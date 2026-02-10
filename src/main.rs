@@ -13,6 +13,7 @@ const SHEET_SIZE_G: UVec2 = uvec2(49, 22);
 /// The tile size in pixels.
 const TILE_SIZE_PX: f32 = 16.0;
 
+/// The size of the map in cells.
 const MAP_SIZE_G: UVec2 = uvec2(10, 10);
 
 /// The clear color for the window.
