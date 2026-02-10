@@ -15,9 +15,13 @@ const TILE_SIZE_PX: f32 = 16.0;
 
 const MAP_SIZE_G: UVec2 = uvec2(10, 10);
 
+/// The clear color for the window.
+const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(CLEAR_COLOR)
         .add_systems(Startup, (load_spritesheet, init_map, setup_camera).chain())
         .init_resource::<SpatialIndex>()
         .run();
