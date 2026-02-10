@@ -19,6 +19,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, (load_spritesheet, init_map, setup_camera).chain())
+        .init_resource::<SpatialIndex>()
         .run();
 }
 
@@ -57,7 +58,7 @@ pub struct MapSpec {
     pub default_sprite_idx: AtlasIdx,
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Default, Debug, PartialEq, Eq)]
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }
