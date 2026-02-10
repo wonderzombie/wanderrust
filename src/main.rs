@@ -147,11 +147,6 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
                     -3.0,
                 )),
             },
-            Transform::from_translation(Vec3::new(
-                x as f32 * TILE_SIZE_PX,
-                y as f32 * TILE_SIZE_PX,
-                -3.0,
-            )),
         ));
     }
 
