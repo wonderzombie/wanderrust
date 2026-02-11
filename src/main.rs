@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Add;
 
 use bevy::prelude::*;
 use itertools::iproduct;
@@ -94,13 +95,72 @@ impl SpatialIndex {
 
 #[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Cell {
-    pub x: u32,
-    pub y: u32,
+    pub x: i32,
+    pub y: i32,
 }
 
-impl From<Cell> for (u32, u32) {
-    fn from(value: Cell) -> Self {
-        (value.x, value.y)
+impl Cell {
+    pub fn at_coords(x: u32, y: u32) -> Self {
+        Cell {
+            x: x as i32,
+            y: y as i32,
+        }
+    }
+
+    pub fn combine(&mut self, other: Cell) {
+        self.x += other.x;
+        self.y += other.y;
+    }
+}
+
+impl From<Vec3> for Cell {
+    fn from(vec: Vec3) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+}
+
+impl From<Vec2> for Cell {
+    fn from(vec: Vec2) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+}
+
+impl Add<Vec2> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Vec2) -> Cell {
+        Cell {
+            x: self.x + rhs.x as i32,
+            y: self.y + rhs.y as i32,
+        }
+    }
+}
+
+impl Add<Vec3> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Vec3) -> Cell {
+        Cell {
+            x: self.x + rhs.x as i32,
+            y: self.y + rhs.y as i32,
+        }
+    }
+}
+
+impl Add<Cell> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Cell) -> Self::Output {
+        Cell {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }
 
@@ -145,7 +205,7 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
             Tile,
             PieceBundle {
                 sprite: sprite_atlas.sprite_from_idx(map_spec.default_sprite_idx),
-                cell: Cell { x, y },
+                cell: Cell::at_coords(x, y),
                 atlas_index: map_spec.default_sprite_idx,
                 transform: Transform::from_translation(Vec3::new(
                     x as f32 * TILE_SIZE_PX,
