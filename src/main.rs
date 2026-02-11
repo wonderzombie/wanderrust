@@ -1,11 +1,14 @@
 use std::collections::HashMap;
-use std::ops::Add;
+use std::ops::Deref;
 
 use bevy::prelude::*;
 use itertools::iproduct;
 
+mod cell;
 mod events;
 mod states;
+
+use cell::Cell;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
@@ -25,6 +28,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(CLEAR_COLOR)
         .add_systems(Startup, (load_spritesheet, init_map, setup_camera).chain())
+        .add_systems(Update, handle_player_input)
         .init_resource::<SpatialIndex>()
         .run();
 }
@@ -93,79 +97,16 @@ impl SpatialIndex {
     }
 }
 
-#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct Cell {
-    pub x: i32,
-    pub y: i32,
-}
-
-impl Cell {
-    pub fn at_coords(x: u32, y: u32) -> Self {
-        Cell {
-            x: x as i32,
-            y: y as i32,
-        }
-    }
-
-    pub fn combine(&mut self, other: Cell) {
-        self.x += other.x;
-        self.y += other.y;
-    }
-}
-
-impl From<Vec3> for Cell {
-    fn from(vec: Vec3) -> Self {
-        Cell {
-            x: vec.x as i32,
-            y: vec.y as i32,
-        }
-    }
-}
-
-impl From<Vec2> for Cell {
-    fn from(vec: Vec2) -> Self {
-        Cell {
-            x: vec.x as i32,
-            y: vec.y as i32,
-        }
-    }
-}
-
-impl Add<Vec2> for Cell {
-    type Output = Cell;
-
-    fn add(self, rhs: Vec2) -> Cell {
-        Cell {
-            x: self.x + rhs.x as i32,
-            y: self.y + rhs.y as i32,
-        }
-    }
-}
-
-impl Add<Vec3> for Cell {
-    type Output = Cell;
-
-    fn add(self, rhs: Vec3) -> Cell {
-        Cell {
-            x: self.x + rhs.x as i32,
-            y: self.y + rhs.y as i32,
-        }
-    }
-}
-
-impl Add<Cell> for Cell {
-    type Output = Cell;
-
-    fn add(self, rhs: Cell) -> Self::Output {
-        Cell {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
 #[derive(Component, Debug, Clone, Copy)]
 pub struct AtlasIdx(pub usize);
+
+impl Deref for AtlasIdx {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(Bundle, Clone, Debug)]
 pub struct PieceBundle {
@@ -197,7 +138,7 @@ struct Tile;
 fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
     let map_spec = MapSpec {
         size: MAP_SIZE_G,
-        default_sprite_idx: AtlasIdx(1),
+        default_sprite_idx: AtlasIdx(0),
     };
 
     for (x, y) in iproduct!(0..map_spec.size.x, 0..map_spec.size.y) {
@@ -217,6 +158,32 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
     }
 
     commands.insert_resource(map_spec);
+}
+
+fn decorate_map(_map_spec: Res<MapSpec>, mut tiles: Query<(&mut Sprite, &Cell), With<Tile>>) {
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    for (mut sprite, cell) in tiles.iter_mut() {
+        if let Some(texture_atlas) = &mut sprite.texture_atlas {
+            let mut hasher = DefaultHasher::new();
+            cell.hash(&mut hasher);
+            let hash = hasher.finish();
+
+            let mut rng = StdRng::seed_from_u64(hash);
+            let result = rng.next_u32() % 6;
+            texture_atlas.index = result as usize;
+        }
+    }
+}
+
+fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<Tile>, Changed<AtlasIdx>)>) {
+    for (mut sprite, idx) in tiles.iter_mut() {
+        if let Some(texture_atlas) = &mut sprite.texture_atlas {
+            texture_atlas.index = idx.0;
+        }
+    }
 }
 
 fn load_spritesheet(
