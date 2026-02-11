@@ -1,0 +1,74 @@
+use std::ops::Add;
+
+use bevy::prelude::*;
+
+#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct Cell {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Cell {
+    pub fn at_coords(x: u32, y: u32) -> Self {
+        Cell {
+            x: x as i32,
+            y: y as i32,
+        }
+    }
+
+    pub fn combine(&mut self, other: Cell) {
+        self.x += other.x;
+        self.y += other.y;
+    }
+}
+
+impl From<Vec3> for Cell {
+    fn from(vec: Vec3) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+}
+
+impl From<Vec2> for Cell {
+    fn from(vec: Vec2) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+}
+
+impl Add<Vec2> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Vec2) -> Cell {
+        Cell {
+            x: self.x + rhs.x as i32,
+            y: self.y + rhs.y as i32,
+        }
+    }
+}
+
+impl Add<Vec3> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Vec3) -> Cell {
+        Cell {
+            x: self.x + rhs.x as i32,
+            y: self.y + rhs.y as i32,
+        }
+    }
+}
+
+impl Add<Cell> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Cell) -> Self::Output {
+        Cell {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}

@@ -238,3 +238,31 @@ fn load_spritesheet(
         layout: layout.clone(),
     });
 }
+
+#[derive(Component, Debug)]
+pub struct Player;
+
+fn handle_player_input(
+    mut _commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut player_query: Query<&mut Cell, With<Player>>,
+) {
+    if let Ok(mut player_cell) = player_query.single_mut() {
+        let mut direction = Vec3::ZERO;
+
+        if keyboard_input.pressed(KeyCode::KeyW) {
+            direction += Vec3::new(0.0, 1.0, 0.0);
+        }
+        if keyboard_input.pressed(KeyCode::KeyS) {
+            direction += Vec3::new(0.0, -1.0, 0.0);
+        }
+        if keyboard_input.pressed(KeyCode::KeyA) {
+            direction += Vec3::new(-1.0, 0.0, 0.0);
+        }
+        if keyboard_input.pressed(KeyCode::KeyD) {
+            direction += Vec3::new(1.0, 0.0, 0.0);
+        }
+
+        player_cell.combine(direction.into());
+    }
+}
