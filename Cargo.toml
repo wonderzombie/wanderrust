@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "mrpas"]
+
 [package]
 name = "wanderrust"
 version = "0.1.0"
