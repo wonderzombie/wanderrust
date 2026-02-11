@@ -27,8 +27,12 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(CLEAR_COLOR)
-        .add_systems(Startup, (load_spritesheet, init_map, setup_camera).chain())
+        .add_systems(
+            Startup,
+            (load_spritesheet, init_map, decorate_map, setup_camera).chain(),
+        )
         .add_systems(Update, handle_player_input)
+        .add_systems(PostUpdate, update_tiles)
         .init_resource::<SpatialIndex>()
         .run();
 }

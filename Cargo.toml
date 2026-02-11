@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 bevy = "0.18.0"
 itertools = "0.14.0"
+rand = "0.10.0"
