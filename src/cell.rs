@@ -40,6 +40,15 @@ impl From<Vec2> for Cell {
     }
 }
 
+impl From<(i32, i32)> for Cell {
+    fn from(coords: (i32, i32)) -> Self {
+        Cell {
+            x: coords.0,
+            y: coords.1,
+        }
+    }
+}
+
 impl Add<Vec2> for Cell {
     type Output = Cell;
 
