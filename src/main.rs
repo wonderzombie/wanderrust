@@ -168,7 +168,7 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component, Debug)]
 struct MapTile;
 
-fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
+fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let spec = MapSpec {
         size: MAP_SIZE_G,
         default_tile: TileIdx::None,
@@ -178,7 +178,7 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
         commands.spawn((
             MapTile,
             PieceBundle {
-                sprite: sprite_atlas.sprite_from_idx(spec.default_tile.into()),
+                sprite: atlas.sprite_from_idx(spec.default_tile.into()),
                 cell: Cell::at_coords(x, y),
                 atlas_index: spec.default_tile.into(),
                 transform: Transform::from_translation(Vec3::new(
