@@ -347,14 +347,14 @@ fn validate_player_action(
         return;
     };
 
-    let Some(direction) = pending.direction else {
-        return;
-    };
+    let PendingPlayerAction {
+        ref action,
+        ref direction,
+    } = *pending;
 
-
-    match pending.action {
-        Some(PlayerAction::Move) => {
-            let target_cell = player_cell.add(direction);
+    match (action, direction) {
+        (Some(PlayerAction::Move), Some(direction)) => {
+            let target_cell = player_cell.add(*direction);
             if spatial.is_occupied(target_cell) {
                 info!(
                     "Player tried to move into an occupied cell {:?}",
@@ -363,9 +363,8 @@ fn validate_player_action(
             } else {
                 *player_cell = target_cell;
             }
+            pending.clear();
         }
         _ => return,
     }
-
-    pending.clear();
 }
