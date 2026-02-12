@@ -3,7 +3,7 @@ mod events;
 mod states;
 mod tiles;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Add};
 
 use bevy::prelude::*;
 use itertools::iproduct;
@@ -51,7 +51,10 @@ fn main() {
             )
                 .chain(),
         )
-        .add_systems(Update, handle_player_input)
+        .add_systems(
+            Update,
+            (handle_player_input, validate_player_action).chain(),
+        )
         .add_systems(
             PostUpdate,
             (
@@ -63,6 +66,7 @@ fn main() {
                 .chain(),
         )
         .init_resource::<SpatialIndex>()
+        .init_resource::<PendingPlayerAction>()
         .run();
 }
 
@@ -284,9 +288,10 @@ pub struct Player;
 fn handle_player_input(
     mut _commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<&mut Cell, With<Player>>,
+    player_query: Query<&Cell, With<Player>>,
+    mut pending_action: ResMut<PendingPlayerAction>,
 ) {
-    if let Ok(mut player_cell) = player_query.single_mut() {
+    if let Ok(_) = player_query.single() {
         let mut direction = IVec2::ZERO;
 
         if keyboard_input.just_pressed(KeyCode::KeyW) {
@@ -302,6 +307,65 @@ fn handle_player_input(
             direction += IVec2::X;
         }
 
-        player_cell.combine(direction.into());
+        pending_action.action = Some(PlayerAction::Move);
+        pending_action.direction = Some(direction);
     }
+}
+
+#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PendingPlayerAction {
+    pub action: Option<PlayerAction>,
+    pub direction: Option<IVec2>,
+}
+
+impl PendingPlayerAction {
+    pub fn new() -> Self {
+        Self {
+            action: None,
+            direction: None,
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.action = None;
+        self.direction = None;
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PlayerAction {
+    Move,
+    Interact,
+}
+
+fn validate_player_action(
+    mut pending: ResMut<PendingPlayerAction>,
+    spatial: Res<SpatialIndex>,
+    mut player: Query<&mut Cell, With<Player>>,
+) {
+    let Ok(mut player_cell) = player.single_mut() else {
+        return;
+    };
+
+    let Some(direction) = pending.direction else {
+        return;
+    };
+
+
+    match pending.action {
+        Some(PlayerAction::Move) => {
+            let target_cell = player_cell.add(direction);
+            if spatial.is_occupied(target_cell) {
+                info!(
+                    "Player tried to move into an occupied cell {:?}",
+                    target_cell
+                );
+            } else {
+                *player_cell = target_cell;
+            }
+        }
+        _ => return,
+    }
+
+    pending.clear();
 }
