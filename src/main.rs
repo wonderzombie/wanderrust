@@ -53,7 +53,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (handle_player_input, validate_player_action).chain(),
+            (handle_player_input, validate_player_action, update_camera).chain(),
         )
         .add_systems(
             PostUpdate,
@@ -367,4 +367,15 @@ fn validate_player_action(
         }
         _ => return,
     }
+}
+
+
+fn update_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, player_query: Query<&Cell, With<Player>>) {
+    let Ok(player_cell) = player_query.single() else {
+        return;
+    };
+
+    let mut camera_transform = camera_query.single_mut().unwrap();
+    camera_transform.translation.x = (player_cell.x as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
+    camera_transform.translation.y = (player_cell.y as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
 }
