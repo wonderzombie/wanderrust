@@ -20,7 +20,7 @@ const SHEET_SIZE_G: UVec2 = uvec2(49, 22);
 const TILE_SIZE_PX: f32 = 16.0;
 
 /// The size of the map in cells.
-const MAP_SIZE_G: UVec2 = uvec2(10, 10);
+const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
