@@ -142,7 +142,7 @@ fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         Player,
         PieceBundle {
             sprite: atlas.sprite_from_idx(PLAYER_SPRITE_IDX),
-            cell: Cell::new(0, 0),
+            cell: Cell::new(5, 5),
             atlas_index: PLAYER_SPRITE_IDX.into(),
             transform: Transform::default(),
         },
