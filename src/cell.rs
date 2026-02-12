@@ -76,6 +76,17 @@ impl Add<Vec2> for Cell {
     }
 }
 
+impl Add<IVec2> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: IVec2) -> Cell {
+        Cell {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
 impl Add<Vec3> for Cell {
     type Output = Cell;
 
