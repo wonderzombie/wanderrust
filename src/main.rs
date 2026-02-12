@@ -147,17 +147,17 @@ fn setup_camera(mut commands: Commands) {
 }
 
 #[derive(Component, Debug)]
-struct Tile;
+struct MapTile;
 
 fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
-    let map_spec = MapSpec {
+    let spec = MapSpec {
         size: MAP_SIZE_G,
         default_tile: TileIdx::None,
     };
 
-    for (x, y) in iproduct!(0..map_spec.size.x, 0..map_spec.size.y) {
+    for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
         commands.spawn((
-            Tile,
+            MapTile,
             PieceBundle {
                 sprite: sprite_atlas.sprite_from_idx(spec.default_tile.into()),
                 cell: Cell::at_coords(x, y),
@@ -171,10 +171,10 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
         ));
     }
 
-    commands.insert_resource(map_spec);
+    commands.insert_resource(spec);
 }
 
-fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<Tile>>) {
+fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -190,7 +190,7 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<Tile>>) {
     }
 }
 
-fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<Tile>, Changed<AtlasIdx>)>) {
+fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>) {
     for (mut sprite, idx) in tiles.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = idx.0;
