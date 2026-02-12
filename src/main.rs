@@ -290,16 +290,16 @@ fn handle_player_input(
         let mut direction = IVec2::ZERO;
 
         if keyboard_input.just_pressed(KeyCode::KeyW) {
-            direction += IVec2::new(0, 1);
+            direction += IVec2::Y;
         }
         if keyboard_input.just_pressed(KeyCode::KeyS) {
-            direction += IVec2::new(0, -1);
+            direction += IVec2::NEG_Y;
         }
         if keyboard_input.just_pressed(KeyCode::KeyA) {
-            direction += IVec2::new(-1, 0);
+            direction += IVec2::NEG_X;
         }
         if keyboard_input.just_pressed(KeyCode::KeyD) {
-            direction += IVec2::new(1, 0);
+            direction += IVec2::X;
         }
 
         player_cell.combine(direction.into());
