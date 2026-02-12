@@ -192,11 +192,11 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
                 sprite: atlas.sprite_from_idx(spec.default_tile.into()),
                 cell: Cell::at_coords(x, y),
                 atlas_index: spec.default_tile.into(),
-                transform: Transform::from_translation(Vec3::new(
+                transform: Transform::from_xyz(
                     x as f32 * TILE_SIZE_PX,
                     y as f32 * TILE_SIZE_PX,
                     -3.0,
-                )),
+                ),
             },
         ));
     }
