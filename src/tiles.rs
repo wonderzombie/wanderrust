@@ -18,12 +18,16 @@ macro_rules! tiles {
     };
 }
 
+const fn atlas_idx(x: u32, y: u32) -> isize {
+    (x + y * 49) as isize  // SHEET_SIZE_G.x
+}
+
 tiles! {
-    Dirt = 1,
-    Gravel = 2,
-    Grass = 5,
-    StoneWall = 637,
-    StoneWallWindow = 638,
+    Dirt = atlas_idx(1, 0),
+    Gravel = atlas_idx(2, 0),
+    Grass = atlas_idx(5, 0),
+    StoneWall = atlas_idx(0, 13),
+    StoneWallWindow = atlas_idx(1, 13),
 }
 
 impl TileIdx {
