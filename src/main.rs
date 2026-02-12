@@ -49,7 +49,7 @@ fn main() {
                 .chain(),
         )
         .add_systems(Update, handle_player_input)
-        .add_systems(PostUpdate, update_tiles)
+        .add_systems(PostUpdate, (update_tiles, update_pieces).chain())
         .init_resource::<SpatialIndex>()
         .run();
 }
@@ -214,6 +214,13 @@ fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Chang
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = idx.0;
         }
+    }
+}
+
+fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
+    for (piece_cell, mut transform) in pieces.iter_mut() {
+        transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
+        transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
     }
 }
 
