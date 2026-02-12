@@ -164,21 +164,19 @@ fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
     commands.insert_resource(map_spec);
 }
 
-fn decorate_map(_map_spec: Res<MapSpec>, mut tiles: Query<(&mut Sprite, &Cell), With<Tile>>) {
+fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<Tile>>) {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
 
-    for (mut sprite, cell) in tiles.iter_mut() {
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            let mut hasher = DefaultHasher::new();
-            cell.hash(&mut hasher);
-            let hash = hasher.finish();
+    for (mut atlas_idx, cell) in tiles.iter_mut() {
+        let mut hasher = DefaultHasher::new();
+        cell.hash(&mut hasher);
+        let hash = hasher.finish();
 
-            let mut rng = StdRng::seed_from_u64(hash);
-            let result = rng.next_u32() % 6;
-            texture_atlas.index = result as usize;
-        }
+        let mut rng = StdRng::seed_from_u64(hash);
+        let result = rng.next_u32() % 6 + 1;
+        atlas_idx.0 = result as usize;
     }
 }
 
