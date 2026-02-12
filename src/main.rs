@@ -90,7 +90,7 @@ impl Deref for AtlasIdx {
 #[derive(Resource, Debug)]
 pub struct MapSpec {
     pub size: UVec2,
-    pub default_sprite_idx: AtlasIdx,
+    pub default_tile: TileIdx,
 }
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
@@ -152,16 +152,16 @@ struct Tile;
 fn init_map(mut commands: Commands, sprite_atlas: Res<SpriteAtlas>) {
     let map_spec = MapSpec {
         size: MAP_SIZE_G,
-        default_sprite_idx: AtlasIdx(0),
+        default_tile: TileIdx::None,
     };
 
     for (x, y) in iproduct!(0..map_spec.size.x, 0..map_spec.size.y) {
         commands.spawn((
             Tile,
             PieceBundle {
-                sprite: sprite_atlas.sprite_from_idx(map_spec.default_sprite_idx),
+                sprite: sprite_atlas.sprite_from_idx(spec.default_tile.into()),
                 cell: Cell::at_coords(x, y),
-                atlas_index: map_spec.default_sprite_idx,
+                atlas_index: spec.default_tile.into(),
                 transform: Transform::from_translation(Vec3::new(
                     x as f32 * TILE_SIZE_PX,
                     y as f32 * TILE_SIZE_PX,
