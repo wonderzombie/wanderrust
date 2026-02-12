@@ -4,7 +4,6 @@ mod states;
 mod tiles;
 
 use std::collections::HashMap;
-use std::ops::Deref;
 
 use bevy::prelude::*;
 use itertools::iproduct;
@@ -28,7 +27,7 @@ const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.
 
 const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
 
-#[derive(Debug, Resource)]
+#[derive(Debug, Resource, Deref, DerefMut)]
 struct Fov(Mrpas);
 
 impl From<TileIdx> for AtlasIdx {
@@ -96,16 +95,8 @@ impl SpriteAtlas {
     }
 }
 
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
 pub struct AtlasIdx(pub usize);
-
-impl Deref for AtlasIdx {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 #[derive(Resource, Debug)]
 pub struct MapSpec {
