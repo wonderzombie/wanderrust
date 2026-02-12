@@ -44,6 +44,12 @@ impl From<Vec2> for Cell {
     }
 }
 
+impl From<IVec2> for Cell {
+    fn from(vec: IVec2) -> Self {
+        Cell { x: vec.x, y: vec.y }
+    }
+}
+
 impl From<(i32, i32)> for Cell {
     fn from(coords: (i32, i32)) -> Self {
         Cell {
