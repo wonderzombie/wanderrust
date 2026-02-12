@@ -254,7 +254,7 @@ fn update_spatial_index(
 fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell, With<Opaque>>) {
     for cell in query.iter() {
         let (x, y) = (*cell).into();
-        fov.0.set_transparent((x, y), true);
+        fov.set_transparent((x, y), true);
     }
 }
 
