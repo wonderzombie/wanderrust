@@ -1,14 +1,16 @@
+mod cell;
+mod events;
+mod states;
+mod tiles;
+
 use std::collections::HashMap;
 use std::ops::Deref;
 
 use bevy::prelude::*;
 use itertools::iproduct;
 
-mod cell;
-mod events;
-mod states;
-
 use cell::Cell;
+use tiles::TileIdx;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
@@ -25,32 +27,9 @@ const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.
 
 const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
 
-pub enum TileIdx {
-    None = 0,
-    Dirt = 1,
-    Gravel = 2,
-    Grass = 5,
-    GrassFlowers = 6,
-    GrassLong = 7,
-}
-
 impl From<TileIdx> for AtlasIdx {
     fn from(tile: TileIdx) -> AtlasIdx {
         AtlasIdx(tile as usize)
-    }
-}
-
-impl From<AtlasIdx> for TileIdx {
-    fn from(atlas_idx: AtlasIdx) -> TileIdx {
-        match atlas_idx.0 {
-            0 => TileIdx::None,
-            1 => TileIdx::Dirt,
-            2 => TileIdx::Gravel,
-            5 => TileIdx::Grass,
-            6 => TileIdx::GrassFlowers,
-            7 => TileIdx::GrassLong,
-            _ => TileIdx::None,
-        }
     }
 }
 
