@@ -4,6 +4,7 @@ macro_rules! tiles {
     ) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum TileIdx {
+            None = 0,
             $( $name = $idx, )*
         }
 
