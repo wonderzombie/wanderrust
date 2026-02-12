@@ -246,19 +246,19 @@ fn handle_player_input(
     mut player_query: Query<&mut Cell, With<Player>>,
 ) {
     if let Ok(mut player_cell) = player_query.single_mut() {
-        let mut direction = Vec3::ZERO;
+        let mut direction = IVec2::ZERO;
 
-        if keyboard_input.pressed(KeyCode::KeyW) {
-            direction += Vec3::new(0.0, 1.0, 0.0);
+        if keyboard_input.just_pressed(KeyCode::KeyW) {
+            direction += IVec2::new(0, 1);
         }
-        if keyboard_input.pressed(KeyCode::KeyS) {
-            direction += Vec3::new(0.0, -1.0, 0.0);
+        if keyboard_input.just_pressed(KeyCode::KeyS) {
+            direction += IVec2::new(0, -1);
         }
-        if keyboard_input.pressed(KeyCode::KeyA) {
-            direction += Vec3::new(-1.0, 0.0, 0.0);
+        if keyboard_input.just_pressed(KeyCode::KeyA) {
+            direction += IVec2::new(-1, 0);
         }
-        if keyboard_input.pressed(KeyCode::KeyD) {
-            direction += Vec3::new(1.0, 0.0, 0.0);
+        if keyboard_input.just_pressed(KeyCode::KeyD) {
+            direction += IVec2::new(1, 0);
         }
 
         player_cell.combine(direction.into());
