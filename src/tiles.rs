@@ -22,7 +22,7 @@ const fn atlas_idx(x: u32, y: u32) -> isize {
 }
 
 tiles! {
-    None = atlas_idx(0, 0),
+    Blank = atlas_idx(0, 0),
     Dirt = atlas_idx(1, 0),
     Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),

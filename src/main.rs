@@ -179,7 +179,7 @@ struct MapTile;
 fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let spec = MapSpec {
         size: MAP_SIZE_G,
-        default_tile: TileIdx::None,
+        default_tile: TileIdx::Blank,
     };
 
     let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
