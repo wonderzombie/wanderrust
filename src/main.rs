@@ -39,7 +39,14 @@ fn main() {
         .insert_resource(CLEAR_COLOR)
         .add_systems(
             Startup,
-            (load_spritesheet, init_map, decorate_map, setup_camera).chain(),
+            (
+                load_spritesheet,
+                init_map,
+                decorate_map,
+                setup_camera,
+                setup_player,
+            )
+                .chain(),
         )
         .add_systems(Update, handle_player_input)
         .add_systems(PostUpdate, update_tiles)
@@ -128,6 +135,18 @@ pub struct PieceBundle {
     pub cell: Cell,
     pub atlas_index: AtlasIdx,
     pub transform: Transform,
+}
+
+fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    commands.spawn((
+        Player,
+        PieceBundle {
+            sprite: atlas.sprite_from_idx(PLAYER_SPRITE_IDX),
+            cell: Cell::new(0, 0),
+            atlas_index: PLAYER_SPRITE_IDX.into(),
+            transform: Transform::default(),
+        },
+    ));
 }
 
 fn setup_camera(mut commands: Commands) {
