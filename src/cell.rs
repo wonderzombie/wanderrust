@@ -9,6 +9,10 @@ pub struct Cell {
 }
 
 impl Cell {
+    pub fn new(x: i32, y: i32) -> Self {
+        Cell { x, y }
+    }
+
     pub fn at_coords(x: u32, y: u32) -> Self {
         Cell {
             x: x as i32,
