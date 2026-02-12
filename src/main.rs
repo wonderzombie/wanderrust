@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use itertools::iproduct;
 
 use cell::Cell;
+use mrpas::Mrpas;
 use tiles::TileIdx;
 
 /// The path to the spritesheet image.
@@ -26,6 +27,9 @@ const MAP_SIZE_G: UVec2 = uvec2(10, 10);
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
 const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
+
+#[derive(Debug, Resource)]
+struct Fov(Mrpas);
 
 impl From<TileIdx> for AtlasIdx {
     fn from(tile: TileIdx) -> AtlasIdx {
@@ -49,7 +53,16 @@ fn main() {
                 .chain(),
         )
         .add_systems(Update, handle_player_input)
-        .add_systems(PostUpdate, (update_tiles, update_pieces).chain())
+        .add_systems(
+            PostUpdate,
+            (
+                update_tiles,
+                update_pieces,
+                update_spatial_index,
+                update_fov_model,
+            )
+                .chain(),
+        )
         .init_resource::<SpatialIndex>()
         .run();
 }
@@ -110,6 +123,10 @@ impl SpatialIndex {
         Self {
             occupied: HashMap::new(),
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.occupied.clear();
     }
 
     pub fn insert(&mut self, cell: Cell, entity: Entity) {
@@ -174,6 +191,9 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         default_tile: TileIdx::None,
     };
 
+    let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
+    commands.insert_resource(fov);
+
     for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
         commands.spawn((
             MapTile,
@@ -221,6 +241,29 @@ fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
+    }
+}
+
+#[derive(Component)]
+struct Solid;
+
+#[derive(Component)]
+struct Opaque;
+
+fn update_spatial_index(
+    mut index: ResMut<SpatialIndex>,
+    query: Query<(Entity, &Cell), With<Solid>>,
+) {
+    index.clear();
+    for (entity, cell) in query.iter() {
+        index.insert(cell.clone(), entity);
+    }
+}
+
+fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell, With<Opaque>>) {
+    for cell in query.iter() {
+        let (x, y) = (*cell).into();
+        fov.0.set_transparent((x, y), true);
     }
 }
 
