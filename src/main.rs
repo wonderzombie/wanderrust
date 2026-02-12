@@ -66,6 +66,17 @@ impl SpriteAtlas {
     }
 }
 
+#[derive(Component, Debug, Clone, Copy)]
+pub struct AtlasIdx(pub usize);
+
+impl Deref for AtlasIdx {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Resource, Debug)]
 pub struct MapSpec {
     pub size: UVec2,
@@ -98,17 +109,6 @@ impl SpatialIndex {
 
     pub fn is_occupied(&self, cell: Cell) -> bool {
         self.occupied.contains_key(&cell)
-    }
-}
-
-#[derive(Component, Debug, Clone, Copy)]
-pub struct AtlasIdx(pub usize);
-
-impl Deref for AtlasIdx {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
