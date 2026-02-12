@@ -1,8 +1,10 @@
+use bevy::prelude::Component;
+
 macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum TileIdx {
             None = 0,
             $( $name = $idx, )*
