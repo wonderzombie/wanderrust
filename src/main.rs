@@ -63,6 +63,7 @@ fn main() {
             )
                 .chain(),
         )
+        .insert_resource(MapSpec{ size: MAP_SIZE_G, default_tile: TileIdx::Blank })
         .init_resource::<SpatialIndex>()
         .init_resource::<PendingPlayerAction>()
         .run();
@@ -179,12 +180,7 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component, Debug)]
 struct MapTile;
 
-fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    let spec = MapSpec {
-        size: MAP_SIZE_G,
-        default_tile: TileIdx::Blank,
-    };
-
+fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
     let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
     commands.insert_resource(fov);
 
@@ -206,8 +202,6 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             },
         ));
     }
-
-    commands.insert_resource(spec);
 }
 
 fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
