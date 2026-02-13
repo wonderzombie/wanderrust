@@ -1,4 +1,4 @@
-use bevy::prelude::Component;
+use bevy::{math::UVec2, prelude::Component};
 
 macro_rules! tiles {
     (
@@ -17,6 +17,8 @@ macro_rules! tiles {
         }
     };
 }
+
+pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
 
 pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize

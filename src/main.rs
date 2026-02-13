@@ -14,8 +14,6 @@ use tiles::TileIdx;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
-/// The grid size of the spritesheet.
-const SHEET_SIZE_G: UVec2 = uvec2(49, 22);
 /// The tile size in pixels.
 const TILE_SIZE_PX: f32 = 16.0;
 
@@ -94,8 +92,8 @@ impl SpriteAtlas {
     }
 
     pub fn sprite_from_coords(&self, xy: UVec2) -> Sprite {
-        let index = xy.x + xy.y * SHEET_SIZE_G.x;
-        self.sprite_from_idx(AtlasIdx(index as usize))
+        let index = tiles::atlas_idx(xy.x, xy.y);
+        self.sprite_from_idx(AtlasIdx(index))
     }
 }
 
@@ -270,8 +268,8 @@ fn load_spritesheet(
     let texture: Handle<Image> = asset_server.load(SHEET_PATH);
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
         UVec2::splat(TILE_SIZE_PX as u32),
-        SHEET_SIZE_G.x,
-        SHEET_SIZE_G.y,
+        tiles::SHEET_SIZE_G.x,
+        tiles::SHEET_SIZE_G.y,
         None,
         None,
     ));
