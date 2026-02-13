@@ -18,21 +18,63 @@ macro_rules! tiles {
 }
 
 const fn atlas_idx(x: u32, y: u32) -> isize {
-    (x + y * 49) as isize  // SHEET_SIZE_G.x
+    (x + y * 49) as isize // SHEET_SIZE_G.x
 }
 
 tiles! {
+    // Floor
     Blank = atlas_idx(0, 0),
     Dirt = atlas_idx(1, 0),
     Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),
+
+    // Walls
     StoneWall = atlas_idx(0, 13),
-    StoneWallWindow = atlas_idx(1, 13),
+    StoneWallWindowBars = atlas_idx(1, 13),
+    StoneWallWindow = atlas_idx(2, 13),
+    StoneWallHalf = atlas_idx(1, 11),
+    StoneWallDebris = atlas_idx(16, 12),
+
+    // Chests
+    ChestBrownClosed = atlas_idx(8, 6),
+    ChestBrownOpen = atlas_idx(9, 6),
+    ChestWhiteClosed = atlas_idx(10, 6),
+    ChestWhiteOpen = atlas_idx(11, 6),
+
+    // Doors
+    DoorwayBrownThick = atlas_idx(6, 9),
+    DoorBrownThickClosed1 = atlas_idx(3, 9),
+    DoorBrownThickClosed2 = atlas_idx(4, 9),
+    DoorBrownThickClosed3 = atlas_idx(5, 9),
 }
 
 impl TileIdx {
-    const SOLID: &'static [TileIdx] = &[TileIdx::StoneWall, TileIdx::StoneWallWindow];
-    const OPAQUE: &'static [TileIdx] = &[TileIdx::StoneWall];
+    const SOLID: &'static [TileIdx] = &[
+        // Walls with or without windows are solid.
+        TileIdx::StoneWall,
+        TileIdx::StoneWallWindowBars,
+        TileIdx::StoneWallWindow,
+        TileIdx::StoneWallHalf,
+        TileIdx::StoneWallDebris,
+        // Closed doors are opaque and solid.
+        TileIdx::DoorBrownThickClosed1,
+        TileIdx::DoorBrownThickClosed2,
+        TileIdx::DoorBrownThickClosed3,
+        // Chests are solid, but not opaque.
+        TileIdx::ChestBrownClosed,
+        TileIdx::ChestBrownOpen,
+        TileIdx::ChestWhiteClosed,
+        TileIdx::ChestWhiteOpen,
+    ];
+
+    const OPAQUE: &'static [TileIdx] = &[
+        // Walls without windows are opaque and solid.
+        TileIdx::StoneWall,
+        // Closed doors are opaque and solid.
+        TileIdx::DoorBrownThickClosed1,
+        TileIdx::DoorBrownThickClosed2,
+        TileIdx::DoorBrownThickClosed3,
+    ];
 
     pub fn is_solid(&self) -> bool {
         Self::SOLID.contains(self)
