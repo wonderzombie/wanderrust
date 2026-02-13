@@ -369,8 +369,10 @@ fn validate_player_action(
     }
 }
 
-
-fn update_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, player_query: Query<&Cell, With<Player>>) {
+fn update_camera(
+    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    player_query: Query<&Cell, With<Player>>,
+) {
     let Ok(player_cell) = player_query.single() else {
         return;
     };
