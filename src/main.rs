@@ -211,14 +211,21 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
 
+    let ground_tile_types = [
+        TileIdx::Blank,
+        TileIdx::Dirt,
+        TileIdx::Gravel,
+        TileIdx::Grass,
+    ];
+
     for (mut atlas_idx, cell) in tiles.iter_mut() {
         let mut hasher = DefaultHasher::new();
         cell.hash(&mut hasher);
         let hash = hasher.finish();
 
         let mut rng = StdRng::seed_from_u64(hash);
-        let result = rng.next_u32() % 6 + 1;
-        atlas_idx.0 = result as usize;
+        let result = rng.next_u32() % (ground_tile_types.len() as u32);
+        atlas_idx.0 = ground_tile_types[result as usize].into();
     }
 }
 
