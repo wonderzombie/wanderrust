@@ -52,22 +52,11 @@ tiles! {
 }
 
 impl TileIdx {
-    const SOLID: &'static [TileIdx] = &[
-        // Walls with or without windows are solid.
-        TileIdx::StoneWall,
-        TileIdx::StoneWallWindowBars,
-        TileIdx::StoneWallWindow,
-        TileIdx::StoneWallHalf,
-        TileIdx::StoneWallDebris,
-        // Closed doors are opaque and solid.
-        TileIdx::DoorBrownThickClosed1,
-        TileIdx::DoorBrownThickClosed2,
-        TileIdx::DoorBrownThickClosed3,
-        // Chests are solid, but not opaque.
-        TileIdx::ChestBrownClosed,
-        TileIdx::ChestBrownOpen,
-        TileIdx::ChestWhiteClosed,
-        TileIdx::ChestWhiteOpen,
+    const WALKABLE: &'static [TileIdx] = &[
+        TileIdx::Blank,
+        TileIdx::Dirt,
+        TileIdx::Gravel,
+        TileIdx::Grass,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[
@@ -79,8 +68,8 @@ impl TileIdx {
         TileIdx::DoorBrownThickClosed3,
     ];
 
-    pub fn is_solid(&self) -> bool {
-        Self::SOLID.contains(self)
+    pub fn is_walkable(&self) -> bool {
+        Self::WALKABLE.contains(self)
     }
 
     pub fn is_opaque(&self) -> bool {
