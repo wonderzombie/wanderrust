@@ -57,6 +57,7 @@ impl TileIdx {
         TileIdx::Dirt,
         TileIdx::Gravel,
         TileIdx::Grass,
+        TileIdx::DoorwayBrownThick,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[
