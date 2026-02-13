@@ -368,7 +368,7 @@ fn validate_player_action(
             }
             pending.clear();
         }
-        _ => return,
+        _ => {},
     }
 }
 
