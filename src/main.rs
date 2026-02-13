@@ -1,4 +1,5 @@
 mod cell;
+mod event_log;
 mod events;
 mod states;
 mod tiles;
@@ -46,6 +47,7 @@ fn main() {
                 decorate_map,
                 setup_camera,
                 setup_player,
+                event_log::setup_log,
             )
                 .chain(),
         )
@@ -60,10 +62,15 @@ fn main() {
                 update_pieces,
                 update_spatial_index,
                 update_fov_model,
+                event_log::update_log_display,
             )
                 .chain(),
         )
-        .insert_resource(MapSpec{ size: MAP_SIZE_G, default_tile: TileIdx::Blank })
+        .insert_resource(MapSpec {
+            size: MAP_SIZE_G,
+            default_tile: TileIdx::Blank,
+        })
+        .insert_resource(event_log::MessageLog::new(10))
         .init_resource::<SpatialIndex>()
         .init_resource::<PendingPlayerAction>()
         .run();
