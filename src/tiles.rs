@@ -77,3 +77,9 @@ impl TileIdx {
         Self::OPAQUE.contains(self)
     }
 }
+
+impl From<TileIdx> for usize {
+    fn from(value: TileIdx) -> Self {
+        value as usize
+    }
+}

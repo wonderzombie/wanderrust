@@ -59,10 +59,10 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
-                update_map_sprites,
-                update_pieces,
-                update_spatial_index,
-                update_fov_model,
+                sync_map_tile_sprites,
+                sync_pieces,
+                sync_spatial_index,
+                sync_fov_model,
                 event_log::update_log_display,
             )
                 .chain(),
@@ -238,25 +238,25 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
 }
 
 /// Updates the sprites of map tiles when their atlas index changes.
-fn update_map_sprites(
-    mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>,
+fn sync_map_tile_sprites(
+    mut tiles: Query<(&mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
 ) {
     for (mut sprite, idx) in tiles.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = idx.0;
+            texture_atlas.index = (*idx).into();
         }
     }
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.
-fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
+fn sync_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
     }
 }
 
-fn update_spatial_index(mut index: ResMut<SpatialIndex>, query: Query<(Entity, &Cell, &TileIdx)>) {
+fn sync_spatial_index(mut index: ResMut<SpatialIndex>, query: Query<(Entity, &Cell, &TileIdx)>) {
     index.clear();
     for (entity, cell, tile_idx) in query.iter() {
         if !tile_idx.is_walkable() {
@@ -265,10 +265,10 @@ fn update_spatial_index(mut index: ResMut<SpatialIndex>, query: Query<(Entity, &
     }
 }
 
-fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell>) {
-    for cell in query.iter() {
+fn sync_fov_model(mut fov: ResMut<Fov>, query: Query<(&Cell, &TileIdx)>) {
+    for (cell, tile_idx) in query.iter() {
         let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), true);
+        fov.set_transparent((x, y), !tile_idx.is_opaque());
     }
 }
 
