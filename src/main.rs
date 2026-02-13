@@ -143,17 +143,18 @@ impl SpatialIndex {
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
-    pub atlas_index: AtlasIdx,
+    pub atlas_idx: AtlasIdx,
     pub transform: Transform,
 }
 
 fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    let sprite = atlas.sprite_from_idx(PLAYER_SPRITE_IDX);
     commands.spawn((
         Player,
         PieceBundle {
-            sprite: atlas.sprite_from_idx(PLAYER_SPRITE_IDX),
+            sprite: sprite,
             cell: Cell::new(5, 5),
-            atlas_index: PLAYER_SPRITE_IDX.into(),
+            atlas_idx: PLAYER_SPRITE_IDX,
             transform: Transform::default(),
         },
     ));
@@ -187,13 +188,16 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
     commands.insert_resource(fov);
 
+    let sprite = atlas.sprite_from_idx(spec.default_tile.into());
+    let default: AtlasIdx = spec.default_tile.into();
+
     for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
         commands.spawn((
             MapTile,
             PieceBundle {
-                sprite: atlas.sprite_from_idx(spec.default_tile.into()),
+                sprite: sprite.clone(),
                 cell: Cell::at_coords(x, y),
-                atlas_index: spec.default_tile.into(),
+                atlas_idx: default,
                 transform: Transform::from_xyz(
                     x as f32 * TILE_SIZE_PX,
                     y as f32 * TILE_SIZE_PX,
