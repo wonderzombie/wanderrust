@@ -5,6 +5,7 @@ macro_rules! tiles {
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
         #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+        #[repr(usize)]
         pub enum TileIdx {
             $( $name = $idx, )*
         }
@@ -17,8 +18,8 @@ macro_rules! tiles {
     };
 }
 
-const fn atlas_idx(x: u32, y: u32) -> isize {
-    (x + y * 49) as isize // SHEET_SIZE_G.x
+pub const fn atlas_idx(x: u32, y: u32) -> usize {
+    (y * SHEET_SIZE_G.x + x) as usize
 }
 
 tiles! {
