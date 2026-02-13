@@ -350,9 +350,14 @@ pub enum PlayerAction {
 
 fn validate_player_action(
     mut pending: ResMut<PendingPlayerAction>,
-    spatial: Res<SpatialIndex>,
+    mut log: ResMut<event_log::MessageLog>,
+    space: Res<SpatialIndex>,
     mut player: Query<&mut Cell, With<Player>>,
 ) {
+    if !pending.is_changed() {
+        return;
+    }
+
     let Ok(mut player_cell) = player.single_mut() else {
         return;
     };
@@ -364,18 +369,24 @@ fn validate_player_action(
 
     match (action, direction) {
         (Some(PlayerAction::Move), Some(direction)) => {
+            if *direction == IVec2::ZERO {
+                pending.clear();
+                return;
+            }
             let target_cell = player_cell.add(*direction);
-            if spatial.is_occupied(target_cell) {
+            if space.is_occupied(target_cell) {
                 info!(
                     "Player tried to move into an occupied cell {:?}",
                     target_cell
                 );
+                log.add("You bump into something!".to_string());
             } else {
+                log.add("You move.".to_string().clone());
                 *player_cell = target_cell;
             }
             pending.clear();
         }
-        _ => {},
+        _ => {}
     }
 }
 
