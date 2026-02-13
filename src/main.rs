@@ -24,6 +24,7 @@ const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
+/// The index of the player sprite in the spritesheet.
 const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
 
 #[derive(Debug, Resource, Deref, DerefMut)]
@@ -58,7 +59,7 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
-                update_tiles,
+                update_map_sprites,
                 update_pieces,
                 update_spatial_index,
                 update_fov_model,
@@ -237,7 +238,9 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
 }
 
 /// Updates the sprites of map tiles when their atlas index changes.
-fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>) {
+fn update_map_sprites(
+    mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>,
+) {
     for (mut sprite, idx) in tiles.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = idx.0;
@@ -253,23 +256,16 @@ fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
     }
 }
 
-#[derive(Component)]
-struct Solid;
-
-#[derive(Component)]
-struct Opaque;
-
-fn update_spatial_index(
-    mut index: ResMut<SpatialIndex>,
-    query: Query<(Entity, &Cell), With<Solid>>,
-) {
+fn update_spatial_index(mut index: ResMut<SpatialIndex>, query: Query<(Entity, &Cell, &TileIdx)>) {
     index.clear();
-    for (entity, cell) in query.iter() {
-        index.insert(cell.clone(), entity);
+    for (entity, cell, tile_idx) in query.iter() {
+        if !tile_idx.is_walkable() {
+            index.insert(cell.clone(), entity);
+        }
     }
 }
 
-fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell, With<Opaque>>) {
+fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell>) {
     for cell in query.iter() {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), true);
