@@ -176,11 +176,11 @@ fn setup_camera(mut commands: Commands) {
             scale: 0.5,
             ..OrthographicProjection::default_2d()
         }),
-        Transform::from_translation(Vec3::new(
+        Transform::from_xyz(
             (MAP_SIZE_G.x as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
             (MAP_SIZE_G.y as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
             0.0,
-        )),
+        ),
     ));
 }
 
