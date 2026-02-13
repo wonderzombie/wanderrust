@@ -99,8 +99,8 @@ impl SpriteAtlas {
         }
     }
 
-    pub fn sprite_from_coords(&self, xy: UVec2) -> Sprite {
-        let index = tiles::atlas_idx(xy.x, xy.y);
+    pub fn sprite_from_coords(&self, coords: UVec2) -> Sprite {
+        let index = tiles::atlas_idx(coords.x, coords.y);
         self.sprite_from_idx(AtlasIdx(index))
     }
 }
@@ -187,6 +187,7 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component, Debug)]
 struct MapTile;
 
+/// Initializes the map by spawning entities for each cell with the default tile sprite.
 fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
     let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
     commands.insert_resource(fov);
@@ -211,6 +212,7 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>)
     }
 }
 
+/// Decorates the map by assigning a random ground tile to each cell based on its coordinates.
 fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
@@ -234,6 +236,7 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
     }
 }
 
+/// Updates the sprites of map tiles when their atlas index changes.
 fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>) {
     for (mut sprite, idx) in tiles.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
@@ -242,6 +245,7 @@ fn update_tiles(mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Chang
     }
 }
 
+/// Updates the position of pieces based on their cell coordinates when the cell changes.
 fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
