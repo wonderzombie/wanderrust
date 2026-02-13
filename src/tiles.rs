@@ -24,6 +24,15 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize
 }
 
+#[derive(Component, Debug)]
+struct MapTile;
+
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Walkable;
+
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Opaque;
+
 tiles! {
     // Floor
     Blank = atlas_idx(0, 0),
@@ -73,7 +82,7 @@ impl TileIdx {
         Self::WALKABLE.contains(self)
     }
 
-    pub fn is_opaque(&self) -> bool {
-        Self::OPAQUE.contains(self)
+    pub fn is_transparent(&self) -> bool {
+        !Self::OPAQUE.contains(self)
     }
 }

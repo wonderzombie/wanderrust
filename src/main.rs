@@ -13,6 +13,8 @@ use cell::Cell;
 use mrpas::Mrpas;
 use tiles::TileIdx;
 
+use crate::tiles::Walkable;
+
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
 /// The tile size in pixels.
@@ -29,6 +31,12 @@ const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
 
 #[derive(Debug, Resource, Deref, DerefMut)]
 struct Fov(Mrpas);
+
+impl From<TileIdx> for usize {
+    fn from(value: TileIdx) -> Self {
+        value as usize
+    }
+}
 
 impl From<TileIdx> for AtlasIdx {
     fn from(tile: TileIdx) -> AtlasIdx {
@@ -60,7 +68,8 @@ fn main() {
             PostUpdate,
             (
                 update_map_sprites,
-                update_pieces,
+                update_tile_properties,
+                update_piece_transforms,
                 update_spatial_index,
                 update_fov_model,
                 event_log::update_log_display,
@@ -108,6 +117,9 @@ impl SpriteAtlas {
 
 #[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
 pub struct AtlasIdx(pub usize);
+
+#[derive(Component, Debug)]
+pub struct Actor;
 
 #[derive(Resource, Debug)]
 pub struct MapSpec {
@@ -160,6 +172,7 @@ fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let sprite = atlas.sprite_from_idx(PLAYER_SPRITE_IDX);
     commands.spawn((
         Player,
+        Actor,
         PieceBundle {
             sprite: sprite,
             cell: Cell::new(5, 5),
@@ -209,12 +222,13 @@ fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>)
                     -3.0,
                 ),
             },
+            spec.default_tile,
         ));
     }
 }
 
 /// Decorates the map by assigning a random ground tile to each cell based on its coordinates.
-fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
+fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -226,49 +240,72 @@ fn decorate_map(mut tiles: Query<(&mut AtlasIdx, &Cell), With<MapTile>>) {
         TileIdx::Grass,
     ];
 
-    for (mut atlas_idx, cell) in tiles.iter_mut() {
+    for (mut tile_idx, cell) in tiles.iter_mut() {
         let mut hasher = DefaultHasher::new();
         cell.hash(&mut hasher);
         let hash = hasher.finish();
 
         let mut rng = StdRng::seed_from_u64(hash);
         let result = rng.next_u32() % (ground_tile_types.len() as u32);
-        atlas_idx.0 = ground_tile_types[result as usize].into();
+        *tile_idx = ground_tile_types[result as usize];
     }
 }
 
 /// Updates the sprites of map tiles when their atlas index changes.
 fn update_map_sprites(
-    mut tiles: Query<(&mut Sprite, &AtlasIdx), (With<MapTile>, Changed<AtlasIdx>)>,
+    mut tiles: Query<(&mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
 ) {
     for (mut sprite, idx) in tiles.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = idx.0;
+            texture_atlas.index = (*idx).into();
+        }
+    }
+}
+
+fn update_tile_properties(mut commands: Commands, mut tiles: Query<(&TileIdx, Entity), With<MapTile>>) {
+    for (tile_idx, entity) in tiles.iter_mut() {
+        let mut entity_command = commands.entity(entity);
+        if tile_idx.is_walkable() {
+            entity_command.insert(Walkable);
+        } else {
+            entity_command.remove::<Walkable>();
+        }
+
+        if tile_idx.is_transparent() {
+            entity_command.insert(tiles::Opaque);
+        } else {
+            entity_command.remove::<tiles::Opaque>();
         }
     }
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.
-fn update_pieces(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
+fn update_piece_transforms(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
     }
 }
 
-fn update_spatial_index(mut index: ResMut<SpatialIndex>, query: Query<(Entity, &Cell, &TileIdx)>) {
+/// Updates the spatial index resource based on the current positions of actors in the world.
+fn update_spatial_index(
+    mut index: ResMut<SpatialIndex>,
+    query: Query<(Entity, &Cell), Without<tiles::Walkable>>,
+) {
     index.clear();
-    for (entity, cell, tile_idx) in query.iter() {
-        if !tile_idx.is_walkable() {
-            index.insert(cell.clone(), entity);
-        }
+    for (entity, cell) in query.iter() {
+        index.insert(cell.clone(), entity);
     }
 }
 
-fn update_fov_model(mut fov: ResMut<Fov>, query: Query<&Cell>) {
-    for cell in query.iter() {
+/// Updates the field of view model based on the transparency of tiles when their atlas index changes.
+fn update_fov_model(
+    mut fov: ResMut<Fov>,
+    query: Query<(&Cell, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
+) {
+    for (cell, tile_idx) in query.iter() {
         let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), true);
+        fov.set_transparent((x, y), tile_idx.is_transparent());
     }
 }
 
@@ -296,7 +333,6 @@ fn load_spritesheet(
 pub struct Player;
 
 fn handle_player_input(
-    mut _commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player_query: Query<&Cell, With<Player>>,
     mut pending_action: ResMut<PendingPlayerAction>,
