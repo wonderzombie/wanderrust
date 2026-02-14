@@ -103,11 +103,6 @@ impl SpriteAtlas {
             ..Default::default()
         }
     }
-
-    pub fn sprite_from_coords(&self, coords: UVec2) -> Sprite {
-        let index = tiles::atlas_idx(coords.x, coords.y);
-        self.sprite_from_idx(AtlasIdx(index))
-    }
 }
 
 
