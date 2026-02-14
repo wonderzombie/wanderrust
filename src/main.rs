@@ -11,7 +11,7 @@ use itertools::iproduct;
 
 use cell::Cell;
 use mrpas::Mrpas;
-use tiles::{MapTile, TileIdx, Walkable, Opaque};
+use tiles::{AtlasIdx, MapTile, TileIdx, Walkable, Opaque};
 
 
 /// The path to the spritesheet image.
@@ -30,18 +30,6 @@ const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
 
 #[derive(Debug, Resource, Deref, DerefMut)]
 struct Fov(Mrpas);
-
-impl From<TileIdx> for usize {
-    fn from(value: TileIdx) -> Self {
-        value as usize
-    }
-}
-
-impl From<TileIdx> for AtlasIdx {
-    fn from(tile: TileIdx) -> AtlasIdx {
-        AtlasIdx(tile as usize)
-    }
-}
 
 fn main() {
     App::new()
@@ -113,8 +101,6 @@ impl SpriteAtlas {
     }
 }
 
-#[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
-pub struct AtlasIdx(pub usize);
 
 #[derive(Component, Debug)]
 pub struct Actor;

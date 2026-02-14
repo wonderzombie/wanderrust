@@ -1,4 +1,7 @@
-use bevy::{math::UVec2, prelude::Component};
+use bevy::{
+    math::UVec2,
+    prelude::{Component, Deref, DerefMut},
+};
 
 macro_rules! tiles {
     (
@@ -23,6 +26,9 @@ pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
 pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize
 }
+
+#[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
+pub struct AtlasIdx(pub usize);
 
 #[derive(Component, Debug)]
 pub struct MapTile;
@@ -84,5 +90,17 @@ impl TileIdx {
 
     pub fn is_transparent(&self) -> bool {
         !Self::OPAQUE.contains(self)
+    }
+}
+
+impl From<TileIdx> for usize {
+    fn from(value: TileIdx) -> Self {
+        value as usize
+    }
+}
+
+impl From<TileIdx> for AtlasIdx {
+    fn from(tile: TileIdx) -> AtlasIdx {
+        AtlasIdx(tile as usize)
     }
 }
