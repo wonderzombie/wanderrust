@@ -9,6 +9,33 @@ use bevy::prelude::*;
 use itertools::iproduct;
 use mrpas::Mrpas;
 
+pub const MAP : &str = r#"
+####################
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#.................D
+#.X...............#
+#.................#
+###################"#;
+
+/// Key for the map legend:
+/// - `#` = wall
+/// - `.` = floor
+/// - `X` = player start position
+/// - `D` = door (closed)
+/// - `O` = door (open)
+/// - ` ` = empty space (not walkable)
+/// - `b` = brown chest
+/// - `w` = white chest
+
 
 #[derive(Resource, Debug)]
 pub struct MapSpec {
@@ -53,25 +80,6 @@ impl MapSpec {
     }
 }
 
-
-pub const MAP : &str = r#"
-####################
-#.................#
-#.................#
-#.................D
-#.X...............#
-#.................#
-###################"#;
-
-/// Key for the map legend:
-/// - `#` = wall
-/// - `.` = floor
-/// - `X` = player start position
-/// - `D` = door (closed)
-/// - `O` = door (open)
-/// - ` ` = empty space (not walkable)
-/// - `b` = brown chest
-/// - `w` = white chest
 
 /// Initializes the map by spawning entities for each cell with the default tile sprite.
 pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
