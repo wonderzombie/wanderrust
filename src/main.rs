@@ -1,17 +1,19 @@
 mod cell;
 mod event_log;
 mod events;
+mod map;
 mod states;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
 
 use bevy::prelude::*;
-use itertools::iproduct;
 
 use cell::Cell;
 use mrpas::Mrpas;
-use tiles::{AtlasIdx, MapTile, TileIdx, Walkable, Opaque};
+use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
+
+use crate::map::MapSpec;
 
 
 /// The path to the spritesheet image.
@@ -39,9 +41,9 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                init_map,
-                decorate_map,
-                draw_structures,
+                map::init_map,
+                map::decorate_map,
+                map::draw_structures,
                 setup_camera,
                 setup_player,
                 event_log::setup_log,
@@ -55,7 +57,7 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
-                update_map_tiles,
+                map::update_map_tiles,
                 update_piece_transforms,
                 update_spatial_index,
                 update_fov_model,
@@ -63,10 +65,7 @@ fn main() {
             )
                 .chain(),
         )
-        .insert_resource(MapSpec {
-            size: MAP_SIZE_G,
-            default_tile: TileIdx::Blank,
-        })
+        .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(10))
         .init_resource::<SpatialIndex>()
         .init_resource::<PendingPlayerAction>()
@@ -105,12 +104,6 @@ impl SpriteAtlas {
 
 #[derive(Component, Debug)]
 pub struct Actor;
-
-#[derive(Resource, Debug)]
-pub struct MapSpec {
-    pub size: UVec2,
-    pub default_tile: TileIdx,
-}
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
 pub struct SpatialIndex {
@@ -181,114 +174,6 @@ fn setup_camera(mut commands: Commands) {
             0.0,
         ),
     ));
-}
-
-/// Initializes the map by spawning entities for each cell with the default tile sprite.
-fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
-    let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
-    commands.insert_resource(fov);
-
-    let sprite = atlas.sprite_from_idx(spec.default_tile.into());
-    let default: AtlasIdx = spec.default_tile.into();
-
-    for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
-        commands.spawn((
-            MapTile,
-            PieceBundle {
-                sprite: sprite.clone(),
-                cell: Cell::at_coords(x, y),
-                atlas_idx: default,
-                transform: Transform::from_xyz(
-                    x as f32 * TILE_SIZE_PX,
-                    y as f32 * TILE_SIZE_PX,
-                    -3.0,
-                ),
-            },
-            spec.default_tile,
-        ));
-    }
-}
-
-/// Decorates the map by assigning a random ground tile to each cell based on its coordinates.
-fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
-    use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
-    use std::hash::{DefaultHasher, Hash, Hasher};
-
-    let ground_tile_types = [
-        TileIdx::Blank,
-        TileIdx::Dirt,
-        TileIdx::Gravel,
-        TileIdx::Grass,
-    ];
-
-    for (mut tile_idx, cell) in tiles.iter_mut() {
-        let mut hasher = DefaultHasher::new();
-        cell.hash(&mut hasher);
-        let hash = hasher.finish();
-
-        let mut rng = StdRng::seed_from_u64(hash);
-        let result = rng.next_u32() % (ground_tile_types.len() as u32);
-        *tile_idx = ground_tile_types[result as usize];
-    }
-}
-
-fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    let wall_sprite = atlas.sprite_from_idx(AtlasIdx(1)); // Example wall sprite index
-
-    // Example structure: a simple 3x3 building in the center of the map
-    let structure_cells = [
-        Cell::at_coords(14, 12),
-        Cell::at_coords(15, 12),
-        Cell::at_coords(16, 12),
-        Cell::at_coords(14, 13),
-        Cell::at_coords(15, 13),
-        Cell::at_coords(16, 13),
-        Cell::at_coords(14, 14),
-        Cell::at_coords(15, 14),
-        Cell::at_coords(16, 14),
-    ];
-
-    for cell in structure_cells.iter() {
-        commands.spawn((
-            MapTile,
-            PieceBundle {
-                sprite: wall_sprite.clone(),
-                cell: *cell,
-                atlas_idx: AtlasIdx(1), // Wall tile index
-                transform: Transform::from_xyz(
-                    cell.x as f32 * TILE_SIZE_PX,
-                    cell.y as f32 * TILE_SIZE_PX,
-                    -2.0,
-                ),
-            },
-            TileIdx::StoneWall,
-        ));
-    }
-}
-
-/// Updates the sprites of map tiles when their atlas index changes.
-fn update_map_tiles(
-    mut commands: Commands,
-    mut tiles: Query<(Entity, &mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
-) {
-    for (entity, mut sprite, tile_idx) in tiles.iter_mut() {
-        let mut entity_command = commands.entity(entity);
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = (*tile_idx).into();
-        }
-        if tile_idx.is_walkable() {
-            entity_command.insert(Walkable);
-        } else {
-            entity_command.remove::<Walkable>();
-        }
-
-        if tile_idx.is_transparent() {
-            entity_command.insert(Opaque);
-        } else {
-            entity_command.remove::<Opaque>();
-        }
-    }
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.
