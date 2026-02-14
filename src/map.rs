@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use crate::{Fov, PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 use crate::cell::Cell;
 use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
+use crate::{Fov, PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 
 use bevy::prelude::*;
 use itertools::iproduct;
 use mrpas::Mrpas;
 
-pub const MAP : &str = r#"
+pub const MAP: &str = r#"
 ####################
 #.................#
 #.................#
@@ -16,16 +16,16 @@ pub const MAP : &str = r#"
 #.................#
 #.................#
 #.................#
+#...###...........#
 #.................#
+#.b.w.D.O. .......#
 #.................#
-#.................#
-#.................#
-#.................D
-#.X...............#
-#.................#
+#....#............D
+#.X..#...#....###.#
+#.............###.#
 ###################"#;
 
-/// Key for the map legend:
+/// Key for the map:
 /// - `#` = wall
 /// - `.` = floor
 /// - `X` = player start position
@@ -34,7 +34,6 @@ pub const MAP : &str = r#"
 /// - ` ` = empty space (not walkable)
 /// - `b` = brown chest
 /// - `w` = white chest
-
 
 #[derive(Resource, Debug)]
 pub struct MapSpec {
@@ -47,27 +46,43 @@ impl MapSpec {
     pub fn from_str(map_str: &str) -> Self {
         let lines: Vec<&str> = map_str.lines().collect();
         let height = lines.len() as u32;
-        let width = lines.iter().map(|line| line.chars().count()).max().unwrap_or(0) as u32;
+        let width = lines
+            .iter()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0) as u32;
 
-        let pieces = lines.iter().enumerate().flat_map(|(y, line)| {
-            line.chars().enumerate().filter_map(move |(x, ch)| {
-                let tile_idx = match ch {
-                    '#' => Some(TileIdx::StoneWall),
-                    '.' => Some(TileIdx::Blank),
-                    'X' => Some(TileIdx::Blank),
-                    'D' => Some(TileIdx::DoorBrownThickClosed1),
-                    'O' => Some(TileIdx::DoorwayBrownThick),
-                    'b' => Some(TileIdx::ChestBrownClosed),
-                    'w' => Some(TileIdx::ChestWhiteClosed),
-                    ' ' => None, // Empty space, not walkable
-                    _ => None,   // Ignore unknown characters
-                };
-                tile_idx.map(|idx| (idx, Cell { x: x as i32, y: y as i32 }))
+        let pieces = lines
+            .iter()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.chars().enumerate().filter_map(move |(x, ch)| {
+                    let tile_idx = match ch {
+                        '#' => Some(TileIdx::StoneWall),
+                        '.' => Some(TileIdx::Blank),
+                        'X' => Some(TileIdx::Blank),
+                        'D' => Some(TileIdx::DoorBrownThickClosed1),
+                        'O' => Some(TileIdx::DoorwayBrownThick),
+                        'b' => Some(TileIdx::ChestBrownClosed),
+                        'w' => Some(TileIdx::ChestWhiteClosed),
+                        ' ' => None, // Empty space, not walkable
+                        _ => None,   // Ignore unknown characters
+                    };
+                    tile_idx.map(|idx| {
+                        (
+                            idx,
+                            Cell {
+                                x: x as i32,
+                                y: y as i32,
+                            },
+                        )
+                    })
+                })
             })
-        }).fold(HashMap::new(), |mut acc, (idx, cell)| {
-            acc.entry(idx).or_insert_with(Vec::new).push(cell);
-            acc
-        });
+            .fold(HashMap::new(), |mut acc, (idx, cell)| {
+                acc.entry(idx).or_insert_with(Vec::new).push(cell);
+                acc
+            });
 
         MapSpec {
             size: UVec2::new(width, height),
@@ -76,7 +91,6 @@ impl MapSpec {
         }
     }
 }
-
 
 /// Initializes the map by spawning entities for each cell with the default tile sprite.
 pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
@@ -124,37 +138,6 @@ pub fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
     }
 }
 
-pub fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    // Example structure: a simple 3x3 building in the center of the map
-    let structure_cells = [
-        Cell::at_coords(14, 12),
-        Cell::at_coords(15, 12),
-        Cell::at_coords(16, 12),
-        Cell::at_coords(14, 13),
-        Cell::at_coords(15, 13),
-        Cell::at_coords(16, 13),
-        Cell::at_coords(14, 14),
-        Cell::at_coords(15, 14),
-        Cell::at_coords(16, 14),
-    ];
-
-    for cell in structure_cells.iter() {
-        commands.spawn((
-            MapTile,
-            PieceBundle {
-                sprite: atlas.sprite(),
-                cell: *cell,
-                transform: Transform::from_xyz(
-                    cell.x as f32 * TILE_SIZE_PX,
-                    cell.y as f32 * TILE_SIZE_PX,
-                    -2.0,
-                ),
-            },
-            TileIdx::StoneWall,
-        ));
-    }
-}
-
 pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
     for (tile_idx, cells) in spec.pieces.iter() {
         for cell in cells.iter() {
@@ -192,9 +175,9 @@ pub fn update_map_tiles(
         }
 
         if tile_idx.is_transparent() {
-            entity_command.insert(Opaque);
-        } else {
             entity_command.remove::<Opaque>();
+        } else {
+            entity_command.insert(Opaque);
         }
     }
 }

@@ -15,7 +15,6 @@ use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
 
 use crate::map::MapSpec;
 
-
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 /// The tile size in pixels.
@@ -104,7 +103,6 @@ impl SpriteAtlas {
         }
     }
 }
-
 
 #[derive(Component, Debug)]
 pub struct Actor;
