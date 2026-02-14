@@ -11,7 +11,7 @@ use itertools::iproduct;
 
 use cell::Cell;
 use mrpas::Mrpas;
-use tiles::TileIdx;
+use tiles::{MapTile, TileIdx};
 
 use crate::tiles::Walkable;
 
@@ -196,9 +196,6 @@ fn setup_camera(mut commands: Commands) {
         ),
     ));
 }
-
-#[derive(Component, Debug)]
-struct MapTile;
 
 /// Initializes the map by spawning entities for each cell with the default tile sprite.
 fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {

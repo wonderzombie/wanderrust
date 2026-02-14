@@ -25,7 +25,7 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
 }
 
 #[derive(Component, Debug)]
-struct MapTile;
+pub struct MapTile;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Walkable;
