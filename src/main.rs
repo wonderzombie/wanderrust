@@ -233,7 +233,7 @@ fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
     }
 }
 
-fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
+fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let wall_sprite = atlas.sprite_from_idx(AtlasIdx(1)); // Example wall sprite index
 
     // Example structure: a simple 3x3 building in the center of the map
