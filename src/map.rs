@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::{Fov, PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 use crate::cell::Cell;
-use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
-use crate::tiles::{AtlasIdx};
+use crate::tiles::{AtlasIdx, MapTile, Opaque, TileIdx, Walkable};
 
 use bevy::prelude::*;
 use itertools::iproduct;
