@@ -64,6 +64,9 @@ tiles! {
     DoorBrownThickClosed1 = atlas_idx(3, 9),
     DoorBrownThickClosed2 = atlas_idx(4, 9),
     DoorBrownThickClosed3 = atlas_idx(5, 9),
+
+    // Player
+    Player = atlas_idx(27, 0),
 }
 
 impl TileIdx {

@@ -27,9 +27,6 @@ const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
-/// The index of the player sprite in the spritesheet.
-const PLAYER_SPRITE_IDX: AtlasIdx = AtlasIdx(27);
-
 #[derive(Debug, Resource, Deref, DerefMut)]
 struct Fov(Mrpas);
 
@@ -62,6 +59,7 @@ fn main() {
             PostUpdate,
             (
                 map::update_map_tiles,
+                sync_actor_sprites,
                 update_piece_transforms,
                 update_spatial_index,
                 update_fov_model,
@@ -81,6 +79,17 @@ pub struct SpriteAtlas {
 impl SpriteAtlas {
     pub fn new(texture: Handle<Image>, layout: Handle<TextureAtlasLayout>) -> Self {
         Self { texture, layout }
+    }
+
+    pub fn sprite(&self) -> Sprite {
+        Sprite {
+            image: self.texture.clone(),
+            texture_atlas: Some(TextureAtlas {
+                layout: self.layout.clone(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
     }
 
     pub fn sprite_from_idx(&self, index: AtlasIdx) -> Sprite {
@@ -142,20 +151,17 @@ impl SpatialIndex {
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
-    pub atlas_idx: AtlasIdx,
     pub transform: Transform,
 }
 
 fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    let sprite = atlas.sprite_from_idx(PLAYER_SPRITE_IDX);
     commands.spawn((
         Player,
         Actor,
         PieceBundle {
-            sprite: sprite,
+            sprite: atlas.sprite(),
             cell: Cell::new(5, 5),
-            atlas_idx: PLAYER_SPRITE_IDX,
-            transform: Transform::default(),
+            transform: Transform::from_xyz(5.0 * TILE_SIZE_PX, 5.0 * TILE_SIZE_PX, -1.0),
         },
         TileIdx::Player,
     ));
@@ -175,6 +181,16 @@ fn setup_camera(mut commands: Commands) {
             0.0,
         ),
     ));
+}
+
+fn sync_actor_sprites(
+    mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
+) {
+    for (mut sprite, tile_idx) in pieces.iter_mut() {
+        if let Some(texture_atlas) = &mut sprite.texture_atlas {
+            texture_atlas.index = (*tile_idx).into();
+        }
+    }
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.

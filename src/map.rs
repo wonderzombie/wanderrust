@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{Fov, PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 use crate::cell::Cell;
-use crate::tiles::{AtlasIdx, MapTile, Opaque, TileIdx, Walkable};
+use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
 
 use bevy::prelude::*;
 use itertools::iproduct;
@@ -41,7 +41,6 @@ pub struct MapSpec {
     pub size: UVec2,
     pub default_tile: TileIdx,
     pub pieces: HashMap<TileIdx, Vec<Cell>>,
-    content: String,
 }
 
 impl MapSpec {
@@ -74,7 +73,6 @@ impl MapSpec {
             size: UVec2::new(width, height),
             default_tile: TileIdx::Blank,
             pieces: pieces,
-            content: map_str.to_string(),
         }
     }
 }
@@ -85,16 +83,12 @@ pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSp
     let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
     commands.insert_resource(fov);
 
-    let sprite = atlas.sprite_from_idx(spec.default_tile.into());
-    let default: AtlasIdx = spec.default_tile.into();
-
     for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
         commands.spawn((
             MapTile,
             PieceBundle {
-                sprite: sprite.clone(),
+                sprite: atlas.sprite(),
                 cell: Cell::at_coords(x, y),
-                atlas_idx: default,
                 transform: Transform::from_xyz(
                     x as f32 * TILE_SIZE_PX,
                     y as f32 * TILE_SIZE_PX,
@@ -131,8 +125,6 @@ pub fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
 }
 
 pub fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    let wall_sprite = atlas.sprite_from_idx(AtlasIdx(1)); // Example wall sprite index
-
     // Example structure: a simple 3x3 building in the center of the map
     let structure_cells = [
         Cell::at_coords(14, 12),
@@ -150,9 +142,8 @@ pub fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         commands.spawn((
             MapTile,
             PieceBundle {
-                sprite: wall_sprite.clone(),
+                sprite: atlas.sprite(),
                 cell: *cell,
-                atlas_idx: AtlasIdx(1), // Wall tile index
                 transform: Transform::from_xyz(
                     cell.x as f32 * TILE_SIZE_PX,
                     cell.y as f32 * TILE_SIZE_PX,
@@ -166,18 +157,16 @@ pub fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
 
 pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
     for (tile_idx, cells) in spec.pieces.iter() {
-        let sprite = atlas.sprite_from_idx((*tile_idx).into());
         for cell in cells.iter() {
             commands.spawn((
                 MapTile,
                 PieceBundle {
-                    sprite: sprite.clone(),
+                    sprite: atlas.sprite(),
                     cell: *cell,
-                    atlas_idx: (*tile_idx).into(),
                     transform: Transform::from_xyz(
                         cell.x as f32 * TILE_SIZE_PX,
                         cell.y as f32 * TILE_SIZE_PX,
-                        -1.0,
+                        -2.0,
                     ),
                 },
                 *tile_idx,
@@ -186,7 +175,7 @@ pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res
     }
 }
 
-/// Updates the sprites of map tiles when their atlas index changes.
+/// Updates the sprites of map tiles when their tile index changes.
 pub fn update_map_tiles(
     mut commands: Commands,
     mut tiles: Query<(Entity, &mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
