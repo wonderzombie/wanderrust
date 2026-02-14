@@ -11,9 +11,8 @@ use itertools::iproduct;
 
 use cell::Cell;
 use mrpas::Mrpas;
-use tiles::{MapTile, TileIdx};
+use tiles::{MapTile, TileIdx, Walkable, Opaque};
 
-use crate::tiles::Walkable;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
@@ -264,9 +263,9 @@ fn update_map_tiles(
         }
 
         if tile_idx.is_transparent() {
-            entity_command.insert(tiles::Opaque);
+            entity_command.insert(Opaque);
         } else {
-            entity_command.remove::<tiles::Opaque>();
+            entity_command.remove::<Opaque>();
         }
     }
 }
