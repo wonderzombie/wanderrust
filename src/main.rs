@@ -67,8 +67,7 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
-                update_map_sprites,
-                update_tile_properties,
+                update_map_tiles,
                 update_piece_transforms,
                 update_spatial_index,
                 update_fov_model,
@@ -252,19 +251,15 @@ fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
 }
 
 /// Updates the sprites of map tiles when their atlas index changes.
-fn update_map_sprites(
-    mut tiles: Query<(&mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
+fn update_map_tiles(
+    mut commands: Commands,
+    mut tiles: Query<(Entity, &mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
 ) {
-    for (mut sprite, idx) in tiles.iter_mut() {
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = (*idx).into();
-        }
-    }
-}
-
-fn update_tile_properties(mut commands: Commands, mut tiles: Query<(&TileIdx, Entity), With<MapTile>>) {
-    for (tile_idx, entity) in tiles.iter_mut() {
+    for (entity, mut sprite, tile_idx) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
+        if let Some(texture_atlas) = &mut sprite.texture_atlas {
+            texture_atlas.index = (*tile_idx).into();
+        }
         if tile_idx.is_walkable() {
             entity_command.insert(Walkable);
         } else {
@@ -280,7 +275,9 @@ fn update_tile_properties(mut commands: Commands, mut tiles: Query<(&TileIdx, En
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.
-fn update_piece_transforms(mut pieces: Query<(&Cell, &mut Transform), Changed<Cell>>) {
+fn update_piece_transforms(
+    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
+) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
