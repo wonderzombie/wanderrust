@@ -15,7 +15,7 @@ use tiles::{AtlasIdx, MapTile, TileIdx, Walkable, Opaque};
 
 
 /// The path to the spritesheet image.
-const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
+const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 /// The tile size in pixels.
 const TILE_SIZE_PX: f32 = 16.0;
 
@@ -41,6 +41,7 @@ fn main() {
                 load_spritesheet,
                 init_map,
                 decorate_map,
+                draw_structures,
                 setup_camera,
                 setup_player,
                 event_log::setup_log,
@@ -229,6 +230,40 @@ fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
         let mut rng = StdRng::seed_from_u64(hash);
         let result = rng.next_u32() % (ground_tile_types.len() as u32);
         *tile_idx = ground_tile_types[result as usize];
+    }
+}
+
+fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
+    let wall_sprite = atlas.sprite_from_idx(AtlasIdx(1)); // Example wall sprite index
+
+    // Example structure: a simple 3x3 building in the center of the map
+    let structure_cells = [
+        Cell::at_coords(14, 12),
+        Cell::at_coords(15, 12),
+        Cell::at_coords(16, 12),
+        Cell::at_coords(14, 13),
+        Cell::at_coords(15, 13),
+        Cell::at_coords(16, 13),
+        Cell::at_coords(14, 14),
+        Cell::at_coords(15, 14),
+        Cell::at_coords(16, 14),
+    ];
+
+    for cell in structure_cells.iter() {
+        commands.spawn((
+            MapTile,
+            PieceBundle {
+                sprite: wall_sprite.clone(),
+                cell: *cell,
+                atlas_idx: AtlasIdx(1), // Wall tile index
+                transform: Transform::from_xyz(
+                    cell.x as f32 * TILE_SIZE_PX,
+                    cell.y as f32 * TILE_SIZE_PX,
+                    -2.0,
+                ),
+            },
+            TileIdx::StoneWall,
+        ));
     }
 }
 
