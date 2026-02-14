@@ -164,6 +164,28 @@ pub fn draw_structures(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     }
 }
 
+pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
+    for (tile_idx, cells) in spec.pieces.iter() {
+        let sprite = atlas.sprite_from_idx((*tile_idx).into());
+        for cell in cells.iter() {
+            commands.spawn((
+                MapTile,
+                PieceBundle {
+                    sprite: sprite.clone(),
+                    cell: *cell,
+                    atlas_idx: (*tile_idx).into(),
+                    transform: Transform::from_xyz(
+                        cell.x as f32 * TILE_SIZE_PX,
+                        cell.y as f32 * TILE_SIZE_PX,
+                        -1.0,
+                    ),
+                },
+                *tile_idx,
+            ));
+        }
+    }
+}
+
 /// Updates the sprites of map tiles when their atlas index changes.
 pub fn update_map_tiles(
     mut commands: Commands,
