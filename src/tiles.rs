@@ -30,6 +30,12 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
 #[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
 pub struct AtlasIdx(pub usize);
 
+impl From<usize> for AtlasIdx {
+    fn from(value: usize) -> Self {
+        AtlasIdx(value)
+    }
+}
+
 #[derive(Component, Debug)]
 pub struct MapTile;
 
@@ -39,6 +45,7 @@ pub struct Walkable;
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Opaque;
 
+// We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
     // Floor
     Blank = atlas_idx(0, 0),
