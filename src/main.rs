@@ -47,7 +47,7 @@ fn main() {
                 load_spritesheet,
                 map::init_map,
                 map::decorate_map,
-                map::draw_structures,
+                map::draw_ascii_map,
                 setup_camera,
                 setup_player,
                 event_log::setup_log,
@@ -157,6 +157,7 @@ fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             atlas_idx: PLAYER_SPRITE_IDX,
             transform: Transform::default(),
         },
+        TileIdx::Player,
     ));
 }
 
