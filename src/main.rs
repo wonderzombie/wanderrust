@@ -37,6 +37,10 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(CLEAR_COLOR)
+        .insert_resource(MapSpec::from_str(map::MAP))
+        .insert_resource(event_log::MessageLog::new(10))
+        .init_resource::<SpatialIndex>()
+        .init_resource::<PendingPlayerAction>()
         .add_systems(
             Startup,
             (
@@ -65,10 +69,6 @@ fn main() {
             )
                 .chain(),
         )
-        .insert_resource(MapSpec::from_str(map::MAP))
-        .insert_resource(event_log::MessageLog::new(10))
-        .init_resource::<SpatialIndex>()
-        .init_resource::<PendingPlayerAction>()
         .run();
 }
 
