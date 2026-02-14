@@ -31,7 +31,18 @@ struct Fov(Mrpas);
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: (800, 600).into(),
+                        title: "wanderrust".to_string(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+        )
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(10))
