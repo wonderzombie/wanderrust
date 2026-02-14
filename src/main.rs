@@ -269,7 +269,7 @@ fn update_piece_transforms(
 /// Updates the spatial index resource based on the current positions of actors in the world.
 fn update_spatial_index(
     mut index: ResMut<SpatialIndex>,
-    query: Query<(Entity, &Cell), Without<tiles::Walkable>>,
+    query: Query<(Entity, &Cell), Without<Walkable>>,
 ) {
     index.clear();
     for (entity, cell) in query.iter() {
