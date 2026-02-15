@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use itertools::Itertools;
+
 use bevy::prelude::*;
 
 #[derive(Debug, Default, Resource)]
@@ -24,9 +26,9 @@ impl MessageLog {
     }
 
     pub fn as_text(&self) -> String {
-        self.messages.iter()
+        self.messages
+            .iter()
             .map(|s| s.as_str())
-            .collect::<Vec<_>>()
             .join("\n")
     }
 }
