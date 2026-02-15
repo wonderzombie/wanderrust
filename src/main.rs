@@ -412,10 +412,11 @@ fn handle_interaction(
                     } else {
                         info!("Player uses {:?} to open the door.", required_item);
                     }
+                } else {
+                    info!("Player opens the door.");
                 }
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
-                info!("Player opens the door.");
             }
         }
         Interactable::Chest { is_open, contents } => {
@@ -451,26 +452,26 @@ pub fn setup_interactables(
     tiles: Query<(Entity, &TileIdx), With<MapTile>>,
 ) {
     for (entity, tile_idx) in tiles.iter() {
-        if tile_idx.is_interactable() {
-            let bundle = match tile_idx {
-                TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => {
-                    Some(Interactable::Chest {
-                        is_open: false,
-                        contents: Inventory::with_item(Item("gold".to_string()), 10),
-                    })
-                }
-                TileIdx::DoorBrownThickClosed1
-                | TileIdx::DoorBrownThickClosed2
-                | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
-                    is_open: false,
-                    requires: None,
-                }),
-                _ => None,
-            };
+        if !tile_idx.is_interactable() {
+            continue;
+        }
 
-            if let Some(bundle) = bundle {
-                commands.entity(entity).insert(bundle);
-            }
+        let bundle = match tile_idx {
+            TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
+                is_open: false,
+                contents: Inventory::with_item(Item("gold".to_string()), 10),
+            }),
+            TileIdx::DoorBrownThickClosed1
+            | TileIdx::DoorBrownThickClosed2
+            | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
+                is_open: false,
+                requires: None,
+            }),
+            _ => None,
+        };
+
+        if let Some(bundle) = bundle {
+            commands.entity(entity).insert(bundle);
         }
     }
 }
