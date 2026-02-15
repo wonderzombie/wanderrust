@@ -47,11 +47,11 @@ fn main() {
         )
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
+        .init_resource::<SpatialIndex>()
+        .init_resource::<Inventory>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(10))
-        .init_resource::<SpatialIndex>()
-        .init_resource::<Inventory>()
         .add_systems(
             Startup,
             (
