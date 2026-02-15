@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.18.0", default-features = false, features = ["2d"] }
+bevy = { version = "0.18.0", default-features = false, features = ["2d", "debug"] }
 itertools = "0.14.0"
 mrpas = { path = "mrpas" }
 rand = "0.10.0"
