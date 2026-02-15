@@ -1,6 +1,7 @@
 mod cell;
 mod event_log;
 mod events;
+mod inventory;
 mod map;
 mod states;
 mod tiles;
@@ -14,6 +15,8 @@ use mrpas::Mrpas;
 use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
 
 use crate::map::MapSpec;
+
+use inventory::*;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
@@ -260,40 +263,6 @@ fn load_spritesheet(
 
 #[derive(Component, Debug)]
 pub struct Player;
-
-#[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
-pub struct Inventory(HashMap<Item, usize>);
-
-impl From<HashMap<Item, usize>> for Inventory {
-    fn from(items: HashMap<Item, usize>) -> Self {
-        Inventory(items)
-    }
-}
-
-impl From<Vec<Item>> for Inventory {
-    fn from(items: Vec<Item>) -> Self {
-        let mut inventory = HashMap::new();
-        for item in items {
-            *inventory.entry(item).or_insert(0) += 1;
-        }
-        Inventory(inventory)
-    }
-}
-
-impl Inventory {
-    pub fn add_item(&mut self, item: Item, count: usize) {
-        *self.0.entry(item).or_insert(0) += count;
-    }
-
-    pub fn merge(&mut self, rhs: Inventory) {
-        for (item, count) in rhs.0 {
-            self.add_item(item, count);
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Item(String);
 
 fn handle_player_input(
     mut events: MessageWriter<ActionAttempt>,
