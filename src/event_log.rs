@@ -34,12 +34,14 @@ impl MessageLog {
 #[derive(Component)]
 pub struct LogDisplay;
 
-pub fn setup_log(mut commands: Commands) {
+pub fn setup_log(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let text_font = asset_server.load("fonts/Kenney Mini.ttf");
     commands.spawn((
         LogDisplay,
-        Text::new(""),
+        Text::new("welcome to adventuregame"),
         TextFont {
             font_size: 14.0,
+            font: text_font,
             ..default()
         },
         Node {
