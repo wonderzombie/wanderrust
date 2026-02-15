@@ -427,6 +427,7 @@ fn update_camera(
     player_query: Query<&Cell, With<Player>>,
 ) {
     let Ok(player_cell) = player_query.single() else {
+        warn!("No player entity found in the world.");
         return;
     };
 
@@ -445,7 +446,7 @@ pub fn setup_interactables(
                 TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => {
                     Some(Interactable::Chest {
                         is_open: false,
-                        contents: vec![Item("Gold Coin".to_string())],
+                        contents: vec![Item("gold".to_string())],
                     })
                 }
                 TileIdx::DoorBrownThickClosed1
