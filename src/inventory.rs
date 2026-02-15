@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bevy::{
     ecs::{
         entity::Entity,
@@ -15,6 +17,12 @@ use crate::Player;
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 /// A simple wrapper around a string to represent an item in the game world.
 pub struct Item(pub String);
+
+impl Display for Item {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
 /// A resource representing the player's inventory, which is a mapping of items to their quantities.
@@ -63,6 +71,13 @@ impl Inventory {
 
     pub fn has_item(&self, item: &Item) -> bool {
         self.0.contains_key(item)
+    }
+
+    pub fn summary(&self, prefix: &str) -> Vec<String> {
+        self.0
+            .iter()
+            .map(|(k, v)| format!("{} {} {}", prefix, v, k))
+            .collect::<Vec<_>>()
     }
 }
 
