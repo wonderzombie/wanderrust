@@ -43,11 +43,13 @@ fn main() {
                     ..Default::default()
                 }),
         )
+        .add_message::<ActionAttempt>()
+        .add_message::<Acquisition>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(10))
         .init_resource::<SpatialIndex>()
-        .init_resource::<PendingPlayerAction>()
+        .init_resource::<Inventory>()
         .add_systems(
             Startup,
             (
@@ -63,7 +65,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (handle_player_input, validate_player_action, update_camera).chain(),
+            (handle_player_input, process_action_attempts, update_camera).chain(),
         )
         .add_systems(
             PostUpdate,
@@ -252,99 +254,146 @@ fn load_spritesheet(
 #[derive(Component, Debug)]
 pub struct Player;
 
+#[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
+pub struct Inventory {
+    items: HashMap<Item, usize>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Item(String);
+
 fn handle_player_input(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    player_query: Query<&Cell, With<Player>>,
-    mut pending_action: ResMut<PendingPlayerAction>,
+    mut events: MessageWriter<ActionAttempt>,
+    input: Res<ButtonInput<KeyCode>>,
+    player_query: Query<(Entity, &Cell), With<Player>>,
 ) {
-    if let Ok(_) = player_query.single() {
-        let mut direction = IVec2::ZERO;
-
-        if keyboard_input.just_pressed(KeyCode::KeyW) {
-            direction += IVec2::Y;
-        }
-        if keyboard_input.just_pressed(KeyCode::KeyS) {
-            direction += IVec2::NEG_Y;
-        }
-        if keyboard_input.just_pressed(KeyCode::KeyA) {
-            direction += IVec2::NEG_X;
-        }
-        if keyboard_input.just_pressed(KeyCode::KeyD) {
-            direction += IVec2::X;
-        }
-
-        pending_action.action = Some(PlayerAction::Move);
-        pending_action.direction = Some(direction);
-    }
-}
-
-#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PendingPlayerAction {
-    pub action: Option<PlayerAction>,
-    pub direction: Option<IVec2>,
-}
-
-impl PendingPlayerAction {
-    pub fn new() -> Self {
-        Self {
-            action: None,
-            direction: None,
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.action = None;
-        self.direction = None;
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PlayerAction {
-    Move,
-    Interact,
-}
-
-fn validate_player_action(
-    mut pending: ResMut<PendingPlayerAction>,
-    mut log: ResMut<event_log::MessageLog>,
-    space: Res<SpatialIndex>,
-    mut player: Query<&mut Cell, With<Player>>,
-) {
-    if !pending.is_changed() {
-        return;
-    }
-
-    let Ok(mut player_cell) = player.single_mut() else {
+    let Some(directiom) = get_direction(&input) else {
         return;
     };
 
-    let PendingPlayerAction {
-        ref action,
-        ref direction,
-    } = *pending;
+    let Ok((player_entity, player_cell)) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
 
-    match (action, direction) {
-        (Some(PlayerAction::Move), Some(direction)) => {
-            if *direction == IVec2::ZERO {
-                pending.clear();
-                return;
-            }
-            let target_cell = player_cell.add(*direction);
-            if space.is_occupied(target_cell) {
-                info!(
-                    "Player tried to move into an occupied cell {:?}",
-                    target_cell
-                );
-                log.add("You bump into something!".to_string());
-            } else {
-                log.add("You move.".to_string().clone());
-                *player_cell = target_cell;
-            }
-            pending.clear();
-        }
-        _ => {}
+    events.write(ActionAttempt {
+        interactor: player_entity,
+        target_cell: player_cell.add(directiom),
+    });
+}
+
+fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
+    let mut direction = IVec2::ZERO;
+
+    if input.just_pressed(KeyCode::KeyW) {
+        direction += IVec2::Y;
+    }
+    if input.just_pressed(KeyCode::KeyS) {
+        direction += IVec2::NEG_Y;
+    }
+    if input.just_pressed(KeyCode::KeyA) {
+        direction += IVec2::NEG_X;
+    }
+    if input.just_pressed(KeyCode::KeyD) {
+        direction += IVec2::X;
+    }
+
+    if direction != IVec2::ZERO {
+        Some(direction)
+    } else {
+        None
     }
 }
+
+#[derive(Message, Debug)]
+pub struct ActionAttempt {
+    pub interactor: Entity,
+    pub target_cell: Cell,
+}
+
+#[derive(Component, Debug)]
+pub enum Interactable {
+    Door { is_open: bool },
+    Chest { is_open: bool, contents: Vec<Item> },
+}
+
+#[derive(Message, Debug)]
+pub struct Acquisition {
+    pub acquirer: Entity,
+    pub items: HashMap<Item, usize>,
+}
+
+fn process_action_attempts(
+    mut commands: Commands,
+    mut interactions: MessageReader<ActionAttempt>,
+    mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    mut acquisitions: MessageWriter<Acquisition>,
+    spatial_index: Res<SpatialIndex>,
+) {
+    for message in interactions.read() {
+        let Some(target_entity) = spatial_index.get(message.target_cell) else {
+            // No entity at the target cell, so we can assume it's an empty walkable tile.
+            // Only non-walkable tiles are added to the spatial index, so if there's no entity, it's safe to move there.
+            commands
+                .entity(message.interactor)
+                .insert(message.target_cell);
+            continue;
+        };
+
+        let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(target_entity) else {
+            info!(
+                "Player interacts with an entity at {:?}, but it's not interactable.",
+                message.target_cell
+            );
+            continue; // There is a target entity, but it's not interactable.
+        };
+
+        match &mut *interactable {
+            Interactable::Door { is_open } => {
+                if !*is_open {
+                    *is_open = true;
+                    *tile_idx = TileIdx::DoorwayBrownThick;
+                    info!("Player opens the door.");
+                }
+            }
+            Interactable::Chest { is_open, contents } => {
+                if !*is_open {
+                    *is_open = true;
+                    *tile_idx = TileIdx::ChestBrownOpen;
+                    info!("Player opens the chest and finds: {:?}", contents);
+                    acquisitions.write(Acquisition {
+                        acquirer: message.interactor,
+                        items: contents.iter().fold(HashMap::new(), |mut acc, item| {
+                            *acc.entry(item.clone()).or_insert(0) += 1;
+                            acc
+                        }),
+                    });
+                }
+            }
+        }
+    }
+}
+
+fn process_acquisitions(
+    mut acquisitions: MessageReader<Acquisition>,
+    player_query: Query<Entity, With<Player>>,
+    mut player_inventory: ResMut<Inventory>,
+) {
+    let Ok(player_entity) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
+
+    for acquisition in acquisitions.read() {
+        if acquisition.acquirer == player_entity {
+            info!("Player acquires items: {:?}", acquisition.items);
+            for (item, count) in &acquisition.items {
+                *player_inventory.items.entry(item.clone()).or_insert(0) += *count;
+            }
+        }
+    }
+}
+
 
 fn update_camera(
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
