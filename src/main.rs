@@ -51,7 +51,7 @@ fn main() {
         .init_resource::<Inventory>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
-        .insert_resource(event_log::MessageLog::new(10))
+        .insert_resource(event_log::MessageLog::new(32))
         .add_systems(
             Startup,
             (
@@ -371,6 +371,7 @@ pub enum Interactable {
 
 fn process_action_attempts(
     mut commands: Commands,
+    mut log: ResMut<event_log::MessageLog>,
     mut interactions: MessageReader<ActionAttempt>,
     mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
@@ -380,10 +381,12 @@ fn process_action_attempts(
     for message in interactions.read() {
         let Some(target_entity) = spatial_index.get(message.target_cell) else {
             // No entity at the target cell, so we can assume it's an empty walkable tile.
-            // Only non-walkable tiles are added to the spatial index, so if there's no entity, it's safe to move there.
+            // Changing the cell will cause the system to move the player sprite.
             commands
                 .entity(message.interactor)
                 .insert(message.target_cell);
+            log.add("You move.");
+
             continue;
         };
 
@@ -401,6 +404,7 @@ fn process_action_attempts(
             &player_inventory,
             &mut acquisitions,
             message.interactor,
+            &mut log,
         );
     }
 }
@@ -411,6 +415,7 @@ fn handle_interaction(
     inventory: &Inventory,
     acquisitions: &mut MessageWriter<Acquisition>,
     interactor: Entity,
+    log: &mut event_log::MessageLog,
 ) {
     match interactable {
         Interactable::Door { is_open, requires } => {
@@ -424,6 +429,7 @@ fn handle_interaction(
                     }
                 } else {
                     info!("Player opens the door.");
+                    log.add("Opened door.");
                 }
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
@@ -434,6 +440,7 @@ fn handle_interaction(
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
                 info!("Player opens the chest and finds: {:?}", contents);
+                log.add(contents.summary("got").join("\n"));
                 acquisitions.write(Acquisition {
                     acquirer: interactor,
                     items: contents.clone().into(),
