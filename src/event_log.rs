@@ -45,10 +45,10 @@ pub fn setup_log(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(10.0),
-            left: Val::Px(10.0),
-            width: Val::Px(600.0),
-            height: Val::Px(100.0),
+            bottom: Val::Px(0.0),
+            left: Val::Px(600.0),
+            width: Val::Px(100.0),
+            height: Val::Px(400.0),
             ..default()
         },
     ));
