@@ -243,10 +243,7 @@ fn setup_fov(mut fov: ResMut<Fov>, tiles: Query<(&Cell, &TileIdx), With<MapTile>
 }
 
 /// Updates the field of view model based on the transparency of tiles when their atlas index changes.
-fn update_fov_model(
-    mut fov: ResMut<Fov>,
-    query: Query<(&Cell, &TileIdx), With<MapTile>>,
-) {
+fn update_fov_model(mut fov: ResMut<Fov>, query: Query<(&Cell, &TileIdx), With<MapTile>>) {
     for (cell, tile_idx) in query.iter() {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), tile_idx.is_transparent());
@@ -263,7 +260,6 @@ fn update_vision(
         warn!("No player entity found in the world.");
         return;
     };
-
 
     fov.clear_field_of_view();
     fov.compute_field_of_view((*player_cell).into(), 5);
@@ -354,7 +350,7 @@ pub struct ActionAttempt {
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 pub enum Interactable {
     Door { is_open: bool },
-    Chest { is_open: bool, contents: Vec<Item> },
+    Chest { is_open: bool, contents: Inventory },
 }
 
 fn process_action_attempts(
@@ -429,7 +425,7 @@ pub fn setup_interactables(
                 TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => {
                     Some(Interactable::Chest {
                         is_open: false,
-                        contents: vec![Item("gold".to_string())],
+                        contents: Inventory::with_item(Item("gold".to_string()), 10),
                     })
                 }
                 TileIdx::DoorBrownThickClosed1

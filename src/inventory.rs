@@ -46,6 +46,20 @@ impl Inventory {
             self.add_item(item, count);
         }
     }
+
+    pub fn with_item(item: Item, count: usize) -> Self {
+        let mut inventory = HashMap::new();
+        inventory.insert(item, count);
+        Inventory(inventory)
+    }
+
+    pub fn with_items(items: &[(Item, usize)]) -> Self {
+        let mut inventory = HashMap::new();
+        for (item, count) in items {
+            *inventory.entry(item.clone()).or_insert(0) += *count;
+        }
+        Inventory(inventory)
+    }
 }
 
 #[derive(Message, Debug)]
