@@ -1,10 +1,19 @@
-use bevy::{ecs::resource::Resource, platform::collections::HashMap};
+use bevy::{
+    ecs::{
+        entity::Entity,
+        message::{Message, MessageReader},
+        query::With,
+        resource::Resource,
+        system::{Query, ResMut},
+    },
+    log::{info, warn},
+    platform::collections::HashMap,
+};
 
-
+use crate::Player;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Item(pub String);
-
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
 pub struct Inventory(HashMap<Item, usize>);
@@ -33,6 +42,30 @@ impl Inventory {
     pub fn merge(&mut self, rhs: Inventory) {
         for (item, count) in rhs.0 {
             self.add_item(item, count);
+        }
+    }
+}
+
+#[derive(Message, Debug)]
+pub struct Acquisition {
+    pub acquirer: Entity,
+    pub items: Inventory,
+}
+
+pub fn process_acquisitions(
+    mut acquisitions: MessageReader<Acquisition>,
+    player_query: Query<Entity, With<Player>>,
+    mut player_inventory: ResMut<Inventory>,
+) {
+    let Ok(player_entity) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
+
+    for acquisition in acquisitions.read() {
+        if acquisition.acquirer == player_entity {
+            info!("Player acquires items: {:?}", acquisition.items);
+            player_inventory.merge(acquisition.items.clone());
         }
     }
 }

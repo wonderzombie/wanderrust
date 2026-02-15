@@ -6,7 +6,7 @@ mod map;
 mod states;
 mod tiles;
 
-use std::{collections::HashMap, hash::Hash, ops::Add};
+use std::{collections::HashMap, ops::Add};
 
 use bevy::prelude::*;
 
@@ -319,12 +319,6 @@ pub enum Interactable {
     Chest { is_open: bool, contents: Vec<Item> },
 }
 
-#[derive(Message, Debug)]
-pub struct Acquisition {
-    pub acquirer: Entity,
-    pub items: Inventory,
-}
-
 fn process_action_attempts(
     mut commands: Commands,
     mut interactions: MessageReader<ActionAttempt>,
@@ -369,24 +363,6 @@ fn process_action_attempts(
                     });
                 }
             }
-        }
-    }
-}
-
-fn process_acquisitions(
-    mut acquisitions: MessageReader<Acquisition>,
-    player_query: Query<Entity, With<Player>>,
-    mut player_inventory: ResMut<Inventory>,
-) {
-    let Ok(player_entity) = player_query.single() else {
-        warn!("No player entity found in the world.");
-        return;
-    };
-
-    for acquisition in acquisitions.read() {
-        if acquisition.acquirer == player_entity {
-            info!("Player acquires items: {:?}", acquisition.items);
-            player_inventory.merge(acquisition.items.clone());
         }
     }
 }
