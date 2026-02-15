@@ -30,6 +30,7 @@ const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
 #[derive(Debug, Resource, Deref, DerefMut)]
+/// Newtype for field of view model that tracks which cells are transparent for visibility calculations.
 struct Fov(Mrpas);
 
 fn main() {
@@ -93,6 +94,7 @@ fn main() {
 }
 
 #[derive(Resource, Debug)]
+/// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
 pub struct SpriteAtlas {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
@@ -128,9 +130,11 @@ impl SpriteAtlas {
 }
 
 #[derive(Component, Debug)]
+/// A marker component for entities that perform actions in the world, such as the player or NPCs.
 pub struct Actor;
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
+/// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }
@@ -164,6 +168,7 @@ impl SpatialIndex {
 }
 
 #[derive(Bundle, Clone, Debug)]
+/// A bundle for map pieces that includes a sprite, cell position, and transform.
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
@@ -308,12 +313,14 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
 }
 
 #[derive(Message, Debug)]
+/// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
 pub struct ActionAttempt {
     pub interactor: Entity,
     pub target_cell: Cell,
 }
 
 #[derive(Component, Debug)]
+/// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 pub enum Interactable {
     Door { is_open: bool },
     Chest { is_open: bool, contents: Vec<Item> },

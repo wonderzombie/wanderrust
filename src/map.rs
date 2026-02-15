@@ -36,6 +36,7 @@ pub const MAP: &str = r#"
 /// - `w` = white chest
 
 #[derive(Resource, Debug)]
+/// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct MapSpec {
     pub size: UVec2,
     pub default_tile: TileIdx,

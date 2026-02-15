@@ -3,6 +3,7 @@ use std::ops::Add;
 use bevy::prelude::*;
 
 #[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+/// A simple struct representing a cell in the grid-based world, with integer coordinates.
 pub struct Cell {
     pub x: i32,
     pub y: i32,
@@ -20,6 +21,7 @@ impl Cell {
         }
     }
 
+    /// Adds the other cell to this one, modifying this cell in place, effectively treating the other cell as a vector offset.
     pub fn combine(&mut self, other: Cell) {
         self.x += other.x;
         self.y += other.y;

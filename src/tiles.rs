@@ -28,6 +28,7 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
 }
 
 #[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
+/// A component representing the index of a tile in the sprite atlas, used for rendering.
 pub struct AtlasIdx(pub usize);
 
 impl From<usize> for AtlasIdx {
@@ -37,12 +38,15 @@ impl From<usize> for AtlasIdx {
 }
 
 #[derive(Component, Debug)]
+/// A marker component for entities that represent tiles on the map, which can have properties like walkability and opacity.
 pub struct MapTile;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+/// A marker component for tiles that can be walked on by actors, such as the player or NPCs.
 pub struct Walkable;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+/// A marker component for tiles that block line of sight, affecting field of view calculations.
 pub struct Opaque;
 
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.

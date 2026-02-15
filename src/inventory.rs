@@ -13,9 +13,11 @@ use bevy::{
 use crate::Player;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+/// A simple wrapper around a string to represent an item in the game world.
 pub struct Item(pub String);
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
+/// A resource representing the player's inventory, which is a mapping of items to their quantities.
 pub struct Inventory(HashMap<Item, usize>);
 
 impl From<HashMap<Item, usize>> for Inventory {
@@ -47,6 +49,7 @@ impl Inventory {
 }
 
 #[derive(Message, Debug)]
+/// A message representing the acquisition of items by an actor, such as the player picking up items from a chest or loot.
 pub struct Acquisition {
     pub acquirer: Entity,
     pub items: Inventory,
