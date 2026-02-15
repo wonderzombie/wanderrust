@@ -60,6 +60,7 @@ fn main() {
                 map::decorate_map,
                 map::draw_ascii_map,
                 setup_interactables,
+                setup_fov,
                 setup_camera,
                 setup_player,
                 event_log::setup_log,
@@ -84,6 +85,7 @@ fn main() {
                 update_piece_transforms,
                 update_spatial_index,
                 update_fov_model,
+                update_vision,
                 event_log::update_log_display,
             )
                 .chain(),
@@ -233,14 +235,45 @@ fn update_spatial_index(
     }
 }
 
+fn setup_fov(mut fov: ResMut<Fov>, tiles: Query<(&Cell, &TileIdx), With<MapTile>>) {
+    for (cell, tile_idx) in tiles.iter() {
+        let (x, y) = (*cell).into();
+        fov.set_transparent((x, y), tile_idx.is_transparent());
+    }
+}
+
 /// Updates the field of view model based on the transparency of tiles when their atlas index changes.
 fn update_fov_model(
     mut fov: ResMut<Fov>,
-    query: Query<(&Cell, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
+    query: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
     for (cell, tile_idx) in query.iter() {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), tile_idx.is_transparent());
+    }
+}
+
+/// Updates the visibility of map tiles based on the player's field of view.
+fn update_vision(
+    mut fov: ResMut<Fov>,
+    player_query: Query<&Cell, With<Player>>,
+    mut tiles: Query<(&Cell, &mut Sprite), With<MapTile>>,
+) {
+    let Ok(player_cell) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
+
+
+    fov.clear_field_of_view();
+    fov.compute_field_of_view((*player_cell).into(), 5);
+    for (cell, mut sprite) in tiles.iter_mut() {
+        let (x, y) = (*cell).into();
+        if fov.is_in_view((x, y)) {
+            sprite.color = Color::WHITE;
+        } else {
+            sprite.color = Color::BLACK.with_alpha(0.0);
+        }
     }
 }
 
