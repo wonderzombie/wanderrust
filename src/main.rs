@@ -60,9 +60,9 @@ fn main() {
                 map::decorate_map,
                 map::draw_ascii_map,
                 setup_interactables,
-                setup_fov,
                 setup_camera,
                 setup_player,
+                setup_fov,
                 event_log::setup_log,
             )
                 .chain(),
@@ -236,10 +236,20 @@ fn update_spatial_index(
 }
 
 fn setup_fov(mut fov: ResMut<Fov>, tiles: Query<(&Cell, &TileIdx), With<MapTile>>) {
+    let mut tiles_count = 0;
+    let mut opaque_count = 0;
+    fov.clear_field_of_view();
     for (cell, tile_idx) in tiles.iter() {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), tile_idx.is_transparent());
+        tiles_count += 1;
+        if !tile_idx.is_transparent() {
+            opaque_count += 1;
+        }
     }
+    info!(
+        "Initialized FOV model with {} tiles, {} opaque.",
+        tiles_count, opaque_count)
 }
 
 /// Updates the field of view model based on the transparency of tiles when their atlas index changes.
