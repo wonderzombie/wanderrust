@@ -117,6 +117,17 @@ impl TileIdx {
     pub fn is_interactable(&self) -> bool {
         Self::INTERACTABLE.contains(self)
     }
+
+    pub fn opened_version(&self) -> Option<TileIdx> {
+        match self {
+            TileIdx::ChestBrownClosed => Some(TileIdx::ChestBrownOpen),
+            TileIdx::ChestWhiteClosed => Some(TileIdx::ChestWhiteOpen),
+            TileIdx::DoorBrownThickClosed1 => Some(TileIdx::DoorwayBrownThick),
+            TileIdx::DoorBrownThickClosed2 => Some(TileIdx::DoorwayBrownThick),
+            TileIdx::DoorBrownThickClosed3 => Some(TileIdx::DoorwayBrownThick),
+            _ => None,
+        }
+    }
 }
 
 impl From<TileIdx> for usize {
