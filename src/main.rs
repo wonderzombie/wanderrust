@@ -349,8 +349,14 @@ pub struct ActionAttempt {
 #[derive(Component, Debug)]
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 pub enum Interactable {
-    Door { is_open: bool },
-    Chest { is_open: bool, contents: Inventory },
+    Door {
+        is_open: bool,
+        requires: Option<Item>,
+    },
+    Chest {
+        is_open: bool,
+        contents: Inventory,
+    },
 }
 
 fn process_action_attempts(
@@ -358,6 +364,7 @@ fn process_action_attempts(
     mut interactions: MessageReader<ActionAttempt>,
     mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
+    player_inventory: Res<Inventory>,
     spatial_index: Res<SpatialIndex>,
 ) {
     for message in interactions.read() {
@@ -379,8 +386,16 @@ fn process_action_attempts(
         };
 
         match &mut *interactable {
-            Interactable::Door { is_open } => {
+            Interactable::Door { is_open, requires } => {
                 if !*is_open {
+                    if let Some(required_item) = requires {
+                        if !player_inventory.has_item(required_item) {
+                            info!("Player does not have the required item to open the door.");
+                            continue;
+                        } else {
+                            info!("Player uses {:?} to open the door.", required_item);
+                        }
+                    }
                     *is_open = true;
                     *tile_idx = TileIdx::DoorwayBrownThick;
                     info!("Player opens the door.");
@@ -430,7 +445,10 @@ pub fn setup_interactables(
                 }
                 TileIdx::DoorBrownThickClosed1
                 | TileIdx::DoorBrownThickClosed2
-                | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door { is_open: false }),
+                | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
+                    is_open: false,
+                    requires: None,
+                }),
                 _ => None,
             };
 

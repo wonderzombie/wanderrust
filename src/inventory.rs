@@ -60,6 +60,10 @@ impl Inventory {
         }
         Inventory(inventory)
     }
+
+    pub fn has_item(&self, item: &Item) -> bool {
+        self.0.contains_key(item)
+    }
 }
 
 #[derive(Message, Debug)]
