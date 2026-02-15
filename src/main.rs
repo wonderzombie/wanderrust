@@ -385,32 +385,48 @@ fn process_action_attempts(
             continue; // There is a target entity, but it's not interactable.
         };
 
-        match &mut *interactable {
-            Interactable::Door { is_open, requires } => {
-                if !*is_open {
-                    if let Some(required_item) = requires {
-                        if !player_inventory.has_item(required_item) {
-                            info!("Player does not have the required item to open the door.");
-                            continue;
-                        } else {
-                            info!("Player uses {:?} to open the door.", required_item);
-                        }
+        handle_interaction(
+            &mut tile_idx,
+            &mut interactable,
+            &player_inventory,
+            &mut acquisitions,
+            message.interactor,
+        );
+    }
+}
+
+fn handle_interaction(
+    tile_idx: &mut TileIdx,
+    interactable: &mut Interactable,
+    inventory: &Inventory,
+    acquisitions: &mut MessageWriter<Acquisition>,
+    interactor: Entity,
+) {
+    match interactable {
+        Interactable::Door { is_open, requires } => {
+            if !*is_open {
+                if let Some(required_item) = requires {
+                    if !inventory.has_item(required_item) {
+                        info!("Player does not have the required item to open the door.");
+                        return;
+                    } else {
+                        info!("Player uses {:?} to open the door.", required_item);
                     }
-                    *is_open = true;
-                    *tile_idx = TileIdx::DoorwayBrownThick;
-                    info!("Player opens the door.");
                 }
+                *is_open = true;
+                *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
+                info!("Player opens the door.");
             }
-            Interactable::Chest { is_open, contents } => {
-                if !*is_open {
-                    *is_open = true;
-                    *tile_idx = TileIdx::ChestBrownOpen;
-                    info!("Player opens the chest and finds: {:?}", contents);
-                    acquisitions.write(Acquisition {
-                        acquirer: message.interactor,
-                        items: contents.clone().into(),
-                    });
-                }
+        }
+        Interactable::Chest { is_open, contents } => {
+            if !*is_open {
+                *is_open = true;
+                *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
+                info!("Player opens the chest and finds: {:?}", contents);
+                acquisitions.write(Acquisition {
+                    acquirer: interactor,
+                    items: contents.clone().into(),
+                });
             }
         }
     }
