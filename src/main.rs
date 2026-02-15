@@ -1,4 +1,5 @@
 mod cell;
+mod colors;
 mod event_log;
 mod inventory;
 mod map;
