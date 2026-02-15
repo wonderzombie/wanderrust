@@ -57,6 +57,7 @@ fn main() {
                 map::init_map,
                 map::decorate_map,
                 map::draw_ascii_map,
+                setup_interactables,
                 setup_camera,
                 setup_player,
                 event_log::setup_log,
@@ -65,7 +66,13 @@ fn main() {
         )
         .add_systems(
             Update,
-            (handle_player_input, process_action_attempts, update_camera).chain(),
+            (
+                handle_player_input,
+                process_action_attempts,
+                process_acquisitions,
+                update_camera,
+            )
+                .chain(),
         )
         .add_systems(
             PostUpdate,
@@ -394,7 +401,6 @@ fn process_acquisitions(
     }
 }
 
-
 fn update_camera(
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
     player_query: Query<&Cell, With<Player>>,
@@ -406,4 +412,30 @@ fn update_camera(
     let mut camera_transform = camera_query.single_mut().unwrap();
     camera_transform.translation.x = (player_cell.x as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
     camera_transform.translation.y = (player_cell.y as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
+}
+
+pub fn setup_interactables(
+    mut commands: Commands,
+    tiles: Query<(Entity, &TileIdx), With<MapTile>>,
+) {
+    for (entity, tile_idx) in tiles.iter() {
+        if tile_idx.is_interactable() {
+            let bundle = match tile_idx {
+                TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => {
+                    Some(Interactable::Chest {
+                        is_open: false,
+                        contents: vec![Item("Gold Coin".to_string())],
+                    })
+                }
+                TileIdx::DoorBrownThickClosed1
+                | TileIdx::DoorBrownThickClosed2
+                | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door { is_open: false }),
+                _ => None,
+            };
+
+            if let Some(bundle) = bundle {
+                commands.entity(entity).insert(bundle);
+            }
+        }
+    }
 }
