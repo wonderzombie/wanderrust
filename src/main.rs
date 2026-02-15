@@ -5,7 +5,7 @@ mod map;
 mod states;
 mod tiles;
 
-use std::{collections::HashMap, ops::Add};
+use std::{collections::HashMap, hash::Hash, ops::Add};
 
 use bevy::prelude::*;
 
@@ -262,8 +262,34 @@ fn load_spritesheet(
 pub struct Player;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
-pub struct Inventory {
-    items: HashMap<Item, usize>,
+pub struct Inventory(HashMap<Item, usize>);
+
+impl From<HashMap<Item, usize>> for Inventory {
+    fn from(items: HashMap<Item, usize>) -> Self {
+        Inventory(items)
+    }
+}
+
+impl From<Vec<Item>> for Inventory {
+    fn from(items: Vec<Item>) -> Self {
+        let mut inventory = HashMap::new();
+        for item in items {
+            *inventory.entry(item).or_insert(0) += 1;
+        }
+        Inventory(inventory)
+    }
+}
+
+impl Inventory {
+    pub fn add_item(&mut self, item: Item, count: usize) {
+        *self.0.entry(item).or_insert(0) += count;
+    }
+
+    pub fn merge(&mut self, rhs: Inventory) {
+        for (item, count) in rhs.0 {
+            self.add_item(item, count);
+        }
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -327,7 +353,7 @@ pub enum Interactable {
 #[derive(Message, Debug)]
 pub struct Acquisition {
     pub acquirer: Entity,
-    pub items: HashMap<Item, usize>,
+    pub items: Inventory,
 }
 
 fn process_action_attempts(
@@ -370,10 +396,7 @@ fn process_action_attempts(
                     info!("Player opens the chest and finds: {:?}", contents);
                     acquisitions.write(Acquisition {
                         acquirer: message.interactor,
-                        items: contents.iter().fold(HashMap::new(), |mut acc, item| {
-                            *acc.entry(item.clone()).or_insert(0) += 1;
-                            acc
-                        }),
+                        items: contents.clone().into(),
                     });
                 }
             }
@@ -394,9 +417,7 @@ fn process_acquisitions(
     for acquisition in acquisitions.read() {
         if acquisition.acquirer == player_entity {
             info!("Player acquires items: {:?}", acquisition.items);
-            for (item, count) in &acquisition.items {
-                *player_inventory.items.entry(item.clone()).or_insert(0) += *count;
-            }
+            player_inventory.merge(acquisition.items.clone());
         }
     }
 }
