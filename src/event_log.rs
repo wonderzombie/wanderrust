@@ -26,10 +26,7 @@ impl MessageLog {
     }
 
     pub fn as_text(&self) -> String {
-        self.messages
-            .iter()
-            .map(|s| s.as_str())
-            .join("\n")
+        self.messages.iter().map(|s| s.as_str()).join("\n")
     }
 }
 
@@ -57,10 +54,7 @@ pub fn setup_log(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-pub fn update_log_display(
-    log: Res<MessageLog>,
-    mut display: Query<&mut Text, With<LogDisplay>>,
-) {
+pub fn update_log_display(log: Res<MessageLog>, mut display: Query<&mut Text, With<LogDisplay>>) {
     if log.is_changed() {
         if let Ok(mut text) = display.single_mut() {
             text.0 = log.as_text();
