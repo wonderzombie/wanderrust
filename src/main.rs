@@ -1,9 +1,7 @@
 mod cell;
 mod event_log;
-mod events;
 mod inventory;
 mod map;
-mod states;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
