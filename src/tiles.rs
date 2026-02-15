@@ -94,12 +94,24 @@ impl TileIdx {
         TileIdx::DoorBrownThickClosed3,
     ];
 
+    const INTERACTABLE: &'static [TileIdx] = &[
+        TileIdx::ChestBrownClosed,
+        TileIdx::ChestWhiteClosed,
+        TileIdx::DoorBrownThickClosed1,
+        TileIdx::DoorBrownThickClosed2,
+        TileIdx::DoorBrownThickClosed3,
+    ];
+
     pub fn is_walkable(&self) -> bool {
         Self::WALKABLE.contains(self)
     }
 
     pub fn is_transparent(&self) -> bool {
         !Self::OPAQUE.contains(self)
+    }
+
+    pub fn is_interactable(&self) -> bool {
+        Self::INTERACTABLE.contains(self)
     }
 }
 
