@@ -1,12 +1,35 @@
 use std::collections::VecDeque;
 
-use itertools::Itertools;
+use bevy_egui::{EguiContexts, egui};
 
 use bevy::prelude::*;
+
+use crate::colors::ColorExt;
+
+pub fn draw_message_log_ui(
+    mut contexts: EguiContexts,
+    log: Res<MessageLog>,
+) {
+    let Ok(ctx) = contexts.ctx_mut() else {
+        return;
+    };
+
+    egui::Window::new("Messages")
+        .fixed_pos([600.0, 200.0])  // Position it where you want
+        .fixed_size([200.0, 400.0])
+        .movable(false)
+        .show(ctx, |ui| {
+            for (msg, color) in log.as_color_text() {
+                // Convert Bevy Color to egui Color32
+                ui.colored_label(color.to_egui(), msg.to_uppercase());
+            }
+        });
+}
 
 #[derive(Debug, Default, Resource)]
 pub struct MessageLog {
     messages: VecDeque<String>,
+    color_messages: VecDeque<(String, Color)>,
     max_lines: usize,
 }
 
@@ -15,49 +38,18 @@ impl MessageLog {
         Self {
             messages: VecDeque::with_capacity(max_lines),
             max_lines,
+            ..Default::default()
         }
     }
 
-    pub fn add(&mut self, msg: impl Into<String>) {
+    pub fn add(&mut self, msg: impl Into<String>, color: impl Into<Color>) {
         if self.messages.len() >= self.max_lines {
             self.messages.pop_front();
         }
-        self.messages.push_back(msg.into());
+        self.color_messages.push_back((msg.into(), color.into()));
     }
 
-    pub fn as_text(&self) -> String {
-        self.messages.iter().map(|s| s.as_str()).join("\n")
-    }
-}
-
-#[derive(Component)]
-pub struct LogDisplay;
-
-pub fn setup_log(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let text_font = asset_server.load("fonts/Kenney Mini.ttf");
-    commands.spawn((
-        LogDisplay,
-        Text::new("welcome to adventuregame"),
-        TextFont {
-            font_size: 14.0,
-            font: text_font,
-            ..default()
-        },
-        Node {
-            position_type: PositionType::Absolute,
-            bottom: Val::Px(0.0),
-            left: Val::Px(600.0),
-            width: Val::Px(100.0),
-            height: Val::Px(400.0),
-            ..default()
-        },
-    ));
-}
-
-pub fn update_log_display(log: Res<MessageLog>, mut display: Query<&mut Text, With<LogDisplay>>) {
-    if log.is_changed() {
-        if let Ok(mut text) = display.single_mut() {
-            text.0 = log.as_text().to_uppercase();
-        }
+    pub fn as_color_text(&self) -> VecDeque<(String, Color)>  {
+        self.color_messages.clone()
     }
 }

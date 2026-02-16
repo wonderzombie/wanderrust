@@ -9,7 +9,10 @@ use std::{collections::HashMap, ops::Add};
 
 use bevy::prelude::*;
 
+use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+
 use cell::Cell;
+use event_log::draw_message_log_ui;
 use mrpas::Mrpas;
 use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
 
@@ -46,6 +49,7 @@ fn main() {
                     ..Default::default()
                 }),
         )
+        .add_plugins(EguiPlugin::default())
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
         .init_resource::<SpatialIndex>()
@@ -64,7 +68,6 @@ fn main() {
                 setup_camera,
                 setup_player,
                 setup_fov,
-                event_log::setup_log,
             )
                 .chain(),
         )
@@ -87,10 +90,10 @@ fn main() {
                 update_spatial_index,
                 update_fov_model,
                 update_vision,
-                event_log::update_log_display,
             )
                 .chain(),
         )
+        .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
 }
 
@@ -250,7 +253,8 @@ fn setup_fov(mut fov: ResMut<Fov>, tiles: Query<(&Cell, &TileIdx), With<MapTile>
     }
     info!(
         "Initialized FOV model with {} tiles, {} opaque.",
-        tiles_count, opaque_count)
+        tiles_count, opaque_count
+    )
 }
 
 /// Updates the field of view model based on the transparency of tiles when their atlas index changes.
@@ -386,7 +390,7 @@ fn process_action_attempts(
             commands
                 .entity(message.interactor)
                 .insert(message.target_cell);
-            log.add("You move.");
+            log.add("You move.", colors::KENNEY_OFF_WHITE);
 
             continue;
         };
@@ -430,7 +434,7 @@ fn handle_interaction(
                     }
                 } else {
                     info!("Player opens the door.");
-                    log.add("Opened door.");
+                    log.add("Opened door.", colors::KENNEY_GOLD);
                 }
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
@@ -441,7 +445,7 @@ fn handle_interaction(
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
                 info!("Player opens the chest and finds: {:?}", contents);
-                log.add(contents.summary("got").join("\n"));
+                log.add(contents.summary("got").join("\n"), colors::KENNEY_GREEN);
                 acquisitions.write(Acquisition {
                     acquirer: interactor,
                     items: contents.clone().into(),
