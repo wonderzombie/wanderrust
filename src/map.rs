@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::cell::Cell;
 use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
-use crate::{Fov, PieceBundle, SpriteAtlas, TILE_SIZE_PX};
+use crate::{Fov, PieceBundle, Player, SpriteAtlas, TILE_SIZE_PX};
 
 use bevy::prelude::*;
 use itertools::iproduct;
@@ -179,6 +179,37 @@ pub fn update_map_tiles(
             entity_command.remove::<Opaque>();
         } else {
             entity_command.insert(Opaque);
+        }
+    }
+}
+
+/// Updates the field of view model based on the transparency of tiles when their atlas index changes.
+pub fn update_fov_model(mut fov: ResMut<Fov>, query: Query<(&Cell, &TileIdx), With<MapTile>>) {
+    for (cell, tile_idx) in query.iter() {
+        let (x, y) = (*cell).into();
+        fov.set_transparent((x, y), tile_idx.is_transparent());
+    }
+}
+
+/// Updates the visibility of map tiles based on the player's field of view.
+pub fn update_vision(
+    mut fov: ResMut<Fov>,
+    player_query: Query<&Cell, With<Player>>,
+    mut tiles: Query<(&Cell, &mut Sprite), With<MapTile>>,
+) {
+    let Ok(player_cell) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
+
+    fov.clear_field_of_view();
+    fov.compute_field_of_view((*player_cell).into(), 5);
+    for (cell, mut sprite) in tiles.iter_mut() {
+        let (x, y) = (*cell).into();
+        if fov.is_in_view((x, y)) {
+            sprite.color = Color::WHITE;
+        } else {
+            sprite.color = Color::BLACK.with_alpha(0.0);
         }
     }
 }
