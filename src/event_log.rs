@@ -1,26 +1,55 @@
 use std::collections::VecDeque;
 
-use bevy_egui::{EguiContexts, egui};
+use bevy_egui::{
+    EguiContexts,
+    egui::{self, Align2, Vec2},
+};
 
 use bevy::prelude::*;
 
 use crate::colors::ColorExt;
 
-pub fn draw_message_log_ui(
-    mut contexts: EguiContexts,
-    log: Res<MessageLog>,
-) {
+pub fn setup_egui_fonts(mut contexts: EguiContexts) {
+    let Ok(ctx) = contexts.ctx_mut() else {
+        warn!("Egui context not ready yet");
+        return;
+    };
+
+    let mut fonts = egui::FontDefinitions::default();
+
+    // Load your font file
+    fonts.font_data.insert(
+        "kenney_mini".to_owned(),
+        egui::FontData::from_static(include_bytes!("../assets/fonts/Kenney Mini.ttf")).into(),
+    );
+
+    // Set it as the default proportional font (used by labels)
+    fonts
+        .families
+        .entry(egui::FontFamily::Proportional)
+        .or_default()
+        .insert(0, "kenney_mini".to_owned());
+
+    // Install the fonts
+    ctx.set_fonts(fonts);
+}
+
+pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
 
-    egui::Window::new("Messages")
-        .fixed_pos([600.0, 200.0])  // Position it where you want
-        .fixed_size([200.0, 400.0])
-        .movable(false)
+    egui::Area::new(egui::Id::new("Messages"))
+        .anchor(Align2::RIGHT_BOTTOM, Vec2::ZERO)
         .show(ctx, |ui| {
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Body,
+                egui::FontId::new(18.0, egui::FontFamily::Proportional),  // ← 14pt
+            );
+
             for (msg, color) in log.as_color_text() {
                 // Convert Bevy Color to egui Color32
+                ui.set_min_width(128.0);
                 ui.colored_label(color.to_egui(), msg.to_uppercase());
             }
         });
@@ -49,7 +78,7 @@ impl MessageLog {
         self.color_messages.push_back((msg.into(), color.into()));
     }
 
-    pub fn as_color_text(&self) -> VecDeque<(String, Color)>  {
+    pub fn as_color_text(&self) -> VecDeque<(String, Color)> {
         self.color_messages.clone()
     }
 }

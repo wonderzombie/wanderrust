@@ -16,7 +16,7 @@ use event_log::draw_message_log_ui;
 use mrpas::Mrpas;
 use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
 
-use crate::map::MapSpec;
+use crate::{event_log::setup_egui_fonts, map::MapSpec};
 
 use inventory::*;
 
@@ -74,6 +74,7 @@ fn main() {
         .add_systems(
             Update,
             (
+                setup_egui_fonts.run_if(run_once),
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,
