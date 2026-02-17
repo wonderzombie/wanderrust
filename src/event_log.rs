@@ -44,7 +44,7 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
         .show(ctx, |ui| {
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Body,
-                egui::FontId::new(18.0, egui::FontFamily::Proportional),  // ← 14pt
+                egui::FontId::new(18.0, egui::FontFamily::Proportional),
             );
 
             for (msg, color) in log.as_color_text() {

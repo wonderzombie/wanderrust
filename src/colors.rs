@@ -25,6 +25,5 @@ impl ColorExt for Color {
             (srgba.blue * 255.0) as u8,
             (srgba.alpha * 255.0) as u8,
         )
-
     }
 }
