@@ -230,7 +230,7 @@ fn update_spatial_index(
 ) {
     index.clear();
     for (entity, cell) in query.iter() {
-        index.insert(cell.clone(), entity);
+        index.insert(*cell, entity);
     }
 }
 
@@ -394,7 +394,7 @@ fn handle_interaction(
                 log.add(contents.summary("got").join("\n"), colors::KENNEY_GREEN);
                 acquisitions.write(Acquisition {
                     acquirer: interactor,
-                    items: contents.clone().into(),
+                    items: contents.clone(),
                 });
             }
         }

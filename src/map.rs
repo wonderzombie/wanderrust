@@ -84,7 +84,7 @@ impl MapSpec {
 
         MapSpec {
             size: UVec2::new(width, height),
-            pieces: pieces,
+            pieces,
         }
     }
 }
