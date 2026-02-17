@@ -2,11 +2,10 @@ use std::collections::HashMap;
 
 use crate::cell::Cell;
 use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
-use crate::{Fov, PieceBundle, Player, SpriteAtlas, TILE_SIZE_PX};
+use crate::{PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 
 use bevy::prelude::*;
 use itertools::iproduct;
-use mrpas::Mrpas;
 
 pub const MAP: &str = r#"
 ####################
@@ -95,9 +94,6 @@ impl MapSpec {
 
 /// Initializes the map by spawning entities for each cell with the default tile sprite.
 pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
-    let fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
-    commands.insert_resource(fov);
-
     for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
         commands.spawn((
             MapTile,
@@ -115,28 +111,20 @@ pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSp
     }
 }
 
-/// Decorates the map by assigning a random ground tile to each cell based on its coordinates.
-pub fn decorate_map(mut tiles: Query<(&mut TileIdx, &Cell), With<MapTile>>) {
+/// Generates a random number using the cell as the seed s/t the number is the same for each cell.
+/// This ensures that a specific cell will yield the same random result for the same `max`.
+#[allow(dead_code)]
+fn stable_hash(cell: &Cell, max: u32) -> u32 {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
 
-    let ground_tile_types = [
-        TileIdx::Blank,
-        TileIdx::Dirt,
-        TileIdx::Gravel,
-        TileIdx::Grass,
-    ];
+    let mut hasher = DefaultHasher::new();
+    cell.hash(&mut hasher);
+    let hash = hasher.finish();
 
-    for (mut tile_idx, cell) in tiles.iter_mut() {
-        let mut hasher = DefaultHasher::new();
-        cell.hash(&mut hasher);
-        let hash = hasher.finish();
-
-        let mut rng = StdRng::seed_from_u64(hash);
-        let result = rng.next_u32() % (ground_tile_types.len() as u32);
-        *tile_idx = ground_tile_types[result as usize];
-    }
+    let mut rng = StdRng::seed_from_u64(hash);
+    rng.next_u32() % max
 }
 
 pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
@@ -179,37 +167,6 @@ pub fn update_map_tiles(
             entity_command.remove::<Opaque>();
         } else {
             entity_command.insert(Opaque);
-        }
-    }
-}
-
-/// Updates the field of view model based on the transparency of tiles when their atlas index changes.
-pub fn update_fov_model(mut fov: ResMut<Fov>, query: Query<(&Cell, &TileIdx), With<MapTile>>) {
-    for (cell, tile_idx) in query.iter() {
-        let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), tile_idx.is_transparent());
-    }
-}
-
-/// Updates the visibility of map tiles based on the player's field of view.
-pub fn update_vision(
-    mut fov: ResMut<Fov>,
-    player_query: Query<&Cell, With<Player>>,
-    mut tiles: Query<(&Cell, &mut Sprite), With<MapTile>>,
-) {
-    let Ok(player_cell) = player_query.single() else {
-        warn!("No player entity found in the world.");
-        return;
-    };
-
-    fov.clear_field_of_view();
-    fov.compute_field_of_view((*player_cell).into(), 5);
-    for (cell, mut sprite) in tiles.iter_mut() {
-        let (x, y) = (*cell).into();
-        if fov.is_in_view((x, y)) {
-            sprite.color = Color::WHITE;
-        } else {
-            sprite.color = Color::BLACK.with_alpha(0.0);
         }
     }
 }

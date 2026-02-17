@@ -14,8 +14,6 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use cell::Cell;
 use event_log::draw_message_log_ui;
-use map::*;
-use mrpas::Mrpas;
 use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
 
 use crate::{event_log::setup_egui_fonts, map::MapSpec};
@@ -32,10 +30,6 @@ const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
-
-#[derive(Debug, Resource, Deref, DerefMut)]
-/// Newtype for field of view model that tracks which cells are transparent for visibility calculations.
-struct Fov(Mrpas);
 
 fn main() {
     App::new()
@@ -64,12 +58,11 @@ fn main() {
             (
                 load_spritesheet,
                 map::init_map,
-                map::decorate_map,
                 map::draw_ascii_map,
                 setup_interactables,
                 setup_camera,
                 setup_player,
-                setup_fov,
+                fov::setup_fov,
             )
                 .chain(),
         )
@@ -91,8 +84,8 @@ fn main() {
                 sync_actor_sprites,
                 update_piece_transforms,
                 update_spatial_index,
-                update_fov_model,
-                update_vision,
+                fov::update_fov_model,
+                fov::update_vision,
             )
                 .chain(),
         )
@@ -240,24 +233,6 @@ fn update_spatial_index(
     for (entity, cell) in query.iter() {
         index.insert(cell.clone(), entity);
     }
-}
-
-fn setup_fov(mut fov: ResMut<Fov>, tiles: Query<(&Cell, &TileIdx), With<MapTile>>) {
-    let mut tiles_count = 0;
-    let mut opaque_count = 0;
-    fov.clear_field_of_view();
-    for (cell, tile_idx) in tiles.iter() {
-        let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), tile_idx.is_transparent());
-        tiles_count += 1;
-        if !tile_idx.is_transparent() {
-            opaque_count += 1;
-        }
-    }
-    info!(
-        "Initialized FOV model with {} tiles, {} opaque.",
-        tiles_count, opaque_count
-    )
 }
 
 fn load_spritesheet(
