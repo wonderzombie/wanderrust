@@ -6,6 +6,7 @@ use crate::{
     Player,
     cell::Cell,
     map::MapSpec,
+    queries::MapCellData,
     tiles::{Hidden, MapTile, TileIdx},
 };
 
@@ -16,14 +17,14 @@ pub struct Fov(Mrpas);
 pub fn setup_fov(
     mut commands: Commands,
     spec: Res<MapSpec>,
-    tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
+    tiles: Query<MapCellData, With<MapTile>>,
 ) {
     let mut fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
 
     let mut tiles_count = 0;
     let mut opaque_count = 0;
     fov.clear_field_of_view();
-    for (cell, tile_idx) in tiles.iter() {
+    for (cell, tile_idx) in tiles.iter().map(|it| (it.cell, it.tile_idx)) {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), tile_idx.is_transparent());
         tiles_count += 1;
@@ -40,19 +41,18 @@ pub fn setup_fov(
     commands.insert_resource(fov);
 }
 
-/// Updates the field of view model based on the transparency of tiles when their atlas index changes.
+/// Updates the field of view model based on the transparency of cells in the FOV model when their atlas index changes.
 pub fn update_fov_model(
     mut fov: ResMut<Fov>,
-    query: Query<(&Cell, &TileIdx), (Changed<TileIdx>, With<MapTile>)>,
+    query: Query<MapCellData, (Changed<TileIdx>, With<MapTile>)>,
 ) {
-    for (cell, tile_idx) in query.iter() {
-        let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), tile_idx.is_transparent());
+    for res in query.iter() {
+        fov.set_transparent(res.xy(), res.tile_idx.is_transparent());
     }
 }
 
-/// Updates the visibility of map tiles based on the player's field of view.
-pub fn update_fov_perspective(
+/// Updates the visibility of map tiles' sprites based on the player's field of view.
+pub fn update_tiles_in_view(
     mut fov: ResMut<Fov>,
     player_query: Query<&Cell, With<Player>>,
     mut tiles: Query<(&Cell, &mut Sprite, &mut Hidden), With<MapTile>>,

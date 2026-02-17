@@ -4,6 +4,7 @@ mod event_log;
 mod fov;
 mod inventory;
 mod map;
+mod queries;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
@@ -84,7 +85,7 @@ fn main() {
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_fov_perspective,
+                fov::update_tiles_in_view,
             )
                 .chain(),
         )
