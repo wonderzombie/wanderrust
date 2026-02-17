@@ -52,7 +52,7 @@ pub fn update_fov_model(
 }
 
 /// Updates the visibility of map tiles based on the player's field of view.
-pub fn update_fov_perspective(
+pub fn update_tile_visibility(
     mut fov: ResMut<Fov>,
     player_query: Query<&Cell, With<Player>>,
     mut tiles: Query<(&Cell, &mut Sprite, &mut Hidden), With<MapTile>>,

@@ -84,7 +84,7 @@ fn main() {
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_fov_perspective,
+                fov::update_tile_visibility,
             )
                 .chain(),
         )
