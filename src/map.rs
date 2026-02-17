@@ -5,7 +5,6 @@ use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
 use crate::{PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 
 use bevy::prelude::*;
-use itertools::iproduct;
 
 pub const MAP: &str = r#"
 ####################
@@ -38,7 +37,6 @@ pub const MAP: &str = r#"
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct MapSpec {
     pub size: UVec2,
-    pub default_tile: TileIdx,
     pub pieces: HashMap<TileIdx, Vec<Cell>>,
 }
 
@@ -86,28 +84,8 @@ impl MapSpec {
 
         MapSpec {
             size: UVec2::new(width, height),
-            default_tile: TileIdx::Blank,
             pieces: pieces,
         }
-    }
-}
-
-/// Initializes the map by spawning entities for each cell with the default tile sprite.
-pub fn init_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
-    for (x, y) in iproduct!(0..spec.size.x, 0..spec.size.y) {
-        commands.spawn((
-            MapTile,
-            PieceBundle {
-                sprite: atlas.sprite(),
-                cell: Cell::at_coords(x, y),
-                transform: Transform::from_xyz(
-                    x as f32 * TILE_SIZE_PX,
-                    y as f32 * TILE_SIZE_PX,
-                    -3.0,
-                ),
-            },
-            spec.default_tile,
-        ));
     }
 }
 

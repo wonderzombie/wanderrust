@@ -57,7 +57,6 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                map::init_map,
                 map::draw_ascii_map,
                 setup_interactables,
                 setup_camera,
