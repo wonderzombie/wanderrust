@@ -41,7 +41,10 @@ pub fn setup_fov(
 }
 
 /// Updates the field of view model based on the transparency of tiles when their atlas index changes.
-pub fn update_fov_model(mut fov: ResMut<Fov>, query: Query<(&Cell, &TileIdx), With<MapTile>>) {
+pub fn update_fov_model(
+    mut fov: ResMut<Fov>,
+    query: Query<(&Cell, &TileIdx), (Changed<TileIdx>, With<MapTile>)>,
+) {
     for (cell, tile_idx) in query.iter() {
         let (x, y) = (*cell).into();
         fov.set_transparent((x, y), tile_idx.is_transparent());
