@@ -1,6 +1,7 @@
 mod cell;
 mod colors;
 mod event_log;
+mod fov;
 mod inventory;
 mod map;
 mod tiles;
