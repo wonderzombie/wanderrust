@@ -39,6 +39,7 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
         return;
     };
 
+    // TODO: set visuals.extreme_bg_color to hide area behind log.
     egui::Area::new(egui::Id::new("Messages"))
         .anchor(Align2::RIGHT_BOTTOM, Vec2::ZERO)
         .show(ctx, |ui| {
