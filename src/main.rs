@@ -4,6 +4,7 @@ mod event_log;
 mod fov;
 mod inventory;
 mod map;
+mod tilegrid;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
@@ -62,6 +63,7 @@ fn main() {
                 setup_camera,
                 setup_player,
                 fov::setup_fov,
+                tilegrid::setup_tilegrid,
             )
                 .chain(),
         )
