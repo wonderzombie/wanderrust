@@ -79,12 +79,12 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
-                map::update_map_tiles,
-                sync_actor_sprites,
-                update_piece_transforms,
+                map::sync_map_tiles,
+                sync_nontile_sprites,
+                sync_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_tile_visibility,
+                fov::sync_tile_visibility,
             )
                 .chain(),
         )
@@ -203,7 +203,8 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
-fn sync_actor_sprites(
+/// Syncs the sprite of non-MapTile entities based on their TileIdx changes.
+fn sync_nontile_sprites(
     mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
 ) {
     for (mut sprite, tile_idx) in pieces.iter_mut() {
@@ -213,10 +214,8 @@ fn sync_actor_sprites(
     }
 }
 
-/// Updates the position of pieces based on their cell coordinates when the cell changes.
-fn update_piece_transforms(
-    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
-) {
+/// Syncs the position of pieces based on their cell coordinates when the cell changes.
+fn sync_piece_transforms(mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;

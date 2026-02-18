@@ -126,8 +126,8 @@ pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res
     }
 }
 
-/// Updates the sprites of map tiles when their tile index changes.
-pub fn update_map_tiles(
+/// Syncs the map's TileIdx with its texture atlas and more.
+pub fn sync_map_tiles(
     mut commands: Commands,
     mut tiles: Query<(Entity, &mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
 ) {
