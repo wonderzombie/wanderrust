@@ -4,6 +4,7 @@ mod event_log;
 mod fov;
 mod inventory;
 mod map;
+mod tilegrid;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
@@ -54,10 +55,18 @@ fn main() {
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
         .add_systems(
-            Startup,
+            PreStartup,
             (
                 load_spritesheet,
                 map::draw_ascii_map,
+                tilegrid::init_tilegrid,
+            )
+                .chain(),
+        )
+        .add_systems(
+            Startup,
+            (
+                tilegrid::setup_tilegrid,
                 setup_interactables,
                 setup_camera,
                 setup_player,
