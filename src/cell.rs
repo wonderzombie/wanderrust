@@ -26,14 +26,13 @@ impl Cell {
         self.x += other.x;
         self.y += other.y;
     }
-}
 
-impl From<Vec3> for Cell {
-    fn from(vec: Vec3) -> Self {
-        Cell {
-            x: vec.x as i32,
-            y: vec.y as i32,
-        }
+    pub fn to_idx(&self, width: u32) -> u32 {
+        self.y as u32 * width + self.x as u32
+    }
+
+    pub fn is_in_bounds(&self, width: u32, height: u32) -> bool {
+        self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
     }
 }
 

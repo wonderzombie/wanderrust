@@ -4,6 +4,7 @@ mod event_log;
 mod fov;
 mod inventory;
 mod map;
+mod tilemap;
 mod tiles;
 
 use std::{collections::HashMap, ops::Add};
@@ -14,9 +15,9 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use cell::Cell;
 use event_log::draw_message_log_ui;
-use tiles::{AtlasIdx, MapTile, TileIdx, Walkable};
+use tiles::{MapTile, TileIdx, Walkable};
 
-use crate::{event_log::setup_egui_fonts, map::MapSpec};
+use crate::{event_log::setup_egui_fonts, map::MapSpec, tilemap::setup_tilemap};
 
 use inventory::*;
 
@@ -57,7 +58,8 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                map::draw_ascii_map,
+                // map::draw_ascii_map,
+                setup_tilemap.after(load_spritesheet),
                 setup_interactables,
                 setup_camera,
                 setup_player,
@@ -115,12 +117,12 @@ impl SpriteAtlas {
         }
     }
 
-    pub fn sprite_from_idx(&self, index: AtlasIdx) -> Sprite {
+    pub fn sprite_from_idx(&self, index: impl Into<usize>) -> Sprite {
         Sprite {
             image: self.texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: self.layout.clone(),
-                index: index.0,
+                index: index.into(),
                 ..Default::default()
             }),
             ..Default::default()

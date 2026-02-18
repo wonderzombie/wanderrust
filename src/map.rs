@@ -37,8 +37,12 @@ pub const MAP: &str = r#"
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct MapSpec {
     pub size: UVec2,
+    pub layer: u32,
+    pub tile_size: u32,
     pub pieces: HashMap<TileIdx, Vec<Cell>>,
 }
+
+const DEFAULT_TILE_SIZE: u32 = 16;
 
 impl MapSpec {
     pub fn from_str(map_str: &str) -> Self {
@@ -85,6 +89,8 @@ impl MapSpec {
         MapSpec {
             size: UVec2::new(width, height),
             pieces,
+            tile_size: DEFAULT_TILE_SIZE,
+            layer: 0,
         }
     }
 }
