@@ -1,5 +1,5 @@
 use bevy::{
-    camera::visibility::InheritedVisibility,
+    camera::visibility::{InheritedVisibility, Visibility},
     ecs::{
         bundle::Bundle,
         component::Component,
@@ -99,54 +99,52 @@ pub struct TileBundle {
 }
 
 #[derive(Bundle, Default)]
-pub struct TileMapBundle {
+pub struct TilemapBundle {
     pub size: TilemapSize,
-    pub storage: TilemapStorage,
     pub layer: TilemapLayer,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
-    pub visibility: InheritedVisibility,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
 }
 
 pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<SpriteAtlas>) {
-    let map_entity = commands.spawn_empty().id();
-
-    let tilemap_id = TilemapId(map_entity);
-    let mut tilemap_storage = TilemapStorage::empty(spec.size.x, spec.size.y, spec.tile_size);
     let size = TilemapSize {
         width: spec.size.x,
         height: spec.size.y,
         tile_size: spec.tile_size,
     };
     let layer = TilemapLayer(spec.layer as f32 - 3.);
+    let tilemap_bundle = TilemapBundle {
+        size: TilemapSize {
+            width: spec.size.x,
+            height: spec.size.y,
+            tile_size: spec.tile_size,
+        },
+        layer: layer,
+        ..Default::default()
+    };
 
     info!(
         "initializing tilemap with size {:?} and layer {:?}",
         size, layer
     );
 
-    let tile_idx = TileIdx::Dirt;
+    let map_entity = commands.spawn(tilemap_bundle).id();
+    let tilemap_id = TilemapId(map_entity);
+    let mut storage = TilemapStorage::empty(size.width, size.height, spec.tile_size);
 
     fill_tilemap(
-        tile_idx,
+        TileIdx::Dirt,
         tilemap_id,
         size,
         layer,
         &sheet,
         &mut commands,
-        &mut tilemap_storage,
+        &mut storage,
     );
 
-    let tilemap_bundle = TileMapBundle {
-        size: size,
-        storage: tilemap_storage,
-        layer: layer,
-        ..Default::default()
-    };
-
-    commands
-        .entity(map_entity)
-        .insert((tilemap_id, tilemap_bundle));
+    commands.entity(map_entity).insert((tilemap_id, storage));
 }
 
 pub fn fill_tilemap(
@@ -158,25 +156,23 @@ pub fn fill_tilemap(
     commands: &mut Commands,
     storage: &mut TilemapStorage,
 ) {
-    commands.entity(tilemap_id.0).with_children(|parent| {
-        for x in 0..size.width {
-            for y in 0..size.height {
-                let cell = Cell::new(x as i32, y as i32);
-                let pos = size.cell_to_pos(&cell);
-                let entity = parent
-                    .spawn((
-                        MapTile,
-                        TileBundle {
-                            tilemap_id,
-                            tile_idx,
-                            cell: cell,
-                            transform: Transform::from_xyz(pos.x, pos.y, layer.0),
-                            sprite: sheet.sprite_from_idx(tile_idx),
-                        },
-                    ))
-                    .id();
-                storage.set(&cell, entity);
-            }
+    for x in 0..size.width {
+        for y in 0..size.height {
+            let cell = Cell::new(x as i32, y as i32);
+            let pos = size.cell_to_pos(&cell);
+            let entity = commands
+                .spawn((
+                    MapTile,
+                    TileBundle {
+                        tilemap_id,
+                        tile_idx,
+                        cell: cell,
+                        transform: Transform::from_xyz(pos.x, pos.y, layer.0),
+                        sprite: sheet.sprite_from_idx(tile_idx),
+                    },
+                ))
+                .id();
+            storage.set(&cell, entity);
         }
-    });
+    }
 }
