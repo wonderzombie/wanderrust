@@ -6,7 +6,7 @@ use crate::{
     Player,
     cell::Cell,
     map::MapSpec,
-    tiles::{Hidden, MapTile, TileIdx},
+    tiles::{Explored, MapTile, Revealed, TileIdx},
 };
 
 #[derive(Debug, Resource, Deref, DerefMut)]
@@ -52,10 +52,11 @@ pub fn update_fov_model(
 }
 
 /// Updates the visibility of map tiles based on the player's field of view.
-pub fn update_tile_visibility(
-    mut fov: ResMut<Fov>,
+pub fn update_revealed_tiles(
     player_query: Query<&Cell, With<Player>>,
-    mut tiles: Query<(&Cell, &mut Sprite, &mut Hidden), With<MapTile>>,
+    mut commands: Commands,
+    mut fov: ResMut<Fov>,
+    mut tiles: Query<(Entity, &Cell, &mut Revealed), With<MapTile>>,
 ) {
     let Ok(player_cell) = player_query.single() else {
         warn!("No player entity found in the world.");
@@ -64,8 +65,10 @@ pub fn update_tile_visibility(
 
     fov.clear_field_of_view();
     fov.compute_field_of_view((*player_cell).into(), 5);
-    for (cell, mut sprite, mut hidden) in tiles.iter_mut() {
-        hidden.0 = !fov.is_in_view((*cell).into());
-        sprite.color = if hidden.0 { Color::NONE } else { Color::WHITE };
+    for (entity, cell, mut revealed) in tiles.iter_mut() {
+        revealed.0 = fov.is_in_view((*cell).into());
+        if revealed.0 {
+            commands.entity(entity).insert(Explored);
+        }
     }
 }

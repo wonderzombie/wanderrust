@@ -51,7 +51,15 @@ pub struct Opaque;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
 /// A marker component for tiles that are hidden from the player's view.
-pub struct Hidden(pub bool);
+pub struct Revealed(pub bool);
+
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+/// A marker component for tiles that have been explored by the player.
+pub struct Explored;
+
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+/// A marker component for tiles that are lit by a light source.
+pub struct Lit;
 
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
