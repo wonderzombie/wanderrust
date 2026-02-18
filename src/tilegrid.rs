@@ -9,21 +9,6 @@ use bevy::{
 };
 
 use crate::{cell::Cell, map::MapSpec, tiles::MapTile};
-use std::hash::Hash;
-
-pub trait Grid<T>
-where
-    T: Hash,
-{
-    type Item;
-
-    fn new(size: (u32, u32)) -> Self;
-    fn get(&self, cell: &Cell) -> Option<T>;
-    fn get_idx(&self, idx: usize) -> Option<T>;
-    fn set(&mut self, cell: &Cell, item: T);
-    fn remove(&mut self, cell: &Cell);
-    fn iter(&self) -> impl Iterator<Item = (Cell, Entity)> + '_;
-}
 
 #[derive(Resource, Debug)]
 pub struct TileGrid {
@@ -33,15 +18,6 @@ pub struct TileGrid {
 }
 
 impl TileGrid {
-    #[inline]
-    pub fn to_idx(&self, cell: &Cell) -> usize {
-        cell.y as usize * self.width + cell.x as usize
-    }
-}
-
-impl Grid<Entity> for TileGrid {
-    type Item = Entity;
-
     fn new(size: (u32, u32)) -> Self {
         info!(
             "TileGrid: {} by {} ({} tiles)",
@@ -54,6 +30,11 @@ impl Grid<Entity> for TileGrid {
             height: size.1 as usize,
             tiles: vec![None; size.0 as usize * size.1 as usize],
         }
+    }
+
+    #[inline]
+    pub fn to_idx(&self, cell: &Cell) -> usize {
+        cell.y as usize * self.width + cell.x as usize
     }
 
     #[inline]
