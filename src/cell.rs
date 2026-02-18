@@ -46,9 +46,12 @@ impl From<Vec2> for Cell {
     }
 }
 
-impl From<IVec2> for Cell {
-    fn from(vec: IVec2) -> Self {
-        Cell { x: vec.x, y: vec.y }
+impl From<UVec2> for Cell {
+    fn from(vec: UVec2) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
     }
 }
 
