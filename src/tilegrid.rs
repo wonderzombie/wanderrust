@@ -93,10 +93,9 @@ pub fn setup_tilegrid(
     info!("setup tilegrid");
     assert_ne!(tilegrid.tiles.len(), 0);
     for (cell, entity) in tiles {
-        let idx = tilegrid.to_idx(cell);
-        info!("setting up {:?} {}", cell, idx);
         tilegrid.set(cell, entity);
     }
+    info!("tilegrid set up {} tiles", tilegrid.tiles.len());
 }
 
 #[cfg(test)]
