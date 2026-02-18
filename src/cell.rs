@@ -26,6 +26,12 @@ impl Cell {
         self.x += other.x;
         self.y += other.y;
     }
+
+    /// Returns the index of the cell in a grid with the given width.
+    #[inline]
+    pub fn to_idx(&self, width: u32) -> usize {
+        (self.y as usize * width as usize) + self.x as usize
+    }
 }
 
 impl From<Vec3> for Cell {
