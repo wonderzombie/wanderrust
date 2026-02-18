@@ -66,7 +66,6 @@ fn main() {
         .add_systems(
             Startup,
             (
-                tilegrid::setup_tilegrid,
                 setup_interactables,
                 setup_camera,
                 setup_player,

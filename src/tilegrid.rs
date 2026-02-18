@@ -3,7 +3,7 @@ use bevy::{
         entity::Entity,
         query::With,
         resource::Resource,
-        system::{Commands, Query, Res, ResMut},
+        system::{Commands, Query, Res},
     },
     log::info,
 };
@@ -78,24 +78,12 @@ pub fn init_tilegrid(
     spec: Res<MapSpec>,
     tiles: Query<(&Cell, Entity), With<MapTile>>,
 ) {
-    info!("init tilegrid");
     let mut tilegrid = TileGrid::new((spec.size.x, spec.size.y));
     for (cell, entity) in tiles {
         tilegrid.set(cell, entity);
     }
+    info!("tilegrid set up for {} tiles", tilegrid.tiles.len());
     commands.insert_resource::<TileGrid>(tilegrid);
-}
-
-pub fn setup_tilegrid(
-    mut tilegrid: ResMut<TileGrid>,
-    tiles: Query<(&Cell, Entity), With<MapTile>>,
-) {
-    info!("setup tilegrid");
-    assert_ne!(tilegrid.tiles.len(), 0);
-    for (cell, entity) in tiles {
-        tilegrid.set(cell, entity);
-    }
-    info!("tilegrid set up {} tiles", tilegrid.tiles.len());
 }
 
 #[cfg(test)]
