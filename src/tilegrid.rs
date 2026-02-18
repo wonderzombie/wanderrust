@@ -35,8 +35,8 @@ impl TileGrid {
     }
 
     #[inline]
-    pub fn get(&self, cell: Cell) -> Option<Entity> {
-        self.get_idx(self.idx_for(cell))
+    pub fn get(&self, cell: &Cell) -> Option<Entity> {
+        self.get_idx(self.idx_for(*cell))
     }
 
     #[inline]
