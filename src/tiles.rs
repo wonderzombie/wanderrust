@@ -50,8 +50,8 @@ pub struct Walkable;
 pub struct Opaque;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
-/// A marker component for tiles that are hidden from the player's view.
-pub struct Hidden(pub bool);
+/// A marker component for tiles that are currently revealed to the player.
+pub struct Revealed(pub bool);
 
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cell::Cell;
-use crate::tiles::{Hidden, MapTile, Opaque, TileIdx, Walkable};
+use crate::tiles::{MapTile, Opaque, Revealed, TileIdx, Walkable};
 use crate::{PieceBundle, SpriteAtlas, TILE_SIZE_PX};
 
 use bevy::prelude::*;
@@ -119,7 +119,7 @@ pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res
                         -2.0,
                     ),
                 },
-                Hidden(true),
+                Revealed(false),
                 *tile_idx,
             ));
         }
