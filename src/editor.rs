@@ -1,9 +1,8 @@
-use std::ops::Deref;
-
 use bevy::{
     camera::Camera,
     ecs::{
         change_detection::DetectChanges,
+        query::With,
         resource::Resource,
         system::{Commands, Query, Res, ResMut, Single},
     },
@@ -12,9 +11,13 @@ use bevy::{
     transform::components::GlobalTransform,
     window::Window,
 };
-use itertools::Itertools;
 
-use crate::{cell::Cell, editor, tilemap::TilemapStorage, tiles};
+use crate::{
+    cell::Cell,
+    colors::KENNEY_RED,
+    tilemap::{self, SavedTilemap, TilemapStorage},
+    tiles::{self, MapTile},
+};
 
 #[derive(Resource)]
 pub struct EditorState {
@@ -70,10 +73,15 @@ pub fn handle_mouse_button(
     }
 }
 
-pub fn handle_editor_keys(input: Res<ButtonInput<KeyCode>>, mut editor_state: ResMut<EditorState>) {
+pub fn handle_tile_editing(
+    input: Res<ButtonInput<KeyCode>>,
+    mut editor_state: ResMut<EditorState>,
+) {
     if !input.is_changed() {
         return;
     }
+
+    if input.all_just_pressed([KeyCode::ShiftLeft, KeyCode::KeyS]) {}
 
     let lookup = tiles::TileIdx::all();
 
@@ -94,4 +102,30 @@ pub fn handle_editor_keys(input: Res<ButtonInput<KeyCode>>, mut editor_state: Re
         .unwrap_or(&editor_state.active_tile);
 
     info!("active tile is now {:?}", editor_state.active_tile);
+}
+
+pub fn handle_map_operations(
+    mut commands: Commands,
+    mut input: ResMut<ButtonInput<KeyCode>>,
+    mut storage: Single<&mut TilemapStorage>,
+    all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
+    mut log: ResMut<crate::event_log::MessageLog>,
+) {
+    if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyS]) {
+        warn!("requested to save");
+        input.reset_all();
+        let storage = tilemap::save_map(&mut storage, &all_tiles);
+        let serialized = ron::to_string(&storage).unwrap();
+        std::fs::write("level.ron", serialized).unwrap();
+        log.add("Saved map", KENNEY_RED);
+        info!("saved map to level.ron");
+    } else if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyL]) {
+        warn!("requested to load");
+        input.reset_all();
+        let serialized = std::fs::read_to_string("level.ron").unwrap();
+        let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
+        tilemap::load_map(&mut commands, &deserialized, &mut storage.as_mut());
+        log.add("Loaded map", KENNEY_RED);
+        info!("loaded map from level.ron");
+    }
 }

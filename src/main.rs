@@ -79,8 +79,9 @@ fn main() {
             Update,
             (
                 setup_egui_fonts.run_if(run_once),
-                editor::handle_editor_keys,
+                editor::handle_tile_editing,
                 editor::handle_mouse_button,
+                editor::handle_map_operations,
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,

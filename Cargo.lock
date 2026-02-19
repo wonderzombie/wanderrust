@@ -5099,6 +5099,8 @@ dependencies = [
  "itertools 0.14.0",
  "mrpas",
  "rand 0.10.0",
+ "ron",
+ "serde",
 ]
 
 [[package]]

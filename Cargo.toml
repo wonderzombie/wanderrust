@@ -12,3 +12,5 @@ bevy_egui = "0.39.1"
 itertools = "0.14.0"
 mrpas = { path = "mrpas" }
 rand = "0.10.0"
+ron = "0.12.0"
+serde = { version = "1.0.228", features = ["derive"] }

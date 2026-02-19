@@ -1,10 +1,12 @@
 use bevy::{math::UVec2, prelude::Component};
 
+use serde::{Deserialize, Serialize};
+
 macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
-        #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Debug, Serialize, Deserialize, Component, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(usize)]
         pub enum TileIdx {
             $( $name = $idx, )*

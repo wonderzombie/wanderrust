@@ -1,19 +1,20 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     SpriteAtlas,
     cell::Cell,
     map::MapSpec,
-    tiles::{MapTile, Revealed, TileIdx},
+    tiles::{self, MapTile, Revealed, TileIdx},
 };
 
 #[derive(Component, Deref, Clone, Copy)]
 pub struct TilemapId(pub Entity);
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
 
-#[derive(Debug, Default, Component, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Component, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TilemapSize {
     pub width: u32,
     pub height: u32,
@@ -30,7 +31,7 @@ impl TilemapSize {
     }
 }
 
-#[derive(Debug, Default, Component, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Component, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// Attach this to an entity with TilemapId.
 pub struct TilemapStorage {
     tiles: Vec<Option<Entity>>,
@@ -74,6 +75,13 @@ impl TilemapStorage {
     // pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Option<Entity>> {
     //     self.tiles.iter_mut()
     // }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SavedTilemap {
+    pub tiles: Vec<Option<tiles::TileIdx>>,
+    pub size: TilemapSize,
+    pub layer: TilemapLayer,
 }
 
 #[derive(Bundle)]
@@ -183,4 +191,33 @@ pub fn load_ascii_map(
             }
         }
     }
+}
+
+pub fn save_map(
+    storage: &mut TilemapStorage,
+    all_tiles: &Query<&TileIdx, With<MapTile>>,
+) -> SavedTilemap {
+    let tiles = storage
+        .tiles
+        .iter()
+        .map(|entity_opt| entity_opt.and_then(|entity| all_tiles.get(entity).ok().copied()))
+        .collect::<Vec<_>>();
+
+    SavedTilemap {
+        tiles: tiles.clone(),
+        size: storage.size,
+        layer: TilemapLayer::default(),
+    }
+}
+
+pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TilemapStorage) {
+    storage
+        .tiles
+        .iter()
+        .zip(saved.tiles.iter())
+        .for_each(|(maybe_entity, maybe_tile_idx)| {
+            if let (Some(entity), Some(tile_idx)) = (maybe_entity, maybe_tile_idx) {
+                commands.entity(*entity).insert(*tile_idx);
+            }
+        });
 }
