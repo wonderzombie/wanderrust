@@ -1,8 +1,9 @@
 use std::ops::Add;
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 /// A simple struct representing a cell in the grid-based world, with integer coordinates.
 pub struct Cell {
     pub x: i32,
@@ -18,6 +19,13 @@ impl Cell {
         Cell {
             x: x as i32,
             y: y as i32,
+        }
+    }
+
+    pub fn from_idx(width: u32, idx: usize) -> Cell {
+        Cell {
+            x: (idx % width as usize) as i32,
+            y: (idx / width as usize) as i32,
         }
     }
 
