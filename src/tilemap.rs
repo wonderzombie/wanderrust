@@ -59,19 +59,19 @@ impl TilemapStorage {
         self.tiles[idx as usize] = Some(entity);
     }
 
-    /// Removes the cell-entity from storage and returns it, if any.
-    pub fn remove(&mut self, cell: &Cell) -> Option<Entity> {
-        let idx = cell.to_idx(self.size.width);
-        self.tiles[idx as usize].take()
-    }
+    // /// Removes the cell-entity from storage and returns it, if any.
+    // pub fn remove(&mut self, cell: &Cell) -> Option<Entity> {
+    //     let idx = cell.to_idx(self.size.width);
+    //     self.tiles[idx as usize].take()
+    // }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Option<Entity>> {
-        self.tiles.iter()
-    }
+    // pub fn iter(&self) -> impl Iterator<Item = &Option<Entity>> {
+    //     self.tiles.iter()
+    // }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Option<Entity>> {
-        self.tiles.iter_mut()
-    }
+    // pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Option<Entity>> {
+    //     self.tiles.iter_mut()
+    // }
 }
 
 #[derive(Bundle)]
