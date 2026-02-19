@@ -23,12 +23,14 @@ impl Cell {
 
     /// Adds the other cell to this one, modifying this cell in place, effectively treating the other cell as a vector offset.
     pub fn combine(&mut self, other: Cell) {
-        self.x += other.x;
-        self.y += other.y;
+        self.x = self.x.saturating_add(other.x);
+        self.y = self.y.saturating_add(other.y);
     }
 
     pub fn to_idx(&self, width: u32) -> u32 {
-        self.y as u32 * width + self.x as u32
+        width
+            .saturating_mul(self.y as u32)
+            .saturating_add(self.x as u32)
     }
 
     pub fn is_in_bounds(&self, width: u32, height: u32) -> bool {

@@ -50,13 +50,15 @@ impl TilemapStorage {
     }
 
     pub fn get(&self, cell: &Cell) -> Option<Entity> {
-        let idx = cell.to_idx(self.size.width);
-        self.tiles[idx as usize]
+        let idx = cell.to_idx(self.size.width) as usize;
+        self.tiles.get(idx).copied().flatten()
     }
 
     pub fn set(&mut self, cell: &Cell, entity: Entity) {
-        let idx = cell.to_idx(self.size.width);
-        self.tiles[idx as usize] = Some(entity);
+        let idx = cell.to_idx(self.size.width) as usize;
+        if let Some(slot) = self.tiles.get_mut(idx) {
+            *slot = Some(entity);
+        }
     }
 
     // /// Removes the cell-entity from storage and returns it, if any.
