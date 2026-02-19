@@ -1,7 +1,4 @@
-use bevy::{
-    math::UVec2,
-    prelude::{Component, Deref, DerefMut},
-};
+use bevy::{math::UVec2, prelude::Component};
 
 macro_rules! tiles {
     (
@@ -25,16 +22,6 @@ pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
 
 pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize
-}
-
-#[derive(Component, Debug, Deref, DerefMut, Clone, Copy)]
-/// A component representing the index of a tile in the sprite atlas, used for rendering.
-pub struct AtlasIdx(pub usize);
-
-impl From<usize> for AtlasIdx {
-    fn from(value: usize) -> Self {
-        AtlasIdx(value)
-    }
 }
 
 #[derive(Component, Debug)]
@@ -137,11 +124,5 @@ impl TileIdx {
 impl From<TileIdx> for usize {
     fn from(value: TileIdx) -> Self {
         value as usize
-    }
-}
-
-impl From<TileIdx> for AtlasIdx {
-    fn from(tile: TileIdx) -> AtlasIdx {
-        AtlasIdx(tile as usize)
     }
 }

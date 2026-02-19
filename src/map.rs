@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cell::Cell;
-use crate::tiles::{MapTile, Opaque, Revealed, TileIdx, Walkable};
-use crate::{PieceBundle, SpriteAtlas, TILE_SIZE_PX};
+use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
 
 use bevy::prelude::*;
 
