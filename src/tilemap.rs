@@ -1,23 +1,10 @@
-use bevy::{
-    camera::visibility::{InheritedVisibility, Visibility},
-    ecs::{
-        bundle::Bundle,
-        component::Component,
-        entity::Entity,
-        system::{Commands, Res},
-    },
-    log::info,
-    prelude::Deref,
-    sprite::Sprite,
-    transform::components::{GlobalTransform, Transform},
-};
-use bevy_egui::egui::Vec2;
+use bevy::{platform::collections::HashMap, prelude::*};
 
 use crate::{
     SpriteAtlas,
     cell::Cell,
     map::MapSpec,
-    tiles::{MapTile, TileIdx},
+    tiles::{MapTile, Revealed, TileIdx},
 };
 
 #[derive(Component, Deref, Clone, Copy)]
@@ -72,9 +59,10 @@ impl TilemapStorage {
         self.tiles[idx as usize] = Some(entity);
     }
 
-    pub fn remove(&mut self, cell: &Cell) {
+    /// Removes the cell-entity from storage and returns it, if any.
+    pub fn remove(&mut self, cell: &Cell) -> Option<Entity> {
         let idx = cell.to_idx(self.size.width);
-        self.tiles[idx as usize] = None;
+        self.tiles[idx as usize].take()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Option<Entity>> {
@@ -85,9 +73,6 @@ impl TilemapStorage {
         self.tiles.iter_mut()
     }
 }
-
-#[derive(Component, Clone, Copy)]
-pub struct TileTextureIdx(pub usize);
 
 #[derive(Bundle)]
 pub struct TileBundle {
@@ -163,6 +148,7 @@ pub fn fill_tilemap(
             let entity = commands
                 .spawn((
                     MapTile,
+                    Revealed(false),
                     TileBundle {
                         tilemap_id,
                         tile_idx,
@@ -173,6 +159,26 @@ pub fn fill_tilemap(
                 ))
                 .id();
             storage.set(&cell, entity);
+        }
+    }
+}
+
+pub fn load_ascii_map(
+    mut commands: Commands,
+    spec: Res<MapSpec>,
+    tilemaps: Query<(&TilemapId, &TilemapStorage)>,
+) {
+    let (_, storage) = tilemaps.single().unwrap();
+
+    for (tile_idx, cells) in spec.pieces.iter() {
+        for cell in cells.iter() {
+            // We're going to reuse the tiles from the existing tilemap via Storage.
+            if let Some(tile) = storage.get(&cell) {
+                commands.entity(tile).insert(*tile_idx);
+            } else {
+                warn!("Tilemap is missing a tile at {:?}", cell);
+                continue;
+            }
         }
     }
 }

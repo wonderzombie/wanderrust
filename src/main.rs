@@ -60,6 +60,7 @@ fn main() {
                 load_spritesheet,
                 // map::draw_ascii_map,
                 setup_tilemap.after(load_spritesheet),
+                tilemap::load_ascii_map,
                 setup_interactables,
                 setup_camera,
                 setup_player,

@@ -111,27 +111,6 @@ fn stable_hash(cell: &Cell, max: u32) -> u32 {
     rng.next_u32() % max
 }
 
-pub fn draw_ascii_map(mut commands: Commands, atlas: Res<SpriteAtlas>, spec: Res<MapSpec>) {
-    for (tile_idx, cells) in spec.pieces.iter() {
-        for cell in cells.iter() {
-            commands.spawn((
-                MapTile,
-                PieceBundle {
-                    sprite: atlas.sprite(),
-                    cell: *cell,
-                    transform: Transform::from_xyz(
-                        cell.x as f32 * TILE_SIZE_PX,
-                        cell.y as f32 * TILE_SIZE_PX,
-                        -2.0,
-                    ),
-                },
-                Revealed(false),
-                *tile_idx,
-            ));
-        }
-    }
-}
-
 /// Updates the sprites of map tiles when their tile index changes.
 pub fn update_map_tiles(
     mut commands: Commands,
