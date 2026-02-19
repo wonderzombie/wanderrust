@@ -1,5 +1,6 @@
 mod cell;
 mod colors;
+mod editor;
 mod event_log;
 mod fov;
 mod inventory;
@@ -17,7 +18,12 @@ use cell::Cell;
 use event_log::draw_message_log_ui;
 use tiles::{MapTile, TileIdx, Walkable};
 
-use crate::{event_log::setup_egui_fonts, map::MapSpec, tilemap::setup_tilemap};
+use crate::{
+    editor::{EditorState, handle_mouse_button},
+    event_log::setup_egui_fonts,
+    map::MapSpec,
+    tilemap::setup_tilemap,
+};
 
 use inventory::*;
 
@@ -51,6 +57,7 @@ fn main() {
         .add_message::<Acquisition>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
+        .init_resource::<EditorState>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
@@ -72,6 +79,8 @@ fn main() {
             Update,
             (
                 setup_egui_fonts.run_if(run_once),
+                editor::handle_editor_keys,
+                editor::handle_mouse_button,
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,

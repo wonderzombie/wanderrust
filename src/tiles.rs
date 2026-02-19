@@ -18,6 +18,12 @@ macro_rules! tiles {
     };
 }
 
+impl Default for TileIdx {
+    fn default() -> Self {
+        TileIdx::Blank
+    }
+}
+
 pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
 
 pub const fn atlas_idx(x: u32, y: u32) -> usize {
