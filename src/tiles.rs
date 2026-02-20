@@ -37,15 +37,15 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
 /// A marker component for entities that represent tiles on the map, which can have properties like walkability and opacity.
 pub struct MapTile;
 
-#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// A marker component for tiles that can be walked on by actors, such as the player or NPCs.
 pub struct Walkable;
 
-#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// A marker component for tiles that block line of sight, affecting field of view calculations.
 pub struct Opaque;
 
-#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// A marker component for tiles that are currently revealed to the player.
 pub struct Revealed(pub bool);
 

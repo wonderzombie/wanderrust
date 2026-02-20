@@ -56,7 +56,7 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
         });
 }
 
-#[derive(Debug, Default, Resource)]
+#[derive(Resource, Debug, Default)]
 pub struct MessageLog {
     messages: VecDeque<String>,
     color_messages: VecDeque<(String, Color)>,

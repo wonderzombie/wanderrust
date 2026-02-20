@@ -9,7 +9,7 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Debug, Resource, Deref, DerefMut)]
+#[derive(Resource, Debug, Deref, DerefMut)]
 /// Newtype for field of view model that tracks which cells are transparent for visibility calculations.
 pub struct Fov(Mrpas);
 

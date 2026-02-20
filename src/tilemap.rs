@@ -14,7 +14,7 @@ pub struct TilemapId(pub Entity);
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
 
-#[derive(Debug, Default, Component, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TilemapSize {
     pub width: u32,
     pub height: u32,
@@ -31,7 +31,7 @@ impl TilemapSize {
     }
 }
 
-#[derive(Debug, Default, Component, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// Attach this to an entity with TilemapId.
 pub struct TilemapStorage {
     tiles: Vec<Option<Entity>>,
