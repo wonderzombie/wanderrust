@@ -18,9 +18,7 @@ use cell::Cell;
 use event_log::draw_message_log_ui;
 use tiles::{MapTile, TileIdx, Walkable};
 
-use crate::{
-    editor::EditorState, event_log::setup_egui_fonts, map::MapSpec, tilemap::setup_tilemap,
-};
+use crate::{editor::EditorState, event_log::setup_egui_fonts, map::MapSpec};
 
 use inventory::*;
 
@@ -63,7 +61,7 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                setup_tilemap.after(load_spritesheet),
+                tilemap::setup_tilemap.after(load_spritesheet),
                 tilemap::load_ascii_map,
                 setup_interactables,
                 setup_camera,

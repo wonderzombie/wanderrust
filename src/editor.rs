@@ -49,8 +49,7 @@ pub fn handle_mouse_button(
 ) {
     let (cam, xform) = *camera;
     let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32)
-        .map(|it| grid.get(&it))
-        .flatten();
+        .and_then(|it| grid.get(&it));
 
     if let Some(entity) = maybe_entity {
         if mouse_button.pressed(MouseButton::Left) {
@@ -115,7 +114,7 @@ pub fn handle_map_operations(
         input.clear();
         let serialized = std::fs::read_to_string("level.ron").unwrap();
         let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
-        tilemap::load_map(&mut commands, &deserialized, &mut storage.as_mut());
+        tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
         log.add("Loaded map", KENNEY_RED);
         info!("loaded map from level.ron");
     }

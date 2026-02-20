@@ -1,4 +1,4 @@
-use bevy::{math::UVec2, prelude::Component};
+use bevy::{ecs::query::With, math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
 
@@ -6,9 +6,10 @@ macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
-        #[derive(Debug, Serialize, Deserialize, Component, Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Debug, Default, Serialize, Deserialize, Component, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(usize)]
         pub enum TileIdx {
+            #[default]
             $( $name = $idx, )*
         }
 
@@ -18,12 +19,6 @@ macro_rules! tiles {
             }
         }
     };
-}
-
-impl Default for TileIdx {
-    fn default() -> Self {
-        TileIdx::Blank
-    }
 }
 
 impl From<TileIdx> for usize {

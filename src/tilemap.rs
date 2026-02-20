@@ -42,7 +42,7 @@ impl TilemapStorage {
     pub fn empty(size: TilemapSize) -> TilemapStorage {
         TilemapStorage {
             tiles: vec![None; (size.width * size.height) as usize],
-            size: size,
+            size,
         }
     }
 
@@ -75,7 +75,7 @@ impl TilemapStorage {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SavedTilemap {
-    pub tiles: Vec<tiles::TileIdx>,
+    pub tiles: Vec<TileIdx>,
     pub size: TilemapSize,
     pub layer: TilemapLayer,
 }
@@ -107,8 +107,8 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     };
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
-        size: size.clone(),
-        layer: layer,
+        size,
+        layer,
         ..Default::default()
     };
 
@@ -154,7 +154,7 @@ pub fn fill_tilemap(
                     TileBundle {
                         tilemap_id,
                         tile_idx,
-                        cell: cell,
+                        cell,
                         transform: Transform::from_xyz(pos.x, pos.y, layer.0),
                         sprite: sheet.sprite_from_idx(tile_idx),
                     },
@@ -175,7 +175,7 @@ pub fn load_ascii_map(
     for (tile_idx, cells) in spec.pieces.iter() {
         for cell in cells.iter() {
             // We're going to reuse the tiles from the existing tilemap via Storage.
-            if let Some(tile) = storage.get(&cell) {
+            if let Some(tile) = storage.get(cell) {
                 commands.entity(tile).insert(*tile_idx);
             } else {
                 warn!("Tilemap is missing a tile at {:?}", cell);

@@ -35,7 +35,7 @@ impl Cell {
         self.y = self.y.saturating_add(other.y);
     }
 
-    pub fn to_idx(&self, width: u32) -> u32 {
+    pub fn to_idx(self, width: u32) -> u32 {
         width
             .saturating_mul(self.y as u32)
             .saturating_add(self.x as u32)
