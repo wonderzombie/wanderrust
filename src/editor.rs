@@ -1,21 +1,4 @@
-use bevy::{
-    app::{App, Plugin, Update},
-    camera::Camera,
-    color::Color,
-    ecs::{
-        change_detection::DetectChanges,
-        component::Component,
-        entity::Entity,
-        query::{Changed, With},
-        resource::Resource,
-        system::{Commands, Local, Query, Res, ResMut, Single},
-    },
-    input::{ButtonInput, keyboard::KeyCode, mouse::MouseButton},
-    log::{info, warn},
-    sprite::Sprite,
-    transform::components::GlobalTransform,
-    window::Window,
-};
+use bevy::prelude::*;
 
 use crate::{
     cell::Cell,
@@ -162,7 +145,7 @@ pub fn update_tile_highlights(
         if lit.0 {
             sprite.color = KENNEY_GOLD;
         } else {
-            sprite.color = Color::NONE;
+            sprite.color = Color::WHITE;
             commands.entity(entity).remove::<Highlighted>();
             info!("{:?} removed highlighted", entity)
         }
@@ -180,7 +163,8 @@ impl Plugin for EditorPlugin {
                 handle_mouse_button,
                 handle_map_operations,
                 update_tile_highlights,
-            ),
+            )
+                .chain(),
         );
     }
 }
