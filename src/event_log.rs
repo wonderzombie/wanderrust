@@ -49,8 +49,7 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
             );
 
             for (msg, color) in log.as_color_text() {
-                // Convert Bevy Color to egui Color32
-                ui.set_min_width(128.0);
+                ui.set_min_width(172.0);
                 ui.colored_label(color.to_egui(), msg.to_uppercase());
             }
         });
