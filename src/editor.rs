@@ -85,7 +85,7 @@ pub fn handle_map_operations(
 pub fn setup_tile_observers(
     mut commands: Commands,
     mut picking_settings: ResMut<SpritePickingSettings>,
-    tiles: Query<Entity, Or<(With<MapTile>, Added<MapTile>)>>,
+    tiles: Query<Entity, Added<MapTile>>,
 ) {
     picking_settings.picking_mode = SpritePickingMode::BoundingBox;
 
@@ -98,7 +98,6 @@ pub fn setup_tile_observers(
             .observe(
                 |on: On<Pointer<Over>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
                     let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
-                        // warn!("over? not i");
                         return;
                     };
                     highlighted.0 = true;
@@ -107,7 +106,6 @@ pub fn setup_tile_observers(
             .observe(
                 |on: On<Pointer<Out>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
                     let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
-                        // warn!("out? not i");
                         return;
                     };
                     highlighted.0 = false;
@@ -139,12 +137,7 @@ impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (
-                setup_tile_observers.run_if(run_once),
-                on_button_input,
-                handle_map_operations,
-            )
-                .chain(),
+            (setup_tile_observers, on_button_input, handle_map_operations).chain(),
         );
     }
 }
