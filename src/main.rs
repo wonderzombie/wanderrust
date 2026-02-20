@@ -381,7 +381,7 @@ fn handle_interaction(
                     }
                 } else {
                     info!("Player opens the door.");
-                    log.add("Opened door.", colors::KENNEY_GOLD);
+                    log.add("Opened door.", colors::KENNEY_BLUE);
                 }
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
@@ -392,6 +392,7 @@ fn handle_interaction(
                 *is_open = true;
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
                 info!("Player opens the chest and finds: {:?}", contents);
+                log.add("Opened chest.", colors::KENNEY_BLUE);
                 log.add(contents.summary("got").join("\n"), colors::KENNEY_GREEN);
                 acquisitions.write(Acquisition {
                     acquirer: interactor,
