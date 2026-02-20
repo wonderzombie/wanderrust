@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use crate::cell::Cell;
-use crate::tiles::{MapTile, Opaque, TileIdx, Walkable};
+use crate::colors;
+use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, Walkable};
 
 use bevy::prelude::*;
 
@@ -111,7 +112,7 @@ fn stable_hash(cell: &Cell, max: u32) -> u32 {
 }
 
 /// Updates the sprites of map tiles when their tile index changes.
-pub fn update_map_tiles(
+pub fn update_tiles_markers(
     mut commands: Commands,
     mut tiles: Query<(Entity, &mut Sprite, &TileIdx), (With<MapTile>, Changed<TileIdx>)>,
 ) {
@@ -131,5 +132,35 @@ pub fn update_map_tiles(
         } else {
             entity_command.insert(Opaque);
         }
+    }
+}
+
+pub fn update_map_tile_colors(
+    mut tiles: Query<
+        (&mut Sprite, Option<&Highlighted>, Option<&Revealed>),
+        (With<MapTile>, Or<(Changed<Highlighted>, Changed<Revealed>)>),
+    >,
+) {
+    for (mut sprite, highlighted, revealed) in tiles.iter_mut() {
+        let revealed = revealed.map_or(false, |it| it.0);
+        let highlighted = highlighted.map_or(false, |it| it.0);
+        sprite.color = if highlighted {
+            colors::KENNEY_GOLD
+        } else if revealed {
+            Color::WHITE
+        } else {
+            Color::NONE
+        };
+    }
+}
+
+pub struct MapPlugin;
+
+impl Plugin for MapPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            PostUpdate,
+            (update_tiles_markers, update_map_tile_colors).chain(),
+        );
     }
 }

@@ -49,6 +49,9 @@ pub struct Opaque;
 /// A marker component for tiles that are currently revealed to the player.
 pub struct Revealed(pub bool);
 
+#[derive(Component, Debug)]
+pub struct Highlighted(pub bool);
+
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
     // Floor

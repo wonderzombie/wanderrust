@@ -5,7 +5,7 @@ use crate::{
     colors::{KENNEY_GOLD, KENNEY_RED},
     event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
-    tiles::{self, MapTile},
+    tiles::{self, Highlighted, MapTile, TileIdx},
 };
 
 #[derive(Resource)]
@@ -23,43 +23,7 @@ impl Default for EditorState {
     }
 }
 
-fn cursor_to_cell(
-    window: &Window,
-    camera: &Camera,
-    camera_transform: &GlobalTransform,
-    tile_size: u32,
-) -> Option<Cell> {
-    let cursor_pos = window.cursor_position()?;
-    let world_pos = camera
-        .viewport_to_world_2d(camera_transform, cursor_pos)
-        .ok()?;
-    Some(Cell::new(
-        (world_pos.x / tile_size as f32).floor() as i32,
-        (world_pos.y / tile_size as f32).floor() as i32,
-    ))
-}
-
-pub fn handle_mouse_button(
-    mut commands: Commands,
-    win: Single<&Window>,
-    mouse_button: Res<ButtonInput<MouseButton>>,
-    camera: Single<(&Camera, &GlobalTransform)>,
-    grid: Single<&TilemapStorage>,
-    editor_state: Res<EditorState>,
-) {
-    let (cam, xform) = *camera;
-    let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32).and_then(|it| grid.get(&it));
-
-    if let Some(entity) = maybe_entity {
-        if mouse_button.pressed(MouseButton::Left) {
-            commands.entity(entity).insert(editor_state.active_tile);
-        } else if mouse_button.pressed(MouseButton::Right) {
-            commands.entity(entity).insert(tiles::TileIdx::Blank);
-        }
-    }
-}
-
-pub fn handle_tile_editing(
+pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorState>,
     mut log: ResMut<event_log::MessageLog>,
@@ -121,30 +85,53 @@ pub fn handle_map_operations(
 
 pub fn setup_tile_observers(
     mut commands: Commands,
+    mut picking_settings: ResMut<SpritePickingSettings>,
     tiles: Query<Entity, Or<(With<MapTile>, Added<MapTile>)>>,
 ) {
+    picking_settings.picking_mode = SpritePickingMode::BoundingBox;
+
+    let mut count = 0;
     for tile in tiles.iter() {
         commands
             .entity(tile)
+            .insert(Pickable::default())
+            .insert(Highlighted(false))
             .observe(
-                |on: On<Pointer<Over>>, mut sprites: Query<&mut Sprite, With<MapTile>>| {
-                    let Ok(mut sprite) = sprites.get_mut(on.event_target()) else {
+                |on: On<Pointer<Over>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
+                    let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
+                        // warn!("over? not i");
                         return;
                     };
-                    sprite.color = KENNEY_GOLD;
-                    info!("now gold {:?}", sprite.color);
+                    highlighted.0 = true;
                 },
             )
             .observe(
-                |on: On<Pointer<Out>>, mut sprites: Query<&mut Sprite, With<MapTile>>| {
-                    let Ok(mut sprite) = sprites.get_mut(on.event_target()) else {
+                |on: On<Pointer<Out>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
+                    let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
+                        // warn!("out? not i");
                         return;
                     };
-                    sprite.color = Color::WHITE;
-                    info!("now white {:?}", sprite.color);
+                    highlighted.0 = false;
+                },
+            )
+            .observe(
+                |on: On<Pointer<Click>>,
+                 mut tiles: Query<&mut TileIdx, With<MapTile>>,
+                 editor: Res<EditorState>| {
+                    let Ok(mut tile_idx) = tiles.get_mut(on.event_target()) else {
+                        return;
+                    };
+
+                    *tile_idx = match on.button {
+                        PointerButton::Primary => editor.active_tile,
+                        PointerButton::Secondary => TileIdx::Blank,
+                        _ => *tile_idx,
+                    };
                 },
             );
+        count += 1;
     }
+    info!("Total tiles observed: {}", count);
 }
 
 pub struct EditorPlugin;
@@ -155,8 +142,7 @@ impl Plugin for EditorPlugin {
             Update,
             (
                 setup_tile_observers.run_if(run_once),
-                handle_tile_editing,
-                handle_mouse_button,
+                on_button_input,
                 handle_map_operations,
             )
                 .chain(),
