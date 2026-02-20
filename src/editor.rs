@@ -128,7 +128,9 @@ pub fn setup_tile_observers(
             );
         count += 1;
     }
-    info!("Total tiles observed: {}", count);
+    if count > 0 {
+        info!("Total tiles observed: {}", count);
+    }
 }
 
 pub struct EditorPlugin;
