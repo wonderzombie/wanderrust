@@ -1,10 +1,8 @@
 use bevy::prelude::*;
 
-use std::fmt::Debug;
-
 use crate::{
     cell::Cell,
-    colors::{KENNEY_GOLD, KENNEY_RED},
+    colors::{self, KENNEY_RED},
     event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
     tiles::{self, MapTile},
@@ -41,10 +39,6 @@ fn cursor_to_cell(
     ))
 }
 
-#[derive(Component)]
-/// When applied to an entity, `true` means it is the highlighted item; `false` means it isn't anymore.
-pub struct Highlighted(pub bool);
-
 pub fn handle_mouse_button(
     mut commands: Commands,
     win: Single<&Window>,
@@ -52,7 +46,6 @@ pub fn handle_mouse_button(
     camera: Single<(&Camera, &GlobalTransform)>,
     grid: Single<&TilemapStorage>,
     editor_state: Res<EditorState>,
-    mut highlighted_entity: Local<Option<Entity>>,
 ) {
     let (cam, xform) = *camera;
     let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32)
@@ -64,12 +57,6 @@ pub fn handle_mouse_button(
             commands.entity(entity).insert(editor_state.active_tile);
         } else if mouse_button.pressed(MouseButton::Right) {
             commands.entity(entity).insert(tiles::TileIdx::Blank);
-        } else {
-            if let Some(highlighted) = highlighted_entity.take() {
-                commands.entity(highlighted).insert(Highlighted(false));
-            }
-            commands.entity(entity).insert(Highlighted(true));
-            highlighted_entity.replace(entity);
         }
     }
 }
@@ -82,8 +69,6 @@ pub fn handle_tile_editing(
     if !input.is_changed() {
         return;
     }
-
-    if input.all_just_pressed([KeyCode::ShiftLeft, KeyCode::KeyS]) {}
 
     let lookup = tiles::TileIdx::all();
 
@@ -119,7 +104,7 @@ pub fn handle_map_operations(
 ) {
     if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyS]) {
         warn!("requested to save");
-        input.reset_all();
+        input.clear();
         let storage = tilemap::save_map(&mut storage, &all_tiles);
         let serialized = ron::to_string(&storage).unwrap();
         std::fs::write("level.ron", serialized).unwrap();
@@ -127,7 +112,7 @@ pub fn handle_map_operations(
         info!("saved map to level.ron");
     } else if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyL]) {
         warn!("requested to load");
-        input.reset_all();
+        input.clear();
         let serialized = std::fs::read_to_string("level.ron").unwrap();
         let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
         tilemap::load_map(&mut commands, &deserialized, &mut storage.as_mut());
@@ -136,44 +121,29 @@ pub fn handle_map_operations(
     }
 }
 
-pub fn update_tile_highlights(
+pub fn setup_tile_observers(
     mut commands: Commands,
-    mut highlighted: Query<
-        (Entity, &mut Sprite, &Highlighted),
-        (With<MapTile>, Changed<Highlighted>),
-    >,
+    tiles: Query<Entity, Or<(With<MapTile>, Added<MapTile>)>>,
 ) {
-    for (entity, mut sprite, lit) in highlighted.iter_mut() {
-        if lit.0 {
-            sprite.color = KENNEY_GOLD;
-        } else {
-            sprite.color = Color::WHITE;
-            commands.entity(entity).remove::<Highlighted>();
-            info!("{:?} removed highlighted", entity)
-        }
-    }
-}
-
-/// An observer that changes the target entity's color.
-/// Lifted from sprite_picking.rs.
-fn recolor_on<E>(color: Color) -> impl Fn(On<E>, Query<&mut Sprite>)
-where
-    E: EntityEvent + Debug + Clone + Reflect,
-{
-    move |ev, mut sprites| {
-        let Ok(mut sprite) = sprites.get_mut(ev.event_target()) else {
-            return;
-        };
-        sprite.color = color;
-    }
-}
-
-pub fn setup_tile_observers(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
     for tile in tiles.iter() {
         commands
             .entity(tile)
-            .observe(recolor_on::<Pointer<Over>>(KENNEY_GOLD))
-            .observe(recolor_on::<Pointer<Out>>(Color::WHITE));
+            .observe(
+                |on: On<Pointer<Over>>, mut sprites: Query<&mut Sprite, With<MapTile>>| {
+                    let Ok(mut sprite) = sprites.get_mut(on.event_target()) else {
+                        return;
+                    };
+                    sprite.color = colors::KENNEY_GOLD;
+                },
+            )
+            .observe(
+                |on: On<Pointer<Out>>, mut sprites: Query<&mut Sprite, With<MapTile>>| {
+                    let Ok(mut sprite) = sprites.get_mut(on.event_target()) else {
+                        return;
+                    };
+                    sprite.color = Color::WHITE;
+                },
+            );
     }
 }
 
@@ -188,7 +158,6 @@ impl Plugin for EditorPlugin {
                 handle_tile_editing,
                 handle_mouse_button,
                 handle_map_operations,
-                update_tile_highlights,
             )
                 .chain(),
         );

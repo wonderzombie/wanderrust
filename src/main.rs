@@ -19,10 +19,7 @@ use event_log::draw_message_log_ui;
 use tiles::{MapTile, TileIdx, Walkable};
 
 use crate::{
-    editor::{EditorState, handle_mouse_button},
-    event_log::setup_egui_fonts,
-    map::MapSpec,
-    tilemap::setup_tilemap,
+    editor::EditorState, event_log::setup_egui_fonts, map::MapSpec, tilemap::setup_tilemap,
 };
 
 use inventory::*;
