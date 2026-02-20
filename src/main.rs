@@ -66,7 +66,6 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                // map::draw_ascii_map,
                 setup_tilemap.after(load_spritesheet),
                 tilemap::load_ascii_map,
                 setup_interactables,
@@ -80,10 +79,6 @@ fn main() {
             Update,
             (
                 setup_egui_fonts.run_if(run_once),
-                // editor::handle_tile_editing,
-                // editor::handle_mouse_button,
-                // editor::handle_map_operations,
-                // editor::update_tile_highlights,
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,
