@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use std::fmt::Debug;
+
 use crate::{
     cell::Cell,
     colors::{KENNEY_GOLD, KENNEY_RED},
@@ -152,6 +154,29 @@ pub fn update_tile_highlights(
     }
 }
 
+/// An observer that changes the target entity's color.
+/// Lifted from sprite_picking.rs.
+fn recolor_on<E>(color: Color) -> impl Fn(On<E>, Query<&mut Sprite>)
+where
+    E: EntityEvent + Debug + Clone + Reflect,
+{
+    move |ev, mut sprites| {
+        let Ok(mut sprite) = sprites.get_mut(ev.event_target()) else {
+            return;
+        };
+        sprite.color = color;
+    }
+}
+
+pub fn setup_tile_observers(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
+    for tile in tiles.iter() {
+        commands
+            .entity(tile)
+            .observe(recolor_on::<Pointer<Over>>(KENNEY_GOLD))
+            .observe(recolor_on::<Pointer<Out>>(Color::WHITE));
+    }
+}
+
 pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
@@ -159,6 +184,7 @@ impl Plugin for EditorPlugin {
         app.add_systems(
             Update,
             (
+                setup_tile_observers.run_if(run_once),
                 handle_tile_editing,
                 handle_mouse_button,
                 handle_map_operations,
