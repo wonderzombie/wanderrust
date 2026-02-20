@@ -3,7 +3,7 @@ use std::ops::Add;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Component, Default, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 /// A simple struct representing a cell in the grid-based world, with integer coordinates.
 pub struct Cell {
     pub x: i32,
