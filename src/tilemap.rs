@@ -39,14 +39,10 @@ pub struct TilemapStorage {
 }
 
 impl TilemapStorage {
-    pub fn empty(width: u32, height: u32, tile_size: u32) -> TilemapStorage {
+    pub fn empty(size: TilemapSize) -> TilemapStorage {
         TilemapStorage {
-            tiles: vec![None; (width * height) as usize],
-            size: TilemapSize {
-                width,
-                height,
-                tile_size,
-            },
+            tiles: vec![None; (size.width * size.height) as usize],
+            size: size,
         }
     }
 
@@ -111,11 +107,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     };
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
-        size: TilemapSize {
-            width: spec.size.x,
-            height: spec.size.y,
-            tile_size: spec.tile_size,
-        },
+        size: size.clone(),
         layer: layer,
         ..Default::default()
     };
@@ -127,7 +119,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     let tilemap_id = TilemapId(map_entity);
-    let mut storage = TilemapStorage::empty(size.width, size.height, spec.tile_size);
+    let mut storage = TilemapStorage::empty(size);
 
     fill_tilemap(
         TileIdx::Dirt,
@@ -201,7 +193,7 @@ pub fn save_map(
         .tiles
         .iter()
         .map(|entity_opt| entity_opt.and_then(|entity| all_tiles.get(entity).ok().copied()))
-        .map(|tile_idx| tile_idx.unwrap_or(TileIdx::Blank))
+        .map(|tile_idx| tile_idx.unwrap_or_default())
         .collect::<Vec<_>>();
 
     SavedTilemap {
