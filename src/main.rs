@@ -61,7 +61,7 @@ fn main() {
             Startup,
             (
                 load_spritesheet,
-                tilemap::setup_tilemap.after(load_spritesheet),
+                tilemap::setup_tilemap,
                 tilemap::load_ascii_map,
                 setup_interactables,
                 setup_camera,
@@ -105,10 +105,6 @@ pub struct SpriteAtlas {
 }
 
 impl SpriteAtlas {
-    pub fn new(texture: Handle<Image>, layout: Handle<TextureAtlasLayout>) -> Self {
-        Self { texture, layout }
-    }
-
     pub fn sprite(&self) -> Sprite {
         Sprite {
             image: self.texture.clone(),
