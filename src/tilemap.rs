@@ -5,7 +5,7 @@ use crate::{
     SpriteAtlas,
     cell::Cell,
     map::MapSpec,
-    tiles::{self, MapTile, Revealed, TileIdx},
+    tiles::{MapTile, Revealed, TileIdx},
 };
 
 #[derive(Component, Deref, Clone, Copy)]

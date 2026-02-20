@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     cell::Cell,
-    colors::{self, KENNEY_RED},
+    colors::{KENNEY_GOLD, KENNEY_RED},
     event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
     tiles::{self, MapTile},
@@ -48,8 +48,7 @@ pub fn handle_mouse_button(
     editor_state: Res<EditorState>,
 ) {
     let (cam, xform) = *camera;
-    let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32)
-        .and_then(|it| grid.get(&it));
+    let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32).and_then(|it| grid.get(&it));
 
     if let Some(entity) = maybe_entity {
         if mouse_button.pressed(MouseButton::Left) {
@@ -132,7 +131,8 @@ pub fn setup_tile_observers(
                     let Ok(mut sprite) = sprites.get_mut(on.event_target()) else {
                         return;
                     };
-                    sprite.color = colors::KENNEY_GOLD;
+                    sprite.color = KENNEY_GOLD;
+                    info!("now gold {:?}", sprite.color);
                 },
             )
             .observe(
@@ -141,6 +141,7 @@ pub fn setup_tile_observers(
                         return;
                     };
                     sprite.color = Color::WHITE;
+                    info!("now white {:?}", sprite.color);
                 },
             );
     }

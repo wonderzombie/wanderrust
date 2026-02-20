@@ -1,4 +1,4 @@
-use bevy::{ecs::query::With, math::UVec2, prelude::Component};
+use bevy::{math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
 
