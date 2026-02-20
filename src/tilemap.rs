@@ -79,7 +79,7 @@ impl TilemapStorage {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SavedTilemap {
-    pub tiles: Vec<Option<tiles::TileIdx>>,
+    pub tiles: Vec<tiles::TileIdx>,
     pub size: TilemapSize,
     pub layer: TilemapLayer,
 }
@@ -201,6 +201,7 @@ pub fn save_map(
         .tiles
         .iter()
         .map(|entity_opt| entity_opt.and_then(|entity| all_tiles.get(entity).ok().copied()))
+        .map(|tile_idx| tile_idx.unwrap_or(TileIdx::Blank))
         .collect::<Vec<_>>();
 
     SavedTilemap {
@@ -216,7 +217,7 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         .iter()
         .zip(saved.tiles.iter())
         .for_each(|(maybe_entity, maybe_tile_idx)| {
-            if let (Some(entity), Some(tile_idx)) = (maybe_entity, maybe_tile_idx) {
+            if let (Some(entity), tile_idx) = (maybe_entity, maybe_tile_idx) {
                 commands.entity(*entity).insert(*tile_idx);
             }
         });

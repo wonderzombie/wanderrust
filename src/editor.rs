@@ -1,20 +1,25 @@
 use bevy::{
     camera::Camera,
+    color::Color,
     ecs::{
         change_detection::DetectChanges,
+        component::Component,
+        entity::Entity,
         query::With,
         resource::Resource,
-        system::{Commands, Query, Res, ResMut, Single},
+        system::{Commands, Local, Query, Res, ResMut, Single},
     },
     input::{ButtonInput, keyboard::KeyCode, mouse::MouseButton},
     log::{info, warn},
+    sprite::Sprite,
     transform::components::GlobalTransform,
     window::Window,
 };
 
 use crate::{
     cell::Cell,
-    colors::KENNEY_RED,
+    colors::{KENNEY_GOLD, KENNEY_RED},
+    event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
     tiles::{self, MapTile},
 };
@@ -50,15 +55,19 @@ fn cursor_to_cell(
     ))
 }
 
+#[derive(Component)]
+/// When applied to an entity, `true` means it is the highlighted item; `false` means it isn't anymore.
+pub struct Highlighted(pub bool);
+
 pub fn handle_mouse_button(
     mut commands: Commands,
     win: Single<&Window>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     camera: Single<(&Camera, &GlobalTransform)>,
-    grid_query: Query<&TilemapStorage>,
+    grid: Single<&TilemapStorage>,
     editor_state: Res<EditorState>,
+    mut highlighted_entity: Local<Option<Entity>>,
 ) {
-    let grid = grid_query.single().unwrap();
     let (cam, xform) = *camera;
     let maybe_entity = cursor_to_cell(&win, cam, xform, 16u32)
         .map(|it| grid.get(&it))
@@ -69,6 +78,12 @@ pub fn handle_mouse_button(
             commands.entity(entity).insert(editor_state.active_tile);
         } else if mouse_button.pressed(MouseButton::Right) {
             commands.entity(entity).insert(tiles::TileIdx::Blank);
+        } else {
+            if let Some(highlighted) = highlighted_entity.take() {
+                commands.entity(highlighted).insert(Highlighted(false));
+            }
+            commands.entity(entity).insert(Highlighted(true));
+            highlighted_entity.replace(entity);
         }
     }
 }
@@ -76,6 +91,7 @@ pub fn handle_mouse_button(
 pub fn handle_tile_editing(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorState>,
+    mut log: ResMut<event_log::MessageLog>,
 ) {
     if !input.is_changed() {
         return;
@@ -101,6 +117,10 @@ pub fn handle_tile_editing(
         .get(editor_state.active_tile_idx)
         .unwrap_or(&editor_state.active_tile);
 
+    log.add(
+        format!("active tile is now {:?}", editor_state.active_tile),
+        KENNEY_RED,
+    );
     info!("active tile is now {:?}", editor_state.active_tile);
 }
 
@@ -127,5 +147,16 @@ pub fn handle_map_operations(
         tilemap::load_map(&mut commands, &deserialized, &mut storage.as_mut());
         log.add("Loaded map", KENNEY_RED);
         info!("loaded map from level.ron");
+    }
+}
+
+pub fn update_tile_highlights(mut highlighted: Query<(&mut Sprite, &mut Highlighted)>) {
+    for (mut sprite, mut lit) in highlighted.iter_mut() {
+        if lit.0 {
+            sprite.color = KENNEY_GOLD;
+        } else {
+            lit.0 = false;
+            sprite.color = Color::NONE;
+        }
     }
 }
