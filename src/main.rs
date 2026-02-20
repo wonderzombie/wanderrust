@@ -14,11 +14,13 @@ use bevy::prelude::*;
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
-use cell::Cell;
-use event_log::draw_message_log_ui;
-use tiles::{MapTile, TileIdx, Walkable};
-
-use crate::{editor::EditorState, event_log::setup_egui_fonts, map::MapSpec};
+use crate::{
+    cell::Cell,
+    editor::EditorState,
+    event_log::{draw_message_log_ui, setup_egui_fonts},
+    map::MapSpec,
+    tiles::{MapTile, TileIdx, Walkable},
+};
 
 use inventory::*;
 

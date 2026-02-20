@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell::Cell,
-    colors::{KENNEY_GOLD, KENNEY_RED},
+    colors::KENNEY_RED,
     event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
     tiles::{self, Highlighted, MapTile, TileIdx},
