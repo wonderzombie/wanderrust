@@ -61,6 +61,7 @@ fn main() {
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
+        .add_plugins(editor::EditorPlugin)
         .add_systems(
             Startup,
             (
@@ -79,9 +80,10 @@ fn main() {
             Update,
             (
                 setup_egui_fonts.run_if(run_once),
-                editor::handle_tile_editing,
-                editor::handle_mouse_button,
-                editor::handle_map_operations,
+                // editor::handle_tile_editing,
+                // editor::handle_mouse_button,
+                // editor::handle_map_operations,
+                // editor::update_tile_highlights,
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,

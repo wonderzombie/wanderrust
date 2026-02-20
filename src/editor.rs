@@ -1,11 +1,12 @@
 use bevy::{
+    app::{App, Plugin, Update},
     camera::Camera,
     color::Color,
     ecs::{
         change_detection::DetectChanges,
         component::Component,
         entity::Entity,
-        query::With,
+        query::{Changed, With},
         resource::Resource,
         system::{Commands, Local, Query, Res, ResMut, Single},
     },
@@ -150,13 +151,36 @@ pub fn handle_map_operations(
     }
 }
 
-pub fn update_tile_highlights(mut highlighted: Query<(&mut Sprite, &mut Highlighted)>) {
-    for (mut sprite, mut lit) in highlighted.iter_mut() {
+pub fn update_tile_highlights(
+    mut commands: Commands,
+    mut highlighted: Query<
+        (Entity, &mut Sprite, &Highlighted),
+        (With<MapTile>, Changed<Highlighted>),
+    >,
+) {
+    for (entity, mut sprite, lit) in highlighted.iter_mut() {
         if lit.0 {
             sprite.color = KENNEY_GOLD;
         } else {
-            lit.0 = false;
             sprite.color = Color::NONE;
+            commands.entity(entity).remove::<Highlighted>();
+            info!("{:?} removed highlighted", entity)
         }
+    }
+}
+
+pub struct EditorPlugin;
+
+impl Plugin for EditorPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            (
+                handle_tile_editing,
+                handle_mouse_button,
+                handle_map_operations,
+                update_tile_highlights,
+            ),
+        );
     }
 }
