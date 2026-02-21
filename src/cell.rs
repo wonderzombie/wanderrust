@@ -52,6 +52,12 @@ impl From<Cell> for (i32, i32) {
     }
 }
 
+impl From<&Cell> for (i32, i32) {
+    fn from(value: &Cell) -> Self {
+        (value.x, value.y)
+    }
+}
+
 impl Add<IVec2> for Cell {
     type Output = Cell;
 
