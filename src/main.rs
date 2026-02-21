@@ -211,7 +211,7 @@ fn sync_actor_sprites(
 ) {
     for (mut sprite, tile_idx) in pieces.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = (*tile_idx).into();
+            texture_atlas.index = tile_idx.into();
         }
     }
 }
