@@ -68,13 +68,13 @@ pub fn handle_map_operations(
         input.clear();
         let storage = tilemap::save_map(&mut storage, &all_tiles);
         let serialized = ron::to_string(&storage).unwrap();
-        std::fs::write("level.ron", serialized).unwrap();
+        std::fs::write("../data/level.ron", serialized).unwrap();
         log.add("Saved map", KENNEY_RED);
         info!("saved map to level.ron");
     } else if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyL]) {
         warn!("requested to load");
         input.clear();
-        let serialized = std::fs::read_to_string("level.ron").unwrap();
+        let serialized = std::fs::read_to_string("../data/level.ron").unwrap();
         let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
         tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
         log.add("Loaded map", KENNEY_RED);
