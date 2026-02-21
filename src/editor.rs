@@ -105,6 +105,8 @@ pub fn update_tile_observers(
             .insert(Pickable::default())
             .insert(Highlighted(false))
             .insert(TilePreview::default())
+            // The pattern below isn't pretty but it's fine as long as it's confined to here
+            // and they are kinda sorta idiosyncratic.
             .observe(
                 |on: On<Pointer<Over>>,
                  mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
