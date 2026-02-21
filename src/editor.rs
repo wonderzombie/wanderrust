@@ -82,6 +82,15 @@ pub fn handle_map_operations(
     }
 }
 
+macro_rules! get_entity {
+    ($query:expr, $on:expr) => {
+        match $query.get_mut($on.event_target()) {
+            Ok(val) => val,
+            Err(_) => return,
+        }
+    };
+}
+
 pub fn update_tile_observers(
     mut commands: Commands,
     mut picking_settings: ResMut<SpritePickingSettings>,
@@ -98,15 +107,9 @@ pub fn update_tile_observers(
             .insert(TilePreview::default())
             .observe(
                 |on: On<Pointer<Over>>,
-                 mut sprites: Query<
-                    (&mut Highlighted, Option<&mut TilePreview>),
-                    With<MapTile>,
-                >,
+                 mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
                  editor: Res<EditorState>| {
-                    let Ok((mut highlighted, preview_opt)) = sprites.get_mut(on.event_target())
-                    else {
-                        return;
-                    };
+                    let (mut highlighted, preview_opt) = get_entity!(tiles, on);
                     highlighted.0 = true;
                     if let Some(mut preview) = preview_opt {
                         preview.set(editor.active_tile);
@@ -115,14 +118,11 @@ pub fn update_tile_observers(
             )
             .observe(
                 |on: On<Pointer<Out>>,
-                 mut sprites: Query<
+                 mut tiles: Query<
                     (&mut Highlighted, Option<&mut TilePreview>),
                     With<MapTile>,
                 >| {
-                    let Ok((mut highlighted, preview_opt)) = sprites.get_mut(on.event_target())
-                    else {
-                        return;
-                    };
+                    let (mut highlighted, preview_opt) = get_entity!(tiles, on);
                     highlighted.0 = false;
                     if let Some(mut preview) = preview_opt {
                         preview.clear();
@@ -133,10 +133,7 @@ pub fn update_tile_observers(
                 |on: On<Pointer<Click>>,
                  mut tiles: Query<&mut TileIdx, With<MapTile>>,
                  editor: Res<EditorState>| {
-                    let Ok(mut tile_idx) = tiles.get_mut(on.event_target()) else {
-                        return;
-                    };
-
+                    let mut tile_idx = get_entity!(tiles, on);
                     *tile_idx = match on.button {
                         PointerButton::Primary => editor.active_tile,
                         PointerButton::Secondary => TileIdx::Blank,
