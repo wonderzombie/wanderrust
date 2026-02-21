@@ -24,8 +24,7 @@ pub fn setup_fov(
     let mut opaque_count = 0;
     fov.clear_field_of_view();
     for (cell, tile_idx) in tiles.iter() {
-        let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), tile_idx.is_transparent());
+        fov.set_transparent(cell.into(), tile_idx.is_transparent());
         tiles_count += 1;
         if !tile_idx.is_transparent() {
             opaque_count += 1;
@@ -46,8 +45,7 @@ pub fn update_fov_model(
     query: Query<(&Cell, &TileIdx), (Changed<TileIdx>, With<MapTile>)>,
 ) {
     for (cell, tile_idx) in query.iter() {
-        let (x, y) = (*cell).into();
-        fov.set_transparent((x, y), tile_idx.is_transparent());
+        fov.set_transparent(cell.into(), tile_idx.is_transparent());
     }
 }
 
@@ -63,8 +61,8 @@ pub fn update_fov_markers(
     };
 
     fov.clear_field_of_view();
-    fov.compute_field_of_view((*player_cell).into(), 5);
+    fov.compute_field_of_view(player_cell.into(), 5);
     for (cell, mut revealed) in tiles.iter_mut() {
-        revealed.0 = fov.is_in_view((*cell).into());
+        revealed.0 = fov.is_in_view(cell.into());
     }
 }
