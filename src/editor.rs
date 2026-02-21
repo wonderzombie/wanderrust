@@ -4,7 +4,7 @@ use crate::{
     colors::KENNEY_RED,
     event_log,
     tilemap::{self, SavedTilemap, TilemapStorage},
-    tiles::{self, Highlighted, MapTile, TileIdx},
+    tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
 #[derive(Resource)]
@@ -96,19 +96,27 @@ pub fn setup_tile_observers(
             .insert(Pickable::default())
             .insert(Highlighted(false))
             .observe(
-                |on: On<Pointer<Over>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
-                    let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
+                |on: On<Pointer<Over>>,
+                 mut sprites: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
+                 editor: Res<EditorState>| {
+                    let Ok((mut highlighted, preview_opt)) = sprites.get_mut(on.event_target())
+                    else {
                         return;
                     };
                     highlighted.0 = true;
+                    if let Some(mut preview) = preview_opt {
+                        preview.set(editor.active_tile);
+                    }
                 },
             )
             .observe(
-                |on: On<Pointer<Out>>, mut sprites: Query<&mut Highlighted, With<MapTile>>| {
-                    let Ok(mut highlighted) = sprites.get_mut(on.event_target()) else {
+                |on: On<Pointer<Out>>, mut sprites: Query<(&mut Highlighted, &mut TilePreview), With<MapTile>>| {
+                    let Ok((mut highlighted, mut preview)) = sprites.get_mut(on.event_target())
+                    else {
                         return;
                     };
                     highlighted.0 = false;
+                    preview.clear();
                 },
             )
             .observe(

@@ -91,7 +91,7 @@ fn main() {
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_fov_markers.before(map::update_map_tile_colors),
+                fov::update_fov_markers.before(map::update_map_tile_visuals),
             )
                 .chain(),
         )
