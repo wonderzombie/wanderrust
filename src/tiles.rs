@@ -1,4 +1,7 @@
-use bevy::{math::UVec2, prelude::Component};
+use bevy::{
+    math::UVec2,
+    prelude::{Component, Deref},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -51,6 +54,27 @@ pub struct Revealed(pub bool);
 
 #[derive(Component, Debug)]
 pub struct Highlighted(pub bool);
+
+#[derive(Component, Debug, Deref)]
+pub struct TilePreview(Option<TileIdx>);
+
+impl TilePreview {
+    pub fn get(&self) -> Option<TileIdx> {
+        self.0
+    }
+
+    pub fn set(&mut self, idx: TileIdx) {
+        self.0 = Some(idx);
+    }
+
+    pub fn clear(&mut self) {
+        self.0 = None;
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.0.is_some()
+    }
+}
 
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
