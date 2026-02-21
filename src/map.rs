@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cell::Cell;
-use crate::colors;
-use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
+use crate::tiles::TileIdx;
 
 use bevy::prelude::*;
 
@@ -113,80 +112,4 @@ fn stable_hash(cell: &Cell, max: u32) -> u32 {
 
     let mut rng = StdRng::seed_from_u64(hash);
     rng.next_u32() % max
-}
-
-/// Updates the sprites of map tiles when their tile index changes.
-pub fn sync_tiles(
-    mut commands: Commands,
-    mut tiles: Query<
-        (Entity, &mut Sprite, &TileIdx, Option<&TilePreview>),
-        (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
-    >,
-) {
-    for (entity, mut sprite, tile_idx, preview_opt) in tiles.iter_mut() {
-        let mut entity_command = commands.entity(entity);
-        // If there's a preview, we should apply that tile index instead.
-        let preview_opt = preview_opt.and_then(|it| it.get());
-        let next_idx = preview_opt.unwrap_or(*tile_idx);
-
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = next_idx.into();
-        }
-
-        if tile_idx.is_walkable() {
-            entity_command.insert(Walkable);
-        } else {
-            entity_command.remove::<Walkable>();
-        }
-
-        if tile_idx.is_transparent() {
-            entity_command.remove::<Opaque>();
-        } else {
-            entity_command.insert(Opaque);
-        }
-    }
-}
-
-pub fn update_map_tile_visuals(
-    mut tiles: Query<
-        (
-            &mut Sprite,
-            Option<&Highlighted>,
-            Option<&Revealed>,
-            Option<&TilePreview>,
-        ),
-        (
-            With<MapTile>,
-            Or<(
-                Changed<Highlighted>,
-                Changed<Revealed>,
-                Changed<TilePreview>,
-            )>,
-        ),
-    >,
-) {
-    for (mut sprite, highlighted, revealed, preview_opt) in tiles.iter_mut() {
-        let revealed = revealed.map_or(false, |it| it.0);
-        let highlighted = highlighted.map_or(false, |it| it.0);
-
-        sprite.color = if highlighted {
-            colors::KENNEY_GOLD
-        } else if revealed {
-            Color::WHITE
-        } else {
-            Color::NONE
-        };
-
-        if preview_opt.is_some_and(TilePreview::is_active) {
-            sprite.color.set_alpha(0.5);
-        }
-    }
-}
-
-pub struct MapPlugin;
-
-impl Plugin for MapPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, (sync_tiles, update_map_tile_visuals).chain());
-    }
 }

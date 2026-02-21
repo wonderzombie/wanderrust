@@ -58,14 +58,12 @@ fn main() {
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
-        .add_plugins(map::MapPlugin)
+        .add_plugins(tilemap::TilemapPlugin)
         .add_plugins(editor::EditorPlugin)
         .add_systems(
             Startup,
             (
                 load_spritesheet,
-                tilemap::setup_tilemap,
-                tilemap::load_ascii_map,
                 setup_interactables,
                 setup_camera,
                 setup_player,
@@ -91,7 +89,7 @@ fn main() {
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_fov_markers.before(map::update_map_tile_visuals),
+                fov::update_fov_markers.before(tilemap::update_map_tile_visuals),
             )
                 .chain(),
         )
