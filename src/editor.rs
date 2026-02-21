@@ -82,7 +82,7 @@ pub fn handle_map_operations(
     }
 }
 
-pub fn setup_tile_observers(
+pub fn update_tile_observers(
     mut commands: Commands,
     mut picking_settings: ResMut<SpritePickingSettings>,
     tiles: Query<Entity, Added<MapTile>>,
@@ -157,7 +157,12 @@ impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (setup_tile_observers, on_button_input, handle_map_operations).chain(),
+            (
+                update_tile_observers,
+                on_button_input,
+                handle_map_operations,
+            )
+                .chain(),
         );
     }
 }
