@@ -89,13 +89,17 @@ tiles! {
     Dirt = atlas_idx(1, 0),
     Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),
+    GrassFlowers = atlas_idx(6, 0),
+    GrassLong = atlas_idx(7, 0),
 
     // Walls
     StoneWall = atlas_idx(0, 13),
     StoneWallWindowBars = atlas_idx(1, 13),
     StoneWallWindow = atlas_idx(2, 13),
+    StoneWallWindowPlus = atlas_idx(2, 12),
     StoneWallHalf = atlas_idx(1, 11),
     StoneWallDebris = atlas_idx(16, 12),
+    StoneDoorway = atlas_idx(4, 13),
 
     // Chests
     ChestBrownClosed = atlas_idx(8, 6),
@@ -108,6 +112,21 @@ tiles! {
     DoorBrownThickClosed1 = atlas_idx(3, 9),
     DoorBrownThickClosed2 = atlas_idx(4, 9),
     DoorBrownThickClosed3 = atlas_idx(5, 9),
+
+    // Trees
+    GreenTree1 = atlas_idx(0, 1),
+    GreenTree2 = atlas_idx(1, 1),
+    GreenTree3 = atlas_idx(2, 1),
+    DoubleGreenTree1 = atlas_idx(3, 1),
+    DoubleGreenTree2 = atlas_idx(3, 2),
+    BigGreenTree1 = atlas_idx(5, 1),
+    BigGreenTree2 = atlas_idx(4, 2),
+
+    // Misc
+    WaterSquare = atlas_idx(8, 5),
+    MineEntrance = atlas_idx(6, 6),
+    StairsUp = atlas_idx(2, 6),
+    StairsDown = atlas_idx(3, 6),
 
     // Player
     Player = atlas_idx(27, 0),

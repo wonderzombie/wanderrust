@@ -67,6 +67,10 @@ impl MapSpec {
                         'O' => Some(TileIdx::DoorwayBrownThick),
                         'b' => Some(TileIdx::ChestBrownClosed),
                         'w' => Some(TileIdx::ChestWhiteClosed),
+                        'T' => Some(TileIdx::GreenTree1),
+                        't' => Some(TileIdx::GreenTree2),
+                        'U' => Some(TileIdx::DoubleGreenTree1),
+                        'u' => Some(TileIdx::DoubleGreenTree2),
                         ' ' => None, // Empty space, not walkable
                         _ => None,   // Ignore unknown characters
                     };
