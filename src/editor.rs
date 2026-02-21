@@ -95,9 +95,13 @@ pub fn setup_tile_observers(
             .entity(tile)
             .insert(Pickable::default())
             .insert(Highlighted(false))
+            .insert(TilePreview::default())
             .observe(
                 |on: On<Pointer<Over>>,
-                 mut sprites: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
+                 mut sprites: Query<
+                    (&mut Highlighted, Option<&mut TilePreview>),
+                    With<MapTile>,
+                >,
                  editor: Res<EditorState>| {
                     let Ok((mut highlighted, preview_opt)) = sprites.get_mut(on.event_target())
                     else {
@@ -110,13 +114,19 @@ pub fn setup_tile_observers(
                 },
             )
             .observe(
-                |on: On<Pointer<Out>>, mut sprites: Query<(&mut Highlighted, &mut TilePreview), With<MapTile>>| {
-                    let Ok((mut highlighted, mut preview)) = sprites.get_mut(on.event_target())
+                |on: On<Pointer<Out>>,
+                 mut sprites: Query<
+                    (&mut Highlighted, Option<&mut TilePreview>),
+                    With<MapTile>,
+                >| {
+                    let Ok((mut highlighted, preview_opt)) = sprites.get_mut(on.event_target())
                     else {
                         return;
                     };
                     highlighted.0 = false;
-                    preview.clear();
+                    if let Some(mut preview) = preview_opt {
+                        preview.clear();
+                    }
                 },
             )
             .observe(

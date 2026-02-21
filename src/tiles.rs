@@ -55,7 +55,7 @@ pub struct Revealed(pub bool);
 #[derive(Component, Debug)]
 pub struct Highlighted(pub bool);
 
-#[derive(Component, Debug, Deref)]
+#[derive(Component, Debug, Deref, Default)]
 pub struct TilePreview(Option<TileIdx>);
 
 impl TilePreview {
