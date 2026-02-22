@@ -10,27 +10,35 @@ use crate::{
 };
 
 #[derive(Resource, Debug, Deref, DerefMut)]
-/// Newtype for field of view model that tracks which cells are transparent for visibility calculations.
-/// Also, Mrpas is not a Resource.
+/// Newtype for field of view model that's a Resource and which tracks which cells are transparent for visibility calculations.
 pub struct Fov(Mrpas);
 
-#[derive(Resource, Debug, Deref, DerefMut)]
-/// Newtype for a read-only clone of an existing Mrpas model for one viewer's origin and max_distance.
-pub struct View(Mrpas);
-
-impl View {
-    pub fn new(model: &Mrpas, origin: (i32, i32), max_distance: i32) -> View {
-        let mut model = model.clone();
+impl Fov {
+    pub fn from(&self, origin: (i32, i32), max_distance: i32) -> View {
+        let mut model = self.0.clone();
         model.clear_field_of_view();
         model.compute_field_of_view(origin, max_distance);
         View(model)
     }
+}
 
+#[derive(Resource, Debug, Deref, DerefMut)]
+/// Newtype for a read-only clone of an existing Mrpas model configured for one viewer's origin and max_distance.
+///
+/// The MRPAS API is ported from GDScript is highly stateful: it maintains both the model (i.e. map of opaque/transparent positions)
+/// *and* the currently computed (active) field of view. `clear_field_of_view()` is required before `compute_field_of_view()`, and
+/// they both mutate the model.
+pub struct View(Mrpas);
+
+impl View {
+    /// Queries a read-only MRPAS model using the origin and max_distance used to create `View`.
     pub fn has(&self, pos: (i32, i32)) -> bool {
         self.0.is_in_view(pos)
     }
 }
 
+/// Internalizes the field of view model by marking tiles as transparent or not.
+/// The field of view is marked as opaque beforehand.
 pub fn setup_fov(
     mut commands: Commands,
     spec: Res<MapSpec>,
@@ -40,9 +48,9 @@ pub fn setup_fov(
 
     let mut tiles_count = 0;
     let mut opaque_count = 0;
-    // Intentionally clear the field.
-    fov.clear_field_of_view();
+    fov.clear_field_of_view(); // initializes current FOV to "zero"
     for (cell, tile_idx) in tiles.iter() {
+        // Sets individual points in the model to transparent-or-not.
         fov.set_transparent(cell.into(), tile_idx.is_transparent());
         tiles_count += 1;
         if !tile_idx.is_transparent() {
@@ -69,7 +77,7 @@ pub fn update_fov_model(
 }
 
 /// Updates the visibility of map tiles based on the player's field of view.
-/// Changes FOV because the API is stateful.
+/// Uses the View type to avoid mutating `Res<Fov>`.
 pub fn update_fov_markers(
     fov: Res<Fov>,
     player_query: Query<&Cell, With<Player>>,
@@ -80,7 +88,7 @@ pub fn update_fov_markers(
         return;
     };
 
-    let view = View::new(&fov, player_cell.into(), 5);
+    let view = fov.from(player_cell.into(), 5);
     for (cell, mut revealed) in tiles.iter_mut() {
         revealed.0 = view.has(cell.into());
     }
