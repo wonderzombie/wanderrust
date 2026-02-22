@@ -87,12 +87,12 @@ fn main() {
             PostUpdate,
             (
                 map::sync_tiles,
-                map::update_map_tile_visuals,
                 sync_actor_sprites,
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
                 fov::update_fov_markers,
+                map::update_map_tile_visuals,
             )
                 .chain(),
         )
