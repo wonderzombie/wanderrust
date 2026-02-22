@@ -58,7 +58,6 @@ fn main() {
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
-        .add_plugins(map::MapPlugin)
         .add_plugins(editor::EditorPlugin)
         .add_systems(
             Startup,
@@ -87,11 +86,13 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
+                map::sync_tiles,
+                map::update_map_tile_visuals,
                 sync_actor_sprites,
                 update_piece_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
-                fov::update_fov_markers.before(map::update_map_tile_visuals),
+                fov::update_fov_markers,
             )
                 .chain(),
         )

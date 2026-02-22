@@ -182,11 +182,3 @@ pub fn update_map_tile_visuals(
         }
     }
 }
-
-pub struct MapPlugin;
-
-impl Plugin for MapPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, (sync_tiles, update_map_tile_visuals).chain());
-    }
-}
