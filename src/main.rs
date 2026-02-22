@@ -92,10 +92,10 @@ fn main() {
                 update_spatial_index,
                 fov::update_fov_model,
                 fov::update_fov_markers,
-                map::update_map_tile_visuals,
             )
                 .chain(),
         )
+        .add_systems(Last, map::update_map_tile_visuals)
         .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
 }
