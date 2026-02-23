@@ -8,8 +8,8 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Deref, Clone, Copy)]
-pub struct TilemapId(pub Entity);
+#[derive(Component, Default, Deref, Clone, Copy)]
+pub struct TilemapId(pub usize);
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
@@ -80,7 +80,7 @@ pub struct SavedTilemap {
     pub layer: TilemapLayer,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 pub struct TileBundle {
     pub tilemap_id: TilemapId,
     pub tile_idx: TileIdx,
@@ -118,7 +118,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     );
 
     let map_entity = commands.spawn(tilemap_bundle).id();
-    let tilemap_id = TilemapId(map_entity);
+    let tilemap_id = TilemapId(0);
     let mut storage = TilemapStorage::empty(size);
 
     fill_tilemap(
