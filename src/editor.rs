@@ -8,12 +8,12 @@ use crate::{
 };
 
 #[derive(Resource)]
-pub struct EditorState {
+pub struct Editor {
     pub active_tile: tiles::TileIdx,
     pub active_tile_idx: usize,
 }
 
-impl Default for EditorState {
+impl Default for Editor {
     fn default() -> Self {
         Self {
             active_tile: tiles::TileIdx::Grass,
@@ -24,7 +24,7 @@ impl Default for EditorState {
 
 pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
-    mut editor_state: ResMut<EditorState>,
+    mut editor_state: ResMut<Editor>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
     if !input.is_changed() {
@@ -110,7 +110,7 @@ pub fn update_tile_observers(
             .observe(
                 |on: On<Pointer<Over>>,
                  mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
-                 editor: Res<EditorState>| {
+                 editor: Res<Editor>| {
                     let (mut highlighted, preview_opt) = get_entity!(tiles, on);
                     highlighted.0 = true;
                     if let Some(mut preview) = preview_opt {
@@ -134,7 +134,7 @@ pub fn update_tile_observers(
             .observe(
                 |on: On<Pointer<Click>>,
                  mut tiles: Query<&mut TileIdx, With<MapTile>>,
-                 editor: Res<EditorState>| {
+                 editor: Res<Editor>| {
                     let mut tile_idx = get_entity!(tiles, on);
                     *tile_idx = match on.button {
                         PointerButton::Primary => editor.active_tile,

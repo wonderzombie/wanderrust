@@ -16,7 +16,7 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::Cell,
-    editor::EditorState,
+    editor::Editor,
     event_log::{draw_message_log_ui, setup_egui_fonts},
     map::MapSpec,
     tiles::{MapTile, TileIdx, Walkable},
@@ -54,7 +54,7 @@ fn main() {
         .add_message::<Acquisition>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
-        .init_resource::<EditorState>()
+        .init_resource::<Editor>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(event_log::MessageLog::new(32))
