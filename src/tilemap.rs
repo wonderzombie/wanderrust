@@ -8,8 +8,8 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Default, Deref, Clone, Copy)]
-pub struct TilemapId(pub usize);
+#[derive(Component, Default, Clone, Copy)]
+pub struct TilemapId(usize);
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
@@ -80,13 +80,15 @@ pub struct SavedTilemap {
     pub layer: TilemapLayer,
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle, Clone, Default)]
 pub struct TileBundle {
+    pub map_tile: MapTile,
     pub tilemap_id: TilemapId,
     pub tile_idx: TileIdx,
     pub cell: Cell,
     pub transform: Transform,
     pub sprite: Sprite,
+    pub revealed: Revealed,
 }
 
 #[derive(Bundle, Default)]
@@ -105,6 +107,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
         height: spec.size.y,
         tile_size: spec.tile_size,
     };
+    // TODO: settle z-order and use this as a constant
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
         size,
@@ -148,17 +151,15 @@ pub fn fill_tilemap(
             let cell = Cell::new(x as i32, y as i32);
             let pos = size.cell_to_pos(&cell);
             let entity = commands
-                .spawn((
-                    MapTile,
-                    Revealed(false),
-                    TileBundle {
-                        tilemap_id,
-                        tile_idx,
-                        cell,
-                        transform: Transform::from_xyz(pos.x, pos.y, layer.0),
-                        sprite: sheet.sprite_from_idx(tile_idx),
-                    },
-                ))
+                .spawn((TileBundle {
+                    map_tile: MapTile,
+                    tilemap_id,
+                    tile_idx,
+                    cell,
+                    transform: Transform::from_xyz(pos.x, pos.y, layer.0),
+                    sprite: sheet.sprite_from_idx(tile_idx),
+                    revealed: Revealed(false),
+                },))
                 .id();
             storage.set(&cell, entity);
         }
