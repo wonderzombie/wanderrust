@@ -1,7 +1,4 @@
-use bevy::{
-    math::UVec2,
-    prelude::{Component, Deref},
-};
+use bevy::{math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
 
@@ -139,6 +136,9 @@ impl TileIdx {
         TileIdx::Gravel,
         TileIdx::Grass,
         TileIdx::DoorwayBrownThick,
+        TileIdx::GreenTree1,
+        TileIdx::GreenTree2,
+        TileIdx::GreenTree3,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[

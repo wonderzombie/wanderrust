@@ -2,9 +2,12 @@ use std::collections::HashMap;
 
 use crate::cell::Cell;
 use crate::colors;
+use crate::tilemap::TilemapSize;
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
 use bevy::prelude::*;
+
+pub const DEFAULT_LAYER: u32 = 0;
 
 pub const MAP: &str = r#"
 ####################
@@ -36,13 +39,12 @@ pub const MAP: &str = r#"
 #[derive(Resource, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct MapSpec {
-    pub size: UVec2,
+    pub size: TilemapSize,
     pub layer: u32,
-    pub tile_size: u32,
     pub pieces: HashMap<TileIdx, Vec<Cell>>,
 }
 
-const DEFAULT_TILE_SIZE: u32 = 16;
+pub const DEFAULT_TILE_SIZE: u32 = 16;
 
 impl MapSpec {
     pub fn from_str(map_str: &str) -> Self {
@@ -54,7 +56,7 @@ impl MapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let pieces = lines
+        let pieces: HashMap<TileIdx, Vec<Cell>> = lines
             .iter()
             .enumerate()
             .flat_map(|(y, line)| {
@@ -86,23 +88,63 @@ impl MapSpec {
                 })
             })
             .fold(HashMap::new(), |mut acc, (idx, cell)| {
-                acc.entry(idx).or_insert_with(Vec::new).push(cell);
+                acc.entry(idx).or_default().push(cell);
                 acc
             });
 
         MapSpec {
-            size: UVec2::new(width, height),
+            size: TilemapSize {
+                width,
+                height,
+                tile_size: DEFAULT_TILE_SIZE,
+            },
             pieces,
-            tile_size: DEFAULT_TILE_SIZE,
-            layer: 0,
+            layer: DEFAULT_LAYER,
         }
     }
+
+    pub fn from_procedure(fx: impl Fn(&Cell) -> TileIdx, size: (u32, u32)) -> Self {
+        let tiles = size.0 * size.1;
+
+        let pieces: HashMap<TileIdx, Vec<Cell>> = (0..tiles)
+            .map(|i| {
+                let cell = Cell::from_idx(size.0, i as usize);
+                let tile_idx = fx(&cell);
+                (tile_idx, cell)
+            })
+            .fold(HashMap::new(), |mut acc, (idx, cell)| {
+                acc.entry(idx).or_default().push(cell);
+                acc
+            });
+
+        MapSpec {
+            size: TilemapSize {
+                width: size.0,
+                height: size.1,
+                tile_size: DEFAULT_TILE_SIZE,
+            },
+            pieces,
+            layer: DEFAULT_LAYER,
+        }
+    }
+}
+
+pub fn stable_tile_hash(cell: &Cell, tile_indices: &[TileIdx]) -> TileIdx {
+    let max = tile_indices.len() as u32;
+    tile_indices
+        .get(stable_hash(cell, max))
+        .copied()
+        .unwrap_or_default()
+}
+
+pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
+    stable_tile_hash(cell, &[TileIdx::Dirt, TileIdx::GreenTree1])
 }
 
 /// Generates a random number using the cell as the seed s/t the number is the same for each cell.
 /// This ensures that a specific cell will yield the same random result for the same `max`.
 #[allow(dead_code)]
-fn stable_hash(cell: &Cell, max: u32) -> u32 {
+pub fn stable_hash(cell: &Cell, max: u32) -> usize {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -112,7 +154,7 @@ fn stable_hash(cell: &Cell, max: u32) -> u32 {
     let hash = hasher.finish();
 
     let mut rng = StdRng::seed_from_u64(hash);
-    rng.next_u32() % max
+    (rng.next_u32() % max) as usize
 }
 
 /// Updates the sprites of map tiles when their tile index changes.

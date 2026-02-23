@@ -44,7 +44,7 @@ pub fn setup_fov(
     spec: Res<MapSpec>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
-    let mut fov = Fov(Mrpas::new(spec.size.x as i32, spec.size.y as i32));
+    let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
 
     let mut tiles_count = 0;
     let mut opaque_count = 0;

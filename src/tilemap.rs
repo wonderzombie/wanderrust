@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     SpriteAtlas,
     cell::Cell,
-    map::MapSpec,
+    map::{self, MapSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -103,9 +103,9 @@ pub struct TilemapBundle {
 
 pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<SpriteAtlas>) {
     let size = TilemapSize {
-        width: spec.size.x,
-        height: spec.size.y,
-        tile_size: spec.tile_size,
+        width: spec.size.width,
+        height: spec.size.height,
+        tile_size: map::DEFAULT_TILE_SIZE,
     };
     // TODO: settle z-order and use this as a constant
     let layer = TilemapLayer(spec.layer as f32 - 3.);
