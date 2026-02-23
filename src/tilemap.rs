@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -124,8 +124,8 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     let tilemap_id = TilemapId(0);
     let mut storage = TilemapStorage::empty(size);
 
-    fill_tilemap(
-        TileIdx::Dirt,
+    fill_tilemap_fn(
+        |_| TileIdx::Blank,
         tilemap_id,
         size,
         layer,
@@ -137,8 +137,8 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     commands.entity(map_entity).insert((tilemap_id, storage));
 }
 
-pub fn fill_tilemap(
-    tile_idx: TileIdx,
+pub fn fill_tilemap_fn(
+    fx: impl Fn(Cell) -> TileIdx,
     tilemap_id: TilemapId,
     size: TilemapSize,
     layer: TilemapLayer,
@@ -146,23 +146,34 @@ pub fn fill_tilemap(
     commands: &mut Commands,
     storage: &mut TilemapStorage,
 ) {
-    for x in 0..size.width {
-        for y in 0..size.height {
-            let cell = Cell::new(x as i32, y as i32);
-            let pos = size.cell_to_pos(&cell);
-            let entity = commands
-                .spawn((TileBundle {
-                    map_tile: MapTile,
-                    tilemap_id,
-                    tile_idx,
-                    cell,
-                    transform: Transform::from_xyz(pos.x, pos.y, layer.0),
-                    sprite: sheet.sprite_from_idx(tile_idx),
-                    revealed: Revealed(false),
-                },))
-                .id();
-            storage.set(&cell, entity);
-        }
+    let tiles = size.width * size.height;
+    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
+    for i in 0..tiles {
+        let cell = Cell::from_idx(size.width, i as usize);
+        let pos = size.cell_to_pos(&cell);
+        let tile_idx = fx(cell);
+        let entity = commands
+            .spawn((TileBundle {
+                map_tile: MapTile,
+                tilemap_id,
+                tile_idx,
+                cell,
+                transform: Transform::from_xyz(pos.x, pos.y, layer.0),
+                sprite: sheet.sprite_from_idx(tile_idx),
+                revealed: Revealed(false),
+            },))
+            .id();
+        storage.set(&cell, entity);
+
+        tally
+            .entry(tile_idx)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    info!("tile distribution:");
+    for (tile_idx, count) in tally.iter() {
+        info!("\t{:?}: {}", tile_idx, count);
     }
 }
 
