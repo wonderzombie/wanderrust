@@ -44,7 +44,7 @@ pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
     // Partially apply get_bilinear_sample() with the same cell and region size.
     let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);
-    select_from_table(&ptable_with_biomes(), sampler, 1)
+    select_from_table(&ptable_with_biomes(), cell, &sampler, 1)
 }
 
 type ProbabilityTable = Vec<WeightedEntry>;
@@ -97,10 +97,12 @@ fn ptable_with_biomes() -> ProbabilityTable {
     ]
 }
 
-fn select_from_table<S>(table: &ProbabilityTable, sampler: S, depth: u64) -> TileIdx
-where
-    S: Fn(u64) -> f32,
-{
+fn select_from_table(
+    table: &ProbabilityTable,
+    cell: &Cell,
+    sampler: &dyn Fn(u64) -> f32,
+    depth: u64,
+) -> TileIdx {
     let total: f32 = table.iter().map(|e| e.weight()).sum();
 
     let mut cursor = sampler(depth) * total;
@@ -115,7 +117,12 @@ where
             WeightedEntry::Table(w, subtable) => {
                 cursor -= w;
                 if cursor <= 0.0 {
-                    return select_from_table(subtable, sampler, depth + 1);
+                    return select_from_table(
+                        subtable,
+                        cell,
+                        &|depth| sample_cell_with_depth(cell, depth),
+                        depth + 1,
+                    );
                 }
             }
         }
