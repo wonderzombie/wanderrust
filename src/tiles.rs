@@ -81,13 +81,19 @@ impl TilePreview {
 
 // We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
-    // Floor
+    // Ground
     Blank = atlas_idx(0, 0),
     GrassBrown = atlas_idx(1, 0),
     Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),
     GrassFlowers = atlas_idx(6, 0),
     GrassLong = atlas_idx(7, 0),
+    GrassTall = atlas_idx(0, 2),
+
+    // Outdoor decor
+    Rocks = atlas_idx(5, 2),
+    Snag = atlas_idx(6, 2),
+
 
     // Walls
     StoneWall = atlas_idx(0, 13),
@@ -134,10 +140,14 @@ tiles! {
 
 impl TileIdx {
     const WALKABLE: &'static [TileIdx] = &[
+        // Ground cover
         TileIdx::Blank,
         TileIdx::GrassBrown,
         TileIdx::Gravel,
         TileIdx::Grass,
+        TileIdx::GrassFlowers,
+        TileIdx::GrassLong,
+        TileIdx::GrassTall,
         TileIdx::DoorwayBrownThick,
         TileIdx::GreenTree1,
         TileIdx::GreenTree2,

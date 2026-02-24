@@ -44,7 +44,7 @@ pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
     // Partially apply get_bilinear_sample() with the same cell and region size.
     let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);
-    select_from_table(&ptable_with_forest(), sampler, 1)
+    select_from_table(&ptable_with_biomes(), sampler, 1)
 }
 
 type ProbabilityTable = Vec<WeightedEntry>;
@@ -70,14 +70,26 @@ impl WeightedEntry {
     }
 }
 
-fn ptable_with_forest() -> ProbabilityTable {
+fn ptable_with_biomes() -> ProbabilityTable {
     vec![
-        WeightedEntry::Tile(0.5, TileIdx::GrassBrown),
+        // Grasslands.
         WeightedEntry::Table(
             0.5,
             vec![
-                WeightedEntry::Tile(0.1, TileIdx::BigGreenTree1),
-                WeightedEntry::Tile(0.1, TileIdx::BigGreenTree2),
+                WeightedEntry::Tile(1.0, TileIdx::Blank),
+                WeightedEntry::Tile(0.01, TileIdx::Rocks),
+                WeightedEntry::Tile(0.3, TileIdx::GrassBrown),
+                WeightedEntry::Tile(0.3, TileIdx::Grass),
+                WeightedEntry::Tile(0.1, TileIdx::GrassFlowers),
+                WeightedEntry::Tile(0.3, TileIdx::GrassLong),
+            ],
+        ),
+        // Forest.
+        WeightedEntry::Table(
+            0.5,
+            vec![
+                WeightedEntry::Tile(0.05, TileIdx::BigGreenTree1),
+                WeightedEntry::Tile(0.05, TileIdx::BigGreenTree2),
                 WeightedEntry::Tile(0.5, TileIdx::DoubleGreenTree1),
                 WeightedEntry::Tile(1.0, TileIdx::GreenTree1),
             ],
