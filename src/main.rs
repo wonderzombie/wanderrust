@@ -7,6 +7,7 @@ mod inventory;
 mod map;
 mod player;
 mod procgen;
+mod ptable;
 mod tilemap;
 mod tiles;
 
