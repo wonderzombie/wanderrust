@@ -58,6 +58,10 @@ impl TilemapStorage {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.tiles.len()
+    }
+
     // /// Removes the cell-entity from storage and returns it, if any.
     // pub fn remove(&mut self, cell: &Cell) -> Option<Entity> {
     //     let idx = cell.to_idx(self.size.width);
@@ -138,7 +142,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
 }
 
 pub fn fill_tilemap_fn(
-    fx: impl Fn(Cell) -> TileIdx,
+    fx: impl Fn(&Cell) -> TileIdx,
     tilemap_id: TilemapId,
     size: TilemapSize,
     layer: TilemapLayer,
@@ -151,7 +155,7 @@ pub fn fill_tilemap_fn(
     for i in 0..tiles {
         let cell = Cell::from_idx(size.width, i as usize);
         let pos = size.cell_to_pos(&cell);
-        let tile_idx = fx(cell);
+        let tile_idx = fx(&cell);
         let entity = commands
             .spawn((TileBundle {
                 map_tile: MapTile,
@@ -171,7 +175,7 @@ pub fn fill_tilemap_fn(
             .or_insert(1);
     }
 
-    info!("tile distribution:");
+    info!("tilemap: initialized tile distribution:");
     for (tile_idx, count) in tally.iter() {
         info!("\t{:?}: {}", tile_idx, count);
     }

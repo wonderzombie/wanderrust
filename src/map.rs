@@ -107,11 +107,10 @@ impl MapSpec {
     }
 
     pub fn from_procedure(fx: impl Fn(&Cell) -> TileIdx, size: (u32, u32)) -> Self {
-        // let start = Cell {
-        //     x: size.0 as i32 / 2,
-        //     y: size.1 as i32 / 2,
-        // };
-        let start = Cell { x: 5, y: 5 };
+        let start = Cell {
+            x: size.0 as i32 / 2,
+            y: size.1 as i32 / 2,
+        };
         info!("map from procedure; start {:?}", start);
         let tiles = size.0 * size.1;
 
@@ -125,6 +124,11 @@ impl MapSpec {
                 acc.entry(idx).or_default().push(cell);
                 acc
             });
+
+        info!("map_spec: generated tile distribution:");
+        for (tile_idx, cells) in &pieces {
+            info!("tile {:?}: {}", tile_idx, cells.len());
+        }
 
         MapSpec {
             size: TilemapSize {
