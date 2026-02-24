@@ -127,6 +127,9 @@ tiles! {
 
     // Player
     Player = atlas_idx(27, 0),
+
+    //
+    GridSquare = atlas_idx(39, 14),
 }
 
 impl TileIdx {
@@ -139,6 +142,11 @@ impl TileIdx {
         TileIdx::GreenTree1,
         TileIdx::GreenTree2,
         TileIdx::GreenTree3,
+        TileIdx::DoubleGreenTree1,
+        TileIdx::DoubleGreenTree2,
+        TileIdx::BigGreenTree1,
+        TileIdx::BigGreenTree2,
+        TileIdx::GridSquare,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[

@@ -1,10 +1,11 @@
-use std::ops::Add;
+use std::ops::{Add, Div, Mul};
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Component, Default, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 /// A simple struct representing a cell in the grid-based world, with integer coordinates.
+/// i32 allows us to use offsets without extra fuss.
 pub struct Cell {
     pub x: i32,
     pub y: i32,
@@ -27,6 +28,10 @@ impl Cell {
             x: (idx % width as usize) as i32,
             y: (idx / width as usize) as i32,
         }
+    }
+
+    pub fn as_vec(&self) -> Vec2 {
+        Vec2::new(self.x as f32, self.y as f32)
     }
 
     /// Adds the other cell to this one, modifying this cell in place, effectively treating the other cell as a vector offset.
@@ -58,6 +63,18 @@ impl From<&Cell> for (i32, i32) {
     }
 }
 
+impl From<&Cell> for (u32, u32) {
+    fn from(value: &Cell) -> Self {
+        (value.x as u32, value.y as u32)
+    }
+}
+
+impl From<&Cell> for IVec2 {
+    fn from(value: &Cell) -> Self {
+        IVec2::new(value.x, value.y)
+    }
+}
+
 impl Add<IVec2> for Cell {
     type Output = Cell;
 
@@ -65,6 +82,61 @@ impl Add<IVec2> for Cell {
         Cell {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Add<Cell> for Cell {
+    type Output = Cell;
+
+    fn add(self, rhs: Cell) -> Cell {
+        Cell {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Div<i32> for &Cell {
+    type Output = Cell;
+
+    fn div(self, rhs: i32) -> Cell {
+        Cell {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
+impl Div<u32> for &Cell {
+    type Output = Cell;
+
+    fn div(self, rhs: u32) -> Cell {
+        Cell {
+            x: self.x / rhs as i32,
+            y: self.y / rhs as i32,
+        }
+    }
+}
+
+impl Mul<i32> for Cell {
+    type Output = Cell;
+
+    fn mul(self, rhs: i32) -> Cell {
+        Cell {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl Mul<u32> for Cell {
+    type Output = Cell;
+
+    fn mul(self, rhs: u32) -> Cell {
+        Cell {
+            x: self.x * rhs as i32,
+            y: self.y * rhs as i32,
         }
     }
 }

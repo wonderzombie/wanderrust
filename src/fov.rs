@@ -6,6 +6,7 @@ use crate::{
     Player,
     cell::Cell,
     map::MapSpec,
+    player,
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -14,10 +15,10 @@ use crate::{
 pub struct Fov(Mrpas);
 
 impl Fov {
-    pub fn from(&self, origin: (i32, i32), max_distance: i32) -> View {
+    pub fn from(&self, origin: (i32, i32), max_distance: u32) -> View {
         let mut model = self.0.clone();
         model.clear_field_of_view();
-        model.compute_field_of_view(origin, max_distance);
+        model.compute_field_of_view(origin, max_distance as i32);
         View(model)
     }
 }
@@ -81,6 +82,7 @@ pub fn update_fov_model(
 pub fn update_fov_markers(
     fov: Res<Fov>,
     player_query: Query<&Cell, With<Player>>,
+    player_stats: Res<player::PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
     let Ok(player_cell) = player_query.single() else {
@@ -88,7 +90,7 @@ pub fn update_fov_markers(
         return;
     };
 
-    let view = fov.from(player_cell.into(), 5);
+    let view = fov.from(player_cell.into(), player_stats.vision_range);
     for (cell, mut revealed) in tiles.iter_mut() {
         revealed.0 = view.has(cell.into());
     }

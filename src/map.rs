@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Div;
 
 use crate::cell::Cell;
 use crate::colors;
@@ -42,6 +43,7 @@ pub struct MapSpec {
     pub size: TilemapSize,
     pub layer: u32,
     pub pieces: HashMap<TileIdx, Vec<Cell>>,
+    pub start: Cell,
 }
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
@@ -100,10 +102,17 @@ impl MapSpec {
             },
             pieces,
             layer: DEFAULT_LAYER,
+            start: Cell { x: 5, y: 5 },
         }
     }
 
     pub fn from_procedure(fx: impl Fn(&Cell) -> TileIdx, size: (u32, u32)) -> Self {
+        // let start = Cell {
+        //     x: size.0 as i32 / 2,
+        //     y: size.1 as i32 / 2,
+        // };
+        let start = Cell { x: 5, y: 5 };
+        info!("map from procedure; start {:?}", start);
         let tiles = size.0 * size.1;
 
         let pieces: HashMap<TileIdx, Vec<Cell>> = (0..tiles)
@@ -125,20 +134,57 @@ impl MapSpec {
             },
             pieces,
             layer: DEFAULT_LAYER,
+            start: Cell {
+                x: size.0 as i32 / 2,
+                y: size.1 as i32 / 2,
+            },
         }
     }
 }
 
-pub fn stable_tile_hash(cell: &Cell, tile_indices: &[TileIdx]) -> TileIdx {
-    let max = tile_indices.len() as u32;
-    tile_indices
-        .get(stable_hash(cell, max))
-        .copied()
-        .unwrap_or_default()
+/// Returns the sub-grid coordinates using a subgrid of `size`.
+pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
+    let size = size as i32;
+    let top_left = cell.clone().div(REGION_SIZE);
+    [
+        top_left,
+        top_left + Cell::new(size, 0),
+        top_left + Cell::new(size, size),
+        top_left + Cell::new(0, size),
+    ]
+}
+
+const REGION_SIZE: i32 = 8;
+
+pub fn get_bilinear_sample(size: u32, cell: &Cell) -> f32 {
+    let points = get_sample_rect_cells(size, cell);
+
+    let size = size as f32;
+    // tx and ty will be a fraction of `size`.
+    let tx = (cell.x as f32).rem_euclid(size) / size;
+    let ty = (cell.y as f32).rem_euclid(size) / size;
+
+    let [top_left, top_right, bot_right, bot_left] = points.map(|c| sample(&c));
+
+    // upper + t * (upper - lower)
+    let top = top_left.lerp(top_right, tx);
+    let bot = bot_left.lerp(bot_right, tx);
+    let value = top.lerp(bot, ty);
+    value
+}
+
+pub fn sample(cell: &Cell) -> f32 {
+    stable_hash(cell, 100) as f32 / 100.
 }
 
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
-    stable_tile_hash(cell, &[TileIdx::Dirt, TileIdx::GreenTree1])
+    let sample = get_bilinear_sample(REGION_SIZE as u32, cell);
+
+    match sample {
+        0.0..=0.5 => TileIdx::Dirt,
+        0.5..1.0 => TileIdx::GreenTree1,
+        _ => TileIdx::GridSquare,
+    }
 }
 
 /// Generates a random number using the cell as the seed s/t the number is the same for each cell.

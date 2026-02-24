@@ -5,6 +5,7 @@ mod event_log;
 mod fov;
 mod inventory;
 mod map;
+mod player;
 mod tilemap;
 mod tiles;
 
@@ -55,6 +56,7 @@ fn main() {
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
+        .init_resource::<player::PlayerStats>()
         .insert_resource(CLEAR_COLOR)
         // .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(MapSpec::from_procedure(map::tile_idx_for_cell, (100, 100)))
@@ -179,14 +181,18 @@ pub struct PieceBundle {
     pub transform: Transform,
 }
 
-fn setup_player(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+fn setup_player(mut commands: Commands, spec: Res<MapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Player,
         Actor,
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: Cell::new(5, 5),
-            transform: Transform::from_xyz(5.0 * TILE_SIZE_PX, 5.0 * TILE_SIZE_PX, -1.0),
+            cell: spec.start,
+            transform: Transform::from_xyz(
+                spec.start.x as f32 * TILE_SIZE_PX,
+                spec.start.y as f32 * TILE_SIZE_PX,
+                -1.0,
+            ),
         },
         TileIdx::Player,
     ));
