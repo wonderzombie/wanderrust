@@ -22,6 +22,28 @@ impl Default for EditorState {
     }
 }
 
+#[derive(Resource)]
+pub struct DesiredZoom(pub f32);
+
+pub fn on_zoom_button_input(
+    mut commands: Commands,
+    input: Res<ButtonInput<KeyCode>>,
+    zoom_opt: Option<ResMut<DesiredZoom>>,
+) {
+    let mut current_zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
+
+    if input.just_released(KeyCode::Equal) {
+        current_zoom += 0.1;
+    } else if input.just_released(KeyCode::Minus) {
+        current_zoom -= 0.1
+    } else if input.just_released(KeyCode::Backspace) {
+        current_zoom = 1.0;
+    }
+
+    let final_zoom = current_zoom.clamp(0.1, 2.0);
+    commands.insert_resource(DesiredZoom(final_zoom));
+}
+
 pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorState>,
@@ -33,7 +55,7 @@ pub fn on_button_input(
 
     let lookup = tiles::TileIdx::all();
 
-    if input.just_pressed(KeyCode::Digit0) {
+    if input.just_pressed(KeyCode::Digit9) {
         editor_state.active_tile_idx = 0;
     } else if input.just_pressed(KeyCode::Digit1) {
         editor_state.active_tile_idx = editor_state.active_tile_idx.saturating_sub(1);
@@ -159,6 +181,7 @@ impl Plugin for EditorPlugin {
             (
                 update_tile_observers,
                 on_button_input,
+                on_zoom_button_input,
                 handle_map_operations,
             )
                 .chain(),

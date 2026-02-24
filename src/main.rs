@@ -17,7 +17,7 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::Cell,
-    editor::EditorState,
+    editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     map::MapSpec,
     tiles::{MapTile, TileIdx, Walkable},
@@ -416,6 +416,7 @@ fn handle_interaction(
 fn update_camera(
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
     player_query: Query<&Cell, With<Player>>,
+    zoom_opt: Option<Res<DesiredZoom>>,
 ) {
     let Ok(player_cell) = player_query.single() else {
         warn!("No player entity found in the world.");
@@ -425,6 +426,8 @@ fn update_camera(
     let mut camera_transform = camera_query.single_mut().unwrap();
     camera_transform.translation.x = (player_cell.x as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
     camera_transform.translation.y = (player_cell.y as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
+    let zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
+    camera_transform.scale = Vec3::splat(zoom);
 }
 
 pub fn setup_interactables(
