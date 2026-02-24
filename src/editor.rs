@@ -55,13 +55,13 @@ pub fn on_button_input(
 
     let lookup = tiles::TileIdx::all();
 
-    if input.just_pressed(KeyCode::Digit9) {
+    if input.just_pressed(KeyCode::Digit1) {
         editor_state.active_tile_idx = 0;
-    } else if input.just_pressed(KeyCode::Digit1) {
-        editor_state.active_tile_idx = editor_state.active_tile_idx.saturating_sub(1);
     } else if input.just_pressed(KeyCode::Digit2) {
-        editor_state.active_tile_idx = (editor_state.active_tile_idx + 1).min(lookup.len() - 1);
+        editor_state.active_tile_idx = editor_state.active_tile_idx.saturating_sub(1);
     } else if input.just_pressed(KeyCode::Digit3) {
+        editor_state.active_tile_idx = (editor_state.active_tile_idx + 1).min(lookup.len() - 1);
+    } else if input.just_pressed(KeyCode::Digit4) {
         editor_state.active_tile_idx = lookup.len() - 1;
     } else {
         return;
