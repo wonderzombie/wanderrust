@@ -83,7 +83,7 @@ impl TilePreview {
 tiles! {
     // Floor
     Blank = atlas_idx(0, 0),
-    Dirt = atlas_idx(1, 0),
+    GrassBrown = atlas_idx(1, 0),
     Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),
     GrassFlowers = atlas_idx(6, 0),
@@ -135,7 +135,7 @@ tiles! {
 impl TileIdx {
     const WALKABLE: &'static [TileIdx] = &[
         TileIdx::Blank,
-        TileIdx::Dirt,
+        TileIdx::GrassBrown,
         TileIdx::Gravel,
         TileIdx::Grass,
         TileIdx::DoorwayBrownThick,
