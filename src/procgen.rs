@@ -1,5 +1,6 @@
 use std::ops::Div;
 
+use bevy::platform::collections::HashMap;
 use bevy::prelude::FloatExt;
 
 use crate::cell::Cell;
@@ -19,7 +20,7 @@ pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
     ]
 }
 
-pub fn get_bilinear_sample(size: u32, cell: &Cell) -> f32 {
+pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
     let points = get_sample_rect_cells(size, cell);
 
     let size = size as f32;
@@ -27,7 +28,8 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell) -> f32 {
     let tx = (cell.x as f32).rem_euclid(size) / size;
     let ty = (cell.y as f32).rem_euclid(size) / size;
 
-    let [top_left, top_right, bot_right, bot_left] = points.map(|c| sample(&c));
+    let [top_left, top_right, bot_right, bot_left] =
+        points.map(|c| sample_cell_with_depth(&c, depth));
 
     // upper + t * (upper - lower)
     let top = top_left.lerp(top_right, tx);
@@ -36,29 +38,93 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell) -> f32 {
     value
 }
 
-pub fn sample(cell: &Cell) -> f32 {
-    stable_hash(cell, 100) as f32 / 100.
+pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
+    stable_hash(cell, 100, depth) as f32 / 100.
 }
 
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
-    let sample = get_bilinear_sample(REGION_SIZE as u32, cell);
+    // Partially apply get_bilinear_sample() with the same cell and region size.
+    let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);
+    select_from_table(&ptable_with_forest(), sampler, 1)
+}
 
-    match sample {
-        0.0..=0.5 => TileIdx::Dirt,
-        0.5..1.0 => TileIdx::GreenTree1,
-        _ => TileIdx::GridSquare,
+type ProbabilityTable = Vec<WeightedEntry>;
+
+#[derive(Debug)]
+enum WeightedEntry {
+    Tile(f32, TileIdx),
+    Table(f32, Vec<WeightedEntry>),
+}
+
+impl From<(f32, TileIdx)> for WeightedEntry {
+    fn from(value: (f32, TileIdx)) -> Self {
+        WeightedEntry::Tile(value.0, value.1)
     }
 }
 
-/// Generates a random number using the cell as the seed s/t the number is the same for each cell.
-/// This ensures that a specific cell will yield the same random result for the same `max`.
-pub fn stable_hash(cell: &Cell, max: u32) -> usize {
+impl WeightedEntry {
+    fn weight(&self) -> f32 {
+        match self {
+            WeightedEntry::Tile(w, _) => *w,
+            WeightedEntry::Table(w, _) => *w,
+        }
+    }
+}
+
+fn ptable_with_forest() -> ProbabilityTable {
+    vec![
+        WeightedEntry::Tile(0.5, TileIdx::GrassBrown),
+        WeightedEntry::Table(
+            0.5,
+            vec![
+                WeightedEntry::Tile(0.1, TileIdx::DoubleGreenTree1),
+                WeightedEntry::Tile(0.5, TileIdx::GreenTree1),
+            ],
+        ),
+    ]
+}
+
+fn select_from_table<S>(table: &ProbabilityTable, sampler: S, depth: u64) -> TileIdx
+where
+    S: Fn(u64) -> f32,
+{
+    let total: f32 = table.iter().map(|e| e.weight()).sum();
+
+    let mut cursor = sampler(depth) * total;
+    for entry in table {
+        match entry {
+            WeightedEntry::Tile(w, tile_idx) => {
+                cursor -= w;
+                if cursor <= 0.0 {
+                    return *tile_idx;
+                }
+            }
+            WeightedEntry::Table(w, subtable) => {
+                cursor -= w;
+                if cursor <= 0.0 {
+                    return select_from_table(subtable, sampler, depth + 1);
+                }
+            }
+        }
+    }
+
+    if let Some(WeightedEntry::Tile(_, t)) = table.last() {
+        return *t;
+    }
+
+    TileIdx::GridSquare
+}
+
+/// Generates a random number using the cell and the given seed s/t the number is the same for each cell.
+/// This ensures that a specific cell will yield the same random result for the same `max` as long as `seed` is the same.
+pub fn stable_hash(cell: &Cell, max: u32, seed: u64) -> usize {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
 
     let mut hasher = DefaultHasher::new();
     cell.hash(&mut hasher);
+    seed.hash(&mut hasher);
     let hash = hasher.finish();
 
     let mut rng = StdRng::seed_from_u64(hash);
@@ -74,14 +140,14 @@ mod tests {
     #[test]
     fn stable_hash_is_deterministic() {
         let cell = Cell::new(3, 7);
-        assert_eq!(stable_hash(&cell, 100), stable_hash(&cell, 100));
+        assert_eq!(stable_hash(&cell, 100, 1), stable_hash(&cell, 100, 1));
     }
 
     #[test]
     fn stable_hash_different_cells_differ() {
         // Collect hashes for a small grid and assert they're not all identical.
         let hashes: Vec<usize> = (0..5)
-            .flat_map(|x| (0..5).map(move |y| stable_hash(&Cell::new(x, y), 1000)))
+            .flat_map(|x| (0..5).map(move |y| stable_hash(&Cell::new(x, y), 1000, 1)))
             .collect();
         let first = hashes[0];
         assert!(
@@ -94,7 +160,7 @@ mod tests {
     fn stable_hash_within_range() {
         for x in 0..10_i32 {
             for y in 0..10_i32 {
-                let result = stable_hash(&Cell::new(x, y), 100);
+                let result = stable_hash(&Cell::new(x, y), 100, 1);
                 assert!(
                     result < 100,
                     "hash {result} out of range for cell ({x},{y})"
@@ -124,7 +190,7 @@ mod tests {
         let size = REGION_SIZE as u32;
         for x in 0..32_i32 {
             for y in 0..32_i32 {
-                let v = get_bilinear_sample(size, &Cell::new(x, y));
+                let v = get_bilinear_sample(size, &Cell::new(x, y), 0);
                 assert!(
                     (0.0..=1.0).contains(&v),
                     "bilinear sample {v} out of [0,1] at ({x},{y})"
