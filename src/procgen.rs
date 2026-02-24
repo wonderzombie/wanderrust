@@ -1,6 +1,5 @@
 use std::ops::Div;
 
-use bevy::platform::collections::HashMap;
 use bevy::prelude::FloatExt;
 
 use crate::cell::Cell;
@@ -39,7 +38,7 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
 }
 
 pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
-    stable_hash(cell, 100, depth) as f32 / 100.
+    stable_hash(cell, depth) as f32 / u32::MAX as f32
 }
 
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
@@ -77,8 +76,10 @@ fn ptable_with_forest() -> ProbabilityTable {
         WeightedEntry::Table(
             0.5,
             vec![
-                WeightedEntry::Tile(0.1, TileIdx::DoubleGreenTree1),
-                WeightedEntry::Tile(0.5, TileIdx::GreenTree1),
+                WeightedEntry::Tile(0.1, TileIdx::BigGreenTree1),
+                WeightedEntry::Tile(0.1, TileIdx::BigGreenTree2),
+                WeightedEntry::Tile(0.5, TileIdx::DoubleGreenTree1),
+                WeightedEntry::Tile(1.0, TileIdx::GreenTree1),
             ],
         ),
     ]
@@ -116,8 +117,8 @@ where
 }
 
 /// Generates a random number using the cell and the given seed s/t the number is the same for each cell.
-/// This ensures that a specific cell will yield the same random result for the same `max` as long as `seed` is the same.
-pub fn stable_hash(cell: &Cell, max: u32, seed: u64) -> usize {
+/// This ensures that a specific cell will yield the same random result as long as `seed` is the same.
+pub fn stable_hash(cell: &Cell, seed: u64) -> usize {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -128,7 +129,7 @@ pub fn stable_hash(cell: &Cell, max: u32, seed: u64) -> usize {
     let hash = hasher.finish();
 
     let mut rng = StdRng::seed_from_u64(hash);
-    (rng.next_u32() % max) as usize
+    rng.next_u32() as usize
 }
 
 #[cfg(test)]
@@ -140,33 +141,20 @@ mod tests {
     #[test]
     fn stable_hash_is_deterministic() {
         let cell = Cell::new(3, 7);
-        assert_eq!(stable_hash(&cell, 100, 1), stable_hash(&cell, 100, 1));
+        assert_eq!(stable_hash(&cell, 1), stable_hash(&cell, 1));
     }
 
     #[test]
     fn stable_hash_different_cells_differ() {
         // Collect hashes for a small grid and assert they're not all identical.
         let hashes: Vec<usize> = (0..5)
-            .flat_map(|x| (0..5).map(move |y| stable_hash(&Cell::new(x, y), 1000, 1)))
+            .flat_map(|x| (0..5).map(move |y| stable_hash(&Cell::new(x, y), 1)))
             .collect();
         let first = hashes[0];
         assert!(
             hashes.iter().any(|&h| h != first),
             "all cells produced the same hash"
         );
-    }
-
-    #[test]
-    fn stable_hash_within_range() {
-        for x in 0..10_i32 {
-            for y in 0..10_i32 {
-                let result = stable_hash(&Cell::new(x, y), 100, 1);
-                assert!(
-                    result < 100,
-                    "hash {result} out of range for cell ({x},{y})"
-                );
-            }
-        }
     }
 
     // --- get_sample_rect_cells ---
