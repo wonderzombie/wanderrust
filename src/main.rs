@@ -22,6 +22,7 @@ use crate::{
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     map::MapSpec,
+    procgen::biome_ptable,
     tiles::{MapTile, TileIdx, Walkable},
 };
 
@@ -61,7 +62,8 @@ fn main() {
         .init_resource::<player::PlayerStats>()
         .insert_resource(CLEAR_COLOR)
         // .insert_resource(MapSpec::from_str(map::MAP))
-        .insert_resource(MapSpec::from_procedure(
+        .insert_resource(MapSpec::with_ptable(
+            procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
             (100, 100),
         ))
@@ -72,7 +74,7 @@ fn main() {
             (
                 load_spritesheet,
                 tilemap::setup_tilemap,
-                tilemap::load_ascii_map,
+                tilemap::load_map_from_spec,
                 setup_interactables,
                 setup_camera,
                 setup_player,

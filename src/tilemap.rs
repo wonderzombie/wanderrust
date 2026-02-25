@@ -128,7 +128,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     let tilemap_id = TilemapId(0);
     let mut storage = TilemapStorage::empty(size);
 
-    fill_tilemap_fn(
+    spawn_maptiles_fn(
         |_| TileIdx::Blank,
         tilemap_id,
         size,
@@ -141,7 +141,7 @@ pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<Spri
     commands.entity(map_entity).insert((tilemap_id, storage));
 }
 
-pub fn fill_tilemap_fn(
+pub fn spawn_maptiles_fn(
     fx: impl Fn(&Cell) -> TileIdx,
     tilemap_id: TilemapId,
     size: TilemapSize,
@@ -181,7 +181,7 @@ pub fn fill_tilemap_fn(
     }
 }
 
-pub fn load_ascii_map(
+pub fn load_map_from_spec(
     mut commands: Commands,
     spec: Res<MapSpec>,
     tilemaps: Query<(&TilemapId, &TilemapStorage)>,

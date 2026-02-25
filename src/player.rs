@@ -7,6 +7,6 @@ pub struct PlayerStats {
 
 impl Default for PlayerStats {
     fn default() -> Self {
-        Self { vision_range: 10 }
+        Self { vision_range: 5 }
     }
 }

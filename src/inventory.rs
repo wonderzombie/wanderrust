@@ -34,11 +34,11 @@ impl From<HashMap<Item, usize>> for Inventory {
     }
 }
 
-impl From<Vec<Item>> for Inventory {
-    fn from(items: Vec<Item>) -> Self {
+impl From<&[Item]> for Inventory {
+    fn from(items: &[Item]) -> Self {
         let mut inventory = HashMap::new();
-        for item in items {
-            *inventory.entry(item).or_insert(0) += 1;
+        for item in items.iter() {
+            *inventory.entry(item.clone()).or_insert(0usize) += 1usize;
         }
         Inventory(inventory)
     }

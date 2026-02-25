@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::cell::Cell;
 use crate::colors;
+use crate::ptable::ProbabilityTable;
 use crate::tilemap::TilemapSize;
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
@@ -105,18 +106,22 @@ impl MapSpec {
         }
     }
 
-    pub fn from_procedure(fx: impl Fn(&Cell) -> TileIdx, size: (u32, u32)) -> Self {
+    pub fn with_ptable(
+        table: ProbabilityTable,
+        fx: impl Fn(&Cell, &ProbabilityTable) -> TileIdx,
+        size: (u32, u32),
+    ) -> Self {
         let start = Cell {
             x: size.0 as i32 / 2,
             y: size.1 as i32 / 2,
         };
-        info!("map from procedure; start {:?}", start);
+        // info!("map from procedure; start {:?}", start);
         let tiles = size.0 * size.1;
 
         let pieces: HashMap<TileIdx, Vec<Cell>> = (0..tiles)
             .map(|i| {
                 let cell = Cell::from_idx(size.0, i as usize);
-                let tile_idx = fx(&cell);
+                let tile_idx = fx(&cell, &table);
                 (tile_idx, cell)
             })
             .fold(HashMap::new(), |mut acc, (idx, cell)| {
@@ -137,14 +142,10 @@ impl MapSpec {
             },
             pieces,
             layer: DEFAULT_LAYER,
-            start: Cell {
-                x: size.0 as i32 / 2,
-                y: size.1 as i32 / 2,
-            },
+            start: start,
         }
     }
 }
-
 
 /// Updates the sprites of map tiles when their tile index changes.
 pub fn sync_tiles(

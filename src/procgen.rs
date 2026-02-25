@@ -2,7 +2,6 @@ use std::ops::Div;
 
 use bevy::prelude::FloatExt;
 
-use crate::TILE_SIZE_PX;
 use crate::cell::Cell;
 use crate::ptable::{ProbabilityTable, TableBuilder, WeightedEntry};
 use crate::tiles::TileIdx;
@@ -43,13 +42,13 @@ pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
     stable_hash(cell, depth) as f32 / u32::MAX as f32
 }
 
-pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
+pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
     // Partially apply get_bilinear_sample() with the same cell and region size.
     let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);
-    select_from_table(&ptable_with_builder(), cell, &sampler, 1)
+    select_from_table(table, cell, &sampler, 1)
 }
 
-fn ptable_with_builder() -> ProbabilityTable {
+pub fn biome_ptable() -> ProbabilityTable {
     ProbabilityTable(
         TableBuilder::new()
             .table(0.5, |t| {
@@ -69,9 +68,15 @@ fn ptable_with_builder() -> ProbabilityTable {
                         .tile(0.01, TileIdx::BigGreenTree2)
                 })
                 .table(0.5, |t| {
-                    t.tile(2.0, TileIdx::GreenTree2)
+                    t.tile(1.5, TileIdx::GreenTree2)
                         .tile(0.5, TileIdx::DoubleGreenTree2)
-                        .tile(0.01, TileIdx::Blank)
+                        .tile(0.005, TileIdx::Blank)
+                })
+                .table(0.5, |t| {
+                    t.tile(10.0, TileIdx::Blank)
+                        .tile(0.15, TileIdx::BigGreenTree1)
+                        .tile(0.15, TileIdx::BigGreenTree2)
+                        .tile(0.05, TileIdx::Rocks)
                 })
             })
             .build(),

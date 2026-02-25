@@ -1,4 +1,4 @@
-use bevy::prelude::Deref;
+use bevy::{ecs::resource::Resource, prelude::Deref};
 
 use crate::tiles::TileIdx;
 
@@ -49,7 +49,7 @@ impl TableBuilder {
     }
 }
 
-#[derive(Debug, Clone, Deref)]
+#[derive(Resource, Debug, Clone, Deref)]
 pub struct ProbabilityTable(pub Vec<WeightedEntry>);
 
 impl ProbabilityTable {
