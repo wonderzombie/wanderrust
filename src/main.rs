@@ -61,7 +61,10 @@ fn main() {
         .init_resource::<player::PlayerStats>()
         .insert_resource(CLEAR_COLOR)
         // .insert_resource(MapSpec::from_str(map::MAP))
-        .insert_resource(MapSpec::from_procedure(procgen::tile_idx_for_cell, (100, 100)))
+        .insert_resource(MapSpec::from_procedure(
+            procgen::tile_idx_for_cell,
+            (100, 100),
+        ))
         .insert_resource(event_log::MessageLog::new(32))
         .add_plugins(editor::EditorPlugin)
         .add_systems(
