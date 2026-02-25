@@ -2,6 +2,7 @@ use std::ops::Div;
 
 use bevy::prelude::FloatExt;
 
+use crate::TILE_SIZE_PX;
 use crate::cell::Cell;
 use crate::ptable::{ProbabilityTable, TableBuilder, WeightedEntry};
 use crate::tiles::TileIdx;
@@ -61,14 +62,14 @@ fn ptable_with_builder() -> ProbabilityTable {
             })
             .table(0.5, |t| {
                 t.table(0.5, |t| {
-                    t.tile(0.5, TileIdx::GreenTree1)
+                    t.tile(1.5, TileIdx::GreenTree1)
                         .tile(0.05, TileIdx::DoubleGreenTree1)
                         .tile(0.01, TileIdx::Blank)
                         .tile(0.01, TileIdx::BigGreenTree1)
                         .tile(0.01, TileIdx::BigGreenTree2)
                 })
                 .table(0.5, |t| {
-                    t.tile(1.0, TileIdx::GreenTree2)
+                    t.tile(2.0, TileIdx::GreenTree2)
                         .tile(0.5, TileIdx::DoubleGreenTree2)
                         .tile(0.01, TileIdx::Blank)
                 })
