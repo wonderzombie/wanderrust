@@ -3,6 +3,7 @@ use std::ops::Div;
 use bevy::prelude::FloatExt;
 
 use crate::cell::Cell;
+use crate::ptable::{ProbabilityTable, TableBuilder, WeightedEntry};
 use crate::tiles::TileIdx;
 
 const REGION_SIZE: i32 = 8;
@@ -44,57 +45,22 @@ pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
 pub fn tile_idx_for_cell(cell: &Cell) -> TileIdx {
     // Partially apply get_bilinear_sample() with the same cell and region size.
     let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);
-    select_from_table(&ptable_with_biomes(), cell, &sampler, 1)
+    select_from_table(&ptable_with_builder(), cell, &sampler, 1)
 }
 
-type ProbabilityTable = Vec<WeightedEntry>;
-
-#[derive(Debug)]
-enum WeightedEntry {
-    Tile(f32, TileIdx),
-    Table(f32, Vec<WeightedEntry>),
-}
-
-impl From<(f32, TileIdx)> for WeightedEntry {
-    fn from(value: (f32, TileIdx)) -> Self {
-        WeightedEntry::Tile(value.0, value.1)
-    }
-}
-
-impl WeightedEntry {
-    fn weight(&self) -> f32 {
-        match self {
-            WeightedEntry::Tile(w, _) => *w,
-            WeightedEntry::Table(w, _) => *w,
-        }
-    }
-}
-
-fn ptable_with_biomes() -> ProbabilityTable {
-    vec![
-        // Grasslands.
-        WeightedEntry::Table(
-            0.5,
-            vec![
-                WeightedEntry::Tile(1.0, TileIdx::Blank),
-                WeightedEntry::Tile(0.01, TileIdx::Rocks),
-                WeightedEntry::Tile(0.3, TileIdx::GrassBrown),
-                WeightedEntry::Tile(0.3, TileIdx::Grass),
-                WeightedEntry::Tile(0.1, TileIdx::GrassFlowers),
-                WeightedEntry::Tile(0.3, TileIdx::GrassLong),
-            ],
-        ),
-        // Forest.
-        WeightedEntry::Table(
-            0.5,
-            vec![
-                WeightedEntry::Tile(0.05, TileIdx::BigGreenTree1),
-                WeightedEntry::Tile(0.05, TileIdx::BigGreenTree2),
-                WeightedEntry::Tile(0.5, TileIdx::DoubleGreenTree1),
-                WeightedEntry::Tile(1.0, TileIdx::GreenTree1),
-            ],
-        ),
-    ]
+fn ptable_with_builder() -> ProbabilityTable {
+    ProbabilityTable(
+        TableBuilder::new()
+            .table(0.5, |t| {
+                t.tile(1.0, TileIdx::Blank)
+                    .tile(0.01, TileIdx::Rocks)
+                    .tile(0.3, TileIdx::GrassBrown)
+                    .tile(0.3, TileIdx::Grass)
+                    .tile(0.1, TileIdx::GrassFlowers)
+                    .tile(0.3, TileIdx::GrassLong)
+            })
+            .build(),
+    )
 }
 
 fn select_from_table(
@@ -106,7 +72,7 @@ fn select_from_table(
     let total: f32 = table.iter().map(|e| e.weight()).sum();
 
     let mut cursor = sampler(depth) * total;
-    for entry in table {
+    for entry in table.iter() {
         match entry {
             WeightedEntry::Tile(w, tile_idx) => {
                 cursor -= w;
@@ -118,7 +84,7 @@ fn select_from_table(
                 cursor -= w;
                 if cursor <= 0.0 {
                     return select_from_table(
-                        subtable,
+                        &ProbabilityTable(subtable.clone()),
                         cell,
                         &|depth| sample_cell_with_depth(cell, depth),
                         depth + 1,

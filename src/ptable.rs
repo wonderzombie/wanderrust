@@ -1,3 +1,5 @@
+use bevy::prelude::Deref;
+
 use crate::tiles::TileIdx;
 
 #[derive(Debug, Clone)]
@@ -6,14 +8,8 @@ pub enum WeightedEntry {
     Table(f32, Vec<WeightedEntry>),
 }
 
-impl From<(f32, TileIdx)> for WeightedEntry {
-    fn from(value: (f32, TileIdx)) -> Self {
-        WeightedEntry::Tile(value.0, value.1)
-    }
-}
-
 impl WeightedEntry {
-    fn weight(&self) -> f32 {
+    pub fn weight(&self) -> f32 {
         match self {
             WeightedEntry::Tile(w, _) => *w,
             WeightedEntry::Table(w, _) => *w,
@@ -21,7 +17,11 @@ impl WeightedEntry {
     }
 }
 
-pub struct ProbabilityTable;
+impl From<(f32, TileIdx)> for WeightedEntry {
+    fn from(value: (f32, TileIdx)) -> Self {
+        WeightedEntry::Tile(value.0, value.1)
+    }
+}
 
 pub struct TableBuilder {
     entries: Vec<WeightedEntry>,
@@ -32,11 +32,7 @@ impl TableBuilder {
         TableBuilder { entries: vec![] }
     }
 
-    pub fn table(
-        mut self,
-        weight: f32,
-        f: impl FnOnce(TableBuilder) -> TableBuilder,
-    ) -> Self {
+    pub fn table(mut self, weight: f32, f: impl FnOnce(TableBuilder) -> TableBuilder) -> Self {
         let inner = f(TableBuilder::new());
         self.entries
             .push(WeightedEntry::Table(weight, inner.build()));
@@ -53,13 +49,21 @@ impl TableBuilder {
     }
 }
 
+#[derive(Debug, Clone, Deref)]
+pub struct ProbabilityTable(pub Vec<WeightedEntry>);
+
 impl ProbabilityTable {
     pub fn new() -> TableBuilder {
         TableBuilder::new()
     }
 
-    pub fn example() -> ProbabilityTable {
-        Self {}
+    pub fn example() -> Self {
+        ProbabilityTable(
+            TableBuilder::new()
+                .tile(1., TileIdx::Blank)
+                .table(0.5, |t| t.tile(0.3, TileIdx::BigGreenTree1))
+                .build(),
+        )
     }
 }
 
@@ -79,7 +83,9 @@ mod tests {
     #[test]
     fn test_table_builder_table_simple() {
         let table = TableBuilder::new()
-            .table(1., |t| t.tile(1., TileIdx::Grass).tile(1., TileIdx::GrassTall))
+            .table(1., |t| {
+                t.tile(1., TileIdx::Grass).tile(1., TileIdx::GrassTall)
+            })
             .tile(1., TileIdx::Blank)
             .tile(2., TileIdx::DoubleGreenTree1)
             .build();
@@ -100,7 +106,9 @@ mod tests {
     #[test]
     fn subtable_contents_are_correct() {
         let table = TableBuilder::new()
-            .table(0.5, |t| t.tile(0.3, TileIdx::Grass).tile(0.7, TileIdx::GrassTall))
+            .table(0.5, |t| {
+                t.tile(0.3, TileIdx::Grass).tile(0.7, TileIdx::GrassTall)
+            })
             .build();
 
         let WeightedEntry::Table(_, subtable) = &table[0] else {
@@ -139,6 +147,9 @@ mod tests {
             panic!("expected inner Table");
         };
         assert_eq!(inner.len(), 1);
-        assert!(matches!(inner[0], WeightedEntry::Tile(_, TileIdx::GreenTree1)));
+        assert!(matches!(
+            inner[0],
+            WeightedEntry::Tile(_, TileIdx::GreenTree1)
+        ));
     }
 }
