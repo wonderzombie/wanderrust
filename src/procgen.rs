@@ -59,6 +59,20 @@ fn ptable_with_builder() -> ProbabilityTable {
                     .tile(0.1, TileIdx::GrassFlowers)
                     .tile(0.3, TileIdx::GrassLong)
             })
+            .table(0.5, |t| {
+                t.table(0.5, |t| {
+                    t.tile(0.5, TileIdx::GreenTree1)
+                        .tile(0.05, TileIdx::DoubleGreenTree1)
+                        .tile(0.01, TileIdx::Blank)
+                        .tile(0.01, TileIdx::BigGreenTree1)
+                        .tile(0.01, TileIdx::BigGreenTree2)
+                })
+                .table(0.5, |t| {
+                    t.tile(1.0, TileIdx::GreenTree2)
+                        .tile(0.5, TileIdx::DoubleGreenTree2)
+                        .tile(0.01, TileIdx::Blank)
+                })
+            })
             .build(),
     )
 }
