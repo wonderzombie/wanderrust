@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::ops::Div;
 
 use bevy::prelude::FloatExt;
@@ -5,6 +6,8 @@ use bevy::prelude::FloatExt;
 use crate::cell::Cell;
 use crate::ptable::{ProbabilityTable, TableBuilder, WeightedEntry};
 use crate::tiles::TileIdx;
+
+use fxhash::FxHasher32;
 
 const REGION_SIZE: i32 = 8;
 
@@ -122,11 +125,10 @@ fn select_from_table(
 /// Generates a random number using the cell and the given seed s/t the number is the same for each cell.
 /// This ensures that a specific cell will yield the same random result as long as `seed` is the same.
 pub fn stable_hash(cell: &Cell, seed: u64) -> f32 {
-    use std::hash::{DefaultHasher, Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = FxHasher32::default();
     cell.hash(&mut hasher);
     seed.hash(&mut hasher);
-    hasher.finish() as f32 / u64::MAX as f32
+    hasher.finish() as f32 / u32::MAX as f32
 }
 
 #[cfg(test)]
