@@ -61,6 +61,11 @@ fn main() {
         .init_resource::<EditorState>()
         .init_resource::<player::PlayerStats>()
         .insert_resource(CLEAR_COLOR)
+        .insert_resource(SpritePickingSettings {
+            picking_mode: SpritePickingMode::BoundingBox,
+            // no specifically sprite picking camera yet
+            require_markers: false,
+        })
         // .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(MapSpec::with_ptable(
             procgen::biome_ptable(),

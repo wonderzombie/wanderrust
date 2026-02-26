@@ -115,10 +115,8 @@ macro_rules! get_entity {
 
 pub fn update_tile_observers(
     mut commands: Commands,
-    mut picking_settings: ResMut<SpritePickingSettings>,
     tiles: Query<Entity, Added<MapTile>>,
 ) {
-    picking_settings.picking_mode = SpritePickingMode::BoundingBox;
 
     let mut count = 0;
     for tile in tiles.iter() {
