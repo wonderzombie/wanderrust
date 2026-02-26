@@ -52,19 +52,6 @@ impl TableBuilder {
 #[derive(Resource, Debug, Clone, Deref)]
 pub struct ProbabilityTable(pub Vec<WeightedEntry>);
 
-impl ProbabilityTable {
-    pub fn new() -> TableBuilder {
-        TableBuilder::new()
-    }
-
-    pub fn example() -> Self {
-        TableBuilder::new()
-            .tile(1., TileIdx::Blank)
-            .table(0.5, |t| t.tile(0.3, TileIdx::BigGreenTree1))
-            .build()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

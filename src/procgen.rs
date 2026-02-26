@@ -42,7 +42,7 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
 }
 
 pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
-    stable_hash(cell, depth) / f32::MAX
+    stable_hash(cell, depth)
 }
 
 pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
@@ -184,5 +184,109 @@ mod tests {
                 );
             }
         }
+    }
+
+    // --- sample_cell_with_depth ---
+
+    #[test]
+    fn sample_cell_with_depth_stays_in_unit_range() {
+        for x in 0..10_i32 {
+            for y in 0..10_i32 {
+                let v = sample_cell_with_depth(&Cell::new(x, y), 0);
+                assert!(
+                    (0.0..=1.0).contains(&v),
+                    "sample_cell_with_depth {v} out of [0,1] at ({x},{y})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn sample_cell_with_depth_not_always_zero() {
+        // Before the fix, dividing by f32::MAX produced values indistinguishable from 0.
+        let values: Vec<f32> = (0..20_i32)
+            .flat_map(|x| (0..20_i32).map(move |y| sample_cell_with_depth(&Cell::new(x, y), 1)))
+            .collect();
+        let nonzero = values.iter().filter(|&&v| v > 1e-10).count();
+        assert!(
+            nonzero > values.len() / 2,
+            "most sample_cell_with_depth values were effectively zero ({nonzero}/{} nonzero)",
+            values.len()
+        );
+    }
+
+    // --- tile_idx_for_cell ---
+
+    #[test]
+    fn tile_idx_for_cell_is_deterministic() {
+        let table = crate::ptable::TableBuilder::new()
+            .tile(1.0, TileIdx::Blank)
+            .tile(1.0, TileIdx::Grass)
+            .tile(1.0, TileIdx::Rocks)
+            .build();
+        let cell = Cell::new(5, 7);
+        let first = tile_idx_for_cell(&cell, &table);
+        let second = tile_idx_for_cell(&cell, &table);
+        assert_eq!(first, second, "tile_idx_for_cell is not deterministic");
+    }
+
+    #[test]
+    fn tile_idx_for_cell_returns_entry_from_table() {
+        let table = crate::ptable::TableBuilder::new()
+            .tile(1.0, TileIdx::Blank)
+            .tile(1.0, TileIdx::Grass)
+            .tile(1.0, TileIdx::Rocks)
+            .build();
+        let valid = [TileIdx::Blank, TileIdx::Grass, TileIdx::Rocks];
+        for x in 0..10_i32 {
+            for y in 0..10_i32 {
+                let idx = tile_idx_for_cell(&Cell::new(x, y), &table);
+                assert!(
+                    valid.contains(&idx),
+                    "tile_idx_for_cell returned unexpected tile {idx:?} at ({x},{y})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn tile_idx_for_cell_produces_varied_output() {
+        // With a uniform table, we should see more than one distinct tile across a grid.
+        let table = crate::ptable::TableBuilder::new()
+            .tile(1.0, TileIdx::Blank)
+            .tile(1.0, TileIdx::Grass)
+            .tile(1.0, TileIdx::Rocks)
+            .build();
+        let mut tiles = std::collections::HashSet::new();
+        for x in 0..20_i32 {
+            for y in 0..20_i32 {
+                tiles.insert(tile_idx_for_cell(&Cell::new(x, y), &table));
+            }
+        }
+        assert!(
+            tiles.len() > 1,
+            "tile_idx_for_cell returned only one tile across a 20x20 grid: {:?}",
+            tiles
+        );
+    }
+
+    #[test]
+    fn tile_idx_for_cell_with_subtable_produces_varied_output() {
+        // Subtable recursion previously was broken by the double-division bug; verify it now works.
+        let table = crate::ptable::TableBuilder::new()
+            .table(0.5, |t| t.tile(1.0, TileIdx::GreenTree1).tile(1.0, TileIdx::GreenTree2))
+            .table(0.5, |t| t.tile(1.0, TileIdx::Grass).tile(1.0, TileIdx::Blank))
+            .build();
+        let mut tiles = std::collections::HashSet::new();
+        for x in 0..20_i32 {
+            for y in 0..20_i32 {
+                tiles.insert(tile_idx_for_cell(&Cell::new(x, y), &table));
+            }
+        }
+        assert!(
+            tiles.len() > 1,
+            "tile_idx_for_cell with subtables returned only one tile: {:?}",
+            tiles
+        );
     }
 }

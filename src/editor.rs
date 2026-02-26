@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, SavedTilemap, TilemapStorage},
+    tilemap::{self, SavedTilemap, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
@@ -81,7 +81,7 @@ pub fn on_button_input(
 pub fn handle_map_operations(
     mut commands: Commands,
     mut input: ResMut<ButtonInput<KeyCode>>,
-    mut storage: Single<&mut TilemapStorage>,
+    mut storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     mut log: ResMut<crate::event_log::MessageLog>,
 ) {

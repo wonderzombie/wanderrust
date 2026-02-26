@@ -77,9 +77,12 @@ fn main() {
         .add_systems(
             Startup,
             (
-                load_spritesheet,
-                tilemap::setup_tilemap,
-                tilemap::load_map_from_spec,
+                (
+                    load_spritesheet,
+                    tilemap::spawn_tilemap,
+                    tilemap::store_maptiles_by_cell,
+                )
+                    .chain(),
                 setup_interactables,
                 setup_camera,
                 setup_player,

@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use crate::cell::Cell;
 use crate::colors;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::TilemapSize;
+use crate::tilemap::MapDimensions;
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
 use bevy::prelude::*;
@@ -37,12 +35,26 @@ pub const MAP: &str = r#"
 /// - `b` = brown chest
 /// - `w` = white chest
 
+#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
+pub struct MapId(Option<Entity>);
+
+impl MapId {
+    pub fn get(&self) -> Option<Entity> {
+        self.0
+    }
+
+    pub fn set(&mut self, id: Entity) {
+        self.0.replace(id);
+    }
+}
+
 #[derive(Resource, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct MapSpec {
-    pub size: TilemapSize,
+    pub id: MapId,
+    pub size: MapDimensions,
     pub layer: u32,
-    pub pieces: HashMap<TileIdx, Vec<Cell>>,
+    pub flat_pieces: Vec<(TileIdx, Cell)>,
     pub start: Cell,
 }
 
@@ -58,7 +70,7 @@ impl MapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let pieces: HashMap<TileIdx, Vec<Cell>> = lines
+        let flat_pieces = lines
             .iter()
             .enumerate()
             .flat_map(|(y, line)| {
@@ -89,18 +101,16 @@ impl MapSpec {
                     })
                 })
             })
-            .fold(HashMap::new(), |mut acc, (idx, cell)| {
-                acc.entry(idx).or_default().push(cell);
-                acc
-            });
+            .collect::<Vec<_>>();
 
         MapSpec {
-            size: TilemapSize {
+            id: MapId::default(),
+            size: MapDimensions {
                 width,
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            pieces,
+            flat_pieces,
             layer: DEFAULT_LAYER,
             start: Cell { x: 5, y: 5 },
         }
@@ -115,32 +125,28 @@ impl MapSpec {
             x: size.0 as i32 / 2,
             y: size.1 as i32 / 2,
         };
-        // info!("map from procedure; start {:?}", start);
+        info!("=== map from procedure ===");
         let tiles = size.0 * size.1;
+        info!("start: {:?}", start);
+        info!("size: {:?}", size);
+        // info!("ptable:\n{:#?}", table);
 
-        let pieces: HashMap<TileIdx, Vec<Cell>> = (0..tiles)
+        let flat_pieces = (0..tiles)
             .map(|i| {
                 let cell = Cell::from_idx(size.0, i as usize);
                 let tile_idx = fx(&cell, &table);
                 (tile_idx, cell)
             })
-            .fold(HashMap::new(), |mut acc, (idx, cell)| {
-                acc.entry(idx).or_default().push(cell);
-                acc
-            });
-
-        info!("map_spec: generated tile distribution:");
-        for (tile_idx, cells) in &pieces {
-            info!("tile {:?}: {}", tile_idx, cells.len());
-        }
+            .collect();
 
         MapSpec {
-            size: TilemapSize {
+            id: MapId::default(),
+            size: MapDimensions {
                 width: size.0,
                 height: size.1,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            pieces,
+            flat_pieces,
             layer: DEFAULT_LAYER,
             start: start,
         }

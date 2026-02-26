@@ -1,27 +1,24 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     SpriteAtlas,
     cell::Cell,
-    map::{self, MapSpec},
+    map::MapSpec,
     tiles::{MapTile, Revealed, TileIdx},
 };
-
-#[derive(Component, Default, Clone, Copy)]
-pub struct TilemapId(usize);
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct TilemapSize {
+pub struct MapDimensions {
     pub width: u32,
     pub height: u32,
     pub tile_size: u32,
 }
 
-impl TilemapSize {
+impl MapDimensions {
     #[inline]
     pub fn cell_to_pos(&self, cell: &Cell) -> Vec2 {
         Vec2::new(
@@ -33,23 +30,23 @@ impl TilemapSize {
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// Attach this to an entity with TilemapId.
-pub struct TilemapStorage {
+pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
-    pub size: TilemapSize,
+    pub size: MapDimensions,
 }
 
-impl TilemapStorage {
-    pub fn empty(size: TilemapSize) -> TilemapStorage {
-        TilemapStorage {
-            tiles: vec![None; (size.width * size.height) as usize],
-            size,
-        }
-    }
+impl TileStorage {
+    // pub fn empty(size: MapDimensions) -> TileStorage {
+    //     TileStorage {
+    //         tiles: vec![None; (size.width * size.height) as usize],
+    //         size,
+    //     }
+    // }
 
-    pub fn get(&self, cell: &Cell) -> Option<Entity> {
-        let idx = cell.to_idx(self.size.width) as usize;
-        self.tiles.get(idx).copied().flatten()
-    }
+    // pub fn get(&self, cell: &Cell) -> Option<Entity> {
+    //     let idx = cell.to_idx(self.size.width) as usize;
+    //     self.tiles.get(idx).copied().flatten()
+    // }
 
     pub fn set(&mut self, cell: &Cell, entity: Entity) {
         let idx = cell.to_idx(self.size.width) as usize;
@@ -60,6 +57,13 @@ impl TilemapStorage {
 
     pub fn len(&self) -> usize {
         self.tiles.len()
+    }
+
+    fn new(size: MapDimensions) -> Self {
+        Self {
+            tiles: vec![None; (size.width * size.height) as usize],
+            size,
+        }
     }
 
     // /// Removes the cell-entity from storage and returns it, if any.
@@ -80,14 +84,13 @@ impl TilemapStorage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SavedTilemap {
     pub tiles: Vec<TileIdx>,
-    pub size: TilemapSize,
+    pub size: MapDimensions,
     pub layer: TilemapLayer,
 }
 
-#[derive(Bundle, Clone, Default)]
+#[derive(Bundle, Clone)]
 pub struct TileBundle {
     pub map_tile: MapTile,
-    pub tilemap_id: TilemapId,
     pub tile_idx: TileIdx,
     pub cell: Cell,
     pub transform: Transform,
@@ -97,7 +100,7 @@ pub struct TileBundle {
 
 #[derive(Bundle, Default)]
 pub struct TilemapBundle {
-    pub size: TilemapSize,
+    pub size: MapDimensions,
     pub layer: TilemapLayer,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
@@ -105,106 +108,64 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
-pub fn setup_tilemap(mut commands: Commands, spec: Res<MapSpec>, sheet: Res<SpriteAtlas>) {
-    let size = TilemapSize {
-        width: spec.size.width,
-        height: spec.size.height,
-        tile_size: map::DEFAULT_TILE_SIZE,
-    };
-    // TODO: settle z-order and use this as a constant
+pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: Res<SpriteAtlas>) {
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
-        size,
+        size: spec.size,
         layer,
         ..Default::default()
     };
 
     info!(
         "initializing tilemap with size {:?} and layer {:?}",
-        size, layer
+        spec.size, layer
     );
 
     let map_entity = commands.spawn(tilemap_bundle).id();
-    let tilemap_id = TilemapId(0);
-    let mut storage = TilemapStorage::empty(size);
-
-    spawn_maptiles_fn(
-        |_| TileIdx::Blank,
-        tilemap_id,
-        size,
-        layer,
-        &sheet,
-        &mut commands,
-        &mut storage,
-    );
-
-    commands.entity(map_entity).insert((tilemap_id, storage));
+    spec.id.set(map_entity);
+    spawn_maptiles_from_spec(&spec, &sheet, &mut commands);
+    commands.entity(map_entity).insert(spec.id);
 }
 
-pub fn spawn_maptiles_fn(
-    fx: impl Fn(&Cell) -> TileIdx,
-    tilemap_id: TilemapId,
-    size: TilemapSize,
-    layer: TilemapLayer,
-    sheet: &SpriteAtlas,
-    commands: &mut Commands,
-    storage: &mut TilemapStorage,
-) {
-    let tiles = size.width * size.height;
-    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
-    for i in 0..tiles {
-        let cell = Cell::from_idx(size.width, i as usize);
-        let pos = size.cell_to_pos(&cell);
-        let tile_idx = fx(&cell);
-        let entity = commands
-            .spawn((TileBundle {
+fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
+    let bundles: Vec<TileBundle> = spec
+        .flat_pieces
+        .iter()
+        .map(|(tile_idx, cell)| {
+            let pos = spec.size.cell_to_pos(&cell);
+
+            TileBundle {
                 map_tile: MapTile,
-                tilemap_id,
-                tile_idx,
-                cell,
-                transform: Transform::from_xyz(pos.x, pos.y, layer.0),
-                sprite: sheet.sprite_from_idx(tile_idx),
+                tile_idx: *tile_idx,
+                cell: *cell,
+                transform: Transform::from_xyz(pos.x, pos.y, spec.layer as f32 - 3.0),
+                sprite: sheet.sprite_from_idx(*tile_idx),
                 revealed: Revealed(false),
-            },))
-            .id();
-        storage.set(&cell, entity);
+            }
+        })
+        .collect();
 
-        tally
-            .entry(tile_idx)
-            .and_modify(|count| *count += 1)
-            .or_insert(1);
-    }
-
-    info!("tilemap: initialized tile distribution:");
-    for (tile_idx, count) in tally.iter() {
-        info!("\t{:?}: {}", tile_idx, count);
-    }
+    commands.spawn_batch(bundles);
 }
 
-pub fn load_map_from_spec(
+pub fn store_maptiles_by_cell(
     mut commands: Commands,
     spec: Res<MapSpec>,
-    tilemaps: Query<(&TilemapId, &TilemapStorage)>,
+    tiles: Query<(&Cell, Entity), With<MapTile>>,
 ) {
-    let (_, storage) = tilemaps.single().unwrap();
+    let map_entity = spec.id.get().expect("MapSpec is missing an ID");
 
-    for (tile_idx, cells) in spec.pieces.iter() {
-        for cell in cells.iter() {
-            // We're going to reuse the tiles from the existing tilemap via Storage.
-            if let Some(tile) = storage.get(cell) {
-                commands.entity(tile).insert(*tile_idx);
-            } else {
-                warn!("Tilemap is missing a tile at {:?}", cell);
-                continue;
-            }
-        }
+    info!("storing maps by cell");
+
+    let mut storage = TileStorage::new(spec.size);
+    for (cell, entity) in tiles.iter() {
+        storage.set(cell, entity);
     }
+    info!("stored tiles: {}", storage.len());
+    commands.entity(map_entity).insert(storage);
 }
 
-pub fn save_map(
-    storage: &mut TilemapStorage,
-    all_tiles: &Query<&TileIdx, With<MapTile>>,
-) -> SavedTilemap {
+pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>>) -> SavedTilemap {
     let tiles = storage
         .tiles
         .iter()
@@ -219,7 +180,7 @@ pub fn save_map(
     }
 }
 
-pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TilemapStorage) {
+pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
     storage
         .tiles
         .iter()
