@@ -113,60 +113,52 @@ macro_rules! get_entity {
     };
 }
 
-pub fn update_tile_observers(
-    mut commands: Commands,
-    tiles: Query<Entity, Added<MapTile>>,
-) {
+pub fn setup_global_tile_observers(mut commands: Commands) {
+    commands.add_observer(
+        |on: On<Pointer<Over>>,
+         mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
+         editor: Res<EditorState>| {
+            let (mut highlighted, preview_opt) = get_entity!(tiles, on);
+            highlighted.0 = true;
+            if let Some(mut preview) = preview_opt {
+                preview.set(editor.active_tile);
+            }
+        },
+    )
+    .observe(
+        |on: On<Pointer<Out>>,
+         mut tiles: Query<
+            (&mut Highlighted, Option<&mut TilePreview>),
+            With<MapTile>,
+        >| {
+            let (mut highlighted, preview_opt) = get_entity!(tiles, on);
+            highlighted.0 = false;
+            if let Some(mut preview) = preview_opt {
+                preview.clear();
+            }
+        },
+    )
+    .observe(
+        |on: On<Pointer<Click>>,
+         mut tiles: Query<&mut TileIdx, With<MapTile>>,
+         editor: Res<EditorState>| {
+            let mut tile_idx = get_entity!(tiles, on);
+            *tile_idx = match on.button {
+                PointerButton::Primary => editor.active_tile,
+                PointerButton::Secondary => TileIdx::Blank,
+                _ => *tile_idx,
+            };
+        },
+    );
+}
 
-    let mut count = 0;
+pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<MapTile>>) {
     for tile in tiles.iter() {
         commands
             .entity(tile)
             .insert(Pickable::default())
             .insert(Highlighted(false))
-            .insert(TilePreview::default())
-            // The pattern below isn't pretty but it's fine as long as it's confined to here
-            // and they are kinda sorta idiosyncratic.
-            .observe(
-                |on: On<Pointer<Over>>,
-                 mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
-                 editor: Res<EditorState>| {
-                    let (mut highlighted, preview_opt) = get_entity!(tiles, on);
-                    highlighted.0 = true;
-                    if let Some(mut preview) = preview_opt {
-                        preview.set(editor.active_tile);
-                    }
-                },
-            )
-            .observe(
-                |on: On<Pointer<Out>>,
-                 mut tiles: Query<
-                    (&mut Highlighted, Option<&mut TilePreview>),
-                    With<MapTile>,
-                >| {
-                    let (mut highlighted, preview_opt) = get_entity!(tiles, on);
-                    highlighted.0 = false;
-                    if let Some(mut preview) = preview_opt {
-                        preview.clear();
-                    }
-                },
-            )
-            .observe(
-                |on: On<Pointer<Click>>,
-                 mut tiles: Query<&mut TileIdx, With<MapTile>>,
-                 editor: Res<EditorState>| {
-                    let mut tile_idx = get_entity!(tiles, on);
-                    *tile_idx = match on.button {
-                        PointerButton::Primary => editor.active_tile,
-                        PointerButton::Secondary => TileIdx::Blank,
-                        _ => *tile_idx,
-                    };
-                },
-            );
-        count += 1;
-    }
-    if count > 0 {
-        info!("Total tiles observed: {}", count);
+            .insert(TilePreview::default());
     }
 }
 
@@ -174,10 +166,11 @@ pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_global_tile_observers);
         app.add_systems(
             Update,
             (
-                update_tile_observers,
+                add_editor_components,
                 on_button_input,
                 on_zoom_button_input,
                 handle_map_operations,
