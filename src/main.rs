@@ -22,7 +22,6 @@ use crate::{
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     map::MapSpec,
-    procgen::biome_ptable,
     tiles::{MapTile, TileIdx, Walkable},
 };
 

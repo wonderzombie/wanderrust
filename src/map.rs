@@ -8,6 +8,7 @@ use bevy::prelude::*;
 
 pub const DEFAULT_LAYER: u32 = 0;
 
+#[allow(dead_code)]
 pub const MAP: &str = r#"
 ####################
 #.................#
@@ -61,6 +62,7 @@ pub struct MapSpec {
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
 impl MapSpec {
+    #[allow(dead_code)]
     pub fn from_str(map_str: &str) -> Self {
         let lines: Vec<&str> = map_str.lines().collect();
         let height = lines.len() as u32;
