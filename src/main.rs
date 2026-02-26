@@ -61,6 +61,7 @@ fn main() {
         .init_resource::<player::PlayerStats>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
+            // clicking on a sprite ignores alpha transparency
             picking_mode: SpritePickingMode::BoundingBox,
             // no specifically sprite picking camera yet
             require_markers: false,
