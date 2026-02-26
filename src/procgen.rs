@@ -39,7 +39,7 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
 }
 
 pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
-    stable_hash(cell, depth) as f32 / u32::MAX as f32
+    stable_hash(cell, depth) / f32::MAX
 }
 
 pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
@@ -121,18 +121,12 @@ fn select_from_table(
 
 /// Generates a random number using the cell and the given seed s/t the number is the same for each cell.
 /// This ensures that a specific cell will yield the same random result as long as `seed` is the same.
-pub fn stable_hash(cell: &Cell, seed: u64) -> u32 {
-    use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
+pub fn stable_hash(cell: &Cell, seed: u64) -> f32 {
     use std::hash::{DefaultHasher, Hash, Hasher};
-
     let mut hasher = DefaultHasher::new();
     cell.hash(&mut hasher);
     seed.hash(&mut hasher);
-    let hash = hasher.finish();
-
-    let mut rng = StdRng::seed_from_u64(hash);
-    rng.next_u32()
+    hasher.finish() as f32 / u64::MAX as f32
 }
 
 #[cfg(test)]
@@ -150,7 +144,7 @@ mod tests {
     #[test]
     fn stable_hash_different_cells_differ() {
         // Collect hashes for a small grid and assert they're not all identical.
-        let hashes: Vec<u32> = (0..5)
+        let hashes: Vec<f32> = (0..5)
             .flat_map(|x| (0..5).map(move |y| stable_hash(&Cell::new(x, y), 1)))
             .collect();
         let first = hashes[0];
