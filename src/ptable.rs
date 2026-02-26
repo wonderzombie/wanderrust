@@ -5,7 +5,7 @@ use crate::tiles::TileIdx;
 #[derive(Debug, Clone)]
 pub enum WeightedEntry {
     Tile(f32, TileIdx),
-    Table(f32, Vec<WeightedEntry>),
+    Table(f32, Box<ProbabilityTable>),
 }
 
 impl WeightedEntry {
@@ -35,7 +35,7 @@ impl TableBuilder {
     pub fn table(mut self, weight: f32, f: impl FnOnce(TableBuilder) -> TableBuilder) -> Self {
         let inner = f(TableBuilder::new());
         self.entries
-            .push(WeightedEntry::Table(weight, inner.build()));
+            .push(WeightedEntry::Table(weight, inner.build().into()));
         self
     }
 
@@ -44,8 +44,8 @@ impl TableBuilder {
         self
     }
 
-    pub fn build(self) -> Vec<WeightedEntry> {
-        self.entries
+    pub fn build(self) -> ProbabilityTable {
+        ProbabilityTable(self.entries)
     }
 }
 
@@ -58,12 +58,10 @@ impl ProbabilityTable {
     }
 
     pub fn example() -> Self {
-        ProbabilityTable(
-            TableBuilder::new()
-                .tile(1., TileIdx::Blank)
-                .table(0.5, |t| t.tile(0.3, TileIdx::BigGreenTree1))
-                .build(),
-        )
+        TableBuilder::new()
+            .tile(1., TileIdx::Blank)
+            .table(0.5, |t| t.tile(0.3, TileIdx::BigGreenTree1))
+            .build()
     }
 }
 

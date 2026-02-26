@@ -49,38 +49,36 @@ pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
 }
 
 pub fn biome_ptable() -> ProbabilityTable {
-    ProbabilityTable(
-        TableBuilder::new()
-            .table(0.5, |t| {
-                t.tile(1.0, TileIdx::Blank)
-                    .tile(0.01, TileIdx::Rocks)
-                    .tile(0.3, TileIdx::GrassBrown)
-                    .tile(0.3, TileIdx::Grass)
-                    .tile(0.1, TileIdx::GrassFlowers)
-                    .tile(0.3, TileIdx::GrassLong)
+    TableBuilder::new()
+        .table(0.5, |t| {
+            t.tile(1.0, TileIdx::Blank)
+                .tile(0.01, TileIdx::Rocks)
+                .tile(0.3, TileIdx::GrassBrown)
+                .tile(0.3, TileIdx::Grass)
+                .tile(0.1, TileIdx::GrassFlowers)
+                .tile(0.3, TileIdx::GrassLong)
+        })
+        .table(0.5, |t| {
+            t.table(0.5, |t| {
+                t.tile(1.5, TileIdx::GreenTree1)
+                    .tile(0.05, TileIdx::DoubleGreenTree1)
+                    .tile(0.01, TileIdx::Blank)
+                    .tile(0.01, TileIdx::BigGreenTree1)
+                    .tile(0.01, TileIdx::BigGreenTree2)
             })
             .table(0.5, |t| {
-                t.table(0.5, |t| {
-                    t.tile(1.5, TileIdx::GreenTree1)
-                        .tile(0.05, TileIdx::DoubleGreenTree1)
-                        .tile(0.01, TileIdx::Blank)
-                        .tile(0.01, TileIdx::BigGreenTree1)
-                        .tile(0.01, TileIdx::BigGreenTree2)
-                })
-                .table(0.5, |t| {
-                    t.tile(1.5, TileIdx::GreenTree2)
-                        .tile(0.5, TileIdx::DoubleGreenTree2)
-                        .tile(0.005, TileIdx::Blank)
-                })
-                .table(0.5, |t| {
-                    t.tile(10.0, TileIdx::Blank)
-                        .tile(0.15, TileIdx::BigGreenTree1)
-                        .tile(0.15, TileIdx::BigGreenTree2)
-                        .tile(0.05, TileIdx::Rocks)
-                })
+                t.tile(1.5, TileIdx::GreenTree2)
+                    .tile(0.5, TileIdx::DoubleGreenTree2)
+                    .tile(0.005, TileIdx::Blank)
             })
-            .build(),
-    )
+            .table(0.5, |t| {
+                t.tile(10.0, TileIdx::Blank)
+                    .tile(0.15, TileIdx::BigGreenTree1)
+                    .tile(0.15, TileIdx::BigGreenTree2)
+                    .tile(0.05, TileIdx::Rocks)
+            })
+        })
+        .build()
 }
 
 fn select_from_table(
@@ -104,7 +102,7 @@ fn select_from_table(
                 cursor -= w;
                 if cursor <= 0.0 {
                     return select_from_table(
-                        &ProbabilityTable(subtable.clone()),
+                        &subtable,
                         cell,
                         &|depth| sample_cell_with_depth(cell, depth),
                         depth + 1,
