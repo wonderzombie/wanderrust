@@ -38,6 +38,8 @@ pub fn on_zoom_button_input(
         current_zoom -= 0.1
     } else if input.just_released(KeyCode::Backspace) {
         current_zoom = 1.0;
+    } else if input.just_released(KeyCode::Digit0) {
+        current_zoom = 0.1;
     }
 
     let final_zoom = current_zoom.clamp(0.1, 2.0);
