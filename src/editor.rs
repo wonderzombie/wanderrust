@@ -126,21 +126,18 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
                 preview.set(editor.active_tile);
             }
         },
-    )
-    .observe(
+    );
+    commands.add_observer(
         |on: On<Pointer<Out>>,
-         mut tiles: Query<
-            (&mut Highlighted, Option<&mut TilePreview>),
-            With<MapTile>,
-        >| {
+         mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>| {
             let (mut highlighted, preview_opt) = get_entity!(tiles, on);
             highlighted.0 = false;
             if let Some(mut preview) = preview_opt {
                 preview.clear();
             }
         },
-    )
-    .observe(
+    );
+    commands.add_observer(
         |on: On<Pointer<Click>>,
          mut tiles: Query<&mut TileIdx, With<MapTile>>,
          editor: Res<EditorState>| {
