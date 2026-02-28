@@ -22,6 +22,7 @@ use crate::{
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     map::MapSpec,
+    player::PlayerStats,
     tiles::{MapTile, TileIdx, Walkable},
 };
 
@@ -58,7 +59,7 @@ fn main() {
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
-        .init_resource::<player::PlayerStats>()
+        .init_resource::<PlayerStats>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
