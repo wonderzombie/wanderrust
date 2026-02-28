@@ -53,16 +53,19 @@ pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
 
 pub fn biome_ptable() -> ProbabilityTable {
     TableBuilder::new()
+        // Grasslands.
         .table(0.5, |t| {
             t.tile(1.0, TileIdx::Blank)
                 .tile(0.01, TileIdx::Rocks)
-                .tile(0.3, TileIdx::GrassBrown)
-                .tile(0.3, TileIdx::Grass)
-                .tile(0.1, TileIdx::GrassFlowers)
-                .tile(0.3, TileIdx::GrassLong)
+                .tile(0.03, TileIdx::GrassBrown)
+                .tile(0.05, TileIdx::Grass)
+                .tile(0.005, TileIdx::GrassFlowers)
+                .tile(0.03, TileIdx::GrassLong)
         })
+        // Forest.
         .table(0.5, |t| {
             t.table(0.5, |t| {
+                // Deciduous
                 t.tile(1.5, TileIdx::GreenTree1)
                     .tile(0.05, TileIdx::DoubleGreenTree1)
                     .tile(0.01, TileIdx::Blank)
@@ -70,11 +73,13 @@ pub fn biome_ptable() -> ProbabilityTable {
                     .tile(0.01, TileIdx::BigGreenTree2)
             })
             .table(0.5, |t| {
+                // Coniferous
                 t.tile(1.5, TileIdx::GreenTree2)
                     .tile(0.5, TileIdx::DoubleGreenTree2)
                     .tile(0.005, TileIdx::Blank)
             })
             .table(0.5, |t| {
+                // Sparse big trees
                 t.tile(10.0, TileIdx::Blank)
                     .tile(0.15, TileIdx::BigGreenTree1)
                     .tile(0.15, TileIdx::BigGreenTree2)
@@ -274,8 +279,13 @@ mod tests {
     fn tile_idx_for_cell_with_subtable_produces_varied_output() {
         // Subtable recursion previously was broken by the double-division bug; verify it now works.
         let table = crate::ptable::TableBuilder::new()
-            .table(0.5, |t| t.tile(1.0, TileIdx::GreenTree1).tile(1.0, TileIdx::GreenTree2))
-            .table(0.5, |t| t.tile(1.0, TileIdx::Grass).tile(1.0, TileIdx::Blank))
+            .table(0.5, |t| {
+                t.tile(1.0, TileIdx::GreenTree1)
+                    .tile(1.0, TileIdx::GreenTree2)
+            })
+            .table(0.5, |t| {
+                t.tile(1.0, TileIdx::Grass).tile(1.0, TileIdx::Blank)
+            })
             .build();
         let mut tiles = std::collections::HashSet::new();
         for x in 0..20_i32 {
