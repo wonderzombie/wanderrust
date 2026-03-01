@@ -54,37 +54,38 @@ pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
 pub fn biome_ptable() -> ProbabilityTable {
     TableBuilder::new()
         // Grasslands.
-        .table(0.5, |t| {
-            t.tile(1.0, TileIdx::Blank)
-                .tile(0.01, TileIdx::Rocks)
-                .tile(0.03, TileIdx::GrassBrown)
+        .table(0.8, |t| {
+            t.tile(0.5, TileIdx::Blank)
+                .tile(0.003, TileIdx::Rocks)
                 .tile(0.05, TileIdx::Grass)
                 .tile(0.005, TileIdx::GrassFlowers)
                 .tile(0.03, TileIdx::GrassLong)
-        })
-        // Forest.
+        }) // Grass and rocks
         .table(0.5, |t| {
-            t.table(0.5, |t| {
-                // Deciduous
-                t.tile(1.5, TileIdx::GreenTree1)
-                    .tile(0.05, TileIdx::DoubleGreenTree1)
-                    .tile(0.01, TileIdx::Blank)
-                    .tile(0.01, TileIdx::BigGreenTree1)
-                    .tile(0.01, TileIdx::BigGreenTree2)
-            })
-            .table(0.5, |t| {
-                // Coniferous
-                t.tile(1.5, TileIdx::GreenTree2)
-                    .tile(0.5, TileIdx::DoubleGreenTree2)
-                    .tile(0.005, TileIdx::Blank)
-            })
-            .table(0.5, |t| {
-                // Sparse big trees
-                t.tile(10.0, TileIdx::Blank)
-                    .tile(0.15, TileIdx::BigGreenTree1)
-                    .tile(0.15, TileIdx::BigGreenTree2)
-                    .tile(0.05, TileIdx::Rocks)
-            })
+            t.tile(0.7, TileIdx::Blank)
+                .tile(0.05, TileIdx::Rocks)
+                .tile(0.9, TileIdx::Grass)
+        })
+        // Deciduous
+        .table(0.5, |t| {
+            t.tile(1.5, TileIdx::GreenTree1)
+                .tile(0.05, TileIdx::DoubleGreenTree1)
+                .tile(0.01, TileIdx::Blank)
+                .tile(0.01, TileIdx::BigGreenTree1)
+                .tile(0.01, TileIdx::BigGreenTree2)
+        })
+        // Coniferous
+        .table(0.8, |t| {
+            t.tile(1.5, TileIdx::GreenTree2)
+                .tile(0.5, TileIdx::DoubleGreenTree2)
+                .tile(0.005, TileIdx::Blank)
+        })
+        // Sparse big trees
+        .table(0.2, |t| {
+            t.tile(10.0, TileIdx::Blank)
+                .tile(0.15, TileIdx::BigGreenTree1)
+                .tile(0.15, TileIdx::BigGreenTree2)
+                .tile(0.05, TileIdx::Rocks)
         })
         .build()
 }
