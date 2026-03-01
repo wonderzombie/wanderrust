@@ -9,7 +9,7 @@ use crate::tiles::TileIdx;
 
 use fxhash::FxHasher32;
 
-const REGION_SIZE: i32 = 8;
+const REGION_SIZE: i32 = 10;
 
 /// Returns the sub-grid coordinates using a subgrid of `size`.
 pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
@@ -54,7 +54,7 @@ pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
 pub fn biome_ptable() -> ProbabilityTable {
     TableBuilder::new()
         // Grasslands.
-        .table(0.8, |t| {
+        .table(0.5, |t| {
             t.tile(0.5, TileIdx::Blank)
                 .tile(0.003, TileIdx::Rocks)
                 .tile(0.05, TileIdx::Grass)
@@ -62,9 +62,9 @@ pub fn biome_ptable() -> ProbabilityTable {
                 .tile(0.03, TileIdx::GrassLong)
         }) // Grass and rocks
         .table(0.5, |t| {
-            t.tile(0.7, TileIdx::Blank)
-                .tile(0.05, TileIdx::Rocks)
-                .tile(0.9, TileIdx::Grass)
+            t.tile(0.9, TileIdx::Blank)
+                .tile(0.1, TileIdx::Rocks)
+                .tile(0.4, TileIdx::GrassBrown)
         })
         // Deciduous
         .table(0.5, |t| {
@@ -75,13 +75,13 @@ pub fn biome_ptable() -> ProbabilityTable {
                 .tile(0.01, TileIdx::BigGreenTree2)
         })
         // Coniferous
-        .table(0.8, |t| {
+        .table(0.5, |t| {
             t.tile(1.5, TileIdx::GreenTree2)
                 .tile(0.5, TileIdx::DoubleGreenTree2)
                 .tile(0.005, TileIdx::Blank)
         })
         // Sparse big trees
-        .table(0.2, |t| {
+        .table(0.05, |t| {
             t.tile(10.0, TileIdx::Blank)
                 .tile(0.15, TileIdx::BigGreenTree1)
                 .tile(0.15, TileIdx::BigGreenTree2)
@@ -113,7 +113,8 @@ fn select_from_table(
                     return select_from_table(
                         &subtable,
                         cell,
-                        &|depth| sample_cell_with_depth(cell, depth),
+                        sampler,
+                        // &|depth| sample_cell_with_depth(cell, depth),
                         depth + 1,
                     );
                 }
