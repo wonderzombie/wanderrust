@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     colors::KENNEY_RED,
     event_log,
+    player::PlayerStats,
     tilemap::{self, SavedTilemap, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
@@ -78,6 +79,16 @@ pub fn on_button_input(
         KENNEY_RED,
     );
     info!("active tile is now {:?}", editor_state.active_tile);
+}
+
+pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerStats>) {
+    if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
+        if stats.is_default() {
+            stats.set_vision_range(10);
+        } else {
+            stats.reset_vision_range();
+        }
+    }
 }
 
 pub fn handle_map_operations(
@@ -172,6 +183,7 @@ impl Plugin for EditorPlugin {
                 add_editor_components,
                 on_button_input,
                 on_zoom_button_input,
+                on_toggle_fov,
                 handle_map_operations,
             )
                 .chain(),
