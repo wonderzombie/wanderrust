@@ -98,7 +98,7 @@ pub fn handle_map_operations(
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     mut log: ResMut<crate::event_log::MessageLog>,
 ) {
-    if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyS]) {
+    if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
         warn!("requested to save");
         input.clear();
         let storage = tilemap::save_map(&mut storage, &all_tiles);
@@ -106,7 +106,7 @@ pub fn handle_map_operations(
         std::fs::write("data/level.ron", serialized).unwrap();
         log.add("Saved map", KENNEY_RED);
         info!("saved map to level.ron");
-    } else if input.all_pressed([KeyCode::ShiftLeft, KeyCode::KeyL]) {
+    } else if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyL) {
         warn!("requested to load");
         input.clear();
         let serialized = std::fs::read_to_string("data/level.ron").unwrap();
