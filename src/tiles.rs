@@ -2,6 +2,8 @@ use bevy::{math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
 
+use TileIdx::*;
+
 macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
@@ -141,39 +143,53 @@ tiles! {
 impl TileIdx {
     const WALKABLE: &'static [TileIdx] = &[
         // Ground cover
-        TileIdx::Blank,
-        TileIdx::GrassBrown,
-        TileIdx::Gravel,
-        TileIdx::Grass,
-        TileIdx::GrassFlowers,
-        TileIdx::GrassLong,
-        TileIdx::GrassTall,
-        TileIdx::DoorwayBrownThick,
-        TileIdx::GreenTree1,
-        TileIdx::GreenTree2,
-        TileIdx::GreenTree3,
-        TileIdx::DoubleGreenTree1,
-        TileIdx::DoubleGreenTree2,
-        TileIdx::BigGreenTree1,
-        TileIdx::BigGreenTree2,
-        TileIdx::GridSquare,
+        Blank,
+        GrassBrown,
+        Gravel,
+        Grass,
+        GrassFlowers,
+        GrassLong,
+        GrassTall,
+        DoorwayBrownThick,
+        GreenTree1,
+        GreenTree2,
+        GreenTree3,
+        DoubleGreenTree1,
+        DoubleGreenTree2,
+        BigGreenTree1,
+        BigGreenTree2,
+        GridSquare,
+        StairsUp,
+        StairsDown,
+        MineEntrance,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[
         // Walls without windows are opaque and solid.
-        TileIdx::StoneWall,
+        StoneWall,
         // Closed doors are opaque and solid.
-        TileIdx::DoorBrownThickClosed1,
-        TileIdx::DoorBrownThickClosed2,
-        TileIdx::DoorBrownThickClosed3,
+        DoorBrownThickClosed1,
+        DoorBrownThickClosed2,
+        DoorBrownThickClosed3,
     ];
 
     const INTERACTABLE: &'static [TileIdx] = &[
-        TileIdx::ChestBrownClosed,
-        TileIdx::ChestWhiteClosed,
-        TileIdx::DoorBrownThickClosed1,
-        TileIdx::DoorBrownThickClosed2,
-        TileIdx::DoorBrownThickClosed3,
+        ChestBrownClosed,
+        ChestWhiteClosed,
+        DoorBrownThickClosed1,
+        DoorBrownThickClosed2,
+        DoorBrownThickClosed3,
+    ];
+
+    const FLIPPABLE: &'static [TileIdx] = &[
+        DoorBrownThickClosed1,
+        DoorBrownThickClosed2,
+        DoorBrownThickClosed3,
+        Grass,
+        GrassFlowers,
+        GrassBrown,
+        Gravel,
+        Rocks,
     ];
 
     pub fn is_walkable(&self) -> bool {
@@ -188,13 +204,17 @@ impl TileIdx {
         Self::INTERACTABLE.contains(self)
     }
 
+    pub fn is_flippable(&self) -> bool {
+        Self::FLIPPABLE.contains(self)
+    }
+
     pub fn opened_version(&self) -> Option<TileIdx> {
         match self {
-            TileIdx::ChestBrownClosed => Some(TileIdx::ChestBrownOpen),
-            TileIdx::ChestWhiteClosed => Some(TileIdx::ChestWhiteOpen),
-            TileIdx::DoorBrownThickClosed1 => Some(TileIdx::DoorwayBrownThick),
-            TileIdx::DoorBrownThickClosed2 => Some(TileIdx::DoorwayBrownThick),
-            TileIdx::DoorBrownThickClosed3 => Some(TileIdx::DoorwayBrownThick),
+            ChestBrownClosed => Some(ChestBrownOpen),
+            ChestWhiteClosed => Some(ChestWhiteOpen),
+            DoorBrownThickClosed1 | DoorBrownThickClosed2 | DoorBrownThickClosed3 => {
+                Some(DoorwayBrownThick)
+            }
             _ => None,
         }
     }
