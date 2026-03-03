@@ -14,7 +14,7 @@ const REGION_SIZE: i32 = 8;
 /// Returns the sub-grid coordinates using a subgrid of `size`.
 pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
     let size = size as i32;
-    let top_left = cell.clone().div(REGION_SIZE);
+    let top_left = cell.clone().div(size);
     [
         top_left,
         top_left + Cell::new(size, 0),
