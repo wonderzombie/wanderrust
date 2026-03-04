@@ -117,10 +117,6 @@ fn select_from_table(
         }
     }
 
-    if let Some(WeightedEntry::Tile(_, t)) = table.last() {
-        return *t;
-    }
-
     TileIdx::GridSquare
 }
 
