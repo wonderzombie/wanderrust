@@ -57,7 +57,6 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
 
 #[derive(Resource, Debug, Default)]
 pub struct MessageLog {
-    messages: VecDeque<String>,
     color_messages: VecDeque<(String, Color)>,
     max_lines: usize,
 }
@@ -65,15 +64,15 @@ pub struct MessageLog {
 impl MessageLog {
     pub fn new(max_lines: usize) -> Self {
         Self {
-            messages: VecDeque::with_capacity(max_lines),
+            color_messages: VecDeque::with_capacity(max_lines),
             max_lines,
             ..Default::default()
         }
     }
 
     pub fn add(&mut self, msg: impl Into<String>, color: impl Into<Color>) {
-        if self.messages.len() >= self.max_lines {
-            self.messages.pop_front();
+        if self.color_messages.len() >= self.max_lines {
+            self.color_messages.pop_front();
         }
         self.color_messages.push_back((msg.into(), color.into()));
     }
