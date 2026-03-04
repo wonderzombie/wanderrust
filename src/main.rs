@@ -64,10 +64,9 @@ fn main() {
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
             picking_mode: SpritePickingMode::BoundingBox,
-            // no specifically sprite picking camera yet
+            // we have no specifically sprite picking camera yet
             require_markers: false,
         })
-        // .insert_resource(MapSpec::from_str(map::MAP))
         .insert_resource(MapSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
