@@ -129,7 +129,7 @@ pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: R
 
 fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
     let bundles: Vec<TileBundle> = spec
-        .flat_pieces
+        .tiles
         .iter()
         .map(|(tile_idx, cell)| {
             let pos = spec.size.cell_to_pos(&cell);

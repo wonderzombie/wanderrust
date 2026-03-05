@@ -56,7 +56,7 @@ pub struct MapSpec {
     pub id: MapId,
     pub size: MapDimensions,
     pub layer: u32,
-    pub flat_pieces: Vec<(TileIdx, Cell)>,
+    pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
 }
 
@@ -113,7 +113,7 @@ impl MapSpec {
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            flat_pieces,
+            tiles: flat_pieces,
             layer: DEFAULT_LAYER,
             start: Cell { x: 5, y: 5 },
         }
@@ -135,7 +135,7 @@ impl MapSpec {
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
-        let flat_pieces = (0..tiles)
+        let tiles = (0..tiles)
             .map(|i| {
                 let cell = Cell::from_idx(size.0, i as usize);
                 let tile_idx = fx(&cell, &table);
@@ -153,9 +153,9 @@ impl MapSpec {
                 height: size.1,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            flat_pieces,
+            tiles,
             layer: DEFAULT_LAYER,
-            start: start,
+            start,
         }
     }
 }
