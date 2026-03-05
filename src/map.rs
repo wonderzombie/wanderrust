@@ -4,6 +4,7 @@ use crate::ptable::ProbabilityTable;
 use crate::tilemap::MapDimensions;
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
 pub const DEFAULT_LAYER: u32 = 0;
@@ -131,15 +132,19 @@ impl MapSpec {
         let tiles = size.0 * size.1;
         info!("start: {:?}", start);
         info!("size: {:?}", size);
-        // info!("ptable:\n{:#?}", table);
+
+        let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
         let flat_pieces = (0..tiles)
             .map(|i| {
                 let cell = Cell::from_idx(size.0, i as usize);
                 let tile_idx = fx(&cell, &table);
+                tally.entry(tile_idx).and_modify(|e| *e += 1).or_insert(1);
                 (tile_idx, cell)
             })
             .collect();
+
+        info!("tile breakdown: {:#?}", tally);
 
         MapSpec {
             id: MapId::default(),
