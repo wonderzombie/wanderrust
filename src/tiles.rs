@@ -184,6 +184,7 @@ impl TileIdx {
         Grass,
         GrassFlowers,
         GrassBrown,
+        GrassLong,
         Gravel,
         Rocks,
     ];

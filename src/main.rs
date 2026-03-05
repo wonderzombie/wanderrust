@@ -350,7 +350,8 @@ fn process_action_attempts(
     mut commands: Commands,
     mut log: ResMut<event_log::MessageLog>,
     mut interactions: MessageReader<ActionAttempt>,
-    mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    mut interactable_tiles: Query<(&mut TileIdx, &mut Interactable)>,
+    interactable_actors: Query<(&ActorIdx, &Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
     player_inventory: Res<Inventory>,
     spatial_index: Res<SpatialIndex>,
@@ -367,22 +368,32 @@ fn process_action_attempts(
             continue;
         };
 
-        let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(target_entity) else {
-            info!(
-                "Player interacts with an entity at {:?}, but it's not interactable.",
-                message.target_cell
-            );
-            continue; // There is a target entity, but it's not interactable.
-        };
+        let it = interactable_tiles.get_mut(target_entity);
+        match it {
+            Ok((mut tile_idx, mut interactable)) => handle_interaction(
+                &mut tile_idx,
+                &mut interactable,
+                &player_inventory,
+                &mut acquisitions,
+                message.interactor,
+                &mut log,
+            ),
+            Err(e) => {
+                warn!("{:?}", e);
+            }
+        }
 
-        handle_interaction(
-            &mut tile_idx,
-            &mut interactable,
-            &player_inventory,
-            &mut acquisitions,
-            message.interactor,
-            &mut log,
-        );
+        if let Ok((mut tile_idx, mut interactable)) = interactable_tiles.get_mut(target_entity) {
+            handle_interaction(
+                &mut tile_idx,
+                &mut interactable,
+                &player_inventory,
+                &mut acquisitions,
+                message.interactor,
+                &mut log,
+            );
+        } else if let Ok((actor_idx, interactable)) = interactable_actors.get(target_entity) {
+        }
     }
 }
 
@@ -489,22 +500,34 @@ fn setup_actors(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let sprite = atlas.sprite();
 
     let hardcoded_actors = vec![
-        (ActorBundle {
-            piece_bundle: PieceBundle {
-                sprite: sprite.clone(),
-                cell: Cell::new(55, 55),
-                transform: Transform::default(),
+        (
+            ActorBundle {
+                piece_bundle: PieceBundle {
+                    sprite: sprite.clone(),
+                    cell: Cell::new(55, 55),
+                    transform: Transform::default(),
+                },
+                actor_idx: ActorIdx::Imp,
             },
-            actor_idx: ActorIdx::Imp,
-        }),
-        (ActorBundle {
-            piece_bundle: PieceBundle {
-                sprite: sprite.clone(),
-                cell: Cell::new(45, 45),
-                transform: Transform::default(),
+            Interactable::Actor {
+                name: "Imp the Imp".to_string(),
+                dialogue: vec!["I am Imp the Imp!".to_string()],
             },
-            actor_idx: ActorIdx::Ghost,
-        }),
+        ),
+        (
+            ActorBundle {
+                piece_bundle: PieceBundle {
+                    sprite: sprite.clone(),
+                    cell: Cell::new(45, 45),
+                    transform: Transform::default(),
+                },
+                actor_idx: ActorIdx::Ghost,
+            },
+            Interactable::Actor {
+                name: "Ghost".to_string(),
+                dialogue: vec!["...".to_string()],
+            },
+        ),
     ];
 
     commands.spawn_batch(hardcoded_actors);

@@ -39,6 +39,6 @@ actors! {
     Wumpus = atlas_idx(28, 6),
     Imp = atlas_idx(29, 2),
     Skeleton = atlas_idx(29, 6),
-    GenericNpc = atlas_idx(30, 1),
+    Merchant = atlas_idx(30, 1),
     Rat = atlas_idx(31, 8),
 }
