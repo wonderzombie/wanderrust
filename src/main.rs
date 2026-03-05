@@ -1,3 +1,4 @@
+mod actors;
 mod cell;
 mod colors;
 mod editor;
@@ -18,6 +19,7 @@ use bevy::prelude::*;
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
+    actors::ActorIdx,
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
@@ -87,6 +89,7 @@ fn main() {
                 setup_camera,
                 setup_player,
                 fov::setup_fov,
+                setup_actors,
             )
                 .chain(),
         )
@@ -106,7 +109,7 @@ fn main() {
             (
                 map::sync_tiles,
                 sync_actor_sprites,
-                update_piece_transforms,
+                update_actor_transforms,
                 update_spatial_index,
                 fov::update_fov_model,
                 fov::update_fov_markers,
@@ -149,10 +152,6 @@ impl SpriteAtlas {
         }
     }
 }
-
-#[derive(Component, Debug)]
-/// A marker component for entities that perform actions in the world, such as the player or NPCs.
-pub struct Actor;
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
@@ -199,7 +198,7 @@ pub struct PieceBundle {
 fn setup_player(mut commands: Commands, spec: Res<MapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Player,
-        Actor,
+        ActorIdx::Player,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: spec.start,
@@ -209,7 +208,6 @@ fn setup_player(mut commands: Commands, spec: Res<MapSpec>, atlas: Res<SpriteAtl
                 -1.0,
             ),
         },
-        TileIdx::Player,
     ));
 }
 
@@ -229,10 +227,8 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
-fn sync_actor_sprites(
-    mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
-) {
-    for (mut sprite, tile_idx) in pieces.iter_mut() {
+fn sync_actor_sprites(mut actors: Query<(&mut Sprite, &ActorIdx), Changed<ActorIdx>>) {
+    for (mut sprite, tile_idx) in actors.iter_mut() {
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = tile_idx.into();
         }
@@ -240,10 +236,10 @@ fn sync_actor_sprites(
 }
 
 /// Updates the position of pieces based on their cell coordinates when the cell changes.
-fn update_piece_transforms(
-    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
+fn update_actor_transforms(
+    mut actors: Query<(&Cell, &mut Transform), (With<ActorIdx>, Changed<Cell>)>,
 ) {
-    for (piece_cell, mut transform) in pieces.iter_mut() {
+    for (piece_cell, mut transform) in actors.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
     }
@@ -344,6 +340,10 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
+    Actor {
+        name: String,
+        dialogue: Vec<String>,
+    },
 }
 
 fn process_action_attempts(
@@ -425,6 +425,11 @@ fn handle_interaction(
                 });
             }
         }
+        Interactable::Actor { name, dialogue } => {
+            info!("interacted with {}", name);
+            let out = dialogue.join("\n");
+            log.add(out, colors::KENNEY_GREEN);
+        }
     }
 }
 
@@ -472,4 +477,35 @@ pub fn setup_interactables(
             commands.entity(entity).insert(bundle);
         }
     }
+}
+
+#[derive(Bundle, Clone)]
+struct ActorBundle {
+    piece_bundle: PieceBundle,
+    actor_idx: ActorIdx,
+}
+
+fn setup_actors(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    let sprite = atlas.sprite();
+
+    let hardcoded_actors = vec![
+        (ActorBundle {
+            piece_bundle: PieceBundle {
+                sprite: sprite.clone(),
+                cell: Cell::new(55, 55),
+                transform: Transform::default(),
+            },
+            actor_idx: ActorIdx::Imp,
+        }),
+        (ActorBundle {
+            piece_bundle: PieceBundle {
+                sprite: sprite.clone(),
+                cell: Cell::new(45, 45),
+                transform: Transform::default(),
+            },
+            actor_idx: ActorIdx::Ghost,
+        }),
+    ];
+
+    commands.spawn_batch(hardcoded_actors);
 }

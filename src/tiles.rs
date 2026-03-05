@@ -133,10 +133,6 @@ tiles! {
     StairsUp = atlas_idx(2, 6),
     StairsDown = atlas_idx(3, 6),
 
-    // Player
-    Player = atlas_idx(27, 0),
-
-    //
     GridSquare = atlas_idx(39, 14),
 }
 
