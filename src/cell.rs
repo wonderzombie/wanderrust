@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Component, Default, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 /// A simple struct representing a cell in the grid-based world, with integer coordinates.
-/// i32 allows us to use offsets without extra fuss.
+/// i32 allows us to use offsets without extra fuss compared to unsigned integers.
 pub struct Cell {
     pub x: i32,
     pub y: i32,
@@ -16,6 +16,7 @@ impl Cell {
         Cell { x, y }
     }
 
+    /// Creates a cell from x and y coordinates, converting them to i32.
     pub fn at_coords(x: u32, y: u32) -> Self {
         Cell {
             x: x as i32,
@@ -23,6 +24,7 @@ impl Cell {
         }
     }
 
+    /// Creates a cell from an index and a width, converting them to i32.
     pub fn from_idx(width: u32, idx: usize) -> Cell {
         Cell {
             x: (idx % width as usize) as i32,
@@ -40,6 +42,7 @@ impl Cell {
         self.y = self.y.saturating_add(other.y);
     }
 
+    /// Converts this cell to an index given a width, treating the cell as a 2D grid index.
     pub fn to_idx(self, width: u32) -> u32 {
         width
             .saturating_mul(self.y as u32)
