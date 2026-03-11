@@ -81,7 +81,7 @@ impl TilePreview {
     }
 }
 
-// We're  keeping this very simple for now. Everything with a sprite on the grid is a tile.
+// We're keeping this very simple for now. Everything with a sprite on the grid is a tile.
 tiles! {
     // Ground
     Blank = atlas_idx(0, 0),
