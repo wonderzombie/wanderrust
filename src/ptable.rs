@@ -2,9 +2,12 @@ use bevy::{ecs::resource::Resource, prelude::Deref};
 
 use crate::tiles::TileIdx;
 
+/// A weighted entry in a ProbabilityTable.
 #[derive(Debug, Clone)]
 pub enum WeightedEntry {
+    /// A Tile by probability weight and its [TileIdx]
     Tile(f32, TileIdx),
+    /// A sub-table by probability weight and its [ProbabilityTable]
     Table(f32, Box<ProbabilityTable>),
 }
 
@@ -23,6 +26,20 @@ impl From<(f32, TileIdx)> for WeightedEntry {
     }
 }
 
+/// Use TableBuilder to construct a [ProbabilityTable].
+///
+/// Example:
+/// ```rust
+/// let table = TableBuilder::new()
+///     .table(1.0, |builder| {
+///         builder.tile(0.5, TileIdx::Grass)
+///             .tile(0.5, TileIdx::Tree)
+///     })
+///     .table(0.5, |builder| {
+///         builder.tile(1.0, TileIdx::Wall)
+///     })
+///     .build();
+/// ```
 pub struct TableBuilder {
     entries: Vec<WeightedEntry>,
 }
@@ -32,6 +49,16 @@ impl TableBuilder {
         TableBuilder { entries: vec![] }
     }
 
+    /// Invokes `f` on a new table and adds it to this TableBuilder.
+    ///
+    /// Example:
+    /// ```rust
+    /// let table = TableBuilder::new()
+    ///     .table(1.0, |builder| {
+    ///         builder.tile(0.5, TileIdx::Blank)
+    ///     })
+    ///     .build();
+    /// ```
     pub fn table(mut self, weight: f32, f: impl FnOnce(TableBuilder) -> TableBuilder) -> Self {
         let inner = f(TableBuilder::new());
         self.entries
@@ -39,6 +66,14 @@ impl TableBuilder {
         self
     }
 
+    /// Add a tile to the current table in this TableBuilder.
+    ///
+    /// Example:
+    /// ```rust
+    /// let table = TableBuilder::new()
+    ///     .tile(1.0, TileIdx::Blank)
+    ///     .build();
+    /// ```
     pub fn tile(mut self, weight: f32, tile: TileIdx) -> Self {
         self.entries.push(WeightedEntry::Tile(weight, tile));
         self
