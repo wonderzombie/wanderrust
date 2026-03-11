@@ -117,6 +117,35 @@ pub fn handle_map_operations(
     }
 }
 
+pub fn pick_and_load(mut dialog: ResMut<AsyncLoadDialog>) -> Option<SavedTilemap> {
+    use rfd::FileDialog;
+    let picked = FileDialog::new()
+        .add_filter("ron", &["ron"])
+        .pick_file()
+        .expect("expected a file to have been picked");
+
+    let serialized = fs::read_to_string(&picked).expect("unable to read map file to string");
+
+    let deserialized =
+        ron::from_str::<SavedTilemap>(&serialized).expect("unable to deserialize map from string");
+
+    info!("loaded map from {:?}", picked);
+    Some(deserialized)
+}
+
+pub fn pick_and_save(tilemap: &SavedTilemap) {
+    use rfd::FileDialog;
+    let picked = FileDialog::new()
+        .add_filter("ron", &["ron"])
+        .pick_file()
+        .expect("expected a file to have been picked");
+
+    let serialized = ron::to_string(tilemap).expect("unable to serialize map to string");
+    let _ = fs::write(&picked, serialized).expect("unable to save serialized map");
+
+    info!("saved map to {:?}", picked);
+}
+
 macro_rules! get_entity {
     ($query:expr, $on:expr) => {
         match $query.get_mut($on.event_target()) {
