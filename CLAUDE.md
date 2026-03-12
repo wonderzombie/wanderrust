@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**wanderrust** is a 2D roguelike game built with [Bevy](https://bevyengine.org/) (v0.18) and `bevy_egui`. It uses a tile-based map rendered from a sprite atlas (Kenney 1-bit pack), with field-of-view, procedural map generation, an inventory system, and an in-game map editor with save/load via the `rfd` file dialog.
+**wanderrust** is a tile-based, fake-retro 2D game built with [Bevy](https://bevyengine.org/) (v0.18) and `bevy_egui`. While some aspects of it are procedural, the world uses a fixed seed by default when choosing terrain tiles. It uses a tile-based map rendered from a sprite atlas (Kenney 1-bit pack), with field-of-view, procedural map generation, an inventory system, and an in-game map editor with save/load via the `rfd` file dialog.
 
 The workspace has two members:
 - `.` — the main game crate (`wanderrust`)
