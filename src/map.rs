@@ -137,6 +137,90 @@ impl TilemapSpec {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dimensions_match_string() {
+        let spec = TilemapSpec::from_str("###\n...\n");
+        assert_eq!(spec.size.width, 3);
+        assert_eq!(spec.size.height, 2);
+        assert_eq!(spec.size.tile_size, DEFAULT_TILE_SIZE);
+    }
+
+    #[test]
+    fn jagged_map_uses_widest_line() {
+        let spec = TilemapSpec::from_str("#\n###\n##\n");
+        assert_eq!(spec.size.width, 3);
+        assert_eq!(spec.size.height, 3);
+    }
+
+    #[test]
+    fn empty_string_produces_empty_spec() {
+        let spec = TilemapSpec::from_str("");
+        assert_eq!(spec.size.width, 0);
+        assert_eq!(spec.size.height, 0);
+        assert!(spec.tiles.is_empty());
+    }
+
+    #[test]
+    fn spaces_and_unknown_chars_excluded() {
+        // ' ' (empty space) and '?' (unknown) should produce no tiles
+        let spec = TilemapSpec::from_str(" ?");
+        assert!(spec.tiles.is_empty());
+    }
+
+    #[test]
+    fn character_mappings() {
+        // One of each known character on a single row; check tile indices in order
+        let spec = TilemapSpec::from_str("#.XDObwTtUu");
+        let tile_types: Vec<TileIdx> = spec.tiles.iter().map(|(idx, _)| *idx).collect();
+        assert_eq!(
+            tile_types,
+            vec![
+                TileIdx::StoneWall,
+                TileIdx::Blank,          // '.'
+                TileIdx::Blank,          // 'X' also maps to Blank
+                TileIdx::DoorBrownThickClosed1,
+                TileIdx::DoorwayBrownThick,
+                TileIdx::ChestBrownClosed,
+                TileIdx::ChestWhiteClosed,
+                TileIdx::GreenTree1,
+                TileIdx::GreenTree2,
+                TileIdx::DoubleGreenTree1,
+                TileIdx::DoubleGreenTree2,
+            ]
+        );
+    }
+
+    #[test]
+    fn cell_coordinates_match_col_row() {
+        // "#." on row 0 → wall at (0,0), blank at (1,0)
+        // ".#" on row 1 → blank at (0,1), wall at (1,1)
+        let spec = TilemapSpec::from_str("#.\n.#");
+        let tiles = &spec.tiles;
+        assert_eq!(tiles[0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
+        assert_eq!(tiles[1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
+        assert_eq!(tiles[2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
+        assert_eq!(tiles[3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
+    }
+
+    #[test]
+    fn start_is_hardcoded_regardless_of_x_position() {
+        // 'X' marks the intended start in ASCII but from_str ignores its position;
+        // start is always hardcoded to (5, 5).
+        let spec = TilemapSpec::from_str("X..\n...\n...");
+        assert_eq!(spec.start, Cell { x: 5, y: 5 });
+    }
+
+    #[test]
+    fn layer_uses_default() {
+        let spec = TilemapSpec::from_str("#");
+        assert_eq!(spec.layer, DEFAULT_LAYER);
+    }
+}
+
 /// Sync [TileIdx] and [Sprite] visuals along with their gameplay properties.
 pub fn sync_tiles(
     mut commands: Commands,
