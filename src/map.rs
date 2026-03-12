@@ -229,22 +229,28 @@ pub fn sync_tiles(
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
 ) {
+    // This method only runs when [TileIdx] or [TilePreview] changes, so
+    // we apply most changes in some unconditional fashion.
     for (entity, mut sprite, tile_idx, preview_opt) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
-        // If there's a preview, we should apply that tile index instead.
-        let preview_opt = preview_opt.and_then(|it| it.get());
-        let next_idx = preview_opt.unwrap_or(*tile_idx);
 
+        // If there's a preview, we should apply that tile index instead.
+        let next_idx = preview_opt.and_then(|it| it.get()).unwrap_or(*tile_idx);
+        // Apply the texture atlas index unconditionally.
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = next_idx.into();
         }
 
+        // Walkable may be added/removed unconditionally based on [TileIdx].
+        // TODO: consider whether to split this out or not.
         if tile_idx.is_walkable() {
             entity_command.insert(Walkable);
         } else {
             entity_command.remove::<Walkable>();
         }
 
+        // Opaque may be added/removed unconditionally based on [TileIdx].
+        // TODO: consider whether to split this out or not.
         if tile_idx.is_transparent() {
             entity_command.remove::<Opaque>();
         } else {
