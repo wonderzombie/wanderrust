@@ -77,27 +77,22 @@ fn main() {
         .add_systems(
             Startup,
             (
-                (
-                    load_spritesheet,
-                    tilemap::spawn_tilemap,
-                    tilemap::store_maptiles_by_cell,
-                )
-                    .chain(),
-                setup_interactables,
+                load_spritesheet,
+                tilemap::spawn_tilemap.after(load_spritesheet),
+                tilemap::initialize_tile_storage.after(tilemap::spawn_tilemap),
+                setup_interactables.after(tilemap::initialize_tile_storage),
+                setup_player.after(load_spritesheet),
+                fov::setup_fov.after(tilemap::initialize_tile_storage),
                 setup_camera,
-                setup_player,
-                fov::setup_fov,
-            )
-                .chain(),
+            ),
         )
+        .add_systems(Update, setup_egui_fonts.run_if(run_once))
         .add_systems(
             Update,
             (
-                setup_egui_fonts.run_if(run_once),
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,
-                update_camera,
             )
                 .chain(),
         )
@@ -107,11 +102,11 @@ fn main() {
                 map::sync_tiles,
                 sync_actor_sprites,
                 update_piece_transforms,
+                update_camera.after(update_piece_transforms),
                 update_spatial_index,
-                fov::update_fov_model,
-                fov::update_fov_markers,
-            )
-                .chain(),
+                fov::update_fov_model.after(map::sync_tiles),
+                fov::update_fov_markers.after(fov::update_fov_model),
+            ),
         )
         .add_systems(Last, map::update_map_tile_visuals)
         .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
