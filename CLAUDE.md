@@ -1,0 +1,81 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**wanderrust** is a 2D roguelike game built with [Bevy](https://bevyengine.org/) (v0.18) and `bevy_egui`. It uses a tile-based map rendered from a sprite atlas (Kenney 1-bit pack), with field-of-view, procedural map generation, an inventory system, and an in-game map editor with save/load via the `rfd` file dialog.
+
+The workspace has two members:
+- `.` — the main game crate (`wanderrust`)
+- `mrpas/` — a local FOV library (port of [godot-mrpas](https://github.com/matt-kimball/godot-mrpas))
+
+## Commands
+
+```bash
+# Build
+cargo build
+
+# Run the game
+cargo run
+
+# Run tests (unit tests in procgen and ptable modules)
+cargo test
+
+# Run tests for a specific module
+cargo test --lib procgen
+cargo test --lib ptable
+
+# Check without building
+cargo check
+
+# Lint
+cargo clippy
+```
+
+## Architecture
+
+### ECS Structure (Bevy)
+
+The game is built around Bevy's ECS. Key resources and their roles:
+
+- **`SpriteAtlas`** — wraps the texture handle + atlas layout for the Kenney tileset; used everywhere sprites are created
+- **`MapSpec`** — defines the map's probability table, tile selection function, size, and start position; used during tilemap generation
+- **`SpatialIndex`** — `HashMap<Cell, Entity>` tracking which cells are blocked by non-walkable entities; rebuilt every `PostUpdate`
+- **`Inventory`** (player) — player's item store, a `Resource`
+- **`EditorState`** — tracks editor mode, selected tile, pending load/save dialog tasks
+- **`MessageLog`** — a fixed-length ring of colored text messages rendered by egui
+
+### Module Responsibilities
+
+| Module | Purpose |
+|---|---|
+| `main.rs` | App setup, `Player`, `Actor`, `SpatialIndex`, `PieceBundle`, `Interactable`, input handling, camera |
+| `map.rs` | `MapSpec` (map config resource), `sync_tiles` (spawns new tile entities from spec), `update_map_tile_visuals` (tint/alpha for FOV) |
+| `tilemap.rs` | `TileStorage`, `MapDimensions`, `SavedTilemap`; spawns map tiles, serializes/deserializes maps to/from RON |
+| `tiles.rs` | `TileIdx` enum (atlas indices for every tile type), marker components (`MapTile`, `Walkable`, `Opaque`, `Revealed`, `Highlighted`) |
+| `procgen.rs` | Procedural generation via bilinear noise sampling and `ProbabilityTable`; `biome_ptable()` and `tile_idx_for_cell()` are the key entry points |
+| `ptable.rs` | `ProbabilityTable` and `TableBuilder` — weighted random tile selection |
+| `fov.rs` | `Fov`/`View` resources wrapping `mrpas::Mrpas`; `update_fov_model` sets transparency, `update_fov_markers` tags tiles with `Revealed`/`Highlighted` |
+| `editor.rs` | `EditorPlugin` — tile picker UI (egui), zoom, click-to-paint tiles, async save/load dialogs via `rfd` |
+| `cell.rs` | `Cell` — a simple `(x, y)` grid coordinate component |
+| `colors.rs` | Named color constants (Kenney palette) |
+| `inventory.rs` | `Item`, `Inventory`, `Acquisition` message |
+| `event_log.rs` | `MessageLog` resource, egui rendering of messages, font setup |
+| `player.rs` | `PlayerStats` resource |
+
+### Key Patterns
+
+**Cell coordinates vs. world space**: Map tiles live at `Cell(x, y)`. World transform is `x * TILE_SIZE_PX, y * TILE_SIZE_PX`. The camera follows the player cell.
+
+**Message passing**: `ActionAttempt` and `Acquisition` are Bevy messages (via `.add_message::<T>()`), not events. Systems use `MessageReader`/`MessageWriter`.
+
+**Tile visual state**: FOV visibility is applied in `map::update_map_tile_visuals` (runs in `Last`) by checking `Revealed` and `Highlighted` marker components. Tiles without `Revealed` are hidden; `Highlighted` tiles are full-brightness.
+
+**Map serialization**: Maps are saved/loaded as RON files via `tilemap::SavedTilemap`, which stores a flat `Vec<TileIdx>` with dimensions. The `data/` directory contains example saved maps.
+
+**Async dialogs**: `editor.rs` uses `rfd` with Bevy tasks (`AsyncComputeTaskPool`) for non-blocking file picker dialogs. Tasks are polled each frame via `poll_load_dialog` / `poll_save_dialog`.
+
+### `mrpas` crate
+
+The local `mrpas/` crate provides `Mrpas` — a grid-based symmetric shadowcasting FOV algorithm. Usage: call `set_transparent(pos, bool)` to mark occluders, `clear_field_of_view()`, then `compute_field_of_view(origin, range)`. Check visibility with `is_in_view(pos)`.
