@@ -428,7 +428,7 @@ fn handle_interaction(
                 *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
                 info!("Player opens the chest and finds: {:?}", contents);
                 log.add("Opened chest.", colors::KENNEY_BLUE);
-                log.add(contents.summary("got").join("\n"), colors::KENNEY_GREEN);
+                log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
                 acquisitions.write(Acquisition {
                     acquirer: interactor,
                     items: contents.clone(),

@@ -71,12 +71,19 @@ impl MessageLog {
         }
     }
 
-    pub fn add(&mut self, msg: impl Into<String>, color: impl Into<Color>) {
+    pub fn add(&mut self, msg: impl AsRef<str>, color: impl Into<Color>) {
         if self.color_messages.len() >= self.max_lines {
             self.color_messages.pop_front();
         }
         self.color_messages
-            .push_back((msg.into().to_uppercase(), color.into()));
+            .push_back((msg.as_ref().to_uppercase(), color.into()));
+    }
+
+    pub fn add_all(&mut self, messages: &[impl AsRef<str>], color: impl Into<Color>) {
+        let color = color.into();
+        for m in messages {
+            self.add(m.as_ref(), color);
+        }
     }
 
     pub fn as_color_text(&self) -> VecDeque<(String, Color)> {
