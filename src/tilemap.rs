@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     SpriteAtlas,
     cell::Cell,
-    map::MapSpec,
+    map::TilemapSpec,
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -110,7 +110,7 @@ pub struct TilemapBundle {
 
 /// Spawns a tilemap, a constituency of [MapTile] entities, from a [MapSpec].
 /// It creates one entity with [TilemapBundle] and many with [TileBundle].
-pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: Res<SpriteAtlas>) {
+pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<TilemapSpec>, sheet: Res<SpriteAtlas>) {
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
         size: spec.size,
@@ -130,7 +130,7 @@ pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: R
 }
 
 /// Spawns [MapTile] entities from a [MapSpec] in a batch.
-fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
+fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
     let bundles: Vec<TileBundle> = spec
         .tiles
         .iter()
@@ -155,7 +155,7 @@ fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut 
 /// Adds all [MapTile] entities to [TileStorage] for quick lookup by [Cell].
 pub fn initialize_tile_storage(
     mut commands: Commands,
-    spec: Res<MapSpec>,
+    spec: Res<TilemapSpec>,
     tiles: Query<(&Cell, Entity), With<MapTile>>,
 ) {
     let map_entity = spec.id.get().expect("MapSpec is missing an ID");

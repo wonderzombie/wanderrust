@@ -50,19 +50,20 @@ impl MapId {
     }
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Default, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-pub struct MapSpec {
+pub struct TilemapSpec {
     pub id: MapId,
     pub size: MapDimensions,
     pub layer: u32,
+    /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
     pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
 }
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
-impl MapSpec {
+impl TilemapSpec {
     #[allow(dead_code)]
     pub fn from_str(map_str: &str) -> Self {
         let lines: Vec<&str> = map_str.lines().collect();
@@ -106,7 +107,7 @@ impl MapSpec {
             })
             .collect::<Vec<_>>();
 
-        MapSpec {
+        TilemapSpec {
             id: MapId::default(),
             size: MapDimensions {
                 width,
@@ -146,7 +147,7 @@ impl MapSpec {
 
         info!("tile breakdown: {:#?}", tally);
 
-        MapSpec {
+        TilemapSpec {
             id: MapId::default(),
             size: MapDimensions {
                 width: size.0,
@@ -192,9 +193,9 @@ pub fn sync_tiles(
     }
 }
 
-/// Sync any visual effects with the tile's logical state.
+/// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 /// TODO: consider whether or how function signature might be simplified.
-pub fn update_map_tile_visuals(
+pub fn update_tile_visuals(
     mut tiles: Query<
         (
             &mut Sprite,

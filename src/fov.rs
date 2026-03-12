@@ -5,7 +5,7 @@ use mrpas::Mrpas;
 use crate::{
     Player,
     cell::Cell,
-    map::MapSpec,
+    map::TilemapSpec,
     player,
     tiles::{MapTile, Revealed, TileIdx},
 };
@@ -42,7 +42,7 @@ impl View {
 /// The field of view is marked as opaque beforehand.
 pub fn setup_fov(
     mut commands: Commands,
-    spec: Res<MapSpec>,
+    spec: Res<TilemapSpec>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
     let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));

@@ -21,7 +21,7 @@ use crate::{
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
-    map::MapSpec,
+    map::TilemapSpec,
     player::PlayerStats,
     tiles::{MapTile, TileIdx, Walkable},
 };
@@ -67,7 +67,7 @@ fn main() {
             // we have no specifically sprite picking camera yet
             require_markers: false,
         })
-        .insert_resource(MapSpec::with_ptable(
+        .insert_resource(TilemapSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
             (100, 100),
@@ -112,7 +112,7 @@ fn main() {
                 fov::update_fov_markers.after(fov::update_fov_model),
             ),
         )
-        .add_systems(Last, map::update_map_tile_visuals)
+        .add_systems(Last, map::update_tile_visuals)
         .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
 }
@@ -212,7 +212,7 @@ pub struct PieceBundle {
     pub transform: Transform,
 }
 
-fn setup_player(mut commands: Commands, spec: Res<MapSpec>, atlas: Res<SpriteAtlas>) {
+fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Player,
         Actor,
