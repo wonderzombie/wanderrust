@@ -224,7 +224,7 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
-/// Syncs changed actor sprites (`Without<MapTile>`) with their corresponding tile indices.
+/// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
 fn sync_actor_sprites(
     mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
 ) {
@@ -235,7 +235,7 @@ fn sync_actor_sprites(
     }
 }
 
-/// Updates the position of pieces based on their cell coordinates when the cell changes.
+/// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
 fn update_piece_transforms(
     mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
 ) {
@@ -245,7 +245,7 @@ fn update_piece_transforms(
     }
 }
 
-/// Updates the spatial index resource based on the current positions of actors in the world.
+/// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
 fn update_spatial_index(
     mut index: ResMut<SpatialIndex>,
     query: Query<(Entity, &Cell), Without<Walkable>>,
@@ -256,6 +256,7 @@ fn update_spatial_index(
     }
 }
 
+/// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 fn load_spritesheet(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -279,6 +280,7 @@ fn load_spritesheet(
 #[derive(Component, Debug)]
 pub struct Player;
 
+/// Handles player input and sends an [ActionAttempt] message derived from player input.
 fn handle_player_input(
     mut events: MessageWriter<ActionAttempt>,
     input: Res<ButtonInput<KeyCode>>,
@@ -299,6 +301,7 @@ fn handle_player_input(
     });
 }
 
+/// Returns the [IVec2] direction implied by [KeyCode], if any.
 fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
     let mut direction = IVec2::ZERO;
 
@@ -342,6 +345,7 @@ pub enum Interactable {
     },
 }
 
+/// Processes [ActionAttempt] messages, either moving the player or interacting with an interactable entity at the target [Cell] using [SpatialIndex].
 fn process_action_attempts(
     mut commands: Commands,
     mut log: ResMut<event_log::MessageLog>,
@@ -382,6 +386,7 @@ fn process_action_attempts(
     }
 }
 
+/// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
 fn handle_interaction(
     tile_idx: &mut TileIdx,
     interactable: &mut Interactable,
