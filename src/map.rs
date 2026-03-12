@@ -38,9 +38,9 @@ pub const MAP: &str = r#"
 /// - `w` = white chest
 
 #[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
-pub struct MapId(Option<Entity>);
+pub struct TilemapId(Option<Entity>);
 
-impl MapId {
+impl TilemapId {
     pub fn get(&self) -> Option<Entity> {
         self.0
     }
@@ -53,7 +53,7 @@ impl MapId {
 #[derive(Resource, Default, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct TilemapSpec {
-    pub id: MapId,
+    pub id: TilemapId,
     pub size: MapDimensions,
     pub layer: u32,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
@@ -108,7 +108,7 @@ impl TilemapSpec {
             .collect::<Vec<_>>();
 
         TilemapSpec {
-            id: MapId::default(),
+            id: TilemapId::default(),
             size: MapDimensions {
                 width,
                 height,
@@ -148,7 +148,7 @@ impl TilemapSpec {
         info!("tile breakdown: {:#?}", tally);
 
         TilemapSpec {
-            id: MapId::default(),
+            id: TilemapId::default(),
             size: MapDimensions {
                 width: size.0,
                 height: size.1,
