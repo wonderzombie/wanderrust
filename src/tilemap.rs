@@ -133,7 +133,11 @@ pub struct TilemapBundle {
 
 /// Spawns a tilemap, a constituency of [MapTile] entities, from a [MapSpec].
 /// It creates one entity with [TilemapBundle] and many with [TileBundle].
-pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<TilemapSpec>, sheet: Res<SpriteAtlas>) {
+pub fn spawn_tilemap(
+    mut commands: Commands,
+    mut spec: ResMut<TilemapSpec>,
+    sheet: Res<SpriteAtlas>,
+) {
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
         size: spec.size,

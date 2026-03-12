@@ -5,8 +5,8 @@ use mrpas::Mrpas;
 use crate::{
     Player,
     cell::Cell,
-    tilemap::TilemapSpec,
     player,
+    tilemap::TilemapSpec,
     tiles::{MapTile, Revealed, TileIdx},
 };
 

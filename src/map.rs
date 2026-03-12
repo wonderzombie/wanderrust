@@ -180,8 +180,8 @@ mod tests {
             tile_types,
             vec![
                 TileIdx::StoneWall,
-                TileIdx::Blank,          // '.'
-                TileIdx::Blank,          // 'X' also maps to Blank
+                TileIdx::Blank, // '.'
+                TileIdx::Blank, // 'X' also maps to Blank
                 TileIdx::DoorBrownThickClosed1,
                 TileIdx::DoorwayBrownThick,
                 TileIdx::ChestBrownClosed,
