@@ -4,7 +4,11 @@
       "mcp__acp__Edit",
       "mcp__acp__Write",
       "mcp__acp__Bash",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "mcp__serena__list_dir",
+      "mcp__serena__activate_project",
+      "mcp__serena__get_symbols_overview",
+      "Bash(cargo check)"
     ]
   }
 }
