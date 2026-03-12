@@ -1,7 +1,7 @@
 use crate::cell::Cell;
 use crate::colors;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::MapDimensions;
+use crate::tilemap::{MapDimensions, TilemapId, TilemapSpec};
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
 use bevy::platform::collections::HashMap;
@@ -36,30 +36,6 @@ pub const MAP: &str = r#"
 /// - ` ` = empty space (not walkable)
 /// - `b` = brown chest
 /// - `w` = white chest
-
-#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
-pub struct TilemapId(Option<Entity>);
-
-impl TilemapId {
-    pub fn get(&self) -> Option<Entity> {
-        self.0
-    }
-
-    pub fn set(&mut self, id: Entity) {
-        self.0.replace(id);
-    }
-}
-
-#[derive(Resource, Default, Debug)]
-/// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-pub struct TilemapSpec {
-    pub id: TilemapId,
-    pub size: MapDimensions,
-    pub layer: u32,
-    /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<(TileIdx, Cell)>,
-    pub start: Cell,
-}
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 

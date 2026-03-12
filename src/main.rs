@@ -21,7 +21,7 @@ use crate::{
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
-    map::TilemapSpec,
+    tilemap::TilemapSpec,
     player::PlayerStats,
     tiles::{MapTile, TileIdx, Walkable},
 };

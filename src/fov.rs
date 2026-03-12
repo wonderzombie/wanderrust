@@ -5,7 +5,7 @@ use mrpas::Mrpas;
 use crate::{
     Player,
     cell::Cell,
-    map::TilemapSpec,
+    tilemap::TilemapSpec,
     player,
     tiles::{MapTile, Revealed, TileIdx},
 };

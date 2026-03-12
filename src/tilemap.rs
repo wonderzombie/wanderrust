@@ -4,9 +4,32 @@ use serde::{Deserialize, Serialize};
 use crate::{
     SpriteAtlas,
     cell::Cell,
-    map::TilemapSpec,
     tiles::{MapTile, Revealed, TileIdx},
 };
+
+#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
+pub struct TilemapId(Option<Entity>);
+
+impl TilemapId {
+    pub fn get(&self) -> Option<Entity> {
+        self.0
+    }
+
+    pub fn set(&mut self, id: Entity) {
+        self.0.replace(id);
+    }
+}
+
+#[derive(Resource, Default, Debug)]
+/// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
+pub struct TilemapSpec {
+    pub id: TilemapId,
+    pub size: MapDimensions,
+    pub layer: u32,
+    /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
+    pub tiles: Vec<(TileIdx, Cell)>,
+    pub start: Cell,
+}
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
