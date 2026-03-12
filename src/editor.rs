@@ -78,6 +78,8 @@ pub fn on_button_input(
         return;
     }
 
+    // TODO: update the tile preview that follows the cursor.
+    // At present it doesn't update until the mouse moves.
     editor_state.active_tile = *lookup
         .get(editor_state.active_tile_idx)
         .unwrap_or(&editor_state.active_tile);
