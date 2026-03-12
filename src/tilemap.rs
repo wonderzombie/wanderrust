@@ -172,7 +172,8 @@ pub fn initialize_tile_storage(
 
 /// Saves the current state [TilemapStorage] as a [SavedTilemap].
 pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>>) -> SavedTilemap {
-    // Using storage to drive iteration, and all_tiles to resolve `TileIdx`.
+    // Using storage to drive iteration and using all_tiles to resolve `TileIdx` for each entity.
+    // We don't need to store coordinates since the map size is fixed and known at load time.
     let tiles = storage
         .tiles
         .iter()
