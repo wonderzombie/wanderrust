@@ -94,7 +94,7 @@ pub fn on_button_input(
 pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerStats>) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
         if stats.is_default() {
-            stats.set_vision_range(10);
+            stats.set_vision_range(15);
         } else {
             stats.reset_vision_range();
         }
