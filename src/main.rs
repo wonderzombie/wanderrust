@@ -88,6 +88,10 @@ fn main() {
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
         .add_systems(
+            Startup,
+            add_test_npc.run_if(run_once).after(load_spritesheet),
+        )
+        .add_systems(
             Update,
             (
                 handle_player_input,
@@ -111,6 +115,23 @@ fn main() {
         .add_systems(Last, map::update_map_tile_visuals)
         .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
+}
+
+fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    let bundle = PieceBundle {
+        sprite: atlas.sprite(),
+        cell: Cell { x: 53, y: 53 },
+        transform: Transform::default(),
+    };
+    commands.spawn((
+        bundle,
+        Actor,
+        TileIdx::Skeleton,
+        Interactable::Dialogue {
+            name: "Mr. Boney".into(),
+            text: "Hello".into(),
+        },
+    ));
 }
 
 #[derive(Resource, Debug)]
@@ -361,13 +382,12 @@ fn process_action_attempts(
 ) {
     for message in interactions.read() {
         let Some(target_entity) = spatial_index.get(message.target_cell) else {
-            // No entity at the target cell, so we can assume it's an empty walkable tile.
-            // Changing the cell will cause the system to move the player sprite.
+            // No entity at the target [Cell], so we can assume it's an empty walkable tile.
+            // Changing the [Cell] via insertion will cause the system to move the player sprite.
             commands
                 .entity(message.interactor)
                 .insert(message.target_cell);
             log.add("You move.", colors::KENNEY_OFF_WHITE);
-
             continue;
         };
 
