@@ -343,6 +343,10 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
+    Dialogue {
+        name: String,
+        text: String,
+    },
 }
 
 /// Processes [ActionAttempt] messages, either moving the player or interacting with an interactable entity at the target [Cell] using [SpatialIndex].
@@ -425,6 +429,10 @@ fn handle_interaction(
                     items: contents.clone(),
                 });
             }
+        }
+        Interactable::Dialogue { name, text } => {
+            info!("Player talks to {}.", name);
+            log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
         }
     }
 }
