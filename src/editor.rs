@@ -14,6 +14,8 @@ use crate::{
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
+const DATA_DIR: &str = "data";
+
 #[derive(Resource)]
 pub struct EditorState {
     pub active_tile: tiles::TileIdx,
@@ -177,6 +179,7 @@ pub fn open_load_dialog(mut commands: Commands) {
     let task = task_pool.spawn(async move {
         rfd::AsyncFileDialog::new()
             .add_filter("RON files", &["ron"])
+            .set_directory(DATA_DIR)
             .pick_file()
             .await
             .map(|handle| handle.path().to_owned())
@@ -222,6 +225,7 @@ pub fn open_save_dialog(mut commands: Commands) {
     let task = task_pool.spawn(async move {
         AsyncFileDialog::new()
             .add_filter("ron", &["ron"])
+            .set_directory(DATA_DIR)
             .save_file()
             .await
             .map(|handle| handle.path().to_path_buf())
