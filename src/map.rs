@@ -193,12 +193,13 @@ pub fn sync_tiles(
 }
 
 /// Sync any visual effects with the tile's logical state.
+/// TODO: consider whether or how function signature might be simplified.
 pub fn update_map_tile_visuals(
     mut tiles: Query<
         (
             &mut Sprite,
             Option<&Highlighted>,
-            Option<&Revealed>,
+            &Revealed,
             Option<&TilePreview>,
         ),
         (
@@ -212,8 +213,8 @@ pub fn update_map_tile_visuals(
     >,
 ) {
     for (mut sprite, highlighted, revealed, preview_opt) in tiles.iter_mut() {
-        let revealed = revealed.map_or(false, |it| it.0);
-        let highlighted = highlighted.map_or(false, |it| it.0);
+        let revealed = revealed.0;
+        let highlighted = highlighted.is_some();
 
         sprite.color = if highlighted {
             colors::KENNEY_GOLD

@@ -135,10 +135,9 @@ macro_rules! get_entity {
 pub fn setup_global_tile_observers(mut commands: Commands) {
     commands.add_observer(
         |on: On<Pointer<Over>>,
-         mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>,
+         mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
          editor: Res<EditorState>| {
-            let (mut highlighted, preview_opt) = get_entity!(tiles, on);
-            highlighted.0 = true;
+            let preview_opt = get_entity!(tiles, on);
             if let Some(mut preview) = preview_opt {
                 preview.set(editor.active_tile);
             }
@@ -146,9 +145,10 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     );
     commands.add_observer(
         |on: On<Pointer<Out>>,
-         mut tiles: Query<(&mut Highlighted, Option<&mut TilePreview>), With<MapTile>>| {
-            let (mut highlighted, preview_opt) = get_entity!(tiles, on);
-            highlighted.0 = false;
+         mut commands: Commands,
+         mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>| {
+            let preview_opt = get_entity!(tiles, on);
+            commands.entity(on.event_target()).remove::<Highlighted>();
             if let Some(mut preview) = preview_opt {
                 preview.clear();
             }
@@ -168,13 +168,12 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     );
 }
 
-/// Adds [Pickable], [Highlighted], and [TilePreview] components to newly added [MapTile] entities.
+/// Adds [Pickable] and [TilePreview] components to newly added [MapTile] entities.
 pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<MapTile>>) {
     for tile in tiles.iter() {
         commands
             .entity(tile)
             .insert(Pickable::default())
-            .insert(Highlighted(false))
             .insert(TilePreview::default());
     }
 }
