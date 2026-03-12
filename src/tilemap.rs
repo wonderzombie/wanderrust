@@ -194,8 +194,8 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         .tiles
         .iter()
         .zip(saved.tiles.iter())
-        .for_each(|(maybe_entity, maybe_tile_idx)| {
-            if let (Some(entity), tile_idx) = (maybe_entity, maybe_tile_idx) {
+        .for_each(|(maybe_entity, tile_idx)| {
+            if let Some(entity) = maybe_entity {
                 commands.entity(*entity).insert(*tile_idx);
             }
         });
