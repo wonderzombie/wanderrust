@@ -452,7 +452,11 @@ fn update_camera(
         return;
     };
 
-    let mut camera_transform = camera_query.single_mut().unwrap();
+    let Ok(mut camera_transform) = camera_query.single_mut() else {
+        warn!("No camera entity found in the world.");
+        return;
+    };
+
     camera_transform.translation.x = (player_cell.x as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
     camera_transform.translation.y = (player_cell.y as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
     let zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
