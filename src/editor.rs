@@ -1,4 +1,10 @@
-use bevy::prelude::*;
+use std::path::PathBuf;
+
+use bevy::{
+    prelude::*,
+    tasks::{AsyncComputeTaskPool, Task, futures},
+};
+use rfd::AsyncFileDialog;
 
 use crate::{
     colors::KENNEY_RED,
@@ -117,35 +123,6 @@ pub fn handle_map_operations(
     }
 }
 
-pub fn pick_and_load(mut dialog: ResMut<AsyncLoadDialog>) -> Option<SavedTilemap> {
-    use rfd::FileDialog;
-    let picked = FileDialog::new()
-        .add_filter("ron", &["ron"])
-        .pick_file()
-        .expect("expected a file to have been picked");
-
-    let serialized = fs::read_to_string(&picked).expect("unable to read map file to string");
-
-    let deserialized =
-        ron::from_str::<SavedTilemap>(&serialized).expect("unable to deserialize map from string");
-
-    info!("loaded map from {:?}", picked);
-    Some(deserialized)
-}
-
-pub fn pick_and_save(tilemap: &SavedTilemap) {
-    use rfd::FileDialog;
-    let picked = FileDialog::new()
-        .add_filter("ron", &["ron"])
-        .pick_file()
-        .expect("expected a file to have been picked");
-
-    let serialized = ron::to_string(tilemap).expect("unable to serialize map to string");
-    let _ = fs::write(&picked, serialized).expect("unable to save serialized map");
-
-    info!("saved map to {:?}", picked);
-}
-
 macro_rules! get_entity {
     ($query:expr, $on:expr) => {
         match $query.get_mut($on.event_target()) {
@@ -201,21 +178,122 @@ pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<
     }
 }
 
+type PathBufTask = Task<Option<std::path::PathBuf>>;
+
+#[derive(Component)]
+pub(crate) struct LoadDialogTask(PathBufTask);
+
+#[derive(Message)]
+pub(crate) struct MapLoadMessage(PathBuf);
+
+pub fn open_load_dialog(mut commands: Commands) {
+    let task_pool = AsyncComputeTaskPool::get();
+    let task = task_pool.spawn(async move {
+        rfd::AsyncFileDialog::new()
+            .add_filter("RON files", &["ron"])
+            .pick_file()
+            .await
+            .map(|handle| handle.path().to_owned())
+    });
+    commands.spawn(LoadDialogTask(task));
+}
+
+pub fn poll_load_dialog(
+    mut commands: Commands,
+    mut tasks: Query<(Entity, &mut LoadDialogTask)>,
+    mut load_events: MessageWriter<MapLoadMessage>,
+) {
+    for (entity, mut task) in &mut tasks {
+        if let Some(opt_path) = futures::check_ready(&mut task.0) {
+            if let Some(path) = opt_path {
+                load_events.write(MapLoadMessage(path));
+            }
+            commands.entity(entity).remove::<LoadDialogTask>();
+        }
+    }
+}
+
+pub fn load_map(
+    mut commands: Commands,
+    mut storage: Single<&mut TileStorage>,
+    mut load_messages: MessageReader<MapLoadMessage>,
+) {
+    for message in load_messages.read() {
+        let serialized = std::fs::read_to_string(&message.0).unwrap();
+        let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
+        tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
+    }
+}
+
+#[derive(Message)]
+pub(crate) struct MapSaveMessage(PathBuf);
+
+#[derive(Component)]
+pub(crate) struct SaveDialogTask(PathBufTask);
+
+pub fn open_save_dialog(mut commands: Commands) {
+    let task_pool = AsyncComputeTaskPool::get();
+    let task = task_pool.spawn(async move {
+        AsyncFileDialog::new()
+            .add_filter("ron", &["ron"])
+            .save_file()
+            .await
+            .map(|handle| handle.path().to_path_buf())
+    });
+    commands.spawn(SaveDialogTask(task));
+}
+
+pub fn poll_save_dialog(
+    mut commands: Commands,
+    mut save_dialog_tasks: Query<(Entity, &mut SaveDialogTask)>,
+    mut save_events: MessageWriter<MapSaveMessage>,
+) {
+    for (entity, mut task) in save_dialog_tasks.iter_mut() {
+        if let Some(opt_path) = futures::check_ready(&mut task.0) {
+            if let Some(path) = opt_path {
+                save_events.write(MapSaveMessage(path));
+            }
+            commands.entity(entity).remove::<SaveDialogTask>();
+        }
+    }
+}
+
+pub fn save_map(
+    mut storage: Single<&mut TileStorage>,
+    all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
+    mut save_messages: MessageReader<MapSaveMessage>,
+) {
+    for message in save_messages.read() {
+        let storage = tilemap::save_map(&mut storage, &all_tiles);
+        if let Ok(serialized) = ron::to_string(&storage) {
+            let Ok(_) = std::fs::write(&message.0, serialized) else {
+                continue;
+            };
+        }
+    }
+}
+
 pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_global_tile_observers);
-        app.add_systems(
-            Update,
-            (
-                add_editor_components,
-                on_button_input,
-                on_zoom_button_input,
-                on_toggle_fov,
-                handle_map_operations,
+        app.add_systems(Startup, setup_global_tile_observers)
+            .add_systems(
+                Update,
+                (
+                    add_editor_components,
+                    on_button_input,
+                    on_zoom_button_input,
+                    on_toggle_fov,
+                    handle_map_operations,
+                )
+                    .chain(),
             )
-                .chain(),
-        );
+            .add_systems(
+                PostUpdate,
+                (poll_load_dialog, poll_save_dialog, load_map, save_map),
+            )
+            .add_message::<MapLoadMessage>()
+            .add_message::<MapSaveMessage>();
     }
 }
