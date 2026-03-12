@@ -138,7 +138,15 @@ tiles! {
     // Player
     Player = atlas_idx(27, 0),
 
-    //
+    // NPCs
+    Skeleton = atlas_idx(29, 6),
+    Spider = atlas_idx(28, 5),
+    Wumpus = atlas_idx(28, 6),
+    Rat = atlas_idx(31, 8),
+    Bat = atlas_idx(26, 8),
+    Slime = atlas_idx(27, 8),
+
+    // Placeholder
     GridSquare = atlas_idx(39, 14),
 }
 
