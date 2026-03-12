@@ -108,6 +108,8 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
+/// Spawns a tilemap, a constituency of [MapTile] entities, from a [MapSpec].
+/// It creates one entity with [TilemapBundle] and many with [TileBundle].
 pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: Res<SpriteAtlas>) {
     let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
@@ -127,6 +129,7 @@ pub fn spawn_tilemap(mut commands: Commands, mut spec: ResMut<MapSpec>, sheet: R
     commands.entity(map_entity).insert(spec.id);
 }
 
+/// Spawns [MapTile] entities from a [MapSpec] in a batch.
 fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
     let bundles: Vec<TileBundle> = spec
         .tiles
@@ -134,6 +137,7 @@ fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut 
         .map(|(tile_idx, cell)| {
             let pos = spec.size.cell_to_pos(&cell);
 
+            // TODO: replace [MapTile] with [MapId] here and elsewhere.
             TileBundle {
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
@@ -148,7 +152,8 @@ fn spawn_maptiles_from_spec(spec: &MapSpec, sheet: &SpriteAtlas, commands: &mut 
     commands.spawn_batch(bundles);
 }
 
-pub fn store_maptiles_by_cell(
+/// Adds all [MapTile] entities to [TileStorage] for quick lookup by [Cell].
+pub fn initialize_tile_storage(
     mut commands: Commands,
     spec: Res<MapSpec>,
     tiles: Query<(&Cell, Entity), With<MapTile>>,
@@ -165,10 +170,13 @@ pub fn store_maptiles_by_cell(
     commands.entity(map_entity).insert(storage);
 }
 
+/// Saves the current state [TilemapStorage] as a [SavedTilemap].
 pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>>) -> SavedTilemap {
+    // Using storage to drive iteration, and all_tiles to resolve `TileIdx`.
     let tiles = storage
         .tiles
         .iter()
+        // If there's an entity in storage, use that entity as a lookup into the [TileIdx] query.
         .map(|entity_opt| entity_opt.and_then(|entity| all_tiles.get(entity).ok().copied()))
         .map(|tile_idx| tile_idx.unwrap_or_default())
         .collect::<Vec<_>>();
@@ -180,6 +188,7 @@ pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>
     }
 }
 
+/// Loads a [SavedTilemap] into [TileStorage].
 pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
     storage
         .tiles

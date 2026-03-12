@@ -160,7 +160,7 @@ impl MapSpec {
     }
 }
 
-/// Updates the sprites of map tiles when their tile index changes.
+/// Sync [TileIdx] and [Sprite] visuals along with their gameplay properties.
 pub fn sync_tiles(
     mut commands: Commands,
     mut tiles: Query<
@@ -192,6 +192,7 @@ pub fn sync_tiles(
     }
 }
 
+/// Sync any visual effects with the tile's logical state.
 pub fn update_map_tile_visuals(
     mut tiles: Query<
         (

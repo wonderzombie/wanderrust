@@ -58,9 +58,11 @@ pub struct Opaque;
 pub struct Revealed(pub bool);
 
 #[derive(Component, Default, Debug, Clone, Copy)]
+/// A marker component for tiles that are currently highlighted, typically by cursor.
 pub struct Highlighted(pub bool);
 
 #[derive(Component, Default, Debug, Clone, Copy)]
+/// A marker component for tiles that are currently being previewed, such as a tile being hovered over.
 pub struct TilePreview(Option<TileIdx>);
 
 impl TilePreview {

@@ -34,6 +34,7 @@ impl Default for EditorState {
 #[derive(Resource)]
 pub struct DesiredZoom(pub f32);
 
+/// Handles zoom button input, updating the desired zoom level.
 pub fn on_zoom_button_input(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
@@ -55,6 +56,7 @@ pub fn on_zoom_button_input(
     commands.insert_resource(DesiredZoom(final_zoom));
 }
 
+/// Handles button input, updating the active tile and logging events.
 pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorState>,
@@ -67,12 +69,16 @@ pub fn on_button_input(
     let lookup = tiles::TileIdx::all();
 
     if input.just_pressed(KeyCode::Digit1) {
+        // First tile index
         editor_state.active_tile_idx = 0;
     } else if input.just_pressed(KeyCode::Digit2) {
+        // Previous tile index
         editor_state.active_tile_idx = editor_state.active_tile_idx.saturating_sub(1);
     } else if input.just_pressed(KeyCode::Digit3) {
+        // Next tile index
         editor_state.active_tile_idx = (editor_state.active_tile_idx + 1).min(lookup.len() - 1);
     } else if input.just_pressed(KeyCode::Digit4) {
+        // Last viable tile index
         editor_state.active_tile_idx = lookup.len() - 1;
     } else {
         return;
@@ -91,6 +97,7 @@ pub fn on_button_input(
     info!("active tile is now {:?}", editor_state.active_tile);
 }
 
+/// Toggles the player's field of view range.
 pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerStats>) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
         if stats.is_default() {
@@ -101,6 +108,7 @@ pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerS
     }
 }
 
+/// Dispatches map-related operations based on keyboard input.
 pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<KeyCode>>) {
     if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
         warn!("requested to save");
@@ -113,6 +121,7 @@ pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<K
     }
 }
 
+/// Convenience macro for getting an entity from a query, returning early if the entity is not found.
 macro_rules! get_entity {
     ($query:expr, $on:expr) => {
         match $query.get_mut($on.event_target()) {
@@ -122,6 +131,7 @@ macro_rules! get_entity {
     };
 }
 
+/// Sets up global tile observers that highlight and preview tiles when the pointer is over them.
 pub fn setup_global_tile_observers(mut commands: Commands) {
     commands.add_observer(
         |on: On<Pointer<Over>>,
@@ -158,6 +168,7 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     );
 }
 
+/// Adds [Pickable], [Highlighted], and [TilePreview] components to newly added [MapTile] entities.
 pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<MapTile>>) {
     for tile in tiles.iter() {
         commands
@@ -176,6 +187,7 @@ pub(crate) struct LoadDialogTask(PathBufTask);
 #[derive(Message)]
 pub(crate) struct MapLoadMessage(PathBuf);
 
+/// Opens a file dialog to select a map file and spawns a [LoadDialogTask] to load the selected file.
 pub fn open_load_dialog(mut commands: Commands) {
     let task_pool = AsyncComputeTaskPool::get();
     let task = task_pool.spawn(async move {
@@ -189,6 +201,7 @@ pub fn open_load_dialog(mut commands: Commands) {
     commands.spawn(LoadDialogTask(task));
 }
 
+/// Polls the [LoadDialogTask] for a result and loads the map if one is available.
 pub fn poll_load_dialog(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut LoadDialogTask)>,
@@ -204,6 +217,7 @@ pub fn poll_load_dialog(
     }
 }
 
+/// Loads a map from a file path when indicated by a [MapLoadMessage].
 pub fn load_map(
     mut commands: Commands,
     mut storage: Single<&mut TileStorage>,
@@ -222,6 +236,7 @@ pub(crate) struct MapSaveMessage(PathBuf);
 #[derive(Component)]
 pub(crate) struct SaveDialogTask(PathBufTask);
 
+/// Opens a save dialog and spawns a [SaveDialogTask] to handle the result.
 pub fn open_save_dialog(mut commands: Commands) {
     let task_pool = AsyncComputeTaskPool::get();
     let task = task_pool.spawn(async move {
@@ -235,6 +250,7 @@ pub fn open_save_dialog(mut commands: Commands) {
     commands.spawn(SaveDialogTask(task));
 }
 
+/// Polls the [SaveDialogTask] for a result and saves the map if a path is returned.
 pub fn poll_save_dialog(
     mut commands: Commands,
     mut save_dialog_tasks: Query<(Entity, &mut SaveDialogTask)>,
@@ -250,6 +266,7 @@ pub fn poll_save_dialog(
     }
 }
 
+/// Saves the map to disk using the provided [TileStorage] and [Query] of all tiles.
 pub fn save_map(
     mut storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,

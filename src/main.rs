@@ -229,6 +229,7 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
+/// Syncs changed actor sprites (`Without<MapTile>`) with their corresponding tile indices.
 fn sync_actor_sprites(
     mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
 ) {
