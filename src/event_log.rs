@@ -17,13 +17,13 @@ pub fn setup_egui_fonts(mut contexts: EguiContexts) {
 
     let mut fonts = egui::FontDefinitions::default();
 
-    // Load your font file
+    // Load font file from disk
     fonts.font_data.insert(
         "kenney_mini".to_owned(),
         egui::FontData::from_static(include_bytes!("../assets/fonts/Kenney Mini.ttf")).into(),
     );
 
-    // Set it as the default proportional font (used by labels)
+    // Set font as default for proportional text (used by labels).
     fonts
         .families
         .entry(egui::FontFamily::Proportional)
@@ -34,6 +34,7 @@ pub fn setup_egui_fonts(mut contexts: EguiContexts) {
     ctx.set_fonts(fonts);
 }
 
+/// Draws the message log UI using Egui using [MessageLog] resource.
 pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
@@ -50,7 +51,7 @@ pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
 
             for (msg, color) in log.as_color_text() {
                 ui.set_min_width(172.0);
-                ui.colored_label(color.to_egui(), msg.to_uppercase());
+                ui.colored_label(color.to_egui(), msg);
             }
         });
 }
@@ -74,7 +75,8 @@ impl MessageLog {
         if self.color_messages.len() >= self.max_lines {
             self.color_messages.pop_front();
         }
-        self.color_messages.push_back((msg.into(), color.into()));
+        self.color_messages
+            .push_back((msg.into().to_uppercase(), color.into()));
     }
 
     pub fn as_color_text(&self) -> VecDeque<(String, Color)> {
