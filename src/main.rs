@@ -405,9 +405,14 @@ fn handle_interaction(
                 if let Some(required_item) = requires {
                     if !inventory.has_item(required_item) {
                         info!("Player does not have the required item to open the door.");
+                        log.add("Locked.", colors::KENNEY_BLUE);
                         return;
                     } else {
                         info!("Player uses {:?} to open the door.", required_item);
+                        log.add(
+                            format!("Opened door with {}.", required_item),
+                            colors::KENNEY_BLUE,
+                        );
                     }
                 } else {
                     info!("Player opens the door.");
