@@ -92,6 +92,9 @@ pub fn update_fov_markers(
 
     let view = fov.from(player_cell.into(), player_stats.vision_range);
     for (cell, mut revealed) in tiles.iter_mut() {
-        revealed.0 = view.has(cell.into());
+        let should_reveal = view.has(cell.into());
+        if should_reveal != revealed.0 {
+            revealed.0 = should_reveal;
+        }
     }
 }
