@@ -265,6 +265,7 @@ pub fn update_tile_visuals(
     mut tiles: Query<
         (
             &mut Sprite,
+            &mut Visibility,
             Option<&Highlighted>,
             &Revealed,
             Option<&TilePreview>,
@@ -279,9 +280,15 @@ pub fn update_tile_visuals(
         ),
     >,
 ) {
-    for (mut sprite, highlighted, revealed, preview_opt) in tiles.iter_mut() {
+    for (mut sprite, mut vis, highlighted, revealed, preview_opt) in tiles.iter_mut() {
         let revealed = revealed.0;
         let highlighted = highlighted.is_some();
+
+        *vis = if revealed {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
 
         sprite.color = if highlighted {
             colors::KENNEY_GOLD
