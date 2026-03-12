@@ -97,29 +97,15 @@ pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerS
     }
 }
 
-pub fn handle_map_operations(
-    mut commands: Commands,
-    mut input: ResMut<ButtonInput<KeyCode>>,
-    mut storage: Single<&mut TileStorage>,
-    all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
-    mut log: ResMut<crate::event_log::MessageLog>,
-) {
+pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<KeyCode>>) {
     if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
         warn!("requested to save");
         input.clear();
-        let storage = tilemap::save_map(&mut storage, &all_tiles);
-        let serialized = ron::to_string(&storage).unwrap();
-        std::fs::write("data/level.ron", serialized).unwrap();
-        log.add("Saved map", KENNEY_RED);
-        info!("saved map to level.ron");
+        open_save_dialog(commands);
     } else if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyL) {
         warn!("requested to load");
         input.clear();
-        let serialized = std::fs::read_to_string("data/level.ron").unwrap();
-        let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
-        tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
-        log.add("Loaded map", KENNEY_RED);
-        info!("loaded map from level.ron");
+        open_load_dialog(commands);
     }
 }
 
