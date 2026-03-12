@@ -51,7 +51,7 @@ The game is built around Bevy's ECS. Key resources and their roles:
 | Module | Purpose |
 |---|---|
 | `main.rs` | App setup, `Player`, `Actor`, `SpatialIndex`, `PieceBundle`, `Interactable`, input handling, camera |
-| `map.rs` | `MapSpec` (map config resource), `sync_tiles` (spawns new tile entities from spec), `update_map_tile_visuals` (tint/alpha for FOV) |
+| `map.rs` | `MapSpec` (map config resource), `sync_tiles` (spawns new tile entities from spec), `update_tile_visuals` (tint/alpha for FOV) |
 | `tilemap.rs` | `TileStorage`, `MapDimensions`, `SavedTilemap`; spawns map tiles, serializes/deserializes maps to/from RON |
 | `tiles.rs` | `TileIdx` enum (atlas indices for every tile type), marker components (`MapTile`, `Walkable`, `Opaque`), and bool-carrying components (`Revealed(bool)`, `Highlighted(bool)`) |
 | `procgen.rs` | Procedural generation via bilinear noise sampling and `ProbabilityTable`; `biome_ptable()` and `tile_idx_for_cell()` are the key entry points |
@@ -70,7 +70,7 @@ The game is built around Bevy's ECS. Key resources and their roles:
 
 **Message passing**: `ActionAttempt` and `Acquisition` are Bevy messages (via `.add_message::<T>()`), not events. Systems use `MessageReader`/`MessageWriter`.
 
-**Tile visual state**: FOV visibility is applied in `map::update_map_tile_visuals` (runs in `Last`) by reading `Revealed(bool)` and `Highlighted(bool)` components. All map tiles carry `Revealed` (spawned as `Revealed(false)`); `update_fov_markers` sets its value each frame. `Revealed(false)` tiles are hidden, `Revealed(true)` tiles are visible, and `Highlighted(true)` tiles (editor hover) are full-brightness gold. The bool-in-component approach is intentional: mutating a bool avoids per-frame archetype changes that `insert`/`remove` would cause. `Highlighted` is only present on editor-mode tiles and is toggled by `Pointer<Over>`/`Pointer<Out>` observers in `editor.rs`.
+**Tile visual state**: FOV visibility is applied in `map::update_tile_visuals` (runs in `Last`) by reading `Revealed(bool)` and `Highlighted(bool)` components. All map tiles carry `Revealed` (spawned as `Revealed(false)`); `update_fov_markers` sets its value each frame. `Revealed(false)` tiles are hidden, `Revealed(true)` tiles are visible, and `Highlighted(true)` tiles (editor hover) are full-brightness gold. The bool-in-component approach is intentional: mutating a bool avoids per-frame archetype changes that `insert`/`remove` would cause. `Highlighted` is only present on editor-mode tiles and is toggled by `Pointer<Over>`/`Pointer<Out>` observers in `editor.rs`.
 
 **Map serialization**: Maps are saved/loaded as RON files via `tilemap::SavedTilemap`, which stores a flat `Vec<TileIdx>` with dimensions. The `data/` directory contains example saved maps.
 
