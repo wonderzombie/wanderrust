@@ -149,6 +149,12 @@ tiles! {
     Bat = atlas_idx(26, 8),
     Slime = atlas_idx(27, 8),
 
+    // Emitters (usually)
+    Candle = atlas_idx(3, 15),
+    Torch = atlas_idx(4, 15),
+    Campfire = atlas_idx(14, 10),
+    Brazier = atlas_idx(14, 13),
+
     // Placeholder
     GridSquare = atlas_idx(39, 14),
 }

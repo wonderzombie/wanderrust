@@ -22,6 +22,7 @@ use crate::{
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
+    light::{Emitter, LightLevel},
     player::PlayerStats,
     tilemap::TilemapSpec,
     tiles::{MapTile, TileIdx, Walkable},
@@ -93,6 +94,10 @@ fn main() {
             add_test_npc.run_if(run_once).after(load_spritesheet),
         )
         .add_systems(
+            Startup,
+            add_test_emitters.run_if(run_once).after(load_spritesheet),
+        )
+        .add_systems(
             Update,
             (
                 handle_player_input,
@@ -134,6 +139,18 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             name: "Mr. Boney".into(),
             text: "Hello".into(),
         },
+    ));
+}
+
+fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    commands.spawn((
+        TileIdx::Torch,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 47, y: 47 },
+            transform: Transform::default(),
+        },
+        Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
     ));
 }
 
