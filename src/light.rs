@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::prelude::*;
 
@@ -63,9 +65,9 @@ impl Emitter {
     /// outer covers an *additional* `outer.thickness` beyond that.
     /// E.g. "bright light for 1 tile, dim light for an additional 1 tile" →
     /// `Emitter::new((Bright, 1), (Dim, 1))`.
-    pub fn light_cells(&self, origin: Cell) -> Vec<(Cell, LightLevel)> {
+    pub fn light_cells(&self, origin: Cell) -> HashMap<Cell, LightLevel> {
         let outer_radius = self.inner.thickness + self.outer.thickness;
-        let mut cells = Vec::new();
+        let mut cell_map = HashMap::default();
         for dx in -outer_radius..=outer_radius {
             for dy in -outer_radius..=outer_radius {
                 let cell = Cell::new(origin.x + dx, origin.y + dy);
@@ -76,16 +78,21 @@ impl Emitter {
                     } else {
                         self.outer.level
                     };
-                    cells.push((cell, level));
+                    cell_map
+                        .entry(cell)
+                        .and_modify(|prev| {
+                            *prev = level.max(*prev);
+                        })
+                        .or_insert(level);
                 }
             }
         }
-        cells
+        cell_map
     }
 }
 
-#[derive(Component, Debug, Clone)]
-pub struct LightMap(pub Vec<(Cell, LightLevel)>);
+#[derive(Component, Debug, Deref, Clone)]
+pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 pub fn update_light_map(
     mut commands: Commands,
@@ -136,7 +143,7 @@ mod tests {
         let lit = e.light_cells(Cell::new(0, 0));
         let origin_level = lit
             .iter()
-            .find(|(c, _)| *c == Cell::new(0, 0))
+            .find(|&(c, _)| c == &Cell::new(0, 0))
             .map(|(_, l)| *l);
         assert_eq!(origin_level, Some(Bright));
     }
@@ -212,13 +219,11 @@ mod tests {
         assert_eq!(at_zero.len(), at_ten.len());
 
         // Every cell from at_zero shifted by (10,10) should match at_ten.
-        let mut shifted: Vec<(Cell, LightLevel)> = at_zero
+        let shifted: HashMap<Cell, LightLevel> = at_zero
             .iter()
             .map(|(c, l)| (Cell::new(c.x + 10, c.y + 10), *l))
             .collect();
-        shifted.sort_by_key(|(c, _)| (c.x, c.y));
-        let mut reference = at_ten.clone();
-        reference.sort_by_key(|(c, _)| (c.x, c.y));
+        let reference = at_ten.clone();
         assert_eq!(shifted, reference);
     }
 }
