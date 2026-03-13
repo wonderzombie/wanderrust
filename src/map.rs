@@ -40,6 +40,28 @@ pub const MAP: &str = r#"
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
 impl TilemapSpec {
+    const KEY: &[(char, TileIdx)] = &[
+        ('#', TileIdx::StoneWall),
+        ('.', TileIdx::Blank),
+        ('X', TileIdx::Blank),
+        ('D', TileIdx::DoorBrownThickClosed1),
+        ('O', TileIdx::DoorwayBrownThick),
+        ('b', TileIdx::ChestBrownClosed),
+        ('w', TileIdx::ChestWhiteClosed),
+        ('T', TileIdx::GreenTree1),
+        ('t', TileIdx::GreenTree2),
+        ('U', TileIdx::DoubleGreenTree1),
+        ('u', TileIdx::DoubleGreenTree2),
+        (' ', TileIdx::Blank),
+    ];
+
+    fn tile_for(c: char) -> Option<TileIdx> {
+        TilemapSpec::KEY
+            .iter()
+            .find(|(k, _)| *k == c)
+            .map(|(_, v)| *v)
+    }
+
     #[allow(dead_code)]
     pub fn from_str(map_str: &str) -> Self {
         let lines: Vec<&str> = map_str.lines().collect();
@@ -50,27 +72,12 @@ impl TilemapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let flat_pieces = lines
+        let tiles = lines
             .iter()
             .enumerate()
             .flat_map(|(y, line)| {
                 line.chars().enumerate().filter_map(move |(x, ch)| {
-                    let tile_idx = match ch {
-                        '#' => Some(TileIdx::StoneWall),
-                        '.' => Some(TileIdx::Blank),
-                        'X' => Some(TileIdx::Blank),
-                        'D' => Some(TileIdx::DoorBrownThickClosed1),
-                        'O' => Some(TileIdx::DoorwayBrownThick),
-                        'b' => Some(TileIdx::ChestBrownClosed),
-                        'w' => Some(TileIdx::ChestWhiteClosed),
-                        'T' => Some(TileIdx::GreenTree1),
-                        't' => Some(TileIdx::GreenTree2),
-                        'U' => Some(TileIdx::DoubleGreenTree1),
-                        'u' => Some(TileIdx::DoubleGreenTree2),
-                        ' ' => None, // Empty space, not walkable
-                        _ => None,   // Ignore unknown characters
-                    };
-                    tile_idx.map(|idx| {
+                    TilemapSpec::tile_for(ch).map(|idx| {
                         (
                             idx,
                             Cell {
@@ -84,15 +91,15 @@ impl TilemapSpec {
             .collect::<Vec<_>>();
 
         TilemapSpec {
-            id: TilemapId::default(),
             size: MapDimensions {
                 width,
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            tiles: flat_pieces,
+            tiles,
             layer: DEFAULT_LAYER,
             start: Cell { x: 5, y: 5 },
+            ..Default::default()
         }
     }
 
@@ -124,7 +131,6 @@ impl TilemapSpec {
         info!("tile breakdown: {:#?}", tally);
 
         TilemapSpec {
-            id: TilemapId::default(),
             size: MapDimensions {
                 width: size.0,
                 height: size.1,
@@ -133,6 +139,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start,
+            ..Default::default()
         }
     }
 }
