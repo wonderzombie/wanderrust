@@ -31,12 +31,6 @@ struct LightRing {
     thickness: i32,
 }
 
-impl LightRing {
-    pub fn new(level: LightLevel, thickness: i32) -> Self {
-        Self { level, thickness }
-    }
-}
-
 impl From<(LightLevel, i32)> for LightRing {
     fn from((level, thickness): (LightLevel, i32)) -> Self {
         Self { level, thickness }
@@ -68,6 +62,7 @@ impl Emitter {
         Self { inner, outer }
     }
 
+    #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
         self.inner.thickness + self.outer.thickness
     }
