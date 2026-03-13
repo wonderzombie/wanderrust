@@ -107,7 +107,10 @@ mod tests {
     fn origin_always_receives_inner_level() {
         let e = emitter(1, 1);
         let lit = e.light_cells(Cell::new(0, 0));
-        let origin_level = lit.iter().find(|(c, _)| *c == Cell::new(0, 0)).map(|(_, l)| *l);
+        let origin_level = lit
+            .iter()
+            .find(|(c, _)| *c == Cell::new(0, 0))
+            .map(|(_, l)| *l);
         assert_eq!(origin_level, Some(Bright));
     }
 
@@ -130,7 +133,11 @@ mod tests {
         for (cell, level) in &lit {
             let dist = cell.as_vec().distance(origin.as_vec());
             let expected = if dist <= 1.0 { Bright } else { Dim };
-            assert_eq!(*level, expected, "cell {:?} at dist {:.2} should be {:?}", cell, dist, expected);
+            assert_eq!(
+                *level, expected,
+                "cell {:?} at dist {:.2} should be {:?}",
+                cell, dist, expected
+            );
         }
     }
 
@@ -151,7 +158,12 @@ mod tests {
         let lit = e.light_cells(origin);
         for (cell, _) in &lit {
             let dist = cell.as_vec().distance(origin.as_vec());
-            assert!(dist <= e.total_radius() as f32, "cell {:?} at dist {:.2} exceeds total radius", cell, dist);
+            assert!(
+                dist <= e.total_radius() as f32,
+                "cell {:?} at dist {:.2} exceeds total radius",
+                cell,
+                dist
+            );
         }
     }
 
