@@ -7,10 +7,22 @@ use bevy::prelude::*;
 pub enum LightLevel {
     Dark, // underground default — render nothing
     #[default]
-    Night, // outdoor default — maybe silhouettes
-    Dim,  // edge of lantern radius
-    Light, // normal lantern range
+    Night, // default for nighttime; not quite dark
+    Dim,  // the outer edge of a lantern or torch
+    Light, // normal non-magical light
     Bright, // noon sun, magical light source
+}
+
+impl From<LightLevel> for f32 {
+    fn from(value: LightLevel) -> Self {
+        match value {
+            LightLevel::Dark => 0.0,
+            LightLevel::Night => 0.1,
+            LightLevel::Dim => 0.4,
+            LightLevel::Light => 0.7,
+            LightLevel::Bright => 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

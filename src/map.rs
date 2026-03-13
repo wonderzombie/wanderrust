@@ -306,13 +306,7 @@ pub fn update_tile_visuals(
         sprite.color = if highlighted {
             colors::KENNEY_GOLD
         } else if revealed {
-            match light_level {
-                LightLevel::Bright => Color::WHITE,
-                LightLevel::Light => Color::WHITE.with_alpha(0.75),
-                LightLevel::Dim => Color::WHITE.with_alpha(0.5),
-                LightLevel::Night => Color::WHITE.with_alpha(0.25),
-                LightLevel::Dark => Color::WHITE.with_alpha(0.0),
-            }
+            Color::WHITE.with_alpha(light_level.into())
         } else {
             Color::NONE
         };
