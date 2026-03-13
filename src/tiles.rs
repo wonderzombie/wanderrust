@@ -1,4 +1,7 @@
-use bevy::{math::UVec2, prelude::Component};
+use bevy::{
+    math::UVec2,
+    prelude::{Component, Deref},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -53,7 +56,7 @@ pub struct Walkable;
 /// A marker component for tiles that block line of sight, affecting field of view calculations.
 pub struct Opaque;
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Default, Deref, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// A marker component for tiles that are currently revealed to the player.
 pub struct Revealed(pub bool);
 

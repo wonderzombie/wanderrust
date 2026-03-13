@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     SpriteAtlas,
     cell::Cell,
+    light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -29,6 +30,7 @@ pub struct TilemapSpec {
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
     pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
+    pub light_level: LightLevel,
 }
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
@@ -52,7 +54,7 @@ impl MapDimensions {
 }
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-/// Attach this to an entity with TilemapId.
+/// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [TilemapId].
 pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
     pub size: MapDimensions,
@@ -66,10 +68,10 @@ impl TileStorage {
     //     }
     // }
 
-    // pub fn get(&self, cell: &Cell) -> Option<Entity> {
-    //     let idx = cell.to_idx(self.size.width) as usize;
-    //     self.tiles.get(idx).copied().flatten()
-    // }
+    pub fn get(&self, cell: &Cell) -> Option<Entity> {
+        let idx = cell.to_idx(self.size.width) as usize;
+        self.tiles.get(idx).copied().flatten()
+    }
 
     pub fn set(&mut self, cell: &Cell, entity: Entity) {
         let idx = cell.to_idx(self.size.width) as usize;

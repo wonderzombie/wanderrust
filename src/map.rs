@@ -1,5 +1,6 @@
 use crate::cell::Cell;
 use crate::colors;
+use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
 use crate::tilemap::{MapDimensions, TilemapId, TilemapSpec};
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
@@ -99,6 +100,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start: Cell { x: 5, y: 5 },
+            light_level: LightLevel::Dark,
             ..Default::default()
         }
     }
@@ -139,6 +141,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start,
+            light_level: LightLevel::Light,
             ..Default::default()
         }
     }
@@ -276,6 +279,7 @@ pub fn update_tile_visuals(
             Option<&Highlighted>,
             &Revealed,
             Option<&TilePreview>,
+            Option<&LightLevel>,
         ),
         (
             With<MapTile>,
@@ -286,10 +290,12 @@ pub fn update_tile_visuals(
             )>,
         ),
     >,
+    map_spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, highlighted, revealed, preview_opt) in tiles.iter_mut() {
+    for (mut sprite, mut vis, highlighted, revealed, preview_opt, light_level) in tiles.iter_mut() {
         let revealed = revealed.0;
         let highlighted = highlighted.is_some();
+        let light_level = light_level.copied().unwrap_or(map_spec.light_level);
 
         *vis = if revealed {
             Visibility::Visible
@@ -300,7 +306,13 @@ pub fn update_tile_visuals(
         sprite.color = if highlighted {
             colors::KENNEY_GOLD
         } else if revealed {
-            Color::WHITE
+            match light_level {
+                LightLevel::Bright => Color::WHITE,
+                LightLevel::Light => Color::WHITE.with_alpha(0.75),
+                LightLevel::Dim => Color::WHITE.with_alpha(0.5),
+                LightLevel::Night => Color::WHITE.with_alpha(0.25),
+                LightLevel::Dark => Color::WHITE.with_alpha(0.0),
+            }
         } else {
             Color::NONE
         };

@@ -1,4 +1,5 @@
-use bevy::ecs::component::Component;
+use crate::{cell::Cell, tilemap::TileStorage};
+use bevy::prelude::*;
 
 #[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LightLevel {
@@ -9,8 +10,6 @@ pub enum LightLevel {
     Light, // normal lantern range
     Bright, // noon sun, magical light source
 }
-
-use crate::cell::Cell;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LightRing {
@@ -82,6 +81,34 @@ impl Emitter {
             }
         }
         cells
+    }
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct LightMap(pub Vec<(Cell, LightLevel)>);
+
+pub fn update_light_map(
+    mut commands: Commands,
+    emitters: Query<(Entity, &Emitter, &Cell), Added<Emitter>>,
+) {
+    for (entity, emitter, cell) in emitters.iter() {
+        commands
+            .entity(entity)
+            .insert(LightMap(emitter.light_cells(*cell)));
+    }
+}
+
+pub fn update_light_levels(
+    mut commands: Commands,
+    light_maps: Query<&LightMap, Changed<LightMap>>,
+    tiles: Single<&TileStorage>,
+) {
+    for light_map in light_maps.iter() {
+        for (cell, level) in light_map.0.iter() {
+            if let Some(tile) = tiles.get(cell) {
+                commands.entity(tile).insert(*level);
+            }
+        }
     }
 }
 

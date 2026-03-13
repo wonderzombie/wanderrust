@@ -111,6 +111,8 @@ fn main() {
                 update_spatial_index,
                 fov::update_fov_model.after(map::sync_tiles),
                 fov::update_fov_markers.after(fov::update_fov_model),
+                light::update_light_map.after(fov::update_fov_markers),
+                light::update_light_levels.after(light::update_light_map),
             ),
         )
         .add_systems(Last, map::update_tile_visuals)
