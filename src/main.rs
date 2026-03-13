@@ -4,6 +4,7 @@ mod editor;
 mod event_log;
 mod fov;
 mod inventory;
+mod light;
 mod map;
 mod player;
 mod procgen;
