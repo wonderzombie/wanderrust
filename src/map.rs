@@ -141,7 +141,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start,
-            light_level: LightLevel::Light,
+            light_level: LightLevel::Night,
             ..Default::default()
         }
     }
