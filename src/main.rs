@@ -248,6 +248,7 @@ fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<Sprit
             visibility: Visibility::Visible,
         },
         TileIdx::Player,
+        Emitter::new((LightLevel::Bright, 1), (LightLevel::Light, 2)),
     ));
 }
 
