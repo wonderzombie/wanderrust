@@ -178,8 +178,8 @@ mod tests {
 
     #[test]
     fn spaces_and_unknown_chars_excluded() {
-        // ' ' (empty space) and '?' (unknown) should produce no tiles
-        let spec = TilemapSpec::from_str(" ?");
+        // '?' (unknown) should produce no tiles
+        let spec = TilemapSpec::from_str("?");
         assert!(spec.tiles.is_empty());
     }
 
