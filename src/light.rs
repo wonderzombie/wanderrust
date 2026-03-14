@@ -177,7 +177,7 @@ pub fn update_emitter_lights(
             let new_level = new_combined_map.get(c)?;
             let old_level = prev_map.0.get(c)?;
 
-            return (old_level != new_level).then_some((tile, new_level));
+            (old_level != new_level).then_some((tile, new_level))
         })
         .for_each(|(tile, new_level)| {
             commands.entity(tile).insert(*new_level);

@@ -272,7 +272,7 @@ pub fn save_map(
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {
-        let storage = tilemap::save_map(&mut storage, &all_tiles);
+        let storage = tilemap::save_map(&storage, &all_tiles);
         if let Ok(serialized) = ron::to_string(&storage) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;

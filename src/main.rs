@@ -307,11 +307,10 @@ fn sync_occupied_tiles(
             commands.entity(tile).insert(Occupied);
         }
 
-        if let Some(prev_cell) = prev_cell_opt {
-            if let Some(prev_tile) = storage.get(prev_cell) {
+        if let Some(prev_cell) = prev_cell_opt
+            && let Some(prev_tile) = storage.get(prev_cell) {
                 commands.entity(prev_tile).remove::<Occupied>();
             }
-        }
     }
 }
 
@@ -356,7 +355,7 @@ fn handle_player_input(
 
     events.write(ActionAttempt {
         interactor: player_entity,
-        origin_cell: player_cell.clone(),
+        origin_cell: *player_cell,
         target_cell: player_cell.add(directiom),
     });
 }
