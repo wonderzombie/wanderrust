@@ -245,6 +245,7 @@ fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<Sprit
                 spec.start.y as f32 * TILE_SIZE_PX,
                 -1.0,
             ),
+            visibility: Visibility::Visible,
         },
         TileIdx::Player,
     ));
