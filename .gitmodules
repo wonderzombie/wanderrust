@@ -1,0 +1,3 @@
+[submodule "mrpas"]
+	path = mrpas
+	url = https://github.com/wonderzombie/mrpas
