@@ -77,8 +77,8 @@ pub fn update_fov_model(
     }
 }
 
-/// Updates the visibility of map tiles based on the player's field of view.
-/// Uses the View type to avoid mutating `Res<Fov>`.
+/// Updates the [Revealed] status of [MapTile]s based on the player's [Fov].
+/// Uses the [View] type to avoid mutating `Res<Fov>`.
 pub fn update_fov_markers(
     fov: Res<Fov>,
     player_query: Query<&Cell, With<Player>>,
