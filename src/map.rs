@@ -296,7 +296,7 @@ pub fn update_tile_visuals(
     for (mut sprite, mut vis, highlighted, revealed, preview_opt, light_level) in tiles.iter_mut() {
         let revealed = revealed.0;
         let highlighted = highlighted.is_some();
-        let light_level = light_level.copied().unwrap_or(map_spec.light_level);
+        let adjusted_light = light_level.copied().unwrap_or(map_spec.light_level);
 
         *vis = if revealed {
             Visibility::Visible
@@ -307,7 +307,7 @@ pub fn update_tile_visuals(
         sprite.color = if highlighted {
             colors::KENNEY_GOLD
         } else if revealed {
-            Color::WHITE.with_alpha(light_level.into())
+            Color::WHITE.with_alpha(adjusted_light.into())
         } else {
             Color::NONE
         };

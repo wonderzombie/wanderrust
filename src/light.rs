@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::Actor;
 use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
