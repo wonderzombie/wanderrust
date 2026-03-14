@@ -117,8 +117,7 @@ fn main() {
                 fov::update_fov_model.after(map::sync_tiles),
                 fov::update_fov_markers.after(fov::update_fov_model),
                 light::update_emitter_lights.after(fov::update_fov_markers),
-                light::sync_tile_light_levels.after(light::update_emitter_lights),
-                light::sync_actor_light_levels.after(light::sync_tile_light_levels),
+                light::sync_actor_light_levels.after(light::update_emitter_lights),
             ),
         )
         .add_systems(Last, map::update_tile_visuals)

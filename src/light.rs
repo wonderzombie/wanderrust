@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use crate::Actor;
 use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
-use bevy::platform::collections::HashSet;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
 #[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -47,12 +45,6 @@ pub struct Emitter {
     outer: LightRing,
 }
 
-impl From<(LightRing, LightRing)> for Emitter {
-    fn from(value: (LightRing, LightRing)) -> Self {
-        Emitter::from_rings(value.0, value.1)
-    }
-}
-
 impl Emitter {
     pub fn new(inner: (LightLevel, i32), outer: (LightLevel, i32)) -> Self {
         Emitter::from_rings(LightRing::from(inner), LightRing::from(outer))
@@ -78,13 +70,15 @@ impl Emitter {
     /// `Emitter::new((Bright, 1), (Dim, 1))`.
     pub fn light_cells(&self, origin: Cell) -> LightMap {
         let outer_radius = self.inner.thickness + self.outer.thickness;
+        let outer_radius_sq = (outer_radius as f32).powi(2);
+        let inner_radius_sq = (self.inner.thickness as f32).powi(2);
         let mut cell_map = HashMap::default();
         for dx in -outer_radius..=outer_radius {
             for dy in -outer_radius..=outer_radius {
                 let cell = Cell::new(origin.x + dx, origin.y + dy);
-                let dist = cell.as_vec().distance(origin.as_vec());
-                if dist <= outer_radius as f32 {
-                    let level = if dist <= self.inner.thickness as f32 {
+                let dist_sq = cell.as_vec().distance_squared(origin.as_vec());
+                if dist_sq <= outer_radius_sq {
+                    let level = if dist_sq <= inner_radius_sq {
                         self.inner.level
                     } else {
                         self.outer.level
@@ -107,15 +101,15 @@ pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 impl LightMap {
     /// Combines two light maps, choosing the brighter level for each cell.
-    pub fn merge_with(&mut self, other: LightMap) {
-        other.0.into_iter().for_each(|(cell, level)| {
+    pub fn merge_with(&mut self, other: &LightMap) {
+        for (&cell, &level) in other.0.iter() {
             self.0
                 .entry(cell)
                 .and_modify(|prev| {
                     *prev = level.max(*prev);
                 })
                 .or_insert(level);
-        });
+        }
     }
 }
 
@@ -133,71 +127,29 @@ pub fn update_emitter_lights(
     let mut new_combined_map = LightMap(HashMap::new());
     for (entity, emitter, &cell) in all_emitters.iter() {
         let next_light_map = emitter.light_cells(cell);
-        // Important: this is a deferred operation. We are storing the light map directly on the entity
-        // but this won't take effect immediately.
-        commands.entity(entity).insert(next_light_map.clone());
-
-        // This populates the map combining each emitter's output, choosing the
-        // brighter value when two emitters address the same cell.
-        new_combined_map.merge_with(next_light_map);
+        new_combined_map.merge_with(&next_light_map);
+        commands.entity(entity).insert(next_light_map);
     }
 
-    let old_map_cells: HashSet<Cell> = prev_map.0.keys().copied().collect();
-    let new_map_cells: HashSet<Cell> = new_combined_map.keys().copied().collect();
-
-    // Any cells in the old map that aren't in the new one are 1) lit and 2) should not be lit.
-    old_map_cells
-        .difference(&new_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            Some(tile)
-        })
-        .for_each(|tile| {
-            commands.entity(tile).remove::<LightLevel>();
-        });
-
-    // Any cells in the new map that aren't in the old one are 1) unlit and 2) should be lit.
-    new_map_cells
-        .difference(&old_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            let level = new_combined_map.get(c)?;
-            Some((level, tile))
-        })
-        .for_each(|(level, tile)| {
-            commands.entity(tile).insert(*level);
-        });
-
-    // Any cells that are still lit may need to be updated; these are 1) lit, and 2) should be lit *differently*.
-    // Tiles here may need to be updated with a different light intensity.
-    old_map_cells
-        .intersection(&new_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            let new_level = new_combined_map.get(c)?;
-            let old_level = prev_map.0.get(c)?;
-
-            (old_level != new_level).then_some((tile, new_level))
-        })
-        .for_each(|(tile, new_level)| {
-            commands.entity(tile).insert(*new_level);
-        });
-
-    *prev_map = new_combined_map;
-}
-
-pub fn sync_tile_light_levels(
-    mut commands: Commands,
-    light_maps: Query<&LightMap, Changed<LightMap>>,
-    tiles: Single<&TileStorage>,
-) {
-    for light_map in light_maps.iter() {
-        for (cell, level) in light_map.0.iter() {
-            if let Some(tile) = tiles.get(cell) {
-                commands.entity(tile).insert(*level);
+    // Insert or update tiles whose light level is new or changed.
+    for (cell, &new_level) in new_combined_map.0.iter() {
+        if prev_map.0.get(cell) != Some(&new_level) {
+            if let Some(tile) = storage.get(cell) {
+                commands.entity(tile).insert(new_level);
             }
         }
     }
+
+    // Remove light from tiles that are no longer lit.
+    for cell in prev_map.0.keys() {
+        if !new_combined_map.0.contains_key(cell) {
+            if let Some(tile) = storage.get(cell) {
+                commands.entity(tile).remove::<LightLevel>();
+            }
+        }
+    }
+
+    *prev_map = new_combined_map;
 }
 
 pub fn sync_actor_light_levels(
@@ -213,7 +165,11 @@ pub fn sync_actor_light_levels(
         };
 
         let revealed = tile_revealed.get(tile).ok().copied().unwrap_or_default();
-        let level = tile_light.get(tile).ok().copied().unwrap_or(map_spec.light_level);
+        let level = tile_light
+            .get(tile)
+            .ok()
+            .copied()
+            .unwrap_or(map_spec.light_level);
 
         *visibility = if revealed.0 {
             Visibility::Visible
