@@ -287,6 +287,7 @@ pub fn update_tile_visuals(
                 Changed<Highlighted>,
                 Changed<Revealed>,
                 Changed<TilePreview>,
+                Changed<LightLevel>,
             )>,
         ),
     >,
