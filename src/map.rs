@@ -3,7 +3,9 @@ use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
 use crate::tilemap::{MapDimensions, TilemapSpec};
-use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
+use crate::tiles::{
+    Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
+};
 
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
@@ -276,14 +278,16 @@ pub fn update_tile_visuals(
         (
             &mut Sprite,
             &mut Visibility,
+            Option<&Occupied>,
             Option<&Highlighted>,
-            &Revealed,
+            Option<&Revealed>,
             Option<&TilePreview>,
             Option<&LightLevel>,
         ),
         (
             With<MapTile>,
             Or<(
+                Changed<Occupied>,
                 Changed<Highlighted>,
                 Changed<Revealed>,
                 Changed<TilePreview>,
@@ -293,12 +297,15 @@ pub fn update_tile_visuals(
     >,
     map_spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, highlighted, revealed, preview_opt, light_level) in tiles.iter_mut() {
-        let revealed = revealed.0;
+    for (mut sprite, mut vis, occupied, highlighted, revealed, preview_opt, light_level) in
+        tiles.iter_mut()
+    {
+        let revealed = revealed.is_some_and(|r| r.0);
         let highlighted = highlighted.is_some();
         let adjusted_light = light_level.copied().unwrap_or(map_spec.light_level);
+        let has_actor = occupied.is_some();
 
-        *vis = if revealed {
+        *vis = if revealed && !has_actor {
             Visibility::Visible
         } else {
             Visibility::Hidden

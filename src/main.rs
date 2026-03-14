@@ -24,8 +24,8 @@ use crate::{
     event_log::{draw_message_log_ui, setup_egui_fonts},
     light::{Emitter, LightLevel},
     player::PlayerStats,
-    tilemap::TilemapSpec,
-    tiles::{MapTile, TileIdx, Walkable},
+    tilemap::{TileStorage, TilemapSpec},
+    tiles::{MapTile, Occupied, TileIdx, Walkable},
 };
 
 use inventory::*;
@@ -111,6 +111,7 @@ fn main() {
             (
                 map::sync_tiles,
                 sync_actor_sprites,
+                sync_tile_occupied,
                 update_piece_transforms,
                 update_camera.after(update_piece_transforms),
                 update_spatial_index,
@@ -297,6 +298,24 @@ fn update_spatial_index(
     }
 }
 
+fn sync_tile_occupied(
+    mut commands: Commands,
+    actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
+    storage: Single<&TileStorage>,
+) {
+    for (curr_cell, prev_cell_opt) in actors.iter() {
+        if let Some(tile) = storage.get(curr_cell) {
+            commands.entity(tile).insert(Occupied);
+        }
+
+        if let Some(prev_cell) = prev_cell_opt {
+            if let Some(prev_tile) = storage.get(prev_cell) {
+                commands.entity(prev_tile).remove::<Occupied>();
+            }
+        }
+    }
+}
+
 /// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 fn load_spritesheet(
     mut commands: Commands,
@@ -338,6 +357,7 @@ fn handle_player_input(
 
     events.write(ActionAttempt {
         interactor: player_entity,
+        origin_cell: player_cell.clone(),
         target_cell: player_cell.add(directiom),
     });
 }
@@ -370,6 +390,7 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
 /// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
 pub struct ActionAttempt {
     pub interactor: Entity,
+    pub origin_cell: Cell,
     pub target_cell: Cell,
 }
 
@@ -390,6 +411,9 @@ pub enum Interactable {
     },
 }
 
+#[derive(Component, Debug, Deref)]
+struct PreviousCell(Cell);
+
 /// Processes [ActionAttempt] messages, either moving the player or interacting with an interactable entity at the target [Cell] using [SpatialIndex].
 fn process_action_attempts(
     mut commands: Commands,
@@ -406,7 +430,9 @@ fn process_action_attempts(
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
             commands
                 .entity(message.interactor)
-                .insert(message.target_cell);
+                .insert(message.target_cell)
+                .insert(PreviousCell(message.origin_cell));
+
             log.add("You move.", colors::KENNEY_OFF_WHITE);
             continue;
         };
