@@ -88,15 +88,14 @@ fn main() {
                 setup_camera,
             ),
         )
+        .add_systems(
+            PostStartup,
+            (
+                add_test_npc.run_if(run_once).after(load_spritesheet),
+                add_test_emitters.run_if(run_once).after(load_spritesheet),
+            ),
+        )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
-        .add_systems(
-            Startup,
-            add_test_npc.run_if(run_once).after(load_spritesheet),
-        )
-        .add_systems(
-            Startup,
-            add_test_emitters.run_if(run_once).after(load_spritesheet),
-        )
         .add_systems(
             Update,
             (
