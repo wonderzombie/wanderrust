@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::Actor;
+use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
@@ -119,6 +120,7 @@ impl LightMap {
 }
 
 pub fn update_emitter_lights(
+    spec: Res<TilemapSpec>,
     mut commands: Commands,
     changed_emitters: Query<&Emitter, Changed<Cell>>,
     all_emitters: Query<(Entity, &Emitter, &Cell)>,
@@ -152,7 +154,7 @@ pub fn update_emitter_lights(
             Some(tile)
         })
         .for_each(|tile| {
-            commands.entity(tile).remove::<LightLevel>();
+            commands.entity(tile).insert(spec.light_level);
         });
 
     // Any cells in the new map that aren't in the old one are 1) unlit and 2) should be lit.
