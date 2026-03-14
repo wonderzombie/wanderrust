@@ -2,7 +2,7 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{MapDimensions, TilemapId, TilemapSpec};
+use crate::tilemap::{MapDimensions, TilemapSpec};
 use crate::tiles::{Highlighted, MapTile, Opaque, Revealed, TileIdx, TilePreview, Walkable};
 
 use bevy::platform::collections::HashMap;
