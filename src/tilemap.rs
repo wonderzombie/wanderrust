@@ -136,7 +136,7 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
-/// Spawns a tilemap, a constituency of [MapTile] entities, from a [MapSpec].
+/// Spawns a tilemap, a constituency of [MapTile] entities, from a [TilemapSpec].
 /// It creates one entity with [TilemapBundle] and many with [TileBundle].
 pub fn spawn_tilemap(
     mut commands: Commands,
