@@ -110,7 +110,7 @@ fn main() {
             (
                 map::sync_tiles,
                 sync_actor_sprites,
-                sync_tile_occupied,
+                sync_occupied_tiles,
                 update_piece_transforms,
                 update_camera.after(update_piece_transforms),
                 update_spatial_index,
@@ -297,7 +297,7 @@ fn update_spatial_index(
     }
 }
 
-fn sync_tile_occupied(
+fn sync_occupied_tiles(
     mut commands: Commands,
     actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
     storage: Single<&TileStorage>,
