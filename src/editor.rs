@@ -267,7 +267,7 @@ pub fn poll_save_dialog(
 
 /// Saves the map to disk using the provided [TileStorage] and [Query] of all tiles.
 pub fn save_map(
-    mut storage: Single<&mut TileStorage>,
+    storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
