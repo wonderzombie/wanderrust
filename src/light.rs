@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::Actor;
+use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
@@ -176,7 +177,7 @@ pub fn update_emitter_lights(
             let new_level = new_combined_map.get(c)?;
             let old_level = prev_map.0.get(c)?;
 
-            return (old_level != new_level).then_some((tile, new_level));
+            (old_level != new_level).then_some((tile, new_level))
         })
         .for_each(|(tile, new_level)| {
             commands.entity(tile).insert(*new_level);
@@ -200,26 +201,26 @@ pub fn sync_tile_light_levels(
 }
 
 pub fn sync_actor_light_levels(
+    map_spec: Res<TilemapSpec>,
     storage: Single<&TileStorage>,
-    light_levels: Query<(&LightLevel, &Revealed), With<MapTile>>,
-    actors: Query<(&mut Sprite, &Cell, &mut Visibility), Without<MapTile>>,
+    tile_revealed: Query<&Revealed, With<MapTile>>,
+    tile_light: Query<&LightLevel, With<MapTile>>,
+    mut actors: Query<(&mut Sprite, &mut Visibility, &Cell), With<Actor>>,
 ) {
-    // Actor entities should have the same LightLevel as the tile they are standing on.
-    for (mut sprite, cell, mut vis) in actors {
+    for (mut sprite, mut visibility, cell) in actors.iter_mut() {
         let Some(tile) = storage.get(cell) else {
             continue;
         };
-        let Ok((level, revealed)) = light_levels.get(tile) else {
-            continue;
-        };
 
-        if revealed.0 {
-            sprite.color = Color::WHITE.with_alpha((*level).into());
-            *vis = Visibility::Visible;
+        let revealed = tile_revealed.get(tile).ok().copied().unwrap_or_default();
+        let level = tile_light.get(tile).ok().copied().unwrap_or(map_spec.light_level);
+
+        *visibility = if revealed.0 {
+            Visibility::Visible
         } else {
-            sprite.color = Color::BLACK.with_alpha(0.0);
-            *vis = Visibility::Hidden;
-        }
+            Visibility::Hidden
+        };
+        sprite.color = Color::WHITE.with_alpha(level.into());
     }
 }
 
