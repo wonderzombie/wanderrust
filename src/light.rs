@@ -187,25 +187,35 @@ pub fn update_emitter_lights(
 }
 
 pub fn sync_actor_light_levels(
+    spec: Res<TilemapSpec>,
     storage: Single<&TileStorage>,
-    light_levels: Query<(&LightLevel, &Revealed), With<MapTile>>,
+    lit_tiles: Query<&LightLevel, With<MapTile>>,
+    revealed_tiles: Query<&Revealed, With<MapTile>>,
     actors: Query<(&mut Sprite, &Cell, &mut Visibility), Without<MapTile>>,
 ) {
     // Actor entities should have the same LightLevel as the tile they are standing on.
-    for (mut sprite, cell, mut vis) in actors {
-        let Some(tile) = storage.get(cell) else {
+    for (mut actor_sprite, actor_cell, mut actor_vis) in actors {
+        let Some(actor_tile) = storage.get(actor_cell) else {
             continue;
         };
-        let Ok((level, revealed)) = light_levels.get(tile) else {
-            continue;
-        };
+        let revealed = revealed_tiles
+            .get(actor_tile)
+            .ok()
+            .copied()
+            .unwrap_or_default();
+
+        let level = lit_tiles
+            .get(actor_tile)
+            .ok()
+            .copied()
+            .unwrap_or(spec.light_level);
 
         if revealed.0 {
-            sprite.color = Color::WHITE.with_alpha((*level).into());
-            *vis = Visibility::Visible;
+            actor_sprite.color = Color::WHITE.with_alpha(level.into());
+            *actor_vis = Visibility::Visible;
         } else {
-            sprite.color = Color::BLACK.with_alpha(0.0);
-            *vis = Visibility::Hidden;
+            actor_sprite.color = Color::BLACK.with_alpha(0.0);
+            *actor_vis = Visibility::Hidden;
         }
     }
 }
