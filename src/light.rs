@@ -185,20 +185,6 @@ pub fn update_emitter_lights(
     *prev_map = new_combined_map;
 }
 
-pub fn sync_tile_light_levels(
-    mut commands: Commands,
-    light_maps: Query<&LightMap, Changed<LightMap>>,
-    tiles: Single<&TileStorage>,
-) {
-    for light_map in light_maps.iter() {
-        for (cell, level) in light_map.0.iter() {
-            if let Some(tile) = tiles.get(cell) {
-                commands.entity(tile).insert(*level);
-            }
-        }
-    }
-}
-
 pub fn sync_actor_light_levels(
     storage: Single<&TileStorage>,
     light_levels: Query<(&LightLevel, &Revealed), With<MapTile>>,
