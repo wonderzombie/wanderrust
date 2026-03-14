@@ -27,6 +27,7 @@ use crate::{
     player::PlayerStats,
     tilemap::{TileStorage, TilemapSpec},
     tiles::{MapTile, Occupied, TileIdx, Walkable},
+    transition::{EntryId, PendingTransition, ZoneId},
 };
 
 use inventory::*;
@@ -309,9 +310,10 @@ fn sync_occupied_tiles(
         }
 
         if let Some(prev_cell) = prev_cell_opt
-            && let Some(prev_tile) = storage.get(prev_cell) {
-                commands.entity(prev_tile).remove::<Occupied>();
-            }
+            && let Some(prev_tile) = storage.get(prev_cell)
+        {
+            commands.entity(prev_tile).remove::<Occupied>();
+        }
     }
 }
 
@@ -408,6 +410,10 @@ pub enum Interactable {
         name: String,
         text: String,
     },
+    Transition {
+        zone: ZoneId,
+        arrive_at: EntryId,
+    },
 }
 
 #[derive(Component, Debug, Deref)]
@@ -445,6 +451,7 @@ fn process_action_attempts(
         };
 
         handle_interaction(
+            &mut commands,
             &mut tile_idx,
             &mut interactable,
             &player_inventory,
@@ -457,6 +464,7 @@ fn process_action_attempts(
 
 /// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
 fn handle_interaction(
+    commands: &mut Commands,
     tile_idx: &mut TileIdx,
     interactable: &mut Interactable,
     inventory: &Inventory,
@@ -503,6 +511,12 @@ fn handle_interaction(
         Interactable::Dialogue { name, text } => {
             info!("Player talks to {}.", name);
             log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
+        }
+        Interactable::Transition { zone, arrive_at } => {
+            commands.insert_resource(PendingTransition {
+                zone: zone.clone(),
+                arrive_at: arrive_at.clone(),
+            })
         }
     }
 }

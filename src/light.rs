@@ -156,7 +156,7 @@ pub fn update_emitter_lights(
             Some(tile)
         })
         .for_each(|tile| {
-            commands.entity(tile).insert(spec.light_level);
+            commands.entity(tile).insert(spec.ambient_light);
         });
 
     // Any cells in the new map that aren't in the old one are 1) unlit and 2) should be lit.
@@ -211,7 +211,7 @@ pub fn sync_actor_light_levels(
             .get(actor_tile)
             .ok()
             .copied()
-            .unwrap_or(spec.light_level);
+            .unwrap_or(spec.ambient_light);
 
         if revealed.0 {
             actor_sprite.color = Color::WHITE.with_alpha(level.into());

@@ -102,7 +102,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start: Cell { x: 5, y: 5 },
-            light_level: LightLevel::Dark,
+            ambient_light: LightLevel::Dark,
             ..Default::default()
         }
     }
@@ -143,7 +143,7 @@ impl TilemapSpec {
             tiles,
             layer: DEFAULT_LAYER,
             start,
-            light_level: LightLevel::Night,
+            ambient_light: LightLevel::Night,
             ..Default::default()
         }
     }
@@ -302,7 +302,7 @@ pub fn update_tile_visuals(
     {
         let revealed = revealed.is_some_and(|r| r.0);
         let highlighted = highlighted.is_some();
-        let adjusted_light = light_level.copied().unwrap_or(map_spec.light_level);
+        let adjusted_light = light_level.copied().unwrap_or(map_spec.ambient_light);
         let has_actor = occupied.is_some();
 
         *vis = if revealed && !has_actor {

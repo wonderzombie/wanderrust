@@ -31,7 +31,7 @@ pub struct TilemapSpec {
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
     pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
-    pub light_level: LightLevel,
+    pub ambient_light: LightLevel,
 }
 
 #[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
