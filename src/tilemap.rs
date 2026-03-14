@@ -164,7 +164,7 @@ fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &
         .tiles
         .iter()
         .map(|(tile_idx, cell)| {
-            let pos = spec.size.cell_to_pos(&cell);
+            let pos = spec.size.cell_to_pos(cell);
 
             // TODO: replace [MapTile] with [MapId] here and elsewhere.
             TileBundle {

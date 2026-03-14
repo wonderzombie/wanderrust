@@ -37,8 +37,8 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
     // upper + t * (upper - lower)
     let top = top_left.lerp(top_right, tx);
     let bot = bot_left.lerp(bot_right, tx);
-    let value = top.lerp(bot, ty);
-    value
+    
+    top.lerp(bot, ty)
 }
 
 pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
@@ -107,7 +107,7 @@ fn select_from_table(
                 cursor -= w;
                 if cursor <= 0.0 {
                     return select_from_table(
-                        &subtable,
+                        subtable,
                         cell,
                         &|depth| sample_cell_with_depth(cell, depth),
                         depth + 1,

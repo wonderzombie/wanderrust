@@ -131,7 +131,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Actor,
         TileIdx::Skeleton,
@@ -148,7 +148,7 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 47, y: 47 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
     ));
