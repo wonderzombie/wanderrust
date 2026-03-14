@@ -202,10 +202,10 @@ pub fn sync_tile_light_levels(
 pub fn sync_actor_light_levels(
     storage: Single<&TileStorage>,
     light_levels: Query<(&LightLevel, &Revealed), With<MapTile>>,
-    actors: Query<(&mut Sprite, &Cell), Without<MapTile>>,
+    actors: Query<(&mut Sprite, &Cell, &mut Visibility), Without<MapTile>>,
 ) {
     // Actor entities should have the same LightLevel as the tile they are standing on.
-    for (mut sprite, cell) in actors {
+    for (mut sprite, cell, mut vis) in actors {
         let Some(tile) = storage.get(cell) else {
             continue;
         };
@@ -215,8 +215,10 @@ pub fn sync_actor_light_levels(
 
         if revealed.0 {
             sprite.color = Color::WHITE.with_alpha((*level).into());
+            *vis = Visibility::Visible;
         } else {
             sprite.color = Color::BLACK.with_alpha(0.0);
+            *vis = Visibility::Hidden;
         }
     }
 }

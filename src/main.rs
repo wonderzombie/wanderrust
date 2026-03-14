@@ -127,13 +127,12 @@ fn main() {
 }
 
 fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    let bundle = PieceBundle {
-        sprite: atlas.sprite(),
-        cell: Cell { x: 53, y: 53 },
-        transform: Transform::default(),
-    };
     commands.spawn((
-        bundle,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 53, y: 53 },
+            transform: Transform::default(),
+        },
         Actor,
         TileIdx::Skeleton,
         Interactable::Dialogue {
