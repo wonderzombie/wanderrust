@@ -111,8 +111,8 @@ fn main() {
                 map::sync_tiles,
                 sync_actor_sprites,
                 sync_occupied_tiles,
-                update_piece_transforms,
-                update_camera.after(update_piece_transforms),
+                update_actor_transforms,
+                update_camera.after(update_actor_transforms),
                 update_spatial_index,
                 fov::update_fov_model.after(map::sync_tiles),
                 fov::update_fov_markers.after(fov::update_fov_model),
@@ -277,7 +277,7 @@ fn sync_actor_sprites(
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
-fn update_piece_transforms(
+fn update_actor_transforms(
     mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
 ) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
