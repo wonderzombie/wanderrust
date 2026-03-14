@@ -11,6 +11,7 @@ mod procgen;
 mod ptable;
 mod tilemap;
 mod tiles;
+mod transition;
 
 use std::{collections::HashMap, ops::Add};
 

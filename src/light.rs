@@ -5,8 +5,11 @@ use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub enum LightLevel {
     Dark, // underground default — render nothing
     #[default]

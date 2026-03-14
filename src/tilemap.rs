@@ -6,6 +6,7 @@ use crate::{
     cell::Cell,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
+    transition::{EntrySpec, ExitSpec},
 };
 
 #[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
@@ -106,11 +107,13 @@ impl TileStorage {
     // }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SavedTilemap {
     pub tiles: Vec<TileIdx>,
     pub size: MapDimensions,
     pub layer: TilemapLayer,
+    pub entries: Vec<EntrySpec>,
+    pub exits: Vec<ExitSpec>,
 }
 
 #[derive(Bundle, Clone)]
@@ -214,7 +217,7 @@ pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>
     SavedTilemap {
         tiles: tiles.clone(),
         size: storage.size,
-        layer: TilemapLayer::default(),
+        ..Default::default()
     }
 }
 
