@@ -224,12 +224,13 @@ impl SpatialIndex {
     }
 }
 
-#[derive(Bundle, Clone, Debug)]
+#[derive(Bundle, Default, Clone, Debug)]
 /// A bundle for map pieces that includes a sprite, cell position, and transform.
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
     pub transform: Transform,
+    pub visibility: Visibility,
 }
 
 fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
