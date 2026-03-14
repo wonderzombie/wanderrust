@@ -107,10 +107,18 @@ impl TileStorage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct EntryId(String);
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Zone(String);
+
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
     pub tiles: Vec<TileIdx>,
     pub size: MapDimensions,
     pub layer: TilemapLayer,
+    pub entries: Vec<(EntryId, Cell)>,
+    pub exits: Vec<(Cell, Zone, EntryId)>,
 }
 
 #[derive(Bundle, Clone)]
@@ -214,7 +222,7 @@ pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>
     SavedTilemap {
         tiles: tiles.clone(),
         size: storage.size,
-        layer: TilemapLayer::default(),
+        ..Default::default()
     }
 }
 
