@@ -126,6 +126,12 @@ impl From<&str> for Entry {
     }
 }
 
+impl PartialEq<EntryId> for Entry {
+    fn eq(&self, other: &EntryId) -> bool {
+        self.0 == *other
+    }
+}
+
 /// EntryId accompanied by a Cell identifies an exit point in a Tilemap pointing to an Entry with the same EntryId.
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Exit(pub EntryId);
@@ -133,6 +139,12 @@ pub struct Exit(pub EntryId);
 impl From<&str> for Exit {
     fn from(value: &str) -> Self {
         Self(EntryId(value.into()))
+    }
+}
+
+impl PartialEq<EntryId> for Exit {
+    fn eq(&self, other: &EntryId) -> bool {
+        self.0 == *other
     }
 }
 

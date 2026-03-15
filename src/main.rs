@@ -564,11 +564,11 @@ fn handle_pending_transition(
     player: Single<Entity, With<Player>>,
 ) {
     if let Some(transition) = pending_transition.as_ref() {
-        for (entry_id, cell) in entries {
-            if entry_id.0 == transition.entry_id {
+        for (entry, cell) in &entries {
+            if entry == &transition.entry_id {
                 info!(
                     "player transitioning to entry_id {:?} at cell {:?}",
-                    entry_id, cell
+                    entry, cell
                 );
                 commands.entity(*player).insert(*cell);
                 commands.remove_resource::<PendingTransition>();
