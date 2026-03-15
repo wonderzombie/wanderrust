@@ -7,9 +7,9 @@ use bevy::{
 use rfd::AsyncFileDialog;
 
 use crate::{
+    actors::PlayerStats,
     colors::KENNEY_RED,
     event_log,
-    player::PlayerStats,
     tilemap::{self, SavedTilemap, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };

@@ -4,8 +4,8 @@ use mrpas::Mrpas;
 
 use crate::{
     Player,
+    actors::PlayerStats,
     cell::Cell,
-    player,
     tilemap::TilemapSpec,
     tiles::{MapTile, Revealed, TileIdx},
 };
@@ -82,7 +82,7 @@ pub fn update_fov_model(
 pub fn update_fov_markers(
     fov: Res<Fov>,
     player_query: Query<&Cell, With<Player>>,
-    player_stats: Res<player::PlayerStats>,
+    player_stats: Res<PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
     let Ok(player_cell) = player_query.single() else {

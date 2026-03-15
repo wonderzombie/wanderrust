@@ -7,7 +7,6 @@ mod fov;
 mod inventory;
 mod light;
 mod map;
-mod player;
 mod procgen;
 mod ptable;
 mod tilemap;
@@ -21,14 +20,13 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     actors::{
-        ActionAttempt, Actor, PieceBundle, Player, PreviousCell, handle_player_input, setup_player,
-        sync_actor_sprites, sync_occupied_tiles, update_actor_transforms,
+        ActionAttempt, Actor, PieceBundle, Player, PlayerStats, PreviousCell, handle_player_input,
+        setup_player, sync_actor_sprites, sync_occupied_tiles, update_actor_transforms,
     },
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     light::{Emitter, LightLevel},
-    player::PlayerStats,
     tilemap::{Entry, EntryId, Exit, TilemapSpec, ZoneFile},
     tiles::{MapTile, TileIdx, Walkable},
 };
