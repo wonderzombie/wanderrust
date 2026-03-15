@@ -106,11 +106,40 @@ impl TileStorage {
     // }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct EntryId(String);
+/// EntryId identifies a link between an Entry and an Exit.
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct EntryId(pub String);
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Zone(String);
+impl From<&str> for EntryId {
+    fn from(value: &str) -> Self {
+        Self(value.into())
+    }
+}
+
+/// Entry accompanied by a Cell identifies an arrival point in a tilemap from an Exit with the same EntryId.
+#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct Entry(pub EntryId);
+
+impl From<&str> for Entry {
+    fn from(value: &str) -> Self {
+        Self(EntryId(value.into()))
+    }
+}
+
+/// EntryId accompanied by a Cell identifies an exit point in a Tilemap pointing to an Entry with the same EntryId.
+#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct Exit(pub EntryId);
+
+impl From<&str> for Exit {
+    fn from(value: &str) -> Self {
+        Self(EntryId(value.into()))
+    }
+}
+
+/// ZoneId is currently just a path to a file representing a zone.
+/// Together with a Cell and EntryId, it identifies a new point in a new map.
+#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct ZoneFile(String);
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
@@ -118,7 +147,7 @@ pub struct SavedTilemap {
     pub size: MapDimensions,
     pub layer: TilemapLayer,
     pub entries: Vec<(EntryId, Cell)>,
-    pub exits: Vec<(Cell, Zone, EntryId)>,
+    pub exits: Vec<(Cell, ZoneFile, EntryId)>,
 }
 
 #[derive(Bundle, Clone)]
@@ -226,7 +255,7 @@ pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>
     }
 }
 
-/// Loads a [SavedTilemap] into [TileStorage].
+/// Loads a [SavedTilemap] into [TileStorage] and inserts entry/exit data.
 pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
     storage
         .tiles
@@ -237,4 +266,18 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
                 commands.entity(*entity).insert(*tile_idx);
             }
         });
+
+    for (entry_id, cell) in saved.entries.iter() {
+        if let Some(entity) = storage.get(cell) {
+            commands.entity(entity).insert(Entry(entry_id.clone()));
+        }
+    }
+    info!("added {} entries", saved.entries.len());
+
+    for (exit_cell, _, entry_id) in saved.exits.iter() {
+        if let Some(entity) = storage.get(exit_cell) {
+            commands.entity(entity).insert(Exit(entry_id.clone()));
+        }
+    }
+    info!("added {} exits", saved.exits.len());
 }
