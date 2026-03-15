@@ -1,3 +1,4 @@
+mod actors;
 mod cell;
 mod colors;
 mod editor;
@@ -12,13 +13,17 @@ mod ptable;
 mod tilemap;
 mod tiles;
 
-use std::{collections::HashMap, ops::Add};
+use std::collections::HashMap;
 
 use bevy::prelude::*;
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
+    actors::{
+        ActionAttempt, Actor, PieceBundle, Player, handle_player_input, setup_player,
+        sync_actor_sprites, update_actor_transforms,
+    },
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
@@ -132,7 +137,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Actor,
         TileIdx::Skeleton,
@@ -145,11 +150,12 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
 
 fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     commands.spawn((
+        Actor,
         TileIdx::Torch,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 47, y: 47 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
     ));
@@ -162,7 +168,7 @@ fn add_test_entry_exit(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 45 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Exit("door".into()),
     ));
@@ -173,7 +179,7 @@ fn add_test_entry_exit(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 47, y: 47 },
-            transform: Transform::default(),
+            ..Default::default()
         },
         Entry("door".into()),
     ));
@@ -211,10 +217,6 @@ impl SpriteAtlas {
     }
 }
 
-#[derive(Component, Debug)]
-/// A marker component for entities that perform actions in the world, such as the player or NPCs.
-pub struct Actor;
-
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 pub struct SpatialIndex {
@@ -249,32 +251,6 @@ impl SpatialIndex {
     }
 }
 
-#[derive(Bundle, Clone, Debug)]
-/// A bundle for map pieces that includes a sprite, cell position, and transform.
-pub struct PieceBundle {
-    pub sprite: Sprite,
-    pub cell: Cell,
-    pub transform: Transform,
-}
-
-fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
-    commands.spawn((
-        Player,
-        Actor,
-        PieceBundle {
-            sprite: atlas.sprite(),
-            cell: spec.start,
-            transform: Transform::from_xyz(
-                spec.start.x as f32 * TILE_SIZE_PX,
-                spec.start.y as f32 * TILE_SIZE_PX,
-                -1.0,
-            ),
-        },
-        TileIdx::Player,
-        Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
-    ));
-}
-
 fn setup_camera(mut commands: Commands) {
     // Spawn the camera using a 2D orthographic projection.
     commands.spawn((
@@ -289,27 +265,6 @@ fn setup_camera(mut commands: Commands) {
             0.0,
         ),
     ));
-}
-
-/// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
-fn sync_actor_sprites(
-    mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
-) {
-    for (mut sprite, tile_idx) in pieces.iter_mut() {
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = tile_idx.into();
-        }
-    }
-}
-
-/// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
-fn update_actor_transforms(
-    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
-) {
-    for (piece_cell, mut transform) in pieces.iter_mut() {
-        transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
-        transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
-    }
 }
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
@@ -360,63 +315,6 @@ fn load_spritesheet(
         texture: texture.clone(),
         layout: layout.clone(),
     });
-}
-
-#[derive(Component, Debug)]
-pub struct Player;
-
-/// Handles player input and sends an [ActionAttempt] message derived from player input.
-fn handle_player_input(
-    mut events: MessageWriter<ActionAttempt>,
-    input: Res<ButtonInput<KeyCode>>,
-    player_query: Query<(Entity, &Cell), With<Player>>,
-) {
-    let Some(directiom) = get_direction(&input) else {
-        return;
-    };
-
-    let Ok((player_entity, player_cell)) = player_query.single() else {
-        warn!("No player entity found in the world.");
-        return;
-    };
-
-    events.write(ActionAttempt {
-        interactor: player_entity,
-        origin_cell: *player_cell,
-        target_cell: player_cell.add(directiom),
-    });
-}
-
-/// Returns the [IVec2] direction implied by [KeyCode], if any.
-fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
-    let mut direction = IVec2::ZERO;
-
-    if input.just_pressed(KeyCode::KeyW) {
-        direction += IVec2::Y;
-    }
-    if input.just_pressed(KeyCode::KeyS) {
-        direction += IVec2::NEG_Y;
-    }
-    if input.just_pressed(KeyCode::KeyA) {
-        direction += IVec2::NEG_X;
-    }
-    if input.just_pressed(KeyCode::KeyD) {
-        direction += IVec2::X;
-    }
-
-    if direction != IVec2::ZERO {
-        Some(direction)
-    } else {
-        None
-    }
-}
-
-#[derive(Message, Debug)]
-/// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
-pub struct ActionAttempt {
-    pub interactor: Entity,
-    pub origin_cell: Cell,
-    pub target_cell: Cell,
 }
 
 #[derive(Component, Debug)]

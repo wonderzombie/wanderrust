@@ -1,0 +1,121 @@
+use std::ops::Add;
+
+use bevy::prelude::*;
+
+use crate::{
+    SpriteAtlas, TILE_SIZE_PX,
+    cell::Cell,
+    light::{Emitter, LightLevel},
+    tilemap::TilemapSpec,
+    tiles::{MapTile, TileIdx},
+};
+
+#[derive(Component, Debug)]
+/// A marker component for entities that perform actions in the world, such as the player or NPCs.
+pub struct Actor;
+
+#[derive(Component, Debug)]
+pub struct Player;
+
+#[derive(Bundle, Default, Clone, Debug)]
+/// A bundle for map pieces that includes a sprite, cell position, and transform.
+pub struct PieceBundle {
+    pub sprite: Sprite,
+    pub cell: Cell,
+    pub transform: Transform,
+    pub visibility: Visibility,
+}
+
+pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
+    commands.spawn((
+        Player,
+        Actor,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: spec.start,
+            transform: Transform::from_xyz(
+                spec.start.x as f32 * TILE_SIZE_PX,
+                spec.start.y as f32 * TILE_SIZE_PX,
+                -1.0,
+            ),
+            ..Default::default()
+        },
+        TileIdx::Player,
+        Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
+    ));
+}
+
+/// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
+pub fn sync_actor_sprites(
+    mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
+) {
+    for (mut sprite, tile_idx) in pieces.iter_mut() {
+        if let Some(texture_atlas) = &mut sprite.texture_atlas {
+            texture_atlas.index = tile_idx.into();
+        }
+    }
+}
+
+/// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
+pub fn update_actor_transforms(
+    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
+) {
+    for (piece_cell, mut transform) in pieces.iter_mut() {
+        transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
+        transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
+    }
+}
+
+#[derive(Message, Debug)]
+/// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
+pub struct ActionAttempt {
+    pub interactor: Entity,
+    pub origin_cell: Cell,
+    pub target_cell: Cell,
+}
+
+/// Handles player input and sends an [ActionAttempt] message derived from player input.
+pub fn handle_player_input(
+    mut events: MessageWriter<ActionAttempt>,
+    input: Res<ButtonInput<KeyCode>>,
+    player_query: Query<(Entity, &Cell), With<Player>>,
+) {
+    let Some(directiom) = get_direction(&input) else {
+        return;
+    };
+
+    let Ok((player_entity, player_cell)) = player_query.single() else {
+        warn!("No player entity found in the world.");
+        return;
+    };
+
+    events.write(ActionAttempt {
+        interactor: player_entity,
+        origin_cell: *player_cell,
+        target_cell: player_cell.add(directiom),
+    });
+}
+
+/// Returns the [IVec2] direction implied by [KeyCode], if any.
+fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
+    let mut direction = IVec2::ZERO;
+
+    if input.just_pressed(KeyCode::KeyW) {
+        direction += IVec2::Y;
+    }
+    if input.just_pressed(KeyCode::KeyS) {
+        direction += IVec2::NEG_Y;
+    }
+    if input.just_pressed(KeyCode::KeyA) {
+        direction += IVec2::NEG_X;
+    }
+    if input.just_pressed(KeyCode::KeyD) {
+        direction += IVec2::X;
+    }
+
+    if direction != IVec2::ZERO {
+        Some(direction)
+    } else {
+        None
+    }
+}
