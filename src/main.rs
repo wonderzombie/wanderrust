@@ -19,19 +19,15 @@ use bevy::prelude::*;
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
-    actors::{
-        ActionAttempt, Actor, PieceBundle, Player, PlayerStats, PreviousCell, handle_player_input,
-        setup_player, sync_actor_sprites, sync_occupied_tiles, update_actor_transforms,
-    },
+    actors::*,
     cell::Cell,
     editor::{DesiredZoom, EditorState},
-    event_log::{draw_message_log_ui, setup_egui_fonts},
+    event_log::{MessageLog, draw_message_log_ui, setup_egui_fonts},
+    inventory::*,
     light::{Emitter, LightLevel},
-    tilemap::{Entry, EntryId, Exit, TilemapSpec, ZoneFile},
+    tilemap::{EntryId, Portal, TilemapSpec},
     tiles::{MapTile, TileIdx, Walkable},
 };
-
-use inventory::*;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
@@ -61,6 +57,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
+        .add_message::<Damage>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
@@ -96,7 +93,7 @@ fn main() {
             (
                 add_test_npc.run_if(run_once),
                 add_test_emitters.run_if(run_once),
-                add_test_entry_exit.run_if(run_once),
+                add_test_portals.run_if(run_once),
             ),
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
@@ -106,6 +103,7 @@ fn main() {
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,
+                handle_damage,
                 handle_pending_transition,
             )
                 .chain(),
@@ -144,6 +142,22 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             text: "Hello".into(),
         },
     ));
+
+    commands.spawn((
+        Actor,
+        TileIdx::Skeleton,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 49, y: 49 },
+            ..Default::default()
+        },
+        Interactable::Combatant {
+            combat_stats: CombatStats {
+                nameplate: "Mr. Sandbag".into(),
+                hp: 10,
+            },
+        },
+    ));
 }
 
 fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
@@ -159,27 +173,35 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     ));
 }
 
-fn add_test_entry_exit(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     // Exit
     commands.spawn((
+        Actor,
         TileIdx::DoorwayBrownThick,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 45 },
             ..Default::default()
         },
-        Exit("door".into()),
+        Portal {
+            id: "door_exit".into(),
+            arrive_at: "door_entry".into(),
+        },
     ));
 
     // Entry (arrival)
     commands.spawn((
+        Actor,
         TileIdx::DoorwayBrownThick,
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: Cell { x: 47, y: 47 },
+            cell: Cell { x: 48, y: 48 },
             ..Default::default()
         },
-        Entry("door".into()),
+        Portal {
+            id: "door_entry".into(),
+            arrive_at: "door_exit".into(),
+        },
     ));
 }
 
@@ -312,9 +334,8 @@ pub enum Interactable {
         name: String,
         text: String,
     },
-    Transition {
-        zone_file: ZoneFile,
-        entry_id: EntryId,
+    Combatant {
+        combat_stats: CombatStats,
     },
 }
 
@@ -324,7 +345,9 @@ fn process_action_attempts(
     mut log: ResMut<event_log::MessageLog>,
     mut interactions: MessageReader<ActionAttempt>,
     mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    portals: Query<&Portal>,
     mut acquisitions: MessageWriter<Acquisition>,
+    mut damages: MessageWriter<Damage>,
     player_inventory: Res<Inventory>,
     spatial_index: Res<SpatialIndex>,
 ) {
@@ -333,13 +356,20 @@ fn process_action_attempts(
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
             commands
-                .entity(message.interactor)
+                .entity(message.entity)
                 .insert(message.target_cell)
                 .insert(PreviousCell(message.origin_cell));
 
             log.add("You move.", colors::KENNEY_OFF_WHITE);
             continue;
         };
+
+        if let Ok(portal) = portals.get(target_entity) {
+            commands.insert_resource(PendingTransition {
+                arrive_at: portal.arrive_at.clone(),
+            });
+            continue;
+        }
 
         let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(target_entity) else {
             info!(
@@ -355,10 +385,18 @@ fn process_action_attempts(
             &mut interactable,
             &player_inventory,
             &mut acquisitions,
-            message.interactor,
+            &mut damages,
+            message.entity,
             &mut log,
         );
     }
+}
+
+#[derive(Message, Debug, Copy, Clone)]
+pub struct Damage {
+    pub amount: i32,
+    pub origin: Cell,
+    pub target: Cell,
 }
 
 /// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
@@ -368,6 +406,7 @@ fn handle_interaction(
     interactable: &mut Interactable,
     inventory: &Inventory,
     acquisitions: &mut MessageWriter<Acquisition>,
+    _damages: &mut MessageWriter<Damage>,
     interactor: Entity,
     log: &mut event_log::MessageLog,
 ) {
@@ -411,50 +450,83 @@ fn handle_interaction(
             info!("Player talks to {}.", name);
             log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
         }
-        Interactable::Transition {
-            zone_file,
-            entry_id,
-        } => {
-            let entry_id = entry_id.clone();
-            let zone_file = zone_file.clone();
-            commands.insert_resource(PendingTransition {
-                zone_file,
-                entry_id,
-            })
+        Interactable::Combatant { .. } => {
+            // TODO: sort out whether to do more looking up here or in the damage handler.
         }
     }
+}
+
+#[derive(Component, Debug, Default)]
+pub struct CombatStats {
+    pub nameplate: String,
+    pub hp: i32,
+}
+
+fn handle_damage(
+    mut damages: MessageReader<Damage>,
+    mut query: Query<&mut CombatStats>,
+    spatial_index: Res<SpatialIndex>,
+    mut log: ResMut<MessageLog>,
+) {
+    damages
+        .read()
+        .into_iter()
+        .filter_map(|damage| {
+            let _ = damage.origin;
+            let target = damage.target;
+            let entity = spatial_index.get(target)?;
+            let mut stats = query.get_mut(entity).ok()?;
+            stats.hp -= damage.amount;
+            Some((stats.nameplate.clone(), damage.amount))
+        })
+        .for_each(|(nameplate, amount)| {
+            log.add(
+                format!("{} takes {} damage", nameplate, amount),
+                colors::KENNEY_RED,
+            );
+        });
 }
 
 #[derive(Resource, Debug)]
 struct PendingTransition {
-    zone_file: ZoneFile,
     /// The destination will be marked by this EntryId.
-    entry_id: EntryId,
+    arrive_at: EntryId,
 }
 
+/// Handles the pending transition, if any.
+/// Matches the EntryId in PendingTransition with the portals' EntryId to find the destination cell.
 fn handle_pending_transition(
     mut commands: Commands,
     pending_transition: Option<ResMut<PendingTransition>>,
-    entries: Query<(&Entry, &Cell), With<MapTile>>,
+    portals: Query<(&Portal, &Cell), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
-    if let Some(transition) = pending_transition.as_ref() {
-        for (entry, cell) in &entries {
-            if entry == &transition.entry_id {
-                info!(
-                    "player transitioning to entry_id {:?} at cell {:?}",
-                    entry, cell
-                );
-                commands.entity(*player).insert(*cell);
-                commands.remove_resource::<PendingTransition>();
-                return;
-            }
-        }
-        warn!(
-            "Pending transition entry_id {:?} not found in entries.",
-            transition.entry_id
+    let Some(transition) = pending_transition.as_ref() else {
+        return;
+    };
+
+    info!("looking for {:?} in {:?}", transition.arrive_at, portals);
+    for (portal, cell) in &portals {
+        info!(
+            "checking entry_id {:?} against {:?}",
+            portal.id, transition.arrive_at
         );
+        if portal.id == transition.arrive_at {
+            info!(
+                "player transitioning to entry_id {:?} at cell {:?}",
+                portal.arrive_at, cell
+            );
+            commands.entity(*player).insert(*cell);
+            commands.remove_resource::<PendingTransition>();
+            return;
+        }
     }
+    warn!(
+        "Pending transition entry_id {:?} not found in entries.",
+        transition.arrive_at
+    );
+
+    commands.remove_resource::<PendingTransition>();
 }
 
 fn update_camera(

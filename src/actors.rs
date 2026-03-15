@@ -99,7 +99,7 @@ pub fn update_actor_transforms(
 #[derive(Message, Debug)]
 /// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
 pub struct ActionAttempt {
-    pub interactor: Entity,
+    pub entity: Entity,
     pub origin_cell: Cell,
     pub target_cell: Cell,
 }
@@ -110,7 +110,7 @@ pub fn handle_player_input(
     input: Res<ButtonInput<KeyCode>>,
     player_query: Query<(Entity, &Cell), With<Player>>,
 ) {
-    let Some(directiom) = get_direction(&input) else {
+    let Some(direction) = get_direction(&input) else {
         return;
     };
 
@@ -120,9 +120,9 @@ pub fn handle_player_input(
     };
 
     events.write(ActionAttempt {
-        interactor: player_entity,
+        entity: player_entity,
         origin_cell: *player_cell,
-        target_cell: player_cell.add(directiom),
+        target_cell: player_cell.add(direction),
     });
 }
 

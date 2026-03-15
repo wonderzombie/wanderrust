@@ -1,8 +1,9 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     SpriteAtlas,
+    actors::Actor,
     cell::Cell,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
@@ -107,7 +108,7 @@ impl TileStorage {
 }
 
 /// EntryId identifies a link between an Entry and an Exit.
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
 pub struct EntryId(pub String);
 
 impl From<&str> for EntryId {
@@ -116,50 +117,18 @@ impl From<&str> for EntryId {
     }
 }
 
-/// Entry accompanied by a Cell identifies an arrival point in a tilemap from an Exit with the same EntryId.
-#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct Entry(pub EntryId);
-
-impl From<&str> for Entry {
-    fn from(value: &str) -> Self {
-        Self(EntryId(value.into()))
-    }
+#[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq)]
+pub struct Portal {
+    pub id: EntryId,
+    pub arrive_at: EntryId,
 }
-
-impl PartialEq<EntryId> for Entry {
-    fn eq(&self, other: &EntryId) -> bool {
-        self.0 == *other
-    }
-}
-
-/// EntryId accompanied by a Cell identifies an exit point in a Tilemap pointing to an Entry with the same EntryId.
-#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct Exit(pub EntryId);
-
-impl From<&str> for Exit {
-    fn from(value: &str) -> Self {
-        Self(EntryId(value.into()))
-    }
-}
-
-impl PartialEq<EntryId> for Exit {
-    fn eq(&self, other: &EntryId) -> bool {
-        self.0 == *other
-    }
-}
-
-/// ZoneId is currently just a path to a file representing a zone.
-/// Together with a Cell and EntryId, it identifies a new point in a new map.
-#[derive(Component, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct ZoneFile(String);
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
     pub tiles: Vec<TileIdx>,
     pub size: MapDimensions,
     pub layer: TilemapLayer,
-    pub entries: Vec<(EntryId, Cell)>,
-    pub exits: Vec<(Cell, ZoneFile, EntryId)>,
+    pub portals: Vec<(Portal, Cell)>,
 }
 
 #[derive(Bundle, Clone)]
@@ -249,7 +218,11 @@ pub fn initialize_tile_storage(
 }
 
 /// Saves the current state [TilemapStorage] as a [SavedTilemap].
-pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>>) -> SavedTilemap {
+pub fn save_map(
+    storage: &TileStorage,
+    all_tiles: &Query<&TileIdx, With<MapTile>>,
+    all_portals: &Query<(&Portal, &Cell), With<Actor>>,
+) -> SavedTilemap {
     // Using storage to drive iteration and using all_tiles to resolve `TileIdx` for each entity.
     // We don't need to store coordinates since the map size is fixed and known at load time.
     let tiles = storage
@@ -260,8 +233,14 @@ pub fn save_map(storage: &TileStorage, all_tiles: &Query<&TileIdx, With<MapTile>
         .map(|tile_idx| tile_idx.unwrap_or_default())
         .collect::<Vec<_>>();
 
+    let portals = all_portals
+        .iter()
+        .map(|(portal, cell)| (portal.clone(), cell.clone()))
+        .collect::<Vec<_>>();
+
     SavedTilemap {
-        tiles: tiles.clone(),
+        tiles: tiles,
+        portals: portals,
         size: storage.size,
         ..Default::default()
     }
@@ -279,17 +258,21 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
             }
         });
 
-    for (entry_id, cell) in saved.entries.iter() {
-        if let Some(entity) = storage.get(cell) {
-            commands.entity(entity).insert(Entry(entry_id.clone()));
-        }
-    }
-    info!("added {} entries", saved.entries.len());
+    let valid_ids = saved
+        .portals
+        .iter()
+        .map(|(portal, _)| portal.id.clone())
+        .collect::<HashSet<_>>();
 
-    for (exit_cell, _, entry_id) in saved.exits.iter() {
-        if let Some(entity) = storage.get(exit_cell) {
-            commands.entity(entity).insert(Exit(entry_id.clone()));
+    for (portal, cell) in saved.portals.iter() {
+        // TODO: ensure that some validation occurs here and/or address the case where
+        // there aren't already enough tiles.
+        if let Some(entity) = storage.get(cell) {
+            if valid_ids.contains(&portal.id) {
+                commands.entity(entity).insert(portal.clone());
+            } else {
+                error!("portal id {:?} not found in valid_ids", portal.id);
+            }
         }
     }
-    info!("added {} exits", saved.exits.len());
 }

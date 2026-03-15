@@ -7,10 +7,11 @@ use bevy::{
 use rfd::AsyncFileDialog;
 
 use crate::{
-    actors::PlayerStats,
+    actors::{Actor, PlayerStats},
+    cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, SavedTilemap, TileStorage},
+    tilemap::{self, Portal, SavedTilemap, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
@@ -269,10 +270,11 @@ pub fn poll_save_dialog(
 pub fn save_map(
     storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
+    all_portals: Query<(&Portal, &Cell), With<Actor>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {
-        let storage = tilemap::save_map(&storage, &all_tiles);
+        let storage = tilemap::save_map(&storage, &all_tiles, &all_portals);
         if let Ok(serialized) = ron::to_string(&storage) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
