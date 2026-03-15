@@ -24,7 +24,7 @@ use crate::{
     event_log::{draw_message_log_ui, setup_egui_fonts},
     light::{Emitter, LightLevel},
     player::PlayerStats,
-    tilemap::{TileStorage, TilemapSpec},
+    tilemap::{Entry, EntryId, Exit, TileStorage, TilemapSpec, ZoneFile},
     tiles::{MapTile, Occupied, TileIdx, Walkable},
 };
 
@@ -91,8 +91,9 @@ fn main() {
         .add_systems(
             PostStartup,
             (
-                add_test_npc.run_if(run_once).after(load_spritesheet),
-                add_test_emitters.run_if(run_once).after(load_spritesheet),
+                add_test_npc.run_if(run_once),
+                add_test_emitters.run_if(run_once),
+                add_test_entry_exit.run_if(run_once),
             ),
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
@@ -102,6 +103,7 @@ fn main() {
                 handle_player_input,
                 process_action_attempts,
                 process_acquisitions,
+                handle_pending_transition,
             )
                 .chain(),
         )
@@ -150,6 +152,30 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             transform: Transform::default(),
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
+    ));
+}
+
+fn add_test_entry_exit(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    // Exit
+    commands.spawn((
+        TileIdx::DoorwayBrownThick,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 50, y: 45 },
+            transform: Transform::default(),
+        },
+        Exit("door".into()),
+    ));
+
+    // Entry (arrival)
+    commands.spawn((
+        TileIdx::DoorwayBrownThick,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 47, y: 47 },
+            transform: Transform::default(),
+        },
+        Entry("door".into()),
     ));
 }
 
@@ -308,9 +334,10 @@ fn sync_occupied_tiles(
         }
 
         if let Some(prev_cell) = prev_cell_opt
-            && let Some(prev_tile) = storage.get(prev_cell) {
-                commands.entity(prev_tile).remove::<Occupied>();
-            }
+            && let Some(prev_tile) = storage.get(prev_cell)
+        {
+            commands.entity(prev_tile).remove::<Occupied>();
+        }
     }
 }
 
@@ -407,6 +434,10 @@ pub enum Interactable {
         name: String,
         text: String,
     },
+    Transition {
+        zone_file: ZoneFile,
+        entry_id: EntryId,
+    },
 }
 
 #[derive(Component, Debug, Deref)]
@@ -444,6 +475,7 @@ fn process_action_attempts(
         };
 
         handle_interaction(
+            &mut commands,
             &mut tile_idx,
             &mut interactable,
             &player_inventory,
@@ -456,6 +488,7 @@ fn process_action_attempts(
 
 /// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
 fn handle_interaction(
+    commands: &mut Commands,
     tile_idx: &mut TileIdx,
     interactable: &mut Interactable,
     inventory: &Inventory,
@@ -503,6 +536,49 @@ fn handle_interaction(
             info!("Player talks to {}.", name);
             log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
         }
+        Interactable::Transition {
+            zone_file,
+            entry_id,
+        } => {
+            let entry_id = entry_id.clone();
+            let zone_file = zone_file.clone();
+            commands.insert_resource(PendingTransition {
+                zone_file,
+                entry_id,
+            })
+        }
+    }
+}
+
+#[derive(Resource, Debug)]
+struct PendingTransition {
+    zone_file: ZoneFile,
+    /// The destination will be marked by this EntryId.
+    entry_id: EntryId,
+}
+
+fn handle_pending_transition(
+    mut commands: Commands,
+    pending_transition: Option<ResMut<PendingTransition>>,
+    entries: Query<(&Entry, &Cell), With<MapTile>>,
+    player: Single<Entity, With<Player>>,
+) {
+    if let Some(transition) = pending_transition.as_ref() {
+        for (entry_id, cell) in entries {
+            if entry_id.0 == transition.entry_id {
+                info!(
+                    "player transitioning to entry_id {:?} at cell {:?}",
+                    entry_id, cell
+                );
+                commands.entity(*player).insert(*cell);
+                commands.remove_resource::<PendingTransition>();
+                return;
+            }
+        }
+        warn!(
+            "Pending transition entry_id {:?} not found in entries.",
+            transition.entry_id
+        );
     }
 }
 
