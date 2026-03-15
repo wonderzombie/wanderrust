@@ -21,16 +21,16 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     actors::{
-        ActionAttempt, Actor, PieceBundle, Player, handle_player_input, setup_player,
-        sync_actor_sprites, update_actor_transforms,
+        ActionAttempt, Actor, PieceBundle, Player, PreviousCell, handle_player_input, setup_player,
+        sync_actor_sprites, sync_occupied_tiles, update_actor_transforms,
     },
     cell::Cell,
     editor::{DesiredZoom, EditorState},
     event_log::{draw_message_log_ui, setup_egui_fonts},
     light::{Emitter, LightLevel},
     player::PlayerStats,
-    tilemap::{Entry, EntryId, Exit, TileStorage, TilemapSpec, ZoneFile},
-    tiles::{MapTile, Occupied, TileIdx, Walkable},
+    tilemap::{Entry, EntryId, Exit, TilemapSpec, ZoneFile},
+    tiles::{MapTile, TileIdx, Walkable},
 };
 
 use inventory::*;
@@ -278,24 +278,6 @@ fn update_spatial_index(
     }
 }
 
-fn sync_occupied_tiles(
-    mut commands: Commands,
-    actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
-    storage: Single<&TileStorage>,
-) {
-    for (curr_cell, prev_cell_opt) in actors.iter() {
-        if let Some(tile) = storage.get(curr_cell) {
-            commands.entity(tile).insert(Occupied);
-        }
-
-        if let Some(prev_cell) = prev_cell_opt
-            && let Some(prev_tile) = storage.get(prev_cell)
-        {
-            commands.entity(prev_tile).remove::<Occupied>();
-        }
-    }
-}
-
 /// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 fn load_spritesheet(
     mut commands: Commands,
@@ -337,9 +319,6 @@ pub enum Interactable {
         entry_id: EntryId,
     },
 }
-
-#[derive(Component, Debug, Deref)]
-struct PreviousCell(Cell);
 
 /// Processes [ActionAttempt] messages, either moving the player or interacting with an interactable entity at the target [Cell] using [SpatialIndex].
 fn process_action_attempts(

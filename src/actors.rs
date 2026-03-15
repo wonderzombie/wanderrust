@@ -6,8 +6,8 @@ use crate::{
     SpriteAtlas, TILE_SIZE_PX,
     cell::Cell,
     light::{Emitter, LightLevel},
-    tilemap::TilemapSpec,
-    tiles::{MapTile, TileIdx},
+    tilemap::{TileStorage, TilemapSpec},
+    tiles::{MapTile, Occupied, TileIdx},
 };
 
 #[derive(Component, Debug)]
@@ -16,6 +16,9 @@ pub struct Actor;
 
 #[derive(Component, Debug)]
 pub struct Player;
+
+#[derive(Component, Debug, Deref)]
+pub struct PreviousCell(pub Cell);
 
 #[derive(Bundle, Default, Clone, Debug)]
 /// A bundle for map pieces that includes a sprite, cell position, and transform.
@@ -117,5 +120,23 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
         Some(direction)
     } else {
         None
+    }
+}
+
+pub fn sync_occupied_tiles(
+    mut commands: Commands,
+    actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
+    storage: Single<&TileStorage>,
+) {
+    for (curr_cell, prev_cell_opt) in actors.iter() {
+        if let Some(tile) = storage.get(curr_cell) {
+            commands.entity(tile).insert(Occupied);
+        }
+
+        if let Some(prev_cell) = prev_cell_opt
+            && let Some(prev_tile) = storage.get(prev_cell)
+        {
+            commands.entity(prev_tile).remove::<Occupied>();
+        }
     }
 }
