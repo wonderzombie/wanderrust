@@ -4,6 +4,8 @@
       "Bash(cargo check)",
       "Bash(cargo clippy)",
       "Bash(cargo test:*)",
+      "Bash(git)",
+      "Bash(grep)",
       "mcp__acp__Bash",
       "mcp__acp__Edit",
       "mcp__acp__Write",
