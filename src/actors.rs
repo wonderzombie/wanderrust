@@ -56,7 +56,8 @@ impl PlayerStats {
     }
 }
 
-const ACTOR_LAYER: TilemapLayer = TilemapLayer(-1.0);
+const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
+const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 
 pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
@@ -65,11 +66,7 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
         PieceBundle {
             sprite: atlas.sprite(),
             cell: spec.start,
-            transform: Transform::from_xyz(
-                spec.start.x as f32 * TILE_SIZE_PX,
-                spec.start.y as f32 * TILE_SIZE_PX,
-                *ACTOR_LAYER,
-            ),
+            transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
             ..Default::default()
         },
         TileIdx::Player,
@@ -95,6 +92,7 @@ pub fn update_actor_transforms(
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
+        transform.translation.z = *ACTOR_LAYER;
     }
 }
 
