@@ -2,15 +2,13 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{MapDimensions, TilemapSpec};
+use crate::tilemap::{MapDimensions, TilemapLayer, TilemapSpec};
 use crate::tiles::{
     Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
 };
 
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
-
-pub const DEFAULT_LAYER: u32 = 0;
 
 #[allow(dead_code)]
 pub const MAP: &str = r#"
@@ -39,6 +37,8 @@ pub const MAP: &str = r#"
 /// - ` ` = empty space (not walkable)
 /// - `b` = brown chest
 /// - `w` = white chest
+
+pub const MAP_LAYER: TilemapLayer = TilemapLayer(-6.);
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
@@ -100,7 +100,7 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             tiles,
-            layer: DEFAULT_LAYER,
+            layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
             light_level: LightLevel::Dark,
             ..Default::default()
@@ -141,7 +141,7 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             tiles,
-            layer: DEFAULT_LAYER,
+            layer: MAP_LAYER,
             start,
             light_level: LightLevel::Night,
             ..Default::default()
@@ -229,7 +229,7 @@ mod tests {
     #[test]
     fn layer_uses_default() {
         let spec = TilemapSpec::from_str("#");
-        assert_eq!(spec.layer, DEFAULT_LAYER);
+        assert_eq!(spec.layer, MAP_LAYER);
     }
 }
 

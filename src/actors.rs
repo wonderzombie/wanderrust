@@ -6,7 +6,7 @@ use crate::{
     SpriteAtlas, TILE_SIZE_PX,
     cell::Cell,
     light::{Emitter, LightLevel},
-    tilemap::{TileStorage, TilemapSpec},
+    tilemap::{TileStorage, TilemapLayer, TilemapSpec},
     tiles::{MapTile, Occupied, TileIdx},
 };
 
@@ -56,6 +56,8 @@ impl PlayerStats {
     }
 }
 
+const ACTOR_LAYER: TilemapLayer = TilemapLayer(-1.0);
+
 pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Player,
@@ -66,7 +68,7 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
             transform: Transform::from_xyz(
                 spec.start.x as f32 * TILE_SIZE_PX,
                 spec.start.y as f32 * TILE_SIZE_PX,
-                -1.0,
+                *ACTOR_LAYER,
             ),
             ..Default::default()
         },

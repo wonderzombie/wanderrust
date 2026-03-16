@@ -27,14 +27,14 @@ impl TilemapId {
 pub struct TilemapSpec {
     pub id: TilemapId,
     pub size: MapDimensions,
-    pub layer: u32,
+    pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
     pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
     pub light_level: LightLevel,
 }
 
-#[derive(Component, Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilemapLayer(pub f32);
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -158,16 +158,15 @@ pub fn spawn_tilemap(
     mut spec: ResMut<TilemapSpec>,
     sheet: Res<SpriteAtlas>,
 ) {
-    let layer = TilemapLayer(spec.layer as f32 - 3.);
     let tilemap_bundle = TilemapBundle {
         size: spec.size,
-        layer,
+        layer: spec.layer,
         ..Default::default()
     };
 
     info!(
         "initializing tilemap with size {:?} and layer {:?}",
-        spec.size, layer
+        spec.size, spec.layer
     );
 
     let map_entity = commands.spawn(tilemap_bundle).id();
@@ -189,7 +188,8 @@ fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
                 cell: *cell,
-                transform: Transform::from_xyz(pos.x, pos.y, spec.layer as f32 - 3.0),
+                // This puts the tile at the correct z-order based on the layer.
+                transform: Transform::from_xyz(pos.x, pos.y, *spec.layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
                 revealed: Revealed(false),
             }

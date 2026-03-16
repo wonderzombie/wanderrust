@@ -25,7 +25,7 @@ use crate::{
     event_log::{MessageLog, draw_message_log_ui, setup_egui_fonts},
     inventory::*,
     light::{Emitter, LightLevel},
-    tilemap::{EntryId, Portal, TilemapSpec},
+    tilemap::{EntryId, Portal, TilemapLayer, TilemapSpec},
     tiles::{MapTile, TileIdx, Walkable},
 };
 
@@ -271,6 +271,8 @@ impl SpatialIndex {
     }
 }
 
+const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
+
 fn setup_camera(mut commands: Commands) {
     // Spawn the camera using a 2D orthographic projection.
     commands.spawn((
@@ -282,7 +284,7 @@ fn setup_camera(mut commands: Commands) {
         Transform::from_xyz(
             (MAP_SIZE_G.x as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
             (MAP_SIZE_G.y as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
-            0.0,
+            *CAMERA_LAYER,
         ),
     ));
 }
