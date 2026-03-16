@@ -353,14 +353,14 @@ fn process_action_attempts(
     player_inventory: Res<Inventory>,
     spatial_index: Res<SpatialIndex>,
 ) {
-    for message in interactions.read() {
-        let Some(target_entity) = spatial_index.get(message.target_cell) else {
+    for action in interactions.read() {
+        let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
             commands
-                .entity(message.entity)
-                .insert(message.target_cell)
-                .insert(PreviousCell(message.origin_cell));
+                .entity(action.entity)
+                .insert(action.target_cell)
+                .insert(PreviousCell(action.origin_cell));
 
             log.add("You move.", colors::KENNEY_OFF_WHITE);
             continue;
@@ -376,7 +376,7 @@ fn process_action_attempts(
         let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(target_entity) else {
             info!(
                 "Player interacts with an entity at {:?}, but it's not interactable.",
-                message.target_cell
+                action.target_cell
             );
             continue; // There is a target entity, but it's not interactable.
         };
@@ -388,7 +388,7 @@ fn process_action_attempts(
             &player_inventory,
             &mut acquisitions,
             &mut damages,
-            message.entity,
+            action.entity,
             &mut log,
         );
     }
