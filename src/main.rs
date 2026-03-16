@@ -507,15 +507,8 @@ fn handle_pending_transition(
 
     info!("looking for {:?} in {:?}", transition.arrive_at, portals);
     for (portal, cell) in &portals {
-        info!(
-            "checking entry_id {:?} against {:?}",
-            portal.id, transition.arrive_at
-        );
         if portal.id == transition.arrive_at {
-            info!(
-                "player transitioning to entry_id {:?} at cell {:?}",
-                portal.arrive_at, cell
-            );
+            info!("portal to {:?} at cell {:?}", portal.arrive_at, cell);
             commands.entity(*player).insert(*cell);
             commands.remove_resource::<PendingTransition>();
             return;
@@ -535,12 +528,12 @@ fn update_camera(
     zoom_opt: Option<Res<DesiredZoom>>,
 ) {
     let Ok(player_cell) = player_query.single() else {
-        warn!("No player entity found in the world.");
+        error!("No player entity found in the world.");
         return;
     };
 
     let Ok(mut camera_transform) = camera_query.single_mut() else {
-        warn!("No camera entity found in the world.");
+        error!("No camera entity found in the world.");
         return;
     };
 

@@ -8,7 +8,7 @@ use bevy::{
         resource::Resource,
         system::{Query, ResMut},
     },
-    log::{info, warn},
+    log::{error, info},
     platform::collections::HashMap,
 };
 
@@ -103,7 +103,7 @@ pub fn process_acquisitions(
     mut player_inventory: ResMut<Inventory>,
 ) {
     let Ok(player_entity) = player_query.single() else {
-        warn!("No player entity found in the world.");
+        error!("No player entity found in the world.");
         return;
     };
 
