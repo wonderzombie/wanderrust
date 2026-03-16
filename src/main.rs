@@ -382,7 +382,6 @@ fn process_action_attempts(
         };
 
         handle_interaction(
-            &mut commands,
             &mut tile_idx,
             &mut interactable,
             &player_inventory,
@@ -403,7 +402,6 @@ pub struct Damage {
 
 /// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
 fn handle_interaction(
-    commands: &mut Commands,
     tile_idx: &mut TileIdx,
     interactable: &mut Interactable,
     inventory: &Inventory,
