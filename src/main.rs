@@ -57,7 +57,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
-        .add_message::<Damage>()
+        .add_message::<AttackAttempt>()
         .add_message::<InteractionAttempt>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
@@ -105,7 +105,7 @@ fn main() {
                 process_actions,
                 process_interactions,
                 process_acquisitions,
-                handle_damage,
+                process_attacks,
                 handle_pending_transition,
             )
                 .chain(),
@@ -153,11 +153,10 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             cell: Cell { x: 49, y: 49 },
             ..Default::default()
         },
-        Interactable::Combatant {
-            combat_stats: CombatStats {
-                nameplate: "Mr. Sandbag".into(),
-                hp: 10,
-            },
+        CombatStats {
+            nameplate: "Mr. Sandbag".into(),
+            max_hp: 10,
+            ..Default::default()
         },
     ));
 }
@@ -337,9 +336,7 @@ pub enum Interactable {
         name: String,
         text: String,
     },
-    Combatant {
-        combat_stats: CombatStats,
-    },
+    Combatant,
 }
 
 /// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
@@ -380,10 +377,9 @@ fn process_actions(
 }
 
 #[derive(Message, Debug, Copy, Clone)]
-pub struct Damage {
-    pub amount: i32,
-    pub origin: Cell,
-    pub target: Cell,
+pub struct AttackAttempt {
+    pub attacker: Entity,
+    pub target: Entity,
 }
 
 #[derive(Message, Debug, Copy, Clone)]
@@ -395,14 +391,15 @@ struct InteractionAttempt {
 /// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
 fn process_interactions(
     mut attempts: MessageReader<InteractionAttempt>,
-    mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
-    mut _damages: MessageWriter<Damage>,
+    mut attacks: MessageWriter<AttackAttempt>,
     player_inventory: Res<Inventory>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
     for attempt in attempts.read() {
-        let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(attempt.target) else {
+        let Ok((entity, mut tile_idx, mut interactable)) = interactables.get_mut(attempt.target)
+        else {
             info!(
                 "Interaction attempted with entity {:?}, but it's not interactable.",
                 attempt.target
@@ -450,8 +447,11 @@ fn process_interactions(
                 info!("Player talks to {}.", name);
                 log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
             }
-            Interactable::Combatant { .. } => {
-                // TODO: sort out whether to do more looking up here or in the damage handler.
+            Interactable::Combatant => {
+                attacks.write(AttackAttempt {
+                    attacker: attempt.interactor,
+                    target: entity,
+                });
             }
         }
     }
@@ -461,30 +461,33 @@ fn process_interactions(
 pub struct CombatStats {
     pub nameplate: String,
     pub hp: i32,
+    pub max_hp: i32,
+    pub attack: i32,
+    pub defense: i32,
+    pub is_dead: bool,
 }
 
-fn handle_damage(
-    mut damages: MessageReader<Damage>,
-    mut query: Query<&mut CombatStats>,
-    spatial_index: Res<SpatialIndex>,
+fn process_attacks(
+    mut combatants: Query<&mut CombatStats>,
+    mut attacks: MessageReader<AttackAttempt>,
     mut log: ResMut<MessageLog>,
 ) {
-    damages
-        .read()
-        .filter_map(|damage| {
-            let _ = damage.origin;
-            let target = damage.target;
-            let entity = spatial_index.get(target)?;
-            let mut stats = query.get_mut(entity).ok()?;
-            stats.hp -= damage.amount;
-            Some((stats.nameplate.clone(), damage.amount))
-        })
-        .for_each(|(nameplate, amount)| {
+    for attack in attacks.read() {
+        let Ok([attacker, mut defender]) =
+            combatants.get_many_mut([attack.attacker, attack.target])
+        else {
+            continue;
+        };
+
+        let damage = attacker.attack - defender.defense;
+        if damage >= 0 {
+            defender.hp = defender.hp.saturating_sub(damage);
             log.add(
-                format!("{} takes {} damage", nameplate, amount),
+                format!("{} takes {} damage", defender.nameplate, damage),
                 colors::KENNEY_RED,
             );
-        });
+        }
+    }
 }
 
 #[derive(Resource, Debug)]

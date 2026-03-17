@@ -3,7 +3,7 @@ use std::ops::Add;
 use bevy::prelude::*;
 
 use crate::{
-    SpriteAtlas, TILE_SIZE_PX,
+    CombatStats, SpriteAtlas, TILE_SIZE_PX,
     cell::Cell,
     light::{Emitter, LightLevel},
     tilemap::{TileStorage, TilemapLayer, TilemapSpec},
@@ -71,6 +71,14 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
         },
         TileIdx::Player,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
+        CombatStats {
+            nameplate: "Player".into(),
+            max_hp: 10,
+            attack: 2,
+            defense: 1,
+            hp: 10,
+            ..Default::default()
+        },
     ));
 }
 
