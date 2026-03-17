@@ -125,6 +125,7 @@ fn main() {
                 light::sync_actor_light_levels.after(light::update_emitter_lights),
             ),
         )
+        .add_systems(PostUpdate, init_combatants)
         .add_systems(Last, map::update_tile_visuals)
         .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
@@ -153,6 +154,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             cell: Cell { x: 49, y: 49 },
             ..Default::default()
         },
+        Interactable::Combatant,
         CombatStats {
             nameplate: "Mr. Sandbag".into(),
             max_hp: 10,
@@ -467,6 +469,12 @@ pub struct CombatStats {
     pub is_dead: bool,
 }
 
+fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats>>) {
+    for mut combatant in combatants.iter_mut() {
+        combatant.hp = combatant.max_hp;
+    }
+}
+
 fn process_attacks(
     mut combatants: Query<&mut CombatStats>,
     mut attacks: MessageReader<AttackAttempt>,
@@ -499,6 +507,14 @@ fn process_attacks(
                 format!("{} takes {} damage", defender.nameplate, damage),
                 colors::KENNEY_RED,
             );
+
+            if defender.hp <= 0 {
+                defender.is_dead = true;
+                log.add(
+                    format!("{} is dead", defender.nameplate),
+                    colors::KENNEY_GOLD,
+                );
+            }
         }
     }
 }
