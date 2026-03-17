@@ -2,7 +2,7 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{MapDimensions, TilemapLayer, TilemapSpec};
+use crate::tilemap::{MapDimensions, Stratum, TilemapLayer, TilemapSpec};
 use crate::tiles::{
     Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
 };
@@ -87,6 +87,7 @@ impl TilemapSpec {
                                 x: x as i32,
                                 y: y as i32,
                             },
+                            Stratum::default(),
                         )
                     })
                 })
@@ -128,7 +129,7 @@ impl TilemapSpec {
                 let cell = Cell::from_idx(size.0, i as usize);
                 let tile_idx = fx(&cell, &table);
                 tally.entry(tile_idx).and_modify(|e| *e += 1).or_insert(1);
-                (tile_idx, cell)
+                (tile_idx, cell, Stratum::default())
             })
             .collect();
 
@@ -151,6 +152,8 @@ impl TilemapSpec {
 
 #[cfg(test)]
 mod tests {
+    use crate::tilemap::Stratum;
+
     use super::*;
 
     #[test]
@@ -187,7 +190,7 @@ mod tests {
     fn character_mappings() {
         // One of each known character on a single row; check tile indices in order
         let spec = TilemapSpec::from_str("#.XDObwTtUu");
-        let tile_types: Vec<TileIdx> = spec.tiles.iter().map(|(idx, _)| *idx).collect();
+        let tile_types: Vec<TileIdx> = spec.tiles.iter().map(|(idx, _, _)| *idx).collect();
         assert_eq!(
             tile_types,
             vec![
@@ -212,10 +215,22 @@ mod tests {
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
         let spec = TilemapSpec::from_str("#.\n.#");
         let tiles = &spec.tiles;
-        assert_eq!(tiles[0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
-        assert_eq!(tiles[1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
-        assert_eq!(tiles[2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
-        assert_eq!(tiles[3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
+        assert_eq!(
+            tiles[0],
+            (TileIdx::StoneWall, Cell { x: 0, y: 0 }, Stratum::default())
+        );
+        assert_eq!(
+            tiles[1],
+            (TileIdx::Blank, Cell { x: 1, y: 0 }, Stratum::default())
+        );
+        assert_eq!(
+            tiles[2],
+            (TileIdx::Blank, Cell { x: 0, y: 1 }, Stratum::default())
+        );
+        assert_eq!(
+            tiles[3],
+            (TileIdx::StoneWall, Cell { x: 1, y: 1 }, Stratum::default())
+        );
     }
 
     #[test]
