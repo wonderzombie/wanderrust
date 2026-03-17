@@ -259,8 +259,8 @@ pub fn save_map(
         .collect::<Vec<_>>();
 
     SavedTilemap {
-        tiles: tiles,
-        portals: portals,
+        tiles,
+        portals,
         size: storage.size,
         ..Default::default()
     }

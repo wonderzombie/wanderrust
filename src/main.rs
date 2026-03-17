@@ -470,7 +470,6 @@ fn handle_damage(
 ) {
     damages
         .read()
-        .into_iter()
         .filter_map(|damage| {
             let _ = damage.origin;
             let target = damage.target;
