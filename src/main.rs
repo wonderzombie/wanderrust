@@ -75,7 +75,7 @@ fn main() {
             procgen::tile_idx_for_cell,
             (100, 100),
         ))
-        .insert_resource(event_log::MessageLog::new(5))
+        .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
         .add_systems(
             Startup,
