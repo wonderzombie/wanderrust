@@ -67,7 +67,6 @@ impl MessageLog {
         Self {
             color_messages: VecDeque::with_capacity(max_lines),
             max_lines,
-            ..Default::default()
         }
     }
 

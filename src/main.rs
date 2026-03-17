@@ -230,7 +230,6 @@ impl SpriteAtlas {
             texture_atlas: Some(TextureAtlas {
                 layout: self.layout.clone(),
                 index: index.into(),
-                ..Default::default()
             }),
             ..Default::default()
         }
