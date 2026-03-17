@@ -37,7 +37,7 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
     // upper + t * (upper - lower)
     let top = top_left.lerp(top_right, tx);
     let bot = bot_left.lerp(bot_right, tx);
-    
+
     top.lerp(bot, ty)
 }
 
