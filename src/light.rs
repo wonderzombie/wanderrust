@@ -101,11 +101,12 @@ impl Emitter {
     }
 }
 
+/// A map of cells to [`LightLevel`] values, representing the light emitted by an [`Emitter`].
 #[derive(Component, Default, Deref, Debug, Clone)]
 pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 impl LightMap {
-    /// Combines two light maps, choosing the brighter level for each cell.
+    /// Combines [`LightMap`]s, choosing the brighter level for each cell.
     pub fn merge_with(&mut self, other: LightMap) {
         other.0.into_iter().for_each(|(cell, level)| {
             self.0
@@ -118,6 +119,13 @@ impl LightMap {
     }
 }
 
+/// Updates the [`LightMap`] of each [`Emitter`] in the tilemap.
+///
+/// Uses the [`Emitter::light_cells`] method to compute the light emitted by each [`Emitter`]
+/// and [`LightMap::merge_with`] to combine the results. When no [`Emitter`] has changed [`Cell`],
+/// we return early, preserving the previous [`LightMap`].
+///
+/// Any [`Cell`] not in [`LightMap`] is initialized with [`TilemapSpec::light_level`].
 pub fn update_emitter_lights(
     spec: Res<TilemapSpec>,
     mut commands: Commands,
@@ -126,26 +134,29 @@ pub fn update_emitter_lights(
     storage: Single<&TileStorage>,
     mut prev_map: Local<LightMap>,
 ) {
+    // If no [`Emitter`] has changed [`Cell`], there's no work to be done.
     if changed_emitters.is_empty() {
         return;
     }
 
     let mut new_combined_map = LightMap(HashMap::new());
     for (entity, emitter, &cell) in all_emitters.iter() {
+        // Important: updating the [`LightMap`] on the entity is not instantaneous
+        // because we are using [`Commands`].
         let next_light_map = emitter.light_cells(cell);
-        // Important: this is a deferred operation. We are storing the light map directly on the entity
-        // but this won't take effect immediately.
         commands.entity(entity).insert(next_light_map.clone());
 
-        // This populates the map combining each emitter's output, choosing the
-        // brighter value when two emitters address the same cell.
+        // Merge this [`Emitter`]'s [`LightMap`] with the emitted-on cells accumulated so far.
+        // See also [`LightMap::merge_with`]
         new_combined_map.merge_with(next_light_map);
     }
 
     let old_map_cells: HashSet<Cell> = prev_map.0.keys().copied().collect();
     let new_map_cells: HashSet<Cell> = new_combined_map.keys().copied().collect();
 
-    // Any cells in the old map that aren't in the new one are 1) lit and 2) should not be lit.
+    // Cells in the old [`LightMap`] that aren't in the new one are no longer
+    // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
+    // accordingly.
     old_map_cells
         .difference(&new_map_cells)
         .filter_map(|c| {
@@ -156,7 +167,10 @@ pub fn update_emitter_lights(
             commands.entity(tile).insert(spec.light_level);
         });
 
-    // Any cells in the new map that aren't in the old one are 1) unlit and 2) should be lit.
+    // Cells in the new [`LightMap`] that aren't in the old one receive light
+    // from the emitter. These cells probably had the default light level for
+    // the area before this. The map has already handled overlapping emitters,
+    // so we apply the map.
     new_map_cells
         .difference(&old_map_cells)
         .filter_map(|c| {
@@ -168,8 +182,10 @@ pub fn update_emitter_lights(
             commands.entity(tile).insert(*level);
         });
 
-    // Any cells that are still lit may need to be updated; these are 1) lit, and 2) should be lit *differently*.
-    // Tiles here may need to be updated with a different light intensity.
+    // Cells in the old [`LightMap`] that *are* in the new map *may* need to
+    // change intensity. When two overlapping emitters have different light
+    // levels and one moves away, we restore tiles to the light level from the
+    // lower-intensity emitter.
     old_map_cells
         .intersection(&new_map_cells)
         .filter_map(|c| {

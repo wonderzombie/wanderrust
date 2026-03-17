@@ -117,7 +117,7 @@ impl TileStorage {
     // }
 }
 
-/// EntryId identifies a link between an Entry and an Exit.
+/// EntryId uniquely identifies a [`Portal`].
 #[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
 pub struct EntryId(pub String);
 
@@ -127,6 +127,7 @@ impl From<&str> for EntryId {
     }
 }
 
+/// A Portal is a bidirectional link between two [`Cell`]s in the map.
 #[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq)]
 pub struct Portal {
     pub id: EntryId,
@@ -163,8 +164,8 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
-/// Spawns a tilemap, a constituency of [MapTile] entities, from a [MapSpec].
-/// It creates one entity with [TilemapBundle] and many with [TileBundle].
+/// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
+/// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].
 pub fn spawn_tilemap(
     mut commands: Commands,
     mut spec: ResMut<TilemapSpec>,
@@ -187,7 +188,7 @@ pub fn spawn_tilemap(
     commands.entity(map_entity).insert(spec.id);
 }
 
-/// Spawns [MapTile] entities from a [MapSpec] in a batch.
+/// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
 fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
     let parent = spec.id.0.unwrap();
     let bundles: Vec<TileBundle> = spec
@@ -214,13 +215,16 @@ fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &
     commands.spawn_batch(bundles);
 }
 
-/// Adds all [MapTile] entities to [TileStorage] for quick lookup by [Cell].
+/// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
 pub fn initialize_tile_storage(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
     tiles: Query<(&Cell, Entity), With<MapTile>>,
 ) {
-    let map_entity = spec.id.get().expect("MapSpec is missing an ID");
+    let map_entity = spec
+        .id
+        .get()
+        .expect("TilemapSpec is missing a map entity ID");
 
     info!("storing maps by cell");
 
@@ -232,19 +236,20 @@ pub fn initialize_tile_storage(
     commands.entity(map_entity).insert(storage);
 }
 
-/// Saves the current state [TilemapStorage] as a [SavedTilemap].
+/// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
 pub fn save_map(
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
     all_portals: &Query<(&Portal, &Cell), With<Actor>>,
     strata: &Query<&Stratum, With<MapTile>>,
 ) -> SavedTilemap {
-    // Using storage to drive iteration and using all_tiles to resolve `TileIdx` for each entity.
-    // We don't need to store coordinates since the map size is fixed and known at load time.
+    // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
+    // We don't need to store coordinates since the map size is fixed and known at load time
+    // AND because we provide a default, never skipping empty cells.
     let tiles = storage
         .tiles
         .iter()
-        // If there's an entity in storage, use that entity as a lookup into the [TileIdx] query.
+        // If there's an entity in storage, use that entity as a lookup into the [`TileIdx`] query.
         .map(|&entity_opt| {
             let Some(entity) = entity_opt else {
                 return (TileIdx::default(), Stratum::default());
@@ -269,7 +274,7 @@ pub fn save_map(
     }
 }
 
-/// Loads a [SavedTilemap] into [TileStorage] and inserts entry/exit data.
+/// Loads a [`SavedTilemap`] into [`TileStorage`].
 pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
     storage
         .tiles
