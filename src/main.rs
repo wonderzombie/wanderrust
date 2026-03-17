@@ -479,6 +479,19 @@ fn process_attacks(
             continue;
         };
 
+        if defender.is_dead {
+            log.add(
+                format!("{} is already dead", defender.nameplate),
+                colors::KENNEY_GOLD,
+            );
+            continue;
+        }
+
+        log.add(
+            format!("{} attacks {}", attacker.nameplate, defender.nameplate),
+            colors::KENNEY_GREEN,
+        );
+
         let damage = attacker.attack - defender.defense;
         if damage >= 0 {
             defender.hp = defender.hp.saturating_sub(damage);
