@@ -22,6 +22,13 @@ impl TilemapId {
     }
 }
 
+#[derive(Component, Default, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Stratum {
+    Above,
+    #[default]
+    Below,
+}
+
 #[derive(Resource, Default, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct TilemapSpec {
@@ -29,7 +36,7 @@ pub struct TilemapSpec {
     pub size: MapDimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<(TileIdx, Cell)>,
+    pub tiles: Vec<(TileIdx, Cell, Stratum)>,
     pub start: Cell,
     pub light_level: LightLevel,
 }
@@ -125,7 +132,7 @@ pub struct Portal {
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
-    pub tiles: Vec<TileIdx>,
+    pub tiles: Vec<(TileIdx, Stratum)>,
     pub size: MapDimensions,
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
@@ -139,6 +146,8 @@ pub struct TileBundle {
     pub transform: Transform,
     pub sprite: Sprite,
     pub revealed: Revealed,
+    pub child_of: ChildOf,
+    pub stratum: Stratum,
 }
 
 #[derive(Bundle, Default)]
@@ -177,10 +186,11 @@ pub fn spawn_tilemap(
 
 /// Spawns [MapTile] entities from a [MapSpec] in a batch.
 fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
+    let parent = spec.id.0.unwrap();
     let bundles: Vec<TileBundle> = spec
         .tiles
         .iter()
-        .map(|(tile_idx, cell)| {
+        .map(|(tile_idx, cell, stratum)| {
             let pos = spec.size.cell_to_pos(cell);
 
             // TODO: replace [MapTile] with [MapId] here and elsewhere.
@@ -192,6 +202,8 @@ fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &
                 transform: Transform::from_xyz(pos.x, pos.y, *spec.layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
                 revealed: Revealed(false),
+                child_of: ChildOf(parent),
+                stratum: *stratum,
             }
         })
         .collect();
@@ -222,6 +234,7 @@ pub fn save_map(
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
     all_portals: &Query<(&Portal, &Cell), With<Actor>>,
+    strata: &Query<&Stratum, With<MapTile>>,
 ) -> SavedTilemap {
     // Using storage to drive iteration and using all_tiles to resolve `TileIdx` for each entity.
     // We don't need to store coordinates since the map size is fixed and known at load time.
@@ -229,13 +242,20 @@ pub fn save_map(
         .tiles
         .iter()
         // If there's an entity in storage, use that entity as a lookup into the [TileIdx] query.
-        .map(|entity_opt| entity_opt.and_then(|entity| all_tiles.get(entity).ok().copied()))
-        .map(|tile_idx| tile_idx.unwrap_or_default())
+        .map(|&entity_opt| {
+            let Some(entity) = entity_opt else {
+                return (TileIdx::default(), Stratum::default());
+            };
+            let tile_idx = all_tiles.get(entity).copied().unwrap_or_default();
+            let stratum = strata.get(entity).copied().unwrap_or_default();
+
+            (tile_idx, stratum)
+        })
         .collect::<Vec<_>>();
 
     let portals = all_portals
         .iter()
-        .map(|(portal, cell)| (portal.clone(), cell.clone()))
+        .map(|(portal, &cell)| (portal.clone(), cell))
         .collect::<Vec<_>>();
 
     SavedTilemap {
@@ -252,9 +272,9 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         .tiles
         .iter()
         .zip(saved.tiles.iter())
-        .for_each(|(maybe_entity, tile_idx)| {
+        .for_each(|(&maybe_entity, &idx_strat)| {
             if let Some(entity) = maybe_entity {
-                commands.entity(*entity).insert(*tile_idx);
+                commands.entity(entity).insert(idx_strat);
             }
         });
 

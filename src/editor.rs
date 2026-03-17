@@ -11,7 +11,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, TileStorage},
+    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
@@ -271,10 +271,11 @@ pub fn save_map(
     storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     all_portals: Query<(&Portal, &Cell), With<Actor>>,
+    all_strata: Query<&Stratum, With<MapTile>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {
-        let storage = tilemap::save_map(&storage, &all_tiles, &all_portals);
+        let storage = tilemap::save_map(&storage, &all_tiles, &all_portals, &all_strata);
         if let Ok(serialized) = ron::to_string(&storage) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
