@@ -58,6 +58,7 @@ fn main() {
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
         .add_message::<Damage>()
+        .add_message::<InteractionAttempt>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
@@ -101,7 +102,8 @@ fn main() {
             Update,
             (
                 handle_player_input,
-                process_action_attempts,
+                process_actions,
+                process_interactions,
                 process_acquisitions,
                 handle_damage,
                 handle_pending_transition,
@@ -340,19 +342,17 @@ pub enum Interactable {
     },
 }
 
-/// Processes [ActionAttempt] messages, either moving the player or interacting with an interactable entity at the target [Cell] using [SpatialIndex].
-fn process_action_attempts(
+/// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
+/// Interaction execution is handled by [process_interactions].
+fn process_actions(
     mut commands: Commands,
     mut log: ResMut<event_log::MessageLog>,
-    mut interactions: MessageReader<ActionAttempt>,
-    mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    mut actions: MessageReader<ActionAttempt>,
     portals: Query<&Portal>,
-    mut acquisitions: MessageWriter<Acquisition>,
-    mut damages: MessageWriter<Damage>,
-    player_inventory: Res<Inventory>,
+    mut interaction_attempts: MessageWriter<InteractionAttempt>,
     spatial_index: Res<SpatialIndex>,
 ) {
-    for action in interactions.read() {
+    for action in actions.read() {
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
@@ -372,23 +372,10 @@ fn process_action_attempts(
             continue;
         }
 
-        let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(target_entity) else {
-            info!(
-                "Player interacts with an entity at {:?}, but it's not interactable.",
-                action.target_cell
-            );
-            continue; // There is a target entity, but it's not interactable.
-        };
-
-        handle_interaction(
-            &mut tile_idx,
-            &mut interactable,
-            &player_inventory,
-            &mut acquisitions,
-            &mut damages,
-            action.entity,
-            &mut log,
-        );
+        interaction_attempts.write(InteractionAttempt {
+            interactor: action.entity,
+            target: target_entity,
+        });
     }
 }
 
@@ -399,58 +386,73 @@ pub struct Damage {
     pub target: Cell,
 }
 
-/// Handles the interaction between the player and an interactable entity with [TileIdx] at the target [Cell].
-fn handle_interaction(
-    tile_idx: &mut TileIdx,
-    interactable: &mut Interactable,
-    inventory: &Inventory,
-    acquisitions: &mut MessageWriter<Acquisition>,
-    _damages: &mut MessageWriter<Damage>,
+#[derive(Message, Debug, Copy, Clone)]
+struct InteractionAttempt {
     interactor: Entity,
-    log: &mut event_log::MessageLog,
+    target: Entity,
+}
+
+/// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
+fn process_interactions(
+    mut attempts: MessageReader<InteractionAttempt>,
+    mut interactables: Query<(&mut TileIdx, &mut Interactable)>,
+    mut acquisitions: MessageWriter<Acquisition>,
+    mut _damages: MessageWriter<Damage>,
+    player_inventory: Res<Inventory>,
+    mut log: ResMut<event_log::MessageLog>,
 ) {
-    match interactable {
-        Interactable::Door { is_open, requires } => {
-            if !*is_open {
-                if let Some(required_item) = requires {
-                    if !inventory.has_item(required_item) {
-                        info!("Player does not have the required item to open the door.");
-                        log.add("Locked.", colors::KENNEY_BLUE);
-                        return;
+    for attempt in attempts.read() {
+        let Ok((mut tile_idx, mut interactable)) = interactables.get_mut(attempt.target) else {
+            info!(
+                "Interaction attempted with entity {:?}, but it's not interactable.",
+                attempt.target
+            );
+            continue;
+        };
+
+        match interactable.as_mut() {
+            Interactable::Door { is_open, requires } => {
+                if !*is_open {
+                    if let Some(required_item) = requires {
+                        if !player_inventory.has_item(required_item) {
+                            info!("Player does not have the required item to open the door.");
+                            log.add("Locked.", colors::KENNEY_BLUE);
+                            continue;
+                        } else {
+                            info!("Player uses {:?} to open the door.", required_item);
+                            log.add(
+                                format!("Opened door with {}.", required_item),
+                                colors::KENNEY_BLUE,
+                            );
+                        }
                     } else {
-                        info!("Player uses {:?} to open the door.", required_item);
-                        log.add(
-                            format!("Opened door with {}.", required_item),
-                            colors::KENNEY_BLUE,
-                        );
+                        info!("Player opens the door.");
+                        log.add("Opened door.", colors::KENNEY_BLUE);
                     }
-                } else {
-                    info!("Player opens the door.");
-                    log.add("Opened door.", colors::KENNEY_BLUE);
+                    *is_open = true;
+                    *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
                 }
-                *is_open = true;
-                *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
             }
-        }
-        Interactable::Chest { is_open, contents } => {
-            if !*is_open {
-                *is_open = true;
-                *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
-                info!("Player opens the chest and finds: {:?}", contents);
-                log.add("Opened chest.", colors::KENNEY_BLUE);
-                log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                acquisitions.write(Acquisition {
-                    acquirer: interactor,
-                    items: contents.clone(),
-                });
+            Interactable::Chest { is_open, contents } => {
+                if !*is_open {
+                    *is_open = true;
+                    *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
+                    info!("Player opens the chest and finds: {:?}", contents);
+                    log.add("Opened chest.", colors::KENNEY_BLUE);
+                    log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
+                    acquisitions.write(Acquisition {
+                        acquirer: attempt.interactor,
+                        items: contents.clone(),
+                    });
+                }
             }
-        }
-        Interactable::Dialogue { name, text } => {
-            info!("Player talks to {}.", name);
-            log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
-        }
-        Interactable::Combatant { .. } => {
-            // TODO: sort out whether to do more looking up here or in the damage handler.
+            Interactable::Dialogue { name, text } => {
+                info!("Player talks to {}.", name);
+                log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
+            }
+            Interactable::Combatant { .. } => {
+                // TODO: sort out whether to do more looking up here or in the damage handler.
+            }
         }
     }
 }
