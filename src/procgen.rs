@@ -23,6 +23,7 @@ pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
     ]
 }
 
+/// Returns a bilinear sample of the cell's value at the given depth.
 pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
     let points = get_sample_rect_cells(size, cell);
 
@@ -37,7 +38,7 @@ pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
     // upper + t * (upper - lower)
     let top = top_left.lerp(top_right, tx);
     let bot = bot_left.lerp(bot_right, tx);
-    
+
     top.lerp(bot, ty)
 }
 
@@ -45,6 +46,7 @@ pub fn sample_cell_with_depth(cell: &Cell, depth: u64) -> f32 {
     stable_hash(cell, depth)
 }
 
+/// Returns the [`TileIdx`] for a given [`Cell`] based on a [`ProbabilityTable`].
 pub fn tile_idx_for_cell(cell: &Cell, table: &ProbabilityTable) -> TileIdx {
     // Partially apply get_bilinear_sample() with the same cell and region size.
     let sampler = |depth| get_bilinear_sample(REGION_SIZE as u32, cell, depth);

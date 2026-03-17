@@ -235,12 +235,12 @@ pub fn save_map(
 
     let portals = all_portals
         .iter()
-        .map(|(portal, cell)| (portal.clone(), cell.clone()))
+        .map(|(portal, cell)| (portal.clone(), *cell))
         .collect::<Vec<_>>();
 
     SavedTilemap {
-        tiles: tiles,
-        portals: portals,
+        tiles,
+        portals,
         size: storage.size,
         ..Default::default()
     }
