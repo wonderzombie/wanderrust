@@ -32,6 +32,7 @@ pub enum Stratum {
 #[derive(Resource, Default, Debug)]
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 pub struct TilemapSpec {
+    /// MapTile entities will be created as children of this entity.
     pub id: TilemapId,
     pub size: MapDimensions,
     pub layer: TilemapLayer,
@@ -63,6 +64,8 @@ impl MapDimensions {
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [TilemapId].
+/// Tiles are stored as a flat vector of `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way,
+/// a cell may be empty of any tile entity.
 pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
     pub size: MapDimensions,
