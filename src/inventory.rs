@@ -2,17 +2,13 @@ use std::fmt::Display;
 
 use bevy::{
     ecs::{
-        entity::Entity,
         message::{Message, MessageReader},
-        query::With,
         resource::Resource,
-        system::{Query, ResMut},
+        system::ResMut,
     },
-    log::{error, info},
+    log::info,
     platform::collections::HashMap,
 };
-
-use crate::Player;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 /// A simple wrapper around a string to represent an item in the game world.
@@ -92,25 +88,16 @@ impl Inventory {
 #[derive(Message, Debug)]
 /// A message representing the acquisition of [Inventory] items by an actor, such as the player picking up items from a chest or loot.
 pub struct Acquisition {
-    pub acquirer: Entity,
     pub items: Inventory,
 }
 
 /// Merges [Inventory] items into the player's inventory.
 pub fn process_acquisitions(
     mut acquisitions: MessageReader<Acquisition>,
-    player_query: Query<Entity, With<Player>>,
     mut player_inventory: ResMut<Inventory>,
 ) {
-    let Ok(player_entity) = player_query.single() else {
-        error!("No player entity found in the world.");
-        return;
-    };
-
     for acquisition in acquisitions.read() {
-        if acquisition.acquirer == player_entity {
-            info!("Player acquires items: {:?}", acquisition.items);
-            player_inventory.merge(acquisition.items.clone());
-        }
+        info!("Player acquires items: {:?}", acquisition.items);
+        player_inventory.merge(acquisition.items.clone());
     }
 }

@@ -58,6 +58,7 @@ fn main() {
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
         .add_message::<AttackAttempt>()
+        .add_message::<DialogueAttempt>()
         .add_message::<InteractionAttempt>()
         .init_resource::<SpatialIndex>()
         .init_resource::<Inventory>()
@@ -104,6 +105,7 @@ fn main() {
                 handle_player_input,
                 process_actions,
                 process_interactions,
+                process_dialogue,
                 process_acquisitions,
                 process_attacks,
                 handle_pending_transition,
@@ -140,10 +142,11 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         },
         Actor,
         TileIdx::Skeleton,
-        Interactable::Dialogue {
-            name: "Mr. Boney".into(),
+        Interactable::Speaker {
+            nameplate: "Mr. Boney".into(),
             text: "Hello".into(),
         },
+        Dialogue::phrases(vec!["hello".into()]),
     ));
 
     commands.spawn((
@@ -334,8 +337,8 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
-    Dialogue {
-        name: String,
+    Speaker {
+        nameplate: String,
         text: String,
     },
     Combatant,
@@ -390,12 +393,18 @@ struct InteractionAttempt {
     target: Entity,
 }
 
+#[derive(Message, Debug, Copy, Clone)]
+struct DialogueAttempt {
+    pub entity: Entity,
+}
+
 /// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
 fn process_interactions(
     mut attempts: MessageReader<InteractionAttempt>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
     mut attacks: MessageWriter<AttackAttempt>,
+    mut speech: MessageWriter<DialogueAttempt>,
     player_inventory: Res<Inventory>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
@@ -414,11 +423,11 @@ fn process_interactions(
                 if !*is_open {
                     if let Some(required_item) = requires {
                         if !player_inventory.has_item(required_item) {
-                            info!("Player does not have the required item to open the door.");
+                            info!("Player lacks required item: {}", required_item.0);
                             log.add("Locked.", colors::KENNEY_BLUE);
                             continue;
                         } else {
-                            info!("Player uses {:?} to open the door.", required_item);
+                            info!("Player opens the door with {:?}.", required_item);
                             log.add(
                                 format!("Opened door with {}.", required_item),
                                 colors::KENNEY_BLUE,
@@ -436,18 +445,18 @@ fn process_interactions(
                 if !*is_open {
                     *is_open = true;
                     *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
-                    info!("Player opens the chest and finds: {:?}", contents);
+                    info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
                     acquisitions.write(Acquisition {
-                        acquirer: attempt.interactor,
                         items: contents.clone(),
                     });
                 }
             }
-            Interactable::Dialogue { name, text } => {
-                info!("Player talks to {}.", name);
-                log.add(format!("{}: {}", name, text), colors::KENNEY_BLUE);
+            Interactable::Speaker { nameplate, .. } => {
+                info!("Player talks to {}.", nameplate);
+                // log.add(format!("{}: {}", nameplate, text), colors::KENNEY_BLUE);
+                speech.write(DialogueAttempt { entity });
             }
             Interactable::Combatant => {
                 attacks.write(AttackAttempt {
@@ -456,6 +465,38 @@ fn process_interactions(
                 });
             }
         }
+    }
+}
+
+#[derive(Component, Debug, Default)]
+pub struct Dialogue {
+    idx: usize,
+    phrases: Vec<String>,
+}
+
+impl Dialogue {
+    pub fn next(&mut self) -> &str {
+        let phrase = &self.phrases[self.idx];
+        self.idx = (self.idx + 1) % self.phrases.len();
+        phrase
+    }
+
+    pub fn phrases(phrases: Vec<String>) -> Self {
+        Self { idx: 0, phrases }
+    }
+}
+
+fn process_dialogue(
+    mut speech: MessageReader<DialogueAttempt>,
+    mut log: ResMut<MessageLog>,
+    mut dialogues: Query<&mut Dialogue>,
+) {
+    for attempt in speech.read() {
+        let Ok(mut dialogue) = dialogues.get_mut(attempt.entity) else {
+            continue;
+        };
+
+        log.add(dialogue.next(), colors::KENNEY_BLUE);
     }
 }
 
