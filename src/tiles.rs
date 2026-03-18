@@ -95,16 +95,20 @@ tiles! {
     // Ground
     Blank = atlas_idx(0, 0),
     GrassBrown = atlas_idx(1, 0),
-    Gravel = atlas_idx(2, 0),
     Grass = atlas_idx(5, 0),
     GrassFlowers = atlas_idx(6, 0),
     GrassLong = atlas_idx(7, 0),
     GrassTall = atlas_idx(0, 2),
 
-    // Outdoor decor
+    // Rocky
+    Gravel = atlas_idx(2, 0),
+    RockMedium = atlas_idx(3, 0),
+    RockLarge = atlas_idx(4, 0),
+
+    // Natural decor
     Rocks = atlas_idx(5, 2),
     Snag = atlas_idx(6, 2),
-
+    Skull = atlas_idx(0, 15),
 
     // Walls
     StoneWall = atlas_idx(0, 13),
@@ -127,6 +131,11 @@ tiles! {
     DoorBrownThickClosed2 = atlas_idx(4, 9),
     DoorBrownThickClosed3 = atlas_idx(5, 9),
 
+    Bars = atlas_idx(5, 3),
+    BarsBroken = atlas_idx(6, 3),
+    BarsDoorClosed = atlas_idx(3, 4),
+    BarsDoorOpen = atlas_idx(4, 4),
+
     // Trees
     GreenTree1 = atlas_idx(0, 1),
     GreenTree2 = atlas_idx(1, 1),
@@ -136,11 +145,27 @@ tiles! {
     BigGreenTree1 = atlas_idx(5, 1),
     BigGreenTree2 = atlas_idx(4, 2),
 
-    // Misc
+    // Water
     WaterSquare = atlas_idx(8, 5),
-    MineEntrance = atlas_idx(6, 6),
+    Stream = atlas_idx(12, 5),
+    WaterEdge = atlas_idx(9, 5),
+    River = atlas_idx(8, 4),
+    RiverBend = atlas_idx(9, 4),
+    WaterCorner = atlas_idx(10, 5),
+    WaterInvertedCorner = atlas_idx(11, 5),
+
+    // Portals (usually)
     StairsUp = atlas_idx(2, 6),
     StairsDown = atlas_idx(3, 6),
+
+    // Misc
+    MineEntrance = atlas_idx(6, 6),
+    Web = atlas_idx(2, 15),
+    Well = atlas_idx(4, 14),
+    BoatUp = atlas_idx(9, 19),
+    BoatDown = atlas_idx(10, 19),
+    BoatRight = atlas_idx(11, 19),
+
 
     // Player
     Player = atlas_idx(27, 0),
@@ -185,6 +210,7 @@ impl TileIdx {
         StairsUp,
         StairsDown,
         MineEntrance,
+        BarsDoorOpen,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[
@@ -194,6 +220,8 @@ impl TileIdx {
         DoorBrownThickClosed1,
         DoorBrownThickClosed2,
         DoorBrownThickClosed3,
+        RockLarge,
+        RockMedium,
     ];
 
     const INTERACTABLE: &'static [TileIdx] = &[
@@ -213,6 +241,8 @@ impl TileIdx {
         GrassBrown,
         Gravel,
         Rocks,
+        RockLarge,
+        RockMedium,
     ];
 
     pub fn is_walkable(&self) -> bool {
@@ -238,6 +268,7 @@ impl TileIdx {
             DoorBrownThickClosed1 | DoorBrownThickClosed2 | DoorBrownThickClosed3 => {
                 Some(DoorwayBrownThick)
             }
+            BarsDoorClosed => Some(BarsDoorOpen),
             _ => None,
         }
     }
