@@ -1,10 +1,23 @@
 use std::fmt::{Display, Formatter};
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, Div, Mul, Sub};
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Component, Default, Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Component,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Ord,
+    PartialOrd,
+)]
 /// A simple struct representing a cell in the grid-based world, with integer coordinates.
 /// i32 allows us to use offsets without extra fuss compared to unsigned integers.
 pub struct Cell {
@@ -82,6 +95,17 @@ impl From<&Cell> for (u32, u32) {
 impl From<&Cell> for IVec2 {
     fn from(value: &Cell) -> Self {
         IVec2::new(value.x, value.y)
+    }
+}
+
+impl Sub<Cell> for Cell {
+    type Output = Cell;
+
+    fn sub(self, rhs: Cell) -> Cell {
+        Cell {
+            x: self.x.saturating_sub(rhs.x),
+            y: self.y.saturating_sub(rhs.y),
+        }
     }
 }
 
