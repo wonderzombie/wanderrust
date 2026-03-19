@@ -3,11 +3,12 @@ use std::ops::Add;
 use bevy::prelude::*;
 
 use crate::{
-    CombatStats, SpriteAtlas, TILE_SIZE_PX,
+    atlas::SpriteAtlas,
     cell::Cell,
+    combat::CombatStats,
     light::{Emitter, LightLevel},
     tilemap::{TileStorage, TilemapLayer, TilemapSpec},
-    tiles::{MapTile, Occupied, TileIdx},
+    tiles::{self, MapTile, Occupied, TileIdx},
 };
 
 #[derive(Component, Debug)]
@@ -98,8 +99,8 @@ pub fn update_actor_transforms(
     mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
 ) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
-        transform.translation.x = piece_cell.x as f32 * TILE_SIZE_PX;
-        transform.translation.y = piece_cell.y as f32 * TILE_SIZE_PX;
+        transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
+        transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
         transform.translation.z = *ACTOR_LAYER;
     }
 }

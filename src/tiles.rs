@@ -35,6 +35,9 @@ impl From<&TileIdx> for usize {
     }
 }
 
+/// The tile size in pixels.
+pub const TILE_SIZE_PX: f32 = 16.0;
+/// The size of the tile sheet in grid units.
 pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
 
 pub const fn atlas_idx(x: u32, y: u32) -> usize {

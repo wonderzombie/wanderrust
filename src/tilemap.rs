@@ -2,8 +2,7 @@ use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    SpriteAtlas,
-    actors::Actor,
+    atlas::SpriteAtlas,
     cell::Cell,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},

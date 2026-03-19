@@ -1,6 +1,8 @@
 mod actors;
+mod atlas;
 mod cell;
 mod colors;
+mod combat;
 mod editor;
 mod event_log;
 mod fov;
@@ -20,7 +22,9 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     actors::*,
+    atlas::SpriteAtlas,
     cell::Cell,
+    combat::CombatStats,
     editor::{DesiredZoom, EditorState},
     event_log::{MessageLog, draw_message_log_ui, setup_egui_fonts},
     inventory::*,
@@ -31,11 +35,6 @@ use crate::{
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
-/// The tile size in pixels.
-const TILE_SIZE_PX: f32 = 16.0;
-
-/// The size of the map in cells.
-const MAP_SIZE_G: UVec2 = uvec2(30, 25);
 
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
@@ -211,37 +210,6 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
     ));
 }
 
-#[derive(Resource, Debug)]
-/// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
-pub struct SpriteAtlas {
-    pub texture: Handle<Image>,
-    pub layout: Handle<TextureAtlasLayout>,
-}
-
-impl SpriteAtlas {
-    pub fn sprite(&self) -> Sprite {
-        Sprite {
-            image: self.texture.clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: self.layout.clone(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
-    }
-
-    pub fn sprite_from_idx(&self, index: impl Into<usize>) -> Sprite {
-        Sprite {
-            image: self.texture.clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: self.layout.clone(),
-                index: index.into(),
-            }),
-            ..Default::default()
-        }
-    }
-}
-
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 pub struct SpatialIndex {
@@ -278,7 +246,8 @@ impl SpatialIndex {
 
 const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
-fn setup_camera(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, spec: Res<TilemapSpec>) {
+    let size = spec.size;
     // Spawn the camera using a 2D orthographic projection.
     commands.spawn((
         Camera2d,
@@ -287,8 +256,8 @@ fn setup_camera(mut commands: Commands) {
             ..OrthographicProjection::default_2d()
         }),
         Transform::from_xyz(
-            (MAP_SIZE_G.x as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
-            (MAP_SIZE_G.y as f32 * TILE_SIZE_PX) / 2.0 - TILE_SIZE_PX / 2.0,
+            (size.width as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
+            (size.height as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
             *CAMERA_LAYER,
         ),
     ));
@@ -313,7 +282,7 @@ fn load_spritesheet(
 ) {
     let texture: Handle<Image> = asset_server.load(SHEET_PATH);
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
-        UVec2::splat(TILE_SIZE_PX as u32),
+        UVec2::splat(tiles::TILE_SIZE_PX as u32),
         tiles::SHEET_SIZE_G.x,
         tiles::SHEET_SIZE_G.y,
         None,
@@ -500,16 +469,6 @@ fn process_dialogue(
     }
 }
 
-#[derive(Component, Debug, Default)]
-pub struct CombatStats {
-    pub nameplate: String,
-    pub hp: i32,
-    pub max_hp: i32,
-    pub attack: i32,
-    pub defense: i32,
-    pub is_dead: bool,
-}
-
 fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats>>) {
     for mut combatant in combatants.iter_mut() {
         combatant.hp = combatant.max_hp;
@@ -610,8 +569,10 @@ fn update_camera(
         return;
     };
 
-    camera_transform.translation.x = (player_cell.x as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
-    camera_transform.translation.y = (player_cell.y as f32 * TILE_SIZE_PX) + (TILE_SIZE_PX / 2.0);
+    camera_transform.translation.x =
+        (player_cell.x as f32 * tiles::TILE_SIZE_PX) + (tiles::TILE_SIZE_PX / 2.0);
+    camera_transform.translation.y =
+        (player_cell.y as f32 * tiles::TILE_SIZE_PX) + (tiles::TILE_SIZE_PX / 2.0);
     let zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
     camera_transform.scale = Vec3::splat(zoom);
 }
