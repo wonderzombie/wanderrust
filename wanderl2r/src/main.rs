@@ -41,7 +41,7 @@ fn main() {
     let reverse_map = reverse_lookup();
 
     for node_path in map.keys() {
-        if !node_path.ends_with("TheCave/_level") {
+        if !node_path.ends_with("_level") {
             continue;
         }
 
@@ -52,6 +52,12 @@ fn main() {
             .as_array()
             .expect("expected level to be an array");
 
+        // IMPORTANT: we need to ensure we do not skip over cells! In
+        // wanderrust, we use a Vec<Option<TileIdx>> to represent the level
+        // data and rely on it having a predictable size. Every tile must
+        // be represented even if it's Blank.
+        //
+        // This means iterating on numeric ranges.
         let transposed = transpose_level_info(&reverse_map, level_data);
 
         let upper_left_x = transposed.keys().map(|it| it.x).min().unwrap_or_default();
@@ -68,8 +74,9 @@ fn main() {
             y: bottom_right_y,
         };
 
+        // There may be negative cells. All cells should therefore adjust for the offset before export.
         println!("{}: offset: {:?}", node_path, upper_left);
-        // println!("{}: bottom_right: {:?}", node_path, bottom_right);
+        println!("{}: bottom_right: {:?}", node_path, bottom_right);
         println!(
             "{}: effective map size: {:?}",
             node_path,
