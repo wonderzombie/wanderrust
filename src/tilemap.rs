@@ -79,12 +79,12 @@ impl TileStorage {
     // }
 
     pub fn get(&self, cell: &Cell) -> Option<Entity> {
-        let idx = cell.to_idx(self.size.width) as usize;
+        let idx = cell.to_idx(self.size.width);
         self.tiles.get(idx).copied().flatten()
     }
 
     pub fn set(&mut self, cell: &Cell, entity: Entity) {
-        let idx = cell.to_idx(self.size.width) as usize;
+        let idx = cell.to_idx(self.size.width);
         if let Some(slot) = self.tiles.get_mut(idx) {
             *slot = Some(entity);
         }
