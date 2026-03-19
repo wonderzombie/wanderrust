@@ -5134,6 +5134,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "wanderl2r"
+version = "0.1.0"
+
+[[package]]
 name = "wanderrust"
 version = "0.1.0"
 dependencies = [
