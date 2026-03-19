@@ -444,7 +444,7 @@ pub struct Dialogue {
 }
 
 impl Dialogue {
-    pub fn next(&mut self) -> &str {
+    pub fn advance(&mut self) -> &str {
         let phrase = &self.phrases[self.idx];
         self.idx = (self.idx + 1) % self.phrases.len();
         phrase
@@ -465,7 +465,7 @@ fn process_dialogue(
             continue;
         };
 
-        log.add(dialogue.next(), colors::KENNEY_BLUE);
+        log.add(dialogue.advance(), colors::KENNEY_BLUE);
     }
 }
 
