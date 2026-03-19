@@ -1,12 +1,14 @@
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use clap::Parser;
 use wanderrust::cell::Cell;
 use wanderrust::tiles::{self, TileIdx};
 
-use tracing::warn;
+use indicatif::ProgressBar;
+use log::warn;
+use std::time::Duration;
 
 #[derive(Parser)]
 struct Cli {
@@ -15,17 +17,19 @@ struct Cli {
 }
 
 fn main() {
-    println!("Hello, world!");
+    env_logger::init();
 
     let args = Cli::parse();
-
     let mut p = args.path.clone();
-
     if !args.path.exists() {
         p = PathBuf::from(
             "/Users/wonderzombie/src/wanderrust/wanderl2r/data/tile_replacer.smugglers_cave.json",
         );
     }
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("Loading...");
+    spinner.enable_steady_tick(Duration::from_millis(100));
 
     let content = std::fs::read_to_string(&p).expect("could not read file");
     let json: Value = serde_json::from_str(&content).expect("could not parse json");
@@ -37,19 +41,98 @@ fn main() {
     let reverse_map = reverse_lookup();
 
     for node_path in map.keys() {
-        if !node_path.ends_with("_level") {
+        if !node_path.ends_with("TheCave/_level") {
             continue;
         }
 
-        let key = node_path.as_str();
-        println!("[+] LEVEL: {}", key);
-        handle_level(
-            &reverse_map,
-            map.get(node_path).expect("expected key to exist"),
+        println!("[+] LEVEL: {}", node_path);
+        let level_data = map
+            .get(node_path)
+            .expect("expected key to exist")
+            .as_array()
+            .expect("expected level to be an array");
+
+        let transposed = transpose_level_info(&reverse_map, level_data);
+
+        let upper_left_x = transposed.keys().map(|it| it.x).min().unwrap_or_default();
+        let upper_left_y = transposed.keys().map(|it| it.y).min().unwrap_or_default();
+        let upper_left = Cell {
+            x: upper_left_x,
+            y: upper_left_y,
+        };
+
+        let bottom_right_x = transposed.keys().map(|it| it.x).max().unwrap_or_default();
+        let bottom_right_y = transposed.keys().map(|it| it.y).max().unwrap_or_default();
+        let bottom_right = Cell {
+            x: bottom_right_x,
+            y: bottom_right_y,
+        };
+
+        println!("{}: offset: {:?}", node_path, upper_left);
+        // println!("{}: bottom_right: {:?}", node_path, bottom_right);
+        println!(
+            "{}: effective map size: {:?}",
+            node_path,
+            bottom_right - upper_left
         );
+        println!("{}: total cells: {}", node_path, transposed.len());
     }
 
-    println!("done");
+    spinner.finish_and_clear();
+    println!("[+] done");
+}
+
+fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
+    let arr = value
+        .as_array()
+        .ok_or(anyhow::anyhow!("not a valid array: {}", value))?;
+    let x = arr[0]
+        .as_i64()
+        .ok_or(anyhow::anyhow!("not a valid integer: {}", arr[0]))? as i32;
+    let y = arr[1]
+        .as_i64()
+        .ok_or(anyhow::anyhow!("not a valid integer: {}", arr[1]))? as i32;
+    Ok(Cell { x, y })
+}
+
+fn transpose_level_info(
+    reverse_map: &HashMap<usize, TileIdx>,
+    level: &[Value],
+) -> HashMap<Cell, TileIdx> {
+    let mut transposed = HashMap::new();
+    for v in level.iter() {
+        let tile_to_cell_map = v.as_object().expect("expected level info to have objects");
+
+        let atlas_coords = tile_to_cell_map
+            .get("atlas_coords")
+            .expect("expected level info to have atlas_coords");
+
+        let Some(atlas_coords) = json2cell(atlas_coords).ok() else {
+            warn!("failed to parse atlas_coords: {:?}", atlas_coords);
+            continue;
+        };
+
+        let atlas_idx = atlas_coords.to_idx(tiles::SHEET_SIZE_G.x);
+        let Some(tile) = reverse_map.get(&atlas_idx).copied() else {
+            warn!("failed to find tile for atlas_idx: {}", atlas_idx);
+            continue;
+        };
+
+        let map_cells = tile_to_cell_map
+            .get("cells")
+            .expect("expected level_info to have cells")
+            .as_array()
+            .expect("expected cells to be an array");
+
+        for map_cell in map_cells.iter() {
+            if let Ok(cell) = json2cell(map_cell) {
+                transposed.insert(cell, tile);
+            } else {
+                warn!("failed to parse cell: {:?}", map_cell);
+            }
+        }
+    }
+    transposed
 }
 
 fn reverse_lookup() -> HashMap<usize, TileIdx> {
@@ -59,59 +142,4 @@ fn reverse_lookup() -> HashMap<usize, TileIdx> {
         map.entry(idx).or_insert(*tile);
     }
     map
-}
-
-fn handle_level(reverse_map: &HashMap<usize, TileIdx>, val: &Value) {
-    let level_info = val.as_array().expect("expected level to be an array");
-
-    println!(" - level_info: {} values", level_info.len());
-
-    let mut counts: HashMap<&TileIdx, usize> = HashMap::new();
-    let mut missing: HashSet<(Cell, usize)> = HashSet::new();
-
-    for v in level_info.iter() {
-        let map = v.as_object().expect("expected level info to have objects");
-
-        let coords = map
-            .get("atlas_coords")
-            .expect("expected atlas_coords to exist")
-            .as_array()
-            .expect("expected atlas_coords to be an array");
-
-        // println!("level_info[{}]: atlas_coords {:?}", i, coords);
-        //
-        //
-
-        let cell = cell_from_array(
-            coords
-                .as_array()
-                .expect("expected atlas_coords to be an array of 2 values"),
-        );
-        let idx = cell.to_idx(tiles::SHEET_SIZE_G.x);
-
-        let Some(tile) = reverse_map.get(&idx) else {
-            warn!("missing: atlas_idx {} atlas_coords: {}", idx, cell);
-            missing.insert((cell, idx));
-            continue;
-        };
-
-        // println!("{:?} at atlas_idx {} atlas_coords {}", tile, idx, cell);
-
-        counts.entry(tile).and_modify(|v| *v += 1).or_insert(1);
-    }
-
-    println!("[-] counts: {:?}", counts);
-
-    println!("[-] missing: {:?}", missing);
-}
-
-fn cell_from_array(coords: &[Value; 2]) -> Cell {
-    Cell {
-        x: coords[0]
-            .as_i64()
-            .expect("expected atlas_coords[0] to be an integer") as i32,
-        y: coords[1]
-            .as_i64()
-            .expect("expected atlas_coords[1] to be an integer") as i32,
-    }
 }
