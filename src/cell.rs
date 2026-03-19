@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, Div, Mul};
 
 use bevy::prelude::*;
@@ -43,14 +44,20 @@ impl Cell {
     }
 
     /// Converts this cell to an index given a width, treating the cell as a 2D grid index.
-    pub fn to_idx(self, width: u32) -> u32 {
+    pub fn to_idx(self, width: u32) -> usize {
         width
             .saturating_mul(self.y as u32)
-            .saturating_add(self.x as u32)
+            .saturating_add(self.x as u32) as usize
     }
 
     pub fn is_in_bounds(&self, width: u32, height: u32) -> bool {
         self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
+    }
+}
+
+impl Display for Cell {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Cell({},{})", self.x, self.y)
     }
 }
 
