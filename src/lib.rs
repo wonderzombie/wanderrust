@@ -1,6 +1,6 @@
 #![allow(unused)]
 mod atlas;
-mod cell;
+pub mod cell;
 mod light;
-mod tilemap;
-mod tiles;
+pub mod tilemap;
+pub mod tiles;
