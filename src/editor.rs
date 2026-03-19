@@ -7,7 +7,7 @@ use bevy::{
 use rfd::AsyncFileDialog;
 
 use crate::{
-    actors::{Actor, PlayerStats},
+    actors::PlayerStats,
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
@@ -270,7 +270,7 @@ pub fn poll_save_dialog(
 pub fn save_map(
     storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
-    all_portals: Query<(&Portal, &Cell), With<Actor>>,
+    all_portals: Query<(&Portal, &Cell)>,
     all_strata: Query<&Stratum, With<MapTile>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {

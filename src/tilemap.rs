@@ -239,7 +239,7 @@ pub fn initialize_tile_storage(
 pub fn save_map(
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
-    all_portals: &Query<(&Portal, &Cell), With<Actor>>,
+    all_portals: &Query<(&Portal, &Cell)>,
     strata: &Query<&Stratum, With<MapTile>>,
 ) -> SavedTilemap {
     // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
