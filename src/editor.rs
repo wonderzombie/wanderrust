@@ -11,7 +11,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage},
+    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -267,6 +267,7 @@ pub fn poll_save_dialog(
 
 /// Saves the map to disk using the provided [TileStorage] and [Query] of all tiles.
 pub fn save_map(
+    spec: Res<TilemapSpec>,
     storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     all_portals: Query<(&Portal, &Cell)>,
@@ -274,7 +275,7 @@ pub fn save_map(
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {
-        let saved = tilemap::save_map(&storage, &all_tiles, &all_portals, &all_strata);
+        let saved = tilemap::save_map(&spec, &storage, &all_tiles, &all_portals, &all_strata);
         if let Ok(serialized) = ron::to_string(&saved) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;

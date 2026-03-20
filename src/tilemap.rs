@@ -241,6 +241,7 @@ pub fn initialize_tile_storage(
 
 /// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
 pub fn save_map(
+    spec: &Res<TilemapSpec>,
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
     all_portals: &Query<(&Portal, &Cell)>,
