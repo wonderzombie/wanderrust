@@ -133,6 +133,21 @@ fn load_from_json(
 
 type TileStratum = (TileIdx, Stratum);
 
+/// Fills a HashMap with a "full" suite of cells with tiles.
+///
+/// Important:
+///
+/// wanderrust maps are treated as square. We store them as a list
+/// because we can easily translate between an index and a cell *if* we have
+/// a fixed width for every single line. Even if there's nothing *at* a cell,
+/// we could still have Option<TileIdx> or TileIdx::Blank.
+///
+/// wanderlust maps are NOT square. They arrive as a list of cells and they
+/// have many irregularities that prevent neat classification based on the
+/// existing `tile_replacer.foo.json`.
+///
+/// This presents an incompatibility which we need to overcome.
+///
 fn fill_map(
     transposed_map: HashMap<cell::Cell, TileIdx>,
     size: cell::Cell,
@@ -171,6 +186,11 @@ fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
     Ok(Cell { x, y })
 }
 
+/// Transposes level info from a list of tile definitions and the cells using it
+/// into a list of cells and the tile at that cell (HashMap<Cell, TileIdx>).
+///
+/// wanderlust maps are not square so the map dimensions are not inferred from
+/// the level info. See also [`fill_map`].
 fn transpose_level_info(
     reverse_map: &HashMap<usize, TileIdx>,
     level: &[Value],
@@ -211,6 +231,14 @@ fn transpose_level_info(
     transposed
 }
 
+/// See [`TileIdx`], especially [`tiles!`] for the definition of tiles.
+/// wanderrust doesn't care about going from an atlas index (Bevy's default) to
+/// a tile; it's typically the other way around for any system that syncs
+/// [`TileIdx`] with [`Sprite`].
+///
+/// Here we generate the opposite by iterating through TileIdx::all(). This
+/// allows us to translate from wanderlust's `tile_replacer` format into
+/// something we can translate into SavedTilemap and then [`ron`].
 fn reverse_lookup() -> HashMap<usize, TileIdx> {
     let mut map = HashMap::new();
     for tile in TileIdx::all() {
