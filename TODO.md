@@ -1,0 +1,131 @@
+# PROBABLY NEXT
+
+## REVISIT PARENTING ENTITIES. 
+
+If we have all entities as a child of the map entity, the initial part becomes way easier. IF we're Below, we hide Above. If we're Above, we show Below but Dim or Night. 
+
+-- In the end I have both. For Visibility, I use the parent/child relationship. For differentiating which tiles belong to which stratum, we have the `Stratum` enum.
+
+## LANTERN ABILITY
+
+Maybe you can *throw "flares."* We could even *treat the flare like it has real physics.*
+
+## TRAVERSAL
+
+I think traversal is important – it can be more or less spectacular, like the ladder versus the boat, as in Zelda. Animal Crossing has some related tools. 
+
+- Horses
+- Boats
+- Magic tool
+- "hookshot"
+- whip
+- ender pearl (i.e. throw it and tp to landing tile)
+
+## HAZARDS LIKE EXPLODING BARRELS
+
+For wanderrust we can just put a number over it? But a floating damage number. The item itself may have a color change so you're not hosed, but if you are paying attention the number will help you more. 
+
+Think also of how Divinity II does this sort of thing. They have text that floats up. There's also an icon probably but we don't need to go there just yet. *Or* we go ahead
+and look at those tiny status icons we made in Piskel. 
+
+## COMBAT LIKE IN ENSHROUDED
+
+We have enemies with a *block meter*. Break it and you can do merciless attack. This is to say it is a critical. The block meter can be a very small N, like 6 high, 8 - 10 is a boss? 
+
+We have *backstab damage* when enemies are *flanked*. (Flanking damage? Maybe it's something dangerous like +1 damage for every ally for some creatures.)
+
+You have effective/ineffective. 
+
+You have *floating damage numbers* alongside bars.
+
+## HIDDEN STAMINA
+
+Hidden stat: Stamina. You get a color. Or a short meter. Or a really long meter. 
+
+You might also get a prompt when you get past a certain point. If the actions are arranged in a table, they would be unadorned: lt attack | hvy attack | dodge | block. 
+
+The notions are that we could color them, we could add punctuation to them, something. 
+
+Measuring is not the point, so we must remove the temptation. The test version might be a swatch with a color gradient from green to yellow to red, or just green to red. 
+
+Like if you're about to spend your last bit of stamina, instead of `hvy attack` it's `[hvy attack]`, or vice versa. Or have brackets all the time but color them. Whatever.
+
+The math should be pretty simple. I am not against using a low N like 5 or even 3 for a starting character's stamina. Let's try 5. 
+
+You can queue actions. The number of queued actions depends on Acumen. Alternatively, maybe Acumen gives you half of what you spend, rounded down, when you cancel a move. Alacrity makes you go sooner. Grit gives you more stamina.
+
+
+
+## TILEIDX: ALTERNATIVE TILES
+
+We don't need an arbitrary number of alternative tiles; just one per tile should be good enough. THe goal is for alternative tiles to retain the appearance of the original without retaining the properties of the original — walkable, opaque, etc. 
+
+One answer is just `alt_atlas_idx`. We would use this to define enums that use the same atlas coordinates without using the same number. The easiest trick is to keep counting: 49 x 22 = 1078. If 0 is the first tile, 1078 is also the first tile. 
+
+The tile itself is exactly like any other tile. Add it to WALKABLE or OPAQUE or whatever.
+
+## TILEIDX: FLIP
+
+A Component would work well: `pub struct TileTransform { flip_v: bool, flip_h: bool, flip_d: bool, }` then Query `Option<&TileTransform>` alongside `TileIdx`.
+
+# DESIGNS
+
+
+
+====
+If needed:
+
+somecave.map.ron <--- lots and lots of tiles
+somecave.data.ron <--- human editable; small-ish
+
+This would mean serializing tiles separately from the others. 
+
+
+
+# MAYBE NEXT
+
+- Inventory becomes a Component alongside Interactable::Chest 
+
+- Finish implementing attacks w/ Damage -- done
+
+- Dead mobs get a marker struct and a system handles them
+- When you kill the mob, you get the loot; that's all — could even write Acquisition
+
+- The inventory list is along the right-hand side
+- It shows you what you have equipped, your HP, and inventory item names
+- When you press Shift-I, an inventory UI appears; it's not interactive yet
+
+- Equipment could also be a component?
+
+- Stamina is a non-numeric stat. You get some back each combat tick.
+
+- XP lets you raise your stats. We are going to use the same three: Alacrity, Acumen, and Grit. 
+- To raise a stat, spend XP equal to the new value. e.g. 2 -> 3 costs 3 XP.
+
+- Consider implementing something like the Shroud. It's not damage over time; it's a countdown. 
+
+- How about an interface for populating a Chest that is a text box. Items are formatted like this (proposal): `gold:10 sword torch:3 mail`. 
+- A key is a separate box; leave empty for no key
+
+- start with something like hold tab to highlight and click on interesting tiles.
+
+## APPENDIX: OLD: STRATA: TWO LAYERS? OR TWO MAPS?
+
+- A stratum is any number of layers, but for now 1:1.
+- Stick to two strata. 
+- Special tile marker: `NoneTile` should get `Hidden`.
+
+
+- First most dumbest way is to put two maps next to one another. 
+- How will they not conflict? They will conflict for sure. 
+  - We don't use `tiles` to drive every tile operation, so every system would work on every map at once.
+  - `MapTile` is undifferentiated across tilemaps
+
+- Newtypes are one way to handle it, like `struct LayerOne` that implements `Component`, something like `LayerOne` and `LayerTwo` to start with. We put a trait `Layer` on this type — could this help? `<L: Layer>`
+
+- TileStorage def needs to be updated with this. 
+
+- Yeah, let's just start with two layers. Above and Below. 
+- ZoneSpec? Has two TilemapSpec? 
+
+- Add `middle` ring to emitter
