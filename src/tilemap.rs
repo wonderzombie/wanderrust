@@ -61,6 +61,21 @@ impl Dimensions {
     }
 }
 
+impl PartialOrd for Dimensions {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Dimensions {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.width
+            .cmp(&other.width)
+            .then(self.height.cmp(&other.height))
+            .then(self.tile_size.cmp(&other.tile_size))
+    }
+}
+
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [TilemapId].
 /// Tiles are stored as a flat vector of `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way,
