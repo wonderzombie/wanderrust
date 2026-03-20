@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
-    light::LightLevel,
+    light::{Emitter, LightLevel},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -143,6 +143,7 @@ pub struct SavedTilemap {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
+    pub light_level: LightLevel,
 }
 
 #[derive(Bundle, Clone)]
@@ -274,6 +275,7 @@ pub fn save_map(
         tiles,
         portals,
         size: storage.size,
+        light_level: spec.light_level,
         ..Default::default()
     }
 }

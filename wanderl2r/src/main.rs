@@ -1,6 +1,7 @@
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use wanderrust::light::LightLevel;
 use wanderrust::tilemap::{Dimensions, SavedTilemap, Stratum};
 
 use clap::Parser;
@@ -61,6 +62,7 @@ fn main() {
         let saved = SavedTilemap {
             tiles: filled.clone(),
             size: size,
+            light_level: LightLevel::Light,
             ..Default::default()
         };
 
