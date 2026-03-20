@@ -2,7 +2,7 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{MapDimensions, Stratum, TilemapLayer, TilemapSpec};
+use crate::tilemap::{Dimensions, Stratum, TilemapLayer, TilemapSpec};
 use crate::tiles::{
     Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
 };
@@ -95,7 +95,7 @@ impl TilemapSpec {
             .collect::<Vec<_>>();
 
         TilemapSpec {
-            size: MapDimensions {
+            size: Dimensions {
                 width,
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
@@ -136,7 +136,7 @@ impl TilemapSpec {
         info!("tile breakdown: {:#?}", tally);
 
         TilemapSpec {
-            size: MapDimensions {
+            size: Dimensions {
                 width: size.0,
                 height: size.1,
                 tile_size: DEFAULT_TILE_SIZE,

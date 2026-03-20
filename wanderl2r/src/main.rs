@@ -8,7 +8,7 @@ use wanderrust::cell::{self, Cell};
 use wanderrust::tiles::{self, TileIdx};
 
 use indicatif::ProgressBar;
-use log::{info, warn};
+use log::warn;
 use std::time::Duration;
 
 #[derive(Parser)]
