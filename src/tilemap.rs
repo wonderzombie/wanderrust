@@ -33,7 +33,7 @@ pub enum Stratum {
 pub struct TilemapSpec {
     /// MapTile entities will be created as children of this entity.
     pub id: TilemapId,
-    pub size: MapDimensions,
+    pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
     pub tiles: Vec<(TileIdx, Cell, Stratum)>,
@@ -45,13 +45,13 @@ pub struct TilemapSpec {
 pub struct TilemapLayer(pub f32);
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct MapDimensions {
+pub struct Dimensions {
     pub width: u32,
     pub height: u32,
     pub tile_size: u32,
 }
 
-impl MapDimensions {
+impl Dimensions {
     #[inline]
     pub fn cell_to_pos(&self, cell: &Cell) -> Vec2 {
         Vec2::new(
@@ -67,7 +67,7 @@ impl MapDimensions {
 /// a cell may be empty of any tile entity.
 pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
-    pub size: MapDimensions,
+    pub size: Dimensions,
 }
 
 impl TileStorage {
@@ -94,7 +94,11 @@ impl TileStorage {
         self.tiles.len()
     }
 
-    fn new(size: MapDimensions) -> Self {
+    pub fn is_empty(&self) -> bool {
+        self.tiles.is_empty()
+    }
+
+    fn new(size: Dimensions) -> Self {
         Self {
             tiles: vec![None; (size.width * size.height) as usize],
             size,
@@ -136,7 +140,7 @@ pub struct Portal {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
     pub tiles: Vec<(TileIdx, Stratum)>,
-    pub size: MapDimensions,
+    pub size: Dimensions,
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
 }
@@ -155,7 +159,7 @@ pub struct TileBundle {
 
 #[derive(Bundle, Default)]
 pub struct TilemapBundle {
-    pub size: MapDimensions,
+    pub size: Dimensions,
     pub layer: TilemapLayer,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
