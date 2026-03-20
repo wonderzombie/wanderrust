@@ -66,6 +66,13 @@ impl Cell {
     pub fn is_in_bounds(&self, width: u32, height: u32) -> bool {
         self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
     }
+
+    pub fn neg(&self) -> Cell {
+        Cell {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
 }
 
 impl Display for Cell {

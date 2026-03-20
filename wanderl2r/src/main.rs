@@ -1,13 +1,14 @@
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use wanderrust::tilemap::Stratum;
 
 use clap::Parser;
-use wanderrust::cell::Cell;
+use wanderrust::cell::{self, Cell};
 use wanderrust::tiles::{self, TileIdx};
 
 use indicatif::ProgressBar;
-use log::warn;
+use log::{info, warn};
 use std::time::Duration;
 
 #[derive(Parser)]
@@ -40,53 +41,100 @@ fn main() {
     // Now load the reverse lookup map
     let reverse_map = reverse_lookup();
 
+    let mut maps: HashMap<String, Vec<(TileIdx, Stratum)>> = HashMap::new();
+
     for node_path in map.keys() {
         if !node_path.ends_with("_level") {
             continue;
         }
 
-        println!("[+] LEVEL: {}", node_path);
-        let level_data = map
-            .get(node_path)
-            .expect("expected key to exist")
-            .as_array()
-            .expect("expected level to be an array");
+        let (transposed, upper_left, bottom_right) = load_from_json(map, &reverse_map, node_path);
 
-        // IMPORTANT: we need to ensure we do not skip over cells! In
-        // wanderrust, we use a Vec<Option<TileIdx>> to represent the level
-        // data and rely on it having a predictable size. Every tile must
-        // be represented even if it's Blank.
-        //
-        // This means iterating on numeric ranges.
-        let transposed = transpose_level_info(&reverse_map, level_data);
+        let filled = fill_map(transposed, upper_left, bottom_right);
 
-        let upper_left_x = transposed.keys().map(|it| it.x).min().unwrap_or_default();
-        let upper_left_y = transposed.keys().map(|it| it.y).min().unwrap_or_default();
-        let upper_left = Cell {
-            x: upper_left_x,
-            y: upper_left_y,
-        };
-
-        let bottom_right_x = transposed.keys().map(|it| it.x).max().unwrap_or_default();
-        let bottom_right_y = transposed.keys().map(|it| it.y).max().unwrap_or_default();
-        let bottom_right = Cell {
-            x: bottom_right_x,
-            y: bottom_right_y,
-        };
-
-        // There may be negative cells. All cells should therefore adjust for the offset before export.
-        println!("{}: offset: {:?}", node_path, upper_left);
-        println!("{}: bottom_right: {:?}", node_path, bottom_right);
-        println!(
-            "{}: effective map size: {:?}",
-            node_path,
-            bottom_right - upper_left
-        );
-        println!("{}: total cells: {}", node_path, transposed.len());
+        let map_name = node_path.replace("/", "_");
+        maps.insert(map_name, filled);
     }
+
+    println!("[+] loaded {} maps", maps.len());
+
+    println!("saving");
+    for (map_name, filled) in maps.iter() {}
 
     spinner.finish_and_clear();
     println!("[+] done");
+}
+
+fn load_from_json(
+    map: &serde_json::Map<String, Value>,
+    reverse_map: &HashMap<usize, TileIdx>,
+    node_path: &String,
+) -> (HashMap<cell::Cell, TileIdx>, cell::Cell, cell::Cell) {
+    println!("[+] LEVEL: {}", node_path);
+    let level_data = map
+        .get(node_path)
+        .expect("expected key to exist")
+        .as_array()
+        .expect("expected level to be an array");
+
+    let transposed = transpose_level_info(reverse_map, level_data);
+
+    let upper_left_x = transposed.keys().map(|it| it.x).min().unwrap_or(0);
+    let upper_left_y = transposed.keys().map(|it| it.y).min().unwrap_or(0);
+    let upper_left = Cell {
+        x: upper_left_x,
+        y: upper_left_y,
+    };
+
+    let bottom_right_x = transposed.keys().map(|it| it.x).max().unwrap_or(0);
+    let bottom_right_y = transposed.keys().map(|it| it.y).max().unwrap_or(0);
+    let bottom_right = Cell {
+        x: bottom_right_x,
+        y: bottom_right_y,
+    };
+
+    // wanderlust permits negative cells and normalizes for MRPAS.
+    // wanderrust does not permit negative cells, so we offset ahead of time.
+    println!("{}: offset: {}", node_path, upper_left);
+    println!("{}: bottom_right: {}", node_path, bottom_right);
+    let size = bottom_right - upper_left;
+    println!("{}: effective map size: {}", node_path, size);
+    println!(
+        "{}: cells / total = {} / {}",
+        node_path,
+        transposed.len(),
+        size.x * size.y
+    );
+
+    (transposed, size, upper_left.neg())
+}
+
+type TileStratum = (TileIdx, Stratum);
+
+fn fill_map(
+    transposed_map: HashMap<cell::Cell, TileIdx>,
+    size: cell::Cell,
+    offset: cell::Cell,
+) -> Vec<TileStratum> {
+    let num_tiles = size.x * size.y;
+    let mut map = vec![TileStratum::default(); num_tiles as usize];
+
+    for idx in 0..num_tiles {
+        let old_cell = Cell {
+            x: (idx as i32) % size.x + offset.x,
+            y: (idx as i32) / size.x + offset.y,
+        };
+
+        let tile = transposed_map
+            .get(&old_cell)
+            .copied()
+            .unwrap_or(TileIdx::default());
+        map[idx as usize] = (tile, Stratum::default());
+    }
+
+    println!("filled {} tiles", map.len());
+
+    map
 }
 
 fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
