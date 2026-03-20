@@ -14,7 +14,6 @@ use crate::{
     tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
-
 const DATA_DIR: &str = "data";
 
 #[derive(Resource)]
@@ -182,10 +181,10 @@ pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<
 type PathBufTask = Task<Option<std::path::PathBuf>>;
 
 #[derive(Component)]
-pub(crate) struct LoadDialogTask(PathBufTask);
+pub struct LoadDialogTask(PathBufTask);
 
 #[derive(Message)]
-pub(crate) struct MapLoadMessage(PathBuf);
+pub struct MapLoadMessage(PathBuf);
 
 /// Opens a file dialog to select a map file and spawns a [LoadDialogTask] to load the selected file.
 pub fn open_load_dialog(mut commands: Commands) {
@@ -231,10 +230,10 @@ pub fn load_map(
 }
 
 #[derive(Message)]
-pub(crate) struct MapSaveMessage(PathBuf);
+pub struct MapSaveMessage(PathBuf);
 
 #[derive(Component)]
-pub(crate) struct SaveDialogTask(PathBufTask);
+pub struct SaveDialogTask(PathBufTask);
 
 /// Opens a save dialog and spawns a [SaveDialogTask] to handle the result.
 pub fn open_save_dialog(mut commands: Commands) {
