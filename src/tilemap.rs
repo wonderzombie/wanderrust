@@ -1,4 +1,7 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::{
+    platform::collections::{HashMap, HashSet},
+    prelude::*,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -297,15 +300,48 @@ pub fn save_map(
 
 /// Loads a [`SavedTilemap`] into [`TileStorage`].
 pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
+    if saved.size > storage.size {
+        error!(
+            "saved map size {:?} exceeds storage size {:?}",
+            saved.size, storage.size
+        );
+        return;
+    } else if saved.size != storage.size {
+        warn!(
+            "saved map size {:?} does not match storage size {:?}",
+            saved.size, storage.size
+        );
+    }
+
+    let mut non_entities = 0;
+    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
+
     storage
         .tiles
         .iter()
         .zip(saved.tiles.iter())
         .for_each(|(&maybe_entity, &idx_strat)| {
             if let Some(entity) = maybe_entity {
-                commands.entity(entity).insert(idx_strat);
+                let (tile, stratum) = idx_strat;
+                commands.entity(entity).insert((tile, stratum));
+                if tile.is_emitter() {
+                    commands.entity(entity).insert(Emitter::torch());
+                }
+
+                tally
+                    .entry(idx_strat.0)
+                    .and_modify(|v| *v += 1)
+                    .or_insert(1);
+            } else {
+                non_entities += 1;
             }
         });
+
+    info!("tile breakdown: {:#?}", tally);
+
+    if non_entities > 0 {
+        warn!("{} tiles in storage are not entities", non_entities);
+    }
 
     let valid_ids = saved
         .portals
