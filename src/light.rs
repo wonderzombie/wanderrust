@@ -5,8 +5,11 @@ use crate::tiles::{MapTile, Revealed};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub enum LightLevel {
     Dark, // underground default — render nothing
     #[default]
@@ -63,6 +66,14 @@ impl Emitter {
             "inner ring level must be >= outer ring level"
         );
         Self { inner, outer }
+    }
+
+    pub fn torch() -> Self {
+        Self::new((LightLevel::Bright, 1), (LightLevel::Dim, 1))
+    }
+
+    pub fn candle() -> Self {
+        Self::new((LightLevel::Bright, 1), (LightLevel::Dim, 1))
     }
 
     #[allow(dead_code)]
