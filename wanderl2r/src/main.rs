@@ -1,7 +1,7 @@
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use wanderrust::tilemap::Stratum;
+use wanderrust::tilemap::{Dimensions, SavedTilemap, Stratum};
 
 use clap::Parser;
 use wanderrust::cell::{self, Cell};
@@ -41,25 +41,37 @@ fn main() {
     // Now load the reverse lookup map
     let reverse_map = reverse_lookup();
 
-    let mut maps: HashMap<String, Vec<(TileIdx, Stratum)>> = HashMap::new();
+    let mut maps: HashMap<String, (Vec<(TileIdx, Stratum)>, Dimensions)> = HashMap::new();
 
     for node_path in map.keys() {
         if !node_path.ends_with("_level") {
             continue;
         }
 
-        let (transposed, upper_left, bottom_right) = load_from_json(map, &reverse_map, node_path);
+        // load_from_json returns (transposed_map, size, offset)
+        let (transposed, size_cell, offset) = load_from_json(map, &reverse_map, node_path);
+        let size = Dimensions {
+            width: size_cell.x as u32,
+            height: size_cell.y as u32,
+            tile_size: tiles::TILE_SIZE_PX as u32,
+        };
 
-        let filled = fill_map(transposed, upper_left, bottom_right);
+        let filled = fill_map(transposed, size_cell, offset);
 
         let map_name = node_path.replace("/", "_");
-        maps.insert(map_name, filled);
+        maps.insert(map_name, (filled, size));
     }
 
     println!("[+] loaded {} maps", maps.len());
 
     println!("saving");
-    for (map_name, filled) in maps.iter() {}
+    for (map_name, (filled, size)) in maps.iter() {
+        let saved = SavedTilemap {
+            tiles: filled.clone(),
+            size: *size,
+            ..Default::default()
+        };
+    }
 
     spinner.finish_and_clear();
     println!("[+] done");
