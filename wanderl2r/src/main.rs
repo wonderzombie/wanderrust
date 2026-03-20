@@ -41,7 +41,7 @@ fn main() {
     // Now load the reverse lookup map
     let reverse_map = reverse_lookup();
 
-    let mut maps: HashMap<String, (Vec<(TileIdx, Stratum)>, Dimensions)> = HashMap::new();
+    let mut maps: HashMap<String, SavedTilemap> = HashMap::new();
 
     for node_path in map.keys() {
         if !node_path.ends_with("_level") {
@@ -58,19 +58,27 @@ fn main() {
 
         let filled = fill_map(transposed, size_cell, offset);
 
+        let saved = SavedTilemap {
+            tiles: filled.clone(),
+            size: size,
+            ..Default::default()
+        };
+
         let map_name = node_path.replace("/", "_");
-        maps.insert(map_name, (filled, size));
+        maps.insert(map_name, saved);
     }
 
     println!("[+] loaded {} maps", maps.len());
 
     println!("saving");
-    for (map_name, (filled, size)) in maps.iter() {
-        let saved = SavedTilemap {
-            tiles: filled.clone(),
-            size: *size,
-            ..Default::default()
-        };
+    for (map_name, saved) in maps.iter() {
+        if let Ok(serialized) = ron::to_string(&saved) {
+            let path = format!("data/{}.ron", map_name);
+            println!("saving {}", path);
+            let Ok(_) = std::fs::write(&path, serialized) else {
+                continue;
+            };
+        }
     }
 
     spinner.finish_and_clear();
@@ -132,13 +140,12 @@ fn fill_map(
     let mut map = vec![TileStratum::default(); num_tiles as usize];
 
     for idx in 0..num_tiles {
-        let old_cell = Cell {
-            x: (idx as i32) % size.x + offset.x,
-            y: (idx as i32) / size.x + offset.y,
-        };
+        let cell = Cell::from_idx(size.x as u32, idx as usize);
+
+        let offset_cell = cell + offset;
 
         let tile = transposed_map
-            .get(&old_cell)
+            .get(&offset_cell)
             .copied()
             .unwrap_or(TileIdx::default());
         map[idx as usize] = (tile, Stratum::default());

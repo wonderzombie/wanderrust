@@ -5370,6 +5370,7 @@ dependencies = [
  "env_logger",
  "indicatif",
  "log",
+ "ron",
  "serde_json",
  "wanderrust",
 ]
