@@ -62,6 +62,20 @@ impl Dimensions {
             cell.y as f32 * self.tile_size as f32,
         )
     }
+
+    #[inline]
+    pub fn idx_to_cell(&self, idx: u32) -> Cell {
+        // TODO: use Cell's impl
+        Cell {
+            x: (idx % self.width) as i32,
+            y: (idx / self.width) as i32,
+        }
+    }
+
+    #[inline]
+    pub fn cell_to_idx(&self, cell: &Cell) -> u32 {
+        cell.x as u32 + cell.y as u32 * self.width
+    }
 }
 
 impl PartialOrd for Dimensions {
@@ -313,34 +327,29 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         );
     }
 
-    let mut non_entities = 0;
-    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
+    let mut tally = HashMap::<TileIdx, usize>::new();
+    let mut missing: usize = 0;
 
-    storage
-        .tiles
-        .iter()
-        .zip(saved.tiles.iter())
-        .for_each(|(&maybe_entity, &idx_strat)| {
-            if let Some(entity) = maybe_entity {
-                let (tile, stratum) = idx_strat;
-                commands.entity(entity).insert((tile, stratum));
-                if tile.is_emitter() {
-                    commands.entity(entity).insert(Emitter::torch());
-                }
+    // We can derive cell from the source using its Dimensions and then
+    // pull the entity from storage thus to insert its new tile components.
+    for (source_idx, source_tile) in saved.tiles.iter().enumerate() {
+        let source_cell = saved.size.idx_to_cell(source_idx as u32);
 
-                tally
-                    .entry(idx_strat.0)
-                    .and_modify(|v| *v += 1)
-                    .or_insert(1);
-            } else {
-                non_entities += 1;
-            }
-        });
+        if let Some(entity) = storage.get(&source_cell) {
+            commands.entity(entity).insert(*source_tile);
+            tally
+                .entry(source_tile.0)
+                .and_modify(|v| *v += 1)
+                .or_insert(1);
+        } else {
+            missing += 1;
+        }
+    }
 
-    info!("tile breakdown: {:#?}", tally);
+    info!("tile breakdown ({} types) {:#?}", tally.len(), tally);
 
-    if non_entities > 0 {
-        warn!("{} tiles in storage are not entities", non_entities);
+    if missing > 0 {
+        warn!("{} tiles in storage are not entities", missing);
     }
 
     let valid_ids = saved

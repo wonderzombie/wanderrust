@@ -49,19 +49,17 @@ fn main() {
             continue;
         }
 
-        // load_from_json returns (transposed_map, size, offset)
-        let (transposed, size_cell, offset) = load_from_json(map, &reverse_map, node_path);
-        let size = Dimensions {
-            width: size_cell.x as u32,
-            height: size_cell.y as u32,
-            tile_size: tiles::TILE_SIZE_PX as u32,
-        };
+        let (transposed, size) = load_from_json(map, &reverse_map, node_path);
 
-        let filled = fill_map(transposed, size_cell, offset);
+        let filled: Vec<(TileIdx, Stratum)> = fill_map(transposed, (size.x * size.y) as usize);
 
         let saved = SavedTilemap {
-            tiles: filled.clone(),
-            size: size,
+            tiles: filled,
+            size: Dimensions {
+                width: size.x as u32,
+                height: size.y as u32,
+                tile_size: 16,
+            },
             light_level: LightLevel::Light,
             ..Default::default()
         };
@@ -76,7 +74,7 @@ fn main() {
     for (map_name, saved) in maps.iter() {
         if let Ok(serialized) = ron::to_string(&saved) {
             let path = format!("data/{}.ron", map_name);
-            println!("saving {}", path);
+            println!("saving {} ({:?})", path, saved.size);
             let Ok(_) = std::fs::write(&path, serialized) else {
                 continue;
             };
@@ -91,7 +89,7 @@ fn load_from_json(
     map: &serde_json::Map<String, Value>,
     reverse_map: &HashMap<usize, TileIdx>,
     node_path: &String,
-) -> (HashMap<cell::Cell, TileIdx>, cell::Cell, cell::Cell) {
+) -> (HashMap<cell::Cell, TileIdx>, cell::Cell) {
     println!("[+] LEVEL: {}", node_path);
     let level_data = map
         .get(node_path)
@@ -128,49 +126,31 @@ fn load_from_json(
         size.x * size.y
     );
 
-    (transposed, size, upper_left.neg())
+    (transposed, size)
 }
 
-type TileStratum = (TileIdx, Stratum);
-
-/// Fills a HashMap with a "full" suite of cells with tiles.
-///
-/// Important:
-///
-/// wanderrust maps are treated as square. We store them as a list
-/// because we can easily translate between an index and a cell *if* we have
-/// a fixed width for every single line. Even if there's nothing *at* a cell,
-/// we could still have Option<TileIdx> or TileIdx::Blank.
-///
-/// wanderlust maps are NOT square. They arrive as a list of cells and they
-/// have many irregularities that prevent neat classification based on the
-/// existing `tile_replacer.foo.json`.
-///
-/// This presents an incompatibility which we need to overcome.
-///
+/// Fills a HashMap with a "full" suite of cells with N tiles,
+/// mapping cells in the transposed map to a position in the returned list.
+/// For this reason it's important to track map size when dealing with Vec.
 fn fill_map(
     transposed_map: HashMap<cell::Cell, TileIdx>,
-    size: cell::Cell,
-    offset: cell::Cell,
-) -> Vec<TileStratum> {
-    let num_tiles = size.x * size.y;
-    let mut map = vec![TileStratum::default(); num_tiles as usize];
+    num_tiles: usize,
+) -> Vec<(TileIdx, Stratum)> {
+    let mut tiles: Vec<(TileIdx, Stratum)> =
+        vec![(TileIdx::default(), Stratum::default()); num_tiles];
 
-    for idx in 0..num_tiles {
-        let cell = Cell::from_idx(size.x as u32, idx as usize);
-
-        let offset_cell = cell + offset;
-
+    for &cell in transposed_map.keys() {
         let tile = transposed_map
-            .get(&offset_cell)
+            .get(&cell)
             .copied()
             .unwrap_or(TileIdx::default());
-        map[idx as usize] = (tile, Stratum::default());
+
+        tiles.push((tile, Stratum::default()));
     }
 
-    println!("filled {} tiles", map.len());
+    println!("filled {} tiles", tiles.len());
 
-    map
+    tiles
 }
 
 fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
