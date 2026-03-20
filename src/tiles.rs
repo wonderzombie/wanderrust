@@ -245,6 +245,8 @@ impl TileIdx {
         RockMedium,
     ];
 
+    const EMITTER: &'static [TileIdx] = &[Torch, Candle, Brazier];
+
     pub fn is_walkable(&self) -> bool {
         Self::WALKABLE.contains(self)
     }
@@ -259,6 +261,10 @@ impl TileIdx {
 
     pub fn is_flippable(&self) -> bool {
         Self::FLIPPABLE.contains(self)
+    }
+
+    pub fn is_emitter(&self) -> bool {
+        Self::EMITTER.contains(self)
     }
 
     pub fn opened_version(&self) -> Option<TileIdx> {
