@@ -332,7 +332,7 @@ fn process_actions(
                 .insert(action.target_cell)
                 .insert(PreviousCell(action.origin_cell));
 
-            log.add("You move.", colors::KENNEY_OFF_WHITE);
+            log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             continue;
         };
 
