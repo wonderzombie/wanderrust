@@ -73,6 +73,14 @@ impl Cell {
             y: -self.y,
         }
     }
+
+    pub fn x(&self) -> i32 {
+        self.x
+    }
+
+    pub fn y(&self) -> i32 {
+        self.y
+    }
 }
 
 impl Display for Cell {

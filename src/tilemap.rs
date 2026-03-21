@@ -4,10 +4,12 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
+use std::fmt::Display;
+
 use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
-    light::{Emitter, LightLevel},
+    light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -76,6 +78,11 @@ impl Dimensions {
     pub fn cell_to_idx(&self, cell: &Cell) -> u32 {
         cell.x as u32 + cell.y as u32 * self.width
     }
+
+    #[inline]
+    pub const fn ntiles(&self) -> u32 {
+        self.width * self.height
+    }
 }
 
 impl PartialOrd for Dimensions {
@@ -90,6 +97,12 @@ impl Ord for Dimensions {
             .cmp(&other.width)
             .then(self.height.cmp(&other.height))
             .then(self.tile_size.cmp(&other.tile_size))
+    }
+}
+
+impl Display for Dimensions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}x{}", self.width, self.height)
     }
 }
 
@@ -176,6 +189,7 @@ pub struct SavedTilemap {
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
     pub light_level: LightLevel,
+    pub flip_v: bool,
 }
 
 #[derive(Bundle, Clone)]
@@ -333,9 +347,24 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
     // We can derive cell from the source using its Dimensions and then
     // pull the entity from storage thus to insert its new tile components.
     for (source_idx, source_tile) in saved.tiles.iter().enumerate() {
-        let source_cell = saved.size.idx_to_cell(source_idx as u32);
+        let orig_cell = saved.size.idx_to_cell(source_idx as u32);
+        let mut flipped_cell = orig_cell;
 
-        if let Some(entity) = storage.get(&source_cell) {
+        if saved.flip_v {
+            flipped_cell.y = storage.size.height as i32 - 1 - flipped_cell.y;
+            println!(
+                "orig: {} => {}",
+                orig_cell,
+                storage.size.cell_to_pos(&orig_cell)
+            );
+            println!(
+                "{} => {}",
+                flipped_cell,
+                storage.size.cell_to_pos(&flipped_cell)
+            );
+        }
+
+        if let Some(entity) = storage.get(&flipped_cell) {
             commands.entity(entity).insert(*source_tile);
             tally
                 .entry(source_tile.0)
