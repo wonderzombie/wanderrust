@@ -108,10 +108,10 @@ fn get_cell(tile_info: &Map<String, Value>) -> Option<Cell> {
 }
 
 fn fill_map(
-    idx_to_tile_idx: &HashMap<usize, TileIdx>,
-    cell_to_idx: HashMap<Cell, usize>,
+    atlas_to_tile_idx: &HashMap<usize, TileIdx>,
+    cell_to_atlas_idx: HashMap<Cell, usize>,
 ) -> (Vec<(TileIdx, Stratum)>, Dimensions) {
-    let dims = calculate_dimensions(&cell_to_idx);
+    let dims = calculate_dimensions(&cell_to_atlas_idx);
 
     let out: Vec<(TileIdx, Stratum)> = (0..dims.ntiles() as usize)
         .map(|idx| {
@@ -119,9 +119,9 @@ fn fill_map(
             // We are effectively joining these two HashMaps. However, we also
             // need to visit each tile no matter what, and it has to be
             // *something* (for now).
-            cell_to_idx
+            cell_to_atlas_idx
                 .get(&cell)
-                .and_then(|&src_idx| idx_to_tile_idx.get(&src_idx))
+                .and_then(|&src_idx| atlas_to_tile_idx.get(&src_idx))
                 .map(|&tile_idx| (tile_idx, Stratum::default()))
                 .unwrap_or_default()
         })

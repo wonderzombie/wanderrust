@@ -43,16 +43,16 @@ pub fn on_zoom_button_input(
     let mut current_zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
 
     if input.just_released(KeyCode::Equal) {
-        current_zoom += 0.1;
+        current_zoom -= 0.2;
     } else if input.just_released(KeyCode::Minus) {
-        current_zoom -= 0.1
+        current_zoom += 0.2
     } else if input.just_released(KeyCode::Backspace) {
         current_zoom = 1.0;
     } else if input.just_released(KeyCode::Digit0) {
-        current_zoom = 0.1;
+        current_zoom = 10.;
     }
 
-    let final_zoom = current_zoom.clamp(0.1, 2.0);
+    let final_zoom = current_zoom.clamp(-10.0, 10.0);
     commands.insert_resource(DesiredZoom(final_zoom));
 }
 
@@ -101,7 +101,7 @@ pub fn on_button_input(
 pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerStats>) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
         if stats.is_default() {
-            stats.set_vision_range(15);
+            stats.set_vision_range(25);
         } else {
             stats.reset_vision_range();
         }
@@ -178,6 +178,7 @@ pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<
     }
 }
 
+/// Represents a task (a dialog) which results in a [`PathBuf`] (a file path).
 type PathBufTask = Task<Option<std::path::PathBuf>>;
 
 #[derive(Component)]
