@@ -1,6 +1,5 @@
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::ops::ControlFlow;
 use std::path::PathBuf;
 use wanderrust::light::LightLevel;
 use wanderrust::tilemap::{Dimensions, SavedTilemap, Stratum};
