@@ -1,5 +1,6 @@
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::collections::HashMap;
+use std::ops::ControlFlow;
 use std::path::PathBuf;
 use wanderrust::light::LightLevel;
 use wanderrust::tilemap::{Dimensions, SavedTilemap, Stratum};
@@ -32,7 +33,7 @@ fn main() {
     println!("read object with entries:\n{:?}", map_info.keys());
 
     // Now load the reverse lookup map so we can use `usize` to get [`TileIdx`].
-    let reverse_lookup = &reverse_lookup();
+    let reverse_lookup = reverse_lookup();
 
     let mut saved_maps: HashMap<String, SavedTilemap> = HashMap::new();
     for (node_path, val) in map_info.iter() {
@@ -46,10 +47,10 @@ fn main() {
             .as_array()
             .expect("expected cell tile info to be an array");
 
-        let cell_data = load_from_exporter_json(info, reverse_lookup);
+        let cell_data = load_from_exporter_json(info);
         println!("• loaded {} cells", cell_data.len());
 
-        let (tiles, size) = fill_map(cell_data);
+        let (tiles, size) = fill_map(&reverse_lookup, cell_data);
         println!("• filled {:?} cells ({:?})", tiles.len(), size);
 
         saved_maps.insert(
@@ -80,43 +81,63 @@ fn main() {
     }
 }
 
-fn load_from_exporter_json(
-    map_info: &[Value],
-    reverse_lookup: &HashMap<usize, TileIdx>,
-) -> HashMap<Cell, TileIdx> {
-    let mut cell_data: HashMap<Cell, TileIdx> = HashMap::new();
+fn load_from_exporter_json(map_info: &[Value]) -> HashMap<Cell, usize> {
+    let mut cell_data: HashMap<Cell, usize> = HashMap::new();
     for value in map_info {
-        // TODO: get `"props"` for such as `flip_h`, `flip_v`, and `transpose`.
         let tile_info = value
             .as_object()
-            .expect("expected tile info to be an object");
+            .expect("expected tile info to be an object")
+            .clone();
 
-        let cell = tile_info.get("cell").expect("expected cell to be present");
-        let atlas_coords = tile_info
-            .get("atlas_coords")
-            .expect("expected atlas_coords to be present");
+        let idx = get_atlas_idx(&tile_info).expect("expected atlas_coords to be present");
+        let cell = get_cell(&tile_info).expect("expected cell to be present");
 
-        let Some(atlas_coords) = json2cell(atlas_coords).ok() else {
-            warn!("failed to parse atlas_coords: {:?}", atlas_coords);
-            continue;
-        };
-        let Some(cell) = json2cell(cell).ok() else {
-            warn!("failed to parse cell: {:?}", cell);
-            continue;
-        };
-
-        let atlas_idx = atlas_coords.to_idx(tiles::SHEET_SIZE_G.x);
-        let Some(tile_idx) = reverse_lookup.get(&atlas_idx) else {
-            warn!("failed to find tile_idx for atlas_idx: {}", atlas_idx);
-            continue;
-        };
-
-        cell_data.insert(cell, *tile_idx);
+        cell_data.insert(cell, idx as usize);
     }
     cell_data
 }
 
-fn fill_map(cell_data: HashMap<Cell, TileIdx>) -> (Vec<(TileIdx, Stratum)>, Dimensions) {
+fn get_atlas_idx(tile_info: &Map<String, Value>) -> Option<usize> {
+    let atlas_coords = tile_info.get("atlas_coords")?;
+    let atlas_coords = json2cell(atlas_coords).ok()?;
+    Some(atlas_coords.to_idx(tiles::SHEET_SIZE_G.x))
+}
+
+fn get_cell(tile_info: &Map<String, Value>) -> Option<Cell> {
+    let cell_val = tile_info.get("cell")?;
+    json2cell(cell_val).ok()
+}
+
+fn fill_map(
+    idx_to_tile_idx: &HashMap<usize, TileIdx>,
+    cell_to_idx: HashMap<Cell, usize>,
+) -> (Vec<(TileIdx, Stratum)>, Dimensions) {
+    let dims = calculate_dimensions(&cell_to_idx);
+
+    let out: Vec<(TileIdx, Stratum)> = (0..dims.ntiles() as usize)
+        .map(|idx| {
+            let cell = dims.idx_to_cell(idx as u32);
+            // We are effectively joining these two HashMaps. However, we also
+            // need to visit each tile no matter what, and it has to be
+            // *something* (for now).
+            cell_to_idx
+                .get(&cell)
+                .and_then(|&src_idx| idx_to_tile_idx.get(&src_idx))
+                .map(|&tile_idx| (tile_idx, Stratum::default()))
+                .unwrap_or_default()
+        })
+        .collect();
+
+    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
+    for (tile_idx, _) in &out {
+        *tally.entry(*tile_idx).or_default() += 1;
+    }
+    println!("• tile breakdown: {:#?}", tally);
+
+    (out, dims)
+}
+
+fn calculate_dimensions<T>(cell_data: &HashMap<Cell, T>) -> Dimensions {
     let ul_x = cell_data.keys().map(Cell::x).min().unwrap_or(0);
     let ul_y = cell_data.keys().map(Cell::y).min().unwrap_or(0);
     let ul = Cell { x: ul_x, y: ul_y };
@@ -130,21 +151,7 @@ fn fill_map(cell_data: HashMap<Cell, TileIdx>) -> (Vec<(TileIdx, Stratum)>, Dime
         height: size.y as u32,
         tile_size: 16,
     };
-
-    let mut out = vec![(TileIdx::default(), Stratum::default()); dims.ntiles() as usize];
-    let mut tally: HashMap<TileIdx, usize> = HashMap::new();
-
-    for idx in 0..out.len() {
-        let cell = dims.idx_to_cell(idx as u32);
-        if let Some(&tile_idx) = cell_data.get(&cell) {
-            out[idx] = (tile_idx, Stratum::default());
-            *tally.entry(tile_idx).or_default() += 1;
-        }
-    }
-
-    println!("• tile breakdown: {:?}", tally);
-
-    (out, dims)
+    dims
 }
 
 fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
