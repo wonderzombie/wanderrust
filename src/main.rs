@@ -16,7 +16,7 @@ mod tiles;
 
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{asset::LoadedFolder, audio::PlaybackMode, prelude::*};
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
@@ -63,6 +63,7 @@ fn main() {
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
         .init_resource::<PlayerStats>()
+        .init_resource::<Sounds>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
@@ -87,6 +88,7 @@ fn main() {
                 setup_player.after(load_spritesheet),
                 fov::setup_fov.after(tilemap::initialize_tile_storage),
                 setup_camera,
+                load_sounds,
             ),
         )
         .add_systems(
@@ -98,6 +100,7 @@ fn main() {
             ),
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
+        .add_systems(Update, initialize_sounds.run_if(run_once))
         .add_systems(
             Update,
             (
@@ -208,6 +211,56 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             arrive_at: "door_exit".into(),
         },
     ));
+}
+
+#[derive(Resource, Default)]
+struct Sounds {
+    lookup: HashMap<String, Handle<AudioSource>>,
+    folder: Handle<LoadedFolder>,
+    loaded: bool,
+}
+
+fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
+    let handle = asset_server.load_folder("audio");
+
+    *sounds = Sounds {
+        folder: handle,
+        loaded: false,
+        ..default()
+    };
+}
+
+fn initialize_sounds(
+    mut sounds: ResMut<Sounds>,
+    loaded_folders: Res<Assets<LoadedFolder>>,
+    asset_server: Res<AssetServer>,
+) {
+    if sounds.loaded {
+        return;
+    }
+
+    let handle = asset_server.load_folder("audio");
+
+    let Some(folder) = loaded_folders.get(&handle) else {
+        info!("Sounds not ready");
+        return;
+    };
+
+    info!("Sounds loading");
+    sounds.lookup = folder
+        .handles
+        .iter()
+        .filter_map(|handle| {
+            let audio_handle = handle.clone().try_typed::<AudioSource>().ok()?;
+            let path = asset_server.get_path(handle.id())?;
+            let name = path.path().file_stem()?.to_string_lossy().into_owned();
+            Some((name, audio_handle))
+        })
+        .collect();
+
+    sounds.loaded = true;
+    sounds.folder = handle;
+    info!("Sounds finish loading");
 }
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
@@ -322,15 +375,26 @@ fn process_actions(
     portals: Query<&Portal>,
     mut interaction_attempts: MessageWriter<InteractionAttempt>,
     spatial_index: Res<SpatialIndex>,
+    sounds: Res<Sounds>,
 ) {
     for action in actions.read() {
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
-            commands
-                .entity(action.entity)
-                .insert(action.target_cell)
-                .insert(PreviousCell(action.origin_cell));
+            let mut entity_cmd = commands.entity(action.entity);
+            entity_cmd.insert((action.target_cell, PreviousCell(action.origin_cell)));
+
+            if let Some(footstep) = sounds.lookup.get("footstep_grass_000") {
+                entity_cmd.remove::<AudioPlayer>().insert((
+                    AudioPlayer::new(footstep.clone()),
+                    PlaybackSettings {
+                        mode: PlaybackMode::Once,
+                        ..default()
+                    },
+                ));
+            } else {
+                error!("footstep_grass_000 sound not found");
+            }
 
             log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             continue;
