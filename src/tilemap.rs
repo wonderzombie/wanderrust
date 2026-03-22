@@ -118,13 +118,6 @@ pub struct TileStorage {
 }
 
 impl TileStorage {
-    // pub fn empty(size: MapDimensions) -> TileStorage {
-    //     TileStorage {
-    //         tiles: vec![None; (size.width * size.height) as usize],
-    //         size,
-    //     }
-    // }
-
     pub fn get(&self, cell: &Cell) -> Option<Entity> {
         let idx = cell.to_idx(self.size.width);
         self.tiles.get(idx).copied().flatten()
@@ -152,20 +145,6 @@ impl TileStorage {
             size,
         }
     }
-
-    // /// Removes the cell-entity from storage and returns it, if any.
-    // pub fn remove(&mut self, cell: &Cell) -> Option<Entity> {
-    //     let idx = cell.to_idx(self.size.width);
-    //     self.tiles[idx as usize].take()
-    // }
-
-    // pub fn iter(&self) -> impl Iterator<Item = &Option<Entity>> {
-    //     self.tiles.iter()
-    // }
-
-    // pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Option<Entity>> {
-    //     self.tiles.iter_mut()
-    // }
 }
 
 /// EntryId uniquely identifies a [`Portal`].
