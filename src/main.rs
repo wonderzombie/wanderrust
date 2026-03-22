@@ -48,9 +48,9 @@ fn main() {
                     primary_window: Some(Window {
                         resolution: (800, 600).into(),
                         title: "wanderrust".to_string(),
-                        ..Default::default()
+                        ..default()
                     }),
-                    ..Default::default()
+                    ..default()
                 }),
         )
         .add_plugins(EguiPlugin::default())
@@ -137,7 +137,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
-            ..Default::default()
+            ..default()
         },
         Actor,
         TileIdx::Skeleton,
@@ -154,13 +154,13 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 49, y: 49 },
-            ..Default::default()
+            ..default()
         },
         Interactable::Combatant,
         CombatStats {
             nameplate: "Mr. Sandbag".into(),
             max_hp: 10,
-            ..Default::default()
+            ..default()
         },
     ));
 }
@@ -172,7 +172,7 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 47, y: 47 },
-            ..Default::default()
+            ..default()
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
     ));
@@ -186,7 +186,7 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 45 },
-            ..Default::default()
+            ..default()
         },
         Portal {
             id: "door_exit".into(),
@@ -201,7 +201,7 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 48, y: 48 },
-            ..Default::default()
+            ..default()
         },
         Portal {
             id: "door_entry".into(),
