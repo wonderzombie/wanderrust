@@ -268,7 +268,7 @@ fn on_sounds_loaded(
     sounds.loaded = true;
     sounds.folder = handle;
 
-    commands.add_observer(maybe_play_sound);
+    commands.add_observer(on_moved_sounds);
 
     info!("finished initializing sounds");
 }
@@ -384,7 +384,7 @@ const GRASS_FOOTSTEPS: [&str; 5] = [
     "footstep_grass_004",
 ];
 
-fn maybe_play_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
+fn on_moved_sounds(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
     let mut rng = rand::rng();
 
     let rand_footstep: &'static str = GRASS_FOOTSTEPS.choose(&mut rng).unwrap();
