@@ -16,9 +16,14 @@ mod tiles;
 
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{
+    asset::LoadedFolder,
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+};
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use rand::seq::IndexedRandom;
 
 use crate::{
     actors::*,
@@ -48,9 +53,9 @@ fn main() {
                     primary_window: Some(Window {
                         resolution: (800, 600).into(),
                         title: "wanderrust".to_string(),
-                        ..Default::default()
+                        ..default()
                     }),
-                    ..Default::default()
+                    ..default()
                 }),
         )
         .add_plugins(EguiPlugin::default())
@@ -63,6 +68,7 @@ fn main() {
         .init_resource::<Inventory>()
         .init_resource::<EditorState>()
         .init_resource::<PlayerStats>()
+        .init_resource::<Sounds>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
@@ -87,6 +93,7 @@ fn main() {
                 setup_player.after(load_spritesheet),
                 fov::setup_fov.after(tilemap::initialize_tile_storage),
                 setup_camera,
+                load_sounds,
             ),
         )
         .add_systems(
@@ -98,6 +105,7 @@ fn main() {
             ),
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
+        .add_systems(Update, on_sounds_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
@@ -137,7 +145,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
-            ..Default::default()
+            ..default()
         },
         Actor,
         TileIdx::Skeleton,
@@ -154,13 +162,13 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 49, y: 49 },
-            ..Default::default()
+            ..default()
         },
         Interactable::Combatant,
         CombatStats {
             nameplate: "Mr. Sandbag".into(),
             max_hp: 10,
-            ..Default::default()
+            ..default()
         },
     ));
 }
@@ -172,7 +180,7 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 47, y: 47 },
-            ..Default::default()
+            ..default()
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
     ));
@@ -186,7 +194,7 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 45 },
-            ..Default::default()
+            ..default()
         },
         Portal {
             id: "door_exit".into(),
@@ -201,13 +209,68 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 48, y: 48 },
-            ..Default::default()
+            ..default()
         },
         Portal {
             id: "door_entry".into(),
             arrive_at: "door_exit".into(),
         },
     ));
+}
+
+#[derive(Resource, Default)]
+struct Sounds {
+    lookup: HashMap<String, Handle<AudioSource>>,
+    folder: Handle<LoadedFolder>,
+    loaded: bool,
+}
+
+fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
+    info!("preparing to load sounds");
+    let handle = asset_server.load_folder("audio");
+
+    *sounds = Sounds {
+        folder: handle,
+        loaded: false,
+        ..default()
+    };
+}
+
+fn on_sounds_loaded(
+    mut commands: Commands,
+    mut sounds: ResMut<Sounds>,
+    loaded_folders: Res<Assets<LoadedFolder>>,
+    asset_server: Res<AssetServer>,
+) {
+    if sounds.loaded {
+        return;
+    }
+
+    let handle = asset_server.load_folder("audio");
+
+    let Some(folder) = loaded_folders.get(&handle) else {
+        info!("Sounds not ready");
+        return;
+    };
+
+    info!("sounds loaded; initializing");
+    sounds.lookup = folder
+        .handles
+        .iter()
+        .filter_map(|handle| {
+            let audio_handle = handle.clone().try_typed::<AudioSource>().ok()?;
+            let path = asset_server.get_path(handle.id())?;
+            let name = path.path().file_stem()?.to_string_lossy().into_owned();
+            Some((name, audio_handle))
+        })
+        .collect();
+
+    sounds.loaded = true;
+    sounds.folder = handle;
+
+    commands.add_observer(maybe_play_sound);
+
+    info!("finished initializing sounds");
 }
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
@@ -313,6 +376,33 @@ pub enum Interactable {
     Combatant,
 }
 
+const GRASS_FOOTSTEPS: [&str; 5] = [
+    "footstep_grass_000",
+    "footstep_grass_001",
+    "footstep_grass_002",
+    "footstep_grass_003",
+    "footstep_grass_004",
+];
+
+fn maybe_play_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
+    let mut rng = rand::rng();
+
+    let rand_footstep: &'static str = GRASS_FOOTSTEPS.choose(&mut rng).unwrap();
+    let Some(footstep) = sounds.lookup.get(rand_footstep) else {
+        error!("footstep sound not found: {}", rand_footstep);
+        return;
+    };
+
+    commands.spawn((
+        AudioPlayer::new(footstep.clone()),
+        PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::Linear(0.1),
+            ..default()
+        },
+    ));
+}
+
 /// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
 /// Interaction execution is handled by [process_interactions].
 fn process_actions(
@@ -327,10 +417,9 @@ fn process_actions(
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
-            commands
-                .entity(action.entity)
-                .insert(action.target_cell)
-                .insert(PreviousCell(action.origin_cell));
+            let mut entity_cmd = commands.entity(action.entity);
+            entity_cmd.insert((action.target_cell, PreviousCell(action.origin_cell)));
+            commands.trigger(Moved(action.entity));
 
             log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             continue;

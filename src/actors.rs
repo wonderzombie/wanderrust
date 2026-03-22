@@ -60,6 +60,9 @@ impl PlayerStats {
 const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
 const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 
+#[derive(EntityEvent, Debug)]
+pub struct Moved(pub Entity);
+
 pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Player,

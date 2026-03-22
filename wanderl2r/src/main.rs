@@ -166,10 +166,10 @@ fn json2cell(value: &Value) -> Result<Cell, anyhow::Error> {
     Ok(Cell { x, y })
 }
 
-/// See [`TileIdx`], especially [`tiles!`] for the definition of tiles.
-/// wanderrust doesn't need to map an atlas index (Bevy's [`TextureAtlas`]) to
+/// See [`TileIdx`], especially [`tiles::tiles!`] for the definition of tiles.
+/// wanderrust doesn't need to map an atlas index (Bevy's [`bevy::sprite::TextureAtlas`]) to
 /// a tile; it's typically the other way around for any system that syncs
-/// [`TileIdx`] with [`Sprite`].
+/// [`TileIdx`] with [`bevy::sprite::Sprite`].
 ///
 /// Here we generate a reverse mapping using TileIdx::all(). This allows us to
 /// translate from wanderlust's `tile_replacer` (or `tile_exporter`) format into
