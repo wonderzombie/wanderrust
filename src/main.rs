@@ -16,9 +16,14 @@ mod tiles;
 
 use std::collections::HashMap;
 
-use bevy::{asset::LoadedFolder, audio::PlaybackMode, prelude::*};
+use bevy::{
+    asset::LoadedFolder,
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+};
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use rand::seq::IndexedRandom;
 
 use crate::{
     actors::*,
@@ -100,7 +105,7 @@ fn main() {
             ),
         )
         .add_systems(Update, setup_egui_fonts.run_if(run_once))
-        .add_systems(Update, initialize_sounds.run_if(run_once))
+        .add_systems(Update, on_sounds_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
@@ -221,6 +226,7 @@ struct Sounds {
 }
 
 fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
+    info!("preparing to load sounds");
     let handle = asset_server.load_folder("audio");
 
     *sounds = Sounds {
@@ -230,7 +236,8 @@ fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
     };
 }
 
-fn initialize_sounds(
+fn on_sounds_loaded(
+    mut commands: Commands,
     mut sounds: ResMut<Sounds>,
     loaded_folders: Res<Assets<LoadedFolder>>,
     asset_server: Res<AssetServer>,
@@ -246,7 +253,7 @@ fn initialize_sounds(
         return;
     };
 
-    info!("Sounds loading");
+    info!("sounds loaded; initializing");
     sounds.lookup = folder
         .handles
         .iter()
@@ -260,7 +267,10 @@ fn initialize_sounds(
 
     sounds.loaded = true;
     sounds.folder = handle;
-    info!("Sounds finish loading");
+
+    commands.add_observer(maybe_play_sound);
+
+    info!("finished initializing sounds");
 }
 
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
@@ -366,6 +376,33 @@ pub enum Interactable {
     Combatant,
 }
 
+const GRASS_FOOTSTEPS: [&str; 5] = [
+    "footstep_grass_000",
+    "footstep_grass_001",
+    "footstep_grass_002",
+    "footstep_grass_003",
+    "footstep_grass_004",
+];
+
+fn maybe_play_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
+    let mut rng = rand::rng();
+
+    let rand_footstep: &'static str = GRASS_FOOTSTEPS.choose(&mut rng).unwrap();
+    let Some(footstep) = sounds.lookup.get(rand_footstep) else {
+        error!("footstep sound not found: {}", rand_footstep);
+        return;
+    };
+
+    commands.spawn((
+        AudioPlayer::new(footstep.clone()),
+        PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::Linear(0.1),
+            ..default()
+        },
+    ));
+}
+
 /// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
 /// Interaction execution is handled by [process_interactions].
 fn process_actions(
@@ -375,7 +412,6 @@ fn process_actions(
     portals: Query<&Portal>,
     mut interaction_attempts: MessageWriter<InteractionAttempt>,
     spatial_index: Res<SpatialIndex>,
-    sounds: Res<Sounds>,
 ) {
     for action in actions.read() {
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
@@ -383,18 +419,7 @@ fn process_actions(
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
             let mut entity_cmd = commands.entity(action.entity);
             entity_cmd.insert((action.target_cell, PreviousCell(action.origin_cell)));
-
-            if let Some(footstep) = sounds.lookup.get("footstep_grass_000") {
-                entity_cmd.remove::<AudioPlayer>().insert((
-                    AudioPlayer::new(footstep.clone()),
-                    PlaybackSettings {
-                        mode: PlaybackMode::Once,
-                        ..default()
-                    },
-                ));
-            } else {
-                error!("footstep_grass_000 sound not found");
-            }
+            commands.trigger(Moved(action.entity));
 
             log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             continue;
