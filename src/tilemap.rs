@@ -75,11 +75,13 @@ impl Dimensions {
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub fn cell_to_idx(&self, cell: &Cell) -> u32 {
         cell.x as u32 + cell.y as u32 * self.width
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub const fn ntiles(&self) -> u32 {
         self.width * self.height
     }
@@ -139,6 +141,7 @@ impl TileStorage {
         self.tiles.len()
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.tiles.is_empty()
     }

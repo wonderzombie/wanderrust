@@ -68,14 +68,6 @@ impl Emitter {
         Self { inner, outer }
     }
 
-    pub fn torch() -> Self {
-        Self::new((LightLevel::Bright, 1), (LightLevel::Dim, 1))
-    }
-
-    pub fn candle() -> Self {
-        Self::new((LightLevel::Bright, 1), (LightLevel::Dim, 1))
-    }
-
     #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
         self.inner.thickness + self.outer.thickness
