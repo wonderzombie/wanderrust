@@ -253,13 +253,19 @@ mod tests {
 pub fn sync_tiles(
     mut commands: Commands,
     mut tiles: Query<
-        (Entity, &mut Sprite, &TileIdx, Option<&TilePreview>),
+        (
+            Entity,
+            &mut Sprite,
+            &TileIdx,
+            (Option<&TilePreview>, Option<&Walkable>, Option<&Opaque>),
+        ),
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so
     // we apply most changes in some unconditional fashion.
-    for (entity, mut sprite, tile_idx, preview_opt) in tiles.iter_mut() {
+    for (entity, mut sprite, tile_idx, props) in tiles.iter_mut() {
+        let (preview_opt, walkable_opt, opaque_opt) = props;
         let mut entity_command = commands.entity(entity);
 
         // If there's a preview, we should apply that tile index instead.
@@ -269,19 +275,19 @@ pub fn sync_tiles(
             texture_atlas.index = next_idx.into();
         }
 
-        // Walkable may be added/removed unconditionally based on [TileIdx].
+        // Update tile Walkable only when necessary.
         // TODO: consider whether to split this out or not.
-        if tile_idx.is_walkable() {
+        if tile_idx.is_walkable() && walkable_opt.is_none() {
             entity_command.insert(Walkable);
-        } else {
+        } else if !tile_idx.is_walkable() && walkable_opt.is_some() {
             entity_command.remove::<Walkable>();
         }
 
-        // Opaque may be added/removed unconditionally based on [TileIdx].
+        // Update tile Opaque only when necessary.
         // TODO: consider whether to split this out or not.
-        if tile_idx.is_transparent() {
+        if tile_idx.is_transparent() && opaque_opt.is_some() {
             entity_command.remove::<Opaque>();
-        } else {
+        } else if !tile_idx.is_transparent() && opaque_opt.is_none() {
             entity_command.insert(Opaque);
         }
     }

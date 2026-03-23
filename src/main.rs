@@ -23,6 +23,12 @@ use bevy::{
 };
 
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_northstar::{
+    grid::{Grid, GridSettingsBuilder},
+    nav::Nav,
+    plugin::NorthstarPlugin,
+    prelude::CardinalNeighborhood,
+};
 use rand::seq::IndexedRandom;
 
 use crate::{
@@ -60,6 +66,10 @@ fn main() {
                 }),
         )
         .add_plugins(EguiPlugin::default())
+        .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
+        .add_systems(Startup, spawn_grid.after(tilemap::initialize_tile_storage))
+        // TODO: consider whether to combine update_grid and update_spatial_index.
+        .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_message::<actors::ActionAttempt>()
         .add_message::<inventory::Acquisition>()
         .add_message::<combat::AttackAttempt>()
@@ -234,6 +244,33 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             arrive_at: "door_exit".into(),
         },
     ));
+}
+
+fn spawn_grid(mut commands: Commands, spec: Res<TilemapSpec>) {
+    let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
+        .chunk_size(16)
+        .default_impassable()
+        .build();
+
+    commands.spawn(Grid::<CardinalNeighborhood>::new(&grid_settings));
+}
+
+fn update_grid(
+    grid: Single<&mut Grid<CardinalNeighborhood>>,
+    tiles: Query<&Cell, Changed<TileIdx>>,
+) {
+    let mut grid = grid.into_inner();
+
+    let mut count = 0;
+    for walkable_cell in tiles.iter() {
+        grid.set_nav(walkable_cell.into(), Nav::Passable(1));
+        count += 1;
+    }
+
+    if count > 0 {
+        info!("updated grid, set {} tiles", count);
+        grid.build();
+    }
 }
 
 fn check_mob_vision(

@@ -113,6 +113,12 @@ impl From<&Cell> for IVec2 {
     }
 }
 
+impl From<&Cell> for UVec3 {
+    fn from(value: &Cell) -> Self {
+        UVec3::new(value.x as u32, value.y as u32, 0)
+    }
+}
+
 impl Sub<Cell> for Cell {
     type Output = Cell;
 
