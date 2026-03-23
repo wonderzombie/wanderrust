@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 bevy = { version = "0.18.0", default-features = false, features = ["2d", "debug", "mouse", "sprite_picking"] }
 bevy_egui = "0.39.1"
+bevy_northstar = "0.6.1"
 fxhash = "0.2.1"
 itertools = "0.14.0"
 mrpas = { path = "mrpas" }
