@@ -62,7 +62,7 @@ fn main() {
                 size,
                 light_level: LightLevel::Light,
                 flip_v: true,
-                ..default()
+                ..Default::default()
             },
         );
     }
