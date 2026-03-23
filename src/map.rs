@@ -104,7 +104,7 @@ impl TilemapSpec {
             layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
             light_level: LightLevel::Dark,
-            ..Default::default()
+            ..default()
         }
     }
 
@@ -145,7 +145,7 @@ impl TilemapSpec {
             layer: MAP_LAYER,
             start,
             light_level: LightLevel::Night,
-            ..Default::default()
+            ..default()
         }
     }
 }

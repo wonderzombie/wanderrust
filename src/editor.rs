@@ -26,7 +26,7 @@ impl Default for EditorState {
     fn default() -> Self {
         Self {
             active_tile: tiles::TileIdx::Grass,
-            active_tile_idx: Default::default(),
+            active_tile_idx: default(),
         }
     }
 }

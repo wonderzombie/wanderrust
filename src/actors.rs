@@ -71,7 +71,7 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
             sprite: atlas.sprite(),
             cell: spec.start,
             transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
-            ..Default::default()
+            ..default()
         },
         TileIdx::Player,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
@@ -81,7 +81,7 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
             attack: 2,
             defense: 1,
             hp: 10,
-            ..Default::default()
+            ..default()
         },
     ));
 }

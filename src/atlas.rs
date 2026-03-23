@@ -2,6 +2,7 @@ use bevy::{
     asset::Handle,
     ecs::resource::Resource,
     image::{Image, TextureAtlas, TextureAtlasLayout},
+    prelude::*,
     sprite::Sprite,
 };
 
@@ -18,9 +19,9 @@ impl SpriteAtlas {
             image: self.texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: self.layout.clone(),
-                ..Default::default()
+                ..default()
             }),
-            ..Default::default()
+            ..default()
         }
     }
 
@@ -31,7 +32,7 @@ impl SpriteAtlas {
                 layout: self.layout.clone(),
                 index: index.into(),
             }),
-            ..Default::default()
+            ..default()
         }
     }
 }

@@ -206,7 +206,7 @@ pub fn spawn_tilemap(
     let tilemap_bundle = TilemapBundle {
         size: spec.size,
         layer: spec.layer,
-        ..Default::default()
+        ..default()
     };
 
     info!(
@@ -304,7 +304,7 @@ pub fn save_map(
         portals,
         size: storage.size,
         light_level: spec.light_level,
-        ..Default::default()
+        ..default()
     }
 }
 
