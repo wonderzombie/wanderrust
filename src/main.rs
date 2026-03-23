@@ -266,13 +266,18 @@ fn spawn_grid(mut commands: Commands, spec: Res<TilemapSpec>) {
 
 fn update_grid(
     grid: Single<&mut Grid<CardinalNeighborhood>>,
-    tiles: Query<&Cell, Changed<TileIdx>>,
+    tiles: Query<(&Cell, Option<&Walkable>), Changed<TileIdx>>,
 ) {
     let mut grid = grid.into_inner();
 
     let mut count = 0;
-    for walkable_cell in tiles.iter() {
-        grid.set_nav(walkable_cell.into(), Nav::Passable(1));
+    for (cell, walkable_opt) in tiles.iter() {
+        let nav = if walkable_opt.is_some() {
+            Nav::Passable(1)
+        } else {
+            Nav::Impassable
+        };
+        grid.set_nav(cell.into(), nav);
         count += 1;
     }
 
