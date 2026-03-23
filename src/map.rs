@@ -10,6 +10,16 @@ use crate::tiles::{
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
+/// Key for the map:
+/// - `#` = wall
+/// - `.` = floor
+/// - `X` = player start position
+/// - `D` = door (closed)
+/// - `O` = door (open)
+/// - ` ` = empty space (not walkable)
+/// - `b` = brown chest
+/// - `w` = white chest
+/// See also [`TilemapSpec::KEY`].
 #[allow(dead_code)]
 pub const MAP: &str = r#"
 ####################
@@ -28,16 +38,7 @@ pub const MAP: &str = r#"
 #.............###.#
 ###################"#;
 
-/// Key for the map:
-/// - `#` = wall
-/// - `.` = floor
-/// - `X` = player start position
-/// - `D` = door (closed)
-/// - `O` = door (open)
-/// - ` ` = empty space (not walkable)
-/// - `b` = brown chest
-/// - `w` = white chest
-
+/// MAP_LAYER is the layer for the map tilemap.
 pub const MAP_LAYER: TilemapLayer = TilemapLayer(-6.);
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
