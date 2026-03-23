@@ -586,22 +586,22 @@ fn process_attacks(
 
         log.add(
             format!("{} attacks {}", attacker.nameplate, defender.nameplate),
-            colors::KENNEY_GREEN,
+            colors::KENNEY_GOLD,
         );
 
         let damage = attacker.attack - defender.defense;
         if damage >= 0 {
             defender.hp = defender.hp.saturating_sub(damage);
             log.add(
-                format!("{} takes {} damage", defender.nameplate, damage),
-                colors::KENNEY_RED,
+                format!("{} hits {}!", attacker.nameplate, defender.nameplate),
+                colors::KENNEY_GOLD,
             );
 
             if defender.hp <= 0 {
                 defender.is_dead = true;
                 log.add(
                     format!("{} is dead", defender.nameplate),
-                    colors::KENNEY_GOLD,
+                    colors::KENNEY_RED,
                 );
             }
         }
