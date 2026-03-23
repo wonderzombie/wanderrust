@@ -31,7 +31,7 @@ use crate::{
     cell::Cell,
     combat::CombatStats,
     editor::{DesiredZoom, EditorState},
-    event_log::{MessageLog, draw_message_log_ui, setup_egui_fonts},
+    event_log::MessageLog,
     inventory::*,
     light::{Emitter, LightLevel},
     tilemap::{EntryId, Portal, TilemapLayer, TilemapSpec},
