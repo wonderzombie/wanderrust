@@ -12,6 +12,9 @@ use crate::{
 };
 
 #[derive(Component, Debug)]
+pub struct Alerted;
+
+#[derive(Component, Debug)]
 /// A marker component for entities that perform actions in the world, such as the player or NPCs.
 pub struct Actor;
 

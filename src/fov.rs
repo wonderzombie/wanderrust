@@ -38,6 +38,9 @@ impl View {
     }
 }
 
+#[derive(Component, Debug)]
+pub struct Vision(pub u32);
+
 /// Internalizes the field of view model by marking tiles as transparent or not.
 /// The field of view is marked as opaque beforehand.
 pub fn setup_fov(

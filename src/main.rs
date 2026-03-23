@@ -32,6 +32,7 @@ use crate::{
     combat::CombatStats,
     editor::{DesiredZoom, EditorState},
     event_log::MessageLog,
+    fov::{Fov, Vision},
     inventory::*,
     light::{Emitter, LightLevel},
     tilemap::{EntryId, Portal, TilemapLayer, TilemapSpec},
@@ -133,6 +134,7 @@ fn main() {
                 fov::update_fov_markers.after(fov::update_fov_model),
                 light::update_emitter_lights.after(fov::update_fov_markers),
                 light::sync_actor_light_levels.after(light::update_emitter_lights),
+                check_mob_vision.after(fov::update_fov_model),
             ),
         )
         .add_systems(PostUpdate, combat::init_combatants)
@@ -167,9 +169,27 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         Interactable::Combatant,
         CombatStats {
             nameplate: "Mr. Sandbag".into(),
-            max_hp: 10,
+            max_hp: 12,
             ..default()
         },
+        Vision(5),
+    ));
+
+    commands.spawn((
+        Actor,
+        TileIdx::Bat,
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: Cell { x: 40, y: 40 },
+            ..default()
+        },
+        Interactable::Combatant,
+        CombatStats {
+            nameplate: "Bat".into(),
+            max_hp: 4,
+            ..default()
+        },
+        Vision(1),
     ));
 }
 
@@ -187,7 +207,6 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
 }
 
 fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
-    // Exit
     commands.spawn((
         Actor,
         TileIdx::DoorwayBrownThick,
@@ -202,7 +221,6 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         },
     ));
 
-    // Entry (arrival)
     commands.spawn((
         Actor,
         TileIdx::DoorwayBrownThick,
@@ -216,6 +234,27 @@ fn add_test_portals(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             arrive_at: "door_exit".into(),
         },
     ));
+}
+
+fn check_mob_vision(
+    mut commands: Commands,
+    fov: Res<Fov>,
+    visions: Query<(Entity, &TileIdx, &Cell, &Vision), (Without<Player>, With<Actor>)>,
+    player: Query<&Cell, (With<Player>, Changed<Cell>)>,
+) {
+    let Some(player_cell) = player.single().ok() else {
+        return;
+    };
+    for (entity, tile, mob_cell, mob_vision) in visions.iter() {
+        let view = fov.from(mob_cell.into(), mob_vision.0);
+        if view.has(player_cell.into()) {
+            commands.entity(entity).insert(Alerted);
+            info!(
+                "{:?} @ {} detected player at {}",
+                tile, mob_cell, player_cell
+            );
+        }
+    }
 }
 
 #[derive(Resource, Default)]
