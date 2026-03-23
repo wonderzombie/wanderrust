@@ -61,7 +61,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_message::<ActionAttempt>()
         .add_message::<Acquisition>()
-        .add_message::<AttackAttempt>()
+        .add_message::<combat::AttackAttempt>()
         .add_message::<DialogueAttempt>()
         .add_message::<InteractionAttempt>()
         .init_resource::<SpatialIndex>()
@@ -440,12 +440,6 @@ fn process_actions(
 }
 
 #[derive(Message, Debug, Copy, Clone)]
-pub struct AttackAttempt {
-    pub attacker: Entity,
-    pub target: Entity,
-}
-
-#[derive(Message, Debug, Copy, Clone)]
 struct InteractionAttempt {
     interactor: Entity,
     target: Entity,
@@ -461,7 +455,7 @@ fn process_interactions(
     mut attempts: MessageReader<InteractionAttempt>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
-    mut attacks: MessageWriter<AttackAttempt>,
+    mut attacks: MessageWriter<combat::AttackAttempt>,
     mut speech: MessageWriter<DialogueAttempt>,
     player_inventory: Res<Inventory>,
     mut log: ResMut<event_log::MessageLog>,
@@ -517,7 +511,7 @@ fn process_interactions(
                 speech.write(DialogueAttempt { entity });
             }
             Interactable::Combatant => {
-                attacks.write(AttackAttempt {
+                attacks.write(combat::AttackAttempt {
                     attacker: attempt.interactor,
                     target: entity,
                 });
