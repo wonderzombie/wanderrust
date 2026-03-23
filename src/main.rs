@@ -153,7 +153,7 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             nameplate: "Mr. Boney".into(),
             text: "Hello".into(),
         },
-        Dialogue::phrases(vec!["hello".into()]),
+        Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
     ));
 
     commands.spawn((
