@@ -24,11 +24,13 @@ impl Fov {
 }
 
 #[derive(Resource, Debug, Deref, DerefMut)]
-/// Newtype for a read-only clone of an existing Mrpas model configured for one viewer's origin and max_distance.
+/// Newtype for a read-only clone of an existing Mrpas model configured for one
+/// viewer's origin and max_distance.
 ///
-/// The MRPAS API is ported from GDScript is highly stateful: it maintains both the model (i.e. map of opaque/transparent positions)
-/// *and* the currently computed (active) field of view. `clear_field_of_view()` is required before `compute_field_of_view()`, and
-/// they both mutate the model.
+/// The MRPAS API is ported from GDScript is highly stateful: it maintains both
+/// the model (i.e. map of opaque/transparent positions) *and* the currently
+/// computed (active) field of view. `clear_field_of_view()` is required before
+/// `compute_field_of_view()`, and they both mutate the model.
 pub struct View(Mrpas);
 
 impl View {
