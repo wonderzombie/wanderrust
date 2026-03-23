@@ -83,14 +83,14 @@ fn main() {
         ))
         .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
+        .add_systems(Startup, load_spritesheet)
         .add_systems(
             Startup,
             (
-                load_spritesheet,
                 tilemap::spawn_tilemap.after(load_spritesheet),
                 tilemap::initialize_tile_storage.after(tilemap::spawn_tilemap),
                 setup_interactables.after(tilemap::initialize_tile_storage),
-                setup_player.after(load_spritesheet),
+                actors::setup_player.after(load_spritesheet),
                 fov::setup_fov.after(tilemap::initialize_tile_storage),
                 setup_camera,
                 load_sounds,
@@ -104,17 +104,18 @@ fn main() {
                 add_test_portals.run_if(run_once),
             ),
         )
-        .add_systems(Update, setup_egui_fonts.run_if(run_once))
+        .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
+        .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
         .add_systems(Update, on_sounds_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
-                handle_player_input,
+                actors::handle_player_input,
                 process_actions,
                 process_interactions,
                 process_dialogue,
-                process_acquisitions,
-                process_attacks,
+                inventory::process_acquisitions,
+                combat::process_attacks,
                 handle_pending_transition,
             )
                 .chain(),
@@ -124,8 +125,8 @@ fn main() {
             (
                 map::sync_tiles,
                 sync_actor_sprites,
-                sync_occupied_tiles,
-                update_actor_transforms,
+                actors::sync_occupied_tiles,
+                actors::update_actor_transforms,
                 update_camera.after(update_actor_transforms),
                 update_spatial_index,
                 fov::update_fov_model.after(map::sync_tiles),
@@ -134,9 +135,8 @@ fn main() {
                 light::sync_actor_light_levels.after(light::update_emitter_lights),
             ),
         )
-        .add_systems(PostUpdate, init_combatants)
+        .add_systems(PostUpdate, combat::init_combatants)
         .add_systems(Last, map::update_tile_visuals)
-        .add_systems(EguiPrimaryContextPass, draw_message_log_ui)
         .run();
 }
 
@@ -555,56 +555,6 @@ fn process_dialogue(
         };
 
         log.add(dialogue.advance(), colors::KENNEY_BLUE);
-    }
-}
-
-fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats>>) {
-    for mut combatant in combatants.iter_mut() {
-        combatant.hp = combatant.max_hp;
-    }
-}
-
-fn process_attacks(
-    mut combatants: Query<&mut CombatStats>,
-    mut attacks: MessageReader<AttackAttempt>,
-    mut log: ResMut<MessageLog>,
-) {
-    for attack in attacks.read() {
-        let Ok([attacker, mut defender]) =
-            combatants.get_many_mut([attack.attacker, attack.target])
-        else {
-            continue;
-        };
-
-        if defender.is_dead {
-            log.add(
-                format!("{} is already dead", defender.nameplate),
-                colors::KENNEY_GOLD,
-            );
-            continue;
-        }
-
-        log.add(
-            format!("{} attacks {}", attacker.nameplate, defender.nameplate),
-            colors::KENNEY_GOLD,
-        );
-
-        let damage = attacker.attack - defender.defense;
-        if damage >= 0 {
-            defender.hp = defender.hp.saturating_sub(damage);
-            log.add(
-                format!("{} hits {}!", attacker.nameplate, defender.nameplate),
-                colors::KENNEY_GOLD,
-            );
-
-            if defender.hp <= 0 {
-                defender.is_dead = true;
-                log.add(
-                    format!("{} is dead", defender.nameplate),
-                    colors::KENNEY_RED,
-                );
-            }
-        }
     }
 }
 
