@@ -27,7 +27,7 @@ use bevy_northstar::{
     grid::{Grid, GridSettingsBuilder},
     nav::Nav,
     plugin::NorthstarPlugin,
-    prelude::CardinalNeighborhood,
+    prelude::*,
 };
 use rand::seq::IndexedRandom;
 
@@ -36,7 +36,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     combat::CombatStats,
-    editor::{DesiredZoom, EditorState},
+    editor::DesiredZoom,
     event_log::MessageLog,
     fov::{Fov, Vision},
     inventory::*,
@@ -67,9 +67,6 @@ fn main() {
         )
         .add_plugins(EguiPlugin::default())
         .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
-        .add_systems(Startup, spawn_grid.after(tilemap::initialize_tile_storage))
-        // TODO: consider whether to combine update_grid and update_spatial_index.
-        .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_message::<actors::ActionAttempt>()
         .add_message::<inventory::Acquisition>()
         .add_message::<combat::AttackAttempt>()
@@ -94,6 +91,7 @@ fn main() {
         ))
         .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
+        .add_systems(Startup, spawn_grid.after(tilemap::initialize_tile_storage))
         .add_systems(Startup, load_spritesheet)
         .add_systems(
             Startup,
@@ -144,15 +142,23 @@ fn main() {
                 fov::update_fov_markers.after(fov::update_fov_model),
                 light::update_emitter_lights.after(fov::update_fov_markers),
                 light::sync_actor_light_levels.after(light::update_emitter_lights),
-                check_mob_vision.after(fov::update_fov_model),
+                check_mob_fov.after(fov::update_fov_model),
+                pathfind_agents.after(check_mob_fov),
+                move_agents.after(pathfind_agents),
             ),
         )
         .add_systems(PostUpdate, combat::init_combatants)
+        // TODO: consider whether to combine update_grid and update_spatial_index.
+        .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_systems(Last, map::update_tile_visuals)
         .run();
 }
 
-fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
+fn add_test_npc(
+    mut commands: Commands,
+    atlas: Res<SpriteAtlas>,
+    grid_entity: Single<Entity, With<Grid<CardinalNeighborhood>>>,
+) {
     commands.spawn((
         PieceBundle {
             sprite: atlas.sprite(),
@@ -185,12 +191,13 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         Vision(5),
     ));
 
+    let cell = Cell { x: 40, y: 40 };
     commands.spawn((
         Actor,
         TileIdx::Bat,
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: Cell { x: 40, y: 40 },
+            cell: cell,
             ..default()
         },
         Interactable::Combatant,
@@ -199,7 +206,9 @@ fn add_test_npc(mut commands: Commands, atlas: Res<SpriteAtlas>) {
             max_hp: 4,
             ..default()
         },
-        Vision(1),
+        Vision(3),
+        AgentPos(cell.into()),
+        AgentOfGrid(*grid_entity),
     ));
 }
 
@@ -273,10 +282,10 @@ fn update_grid(
     }
 }
 
-fn check_mob_vision(
+fn check_mob_fov(
     mut commands: Commands,
     fov: Res<Fov>,
-    visions: Query<(Entity, &TileIdx, &Cell, &Vision), (Without<Player>, With<Actor>)>,
+    visions: Query<(Entity, &TileIdx, &Cell, &Vision), (With<AgentOfGrid>, Without<Player>)>,
     player: Query<&Cell, (With<Player>, Changed<Cell>)>,
 ) {
     let Some(player_cell) = player.single().ok() else {
@@ -291,6 +300,57 @@ fn check_mob_vision(
                 tile, mob_cell, player_cell
             );
         }
+    }
+}
+
+fn pathfind_agents(
+    mut commands: Commands,
+    player: Single<&Cell, (With<Player>, Changed<Cell>)>,
+    query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
+) {
+    for entity in &query {
+        commands
+            .entity(entity)
+            .insert(Pathfind::new_2d(player.x as u32, player.y as u32));
+    }
+}
+
+impl Cell {
+    pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
+        Self {
+            x: agent_pos.0.x as i32,
+            y: agent_pos.0.y as i32,
+        }
+    }
+}
+
+fn move_agents(
+    mut query: Query<(Entity, &mut AgentPos, &NextPos)>,
+    player: Single<(Entity, &Cell), With<Player>>,
+    mut attacks: MessageWriter<combat::AttackAttempt>,
+    mut commands: Commands,
+) {
+    for (entity, mut agent_pos, next_pos) in query.iter_mut() {
+        info!(
+            "alerted entity {} moving from {:?} to {:?}",
+            entity, agent_pos, next_pos
+        );
+
+        let (player, player_cell) = *player;
+
+        if next_pos.0 == player_cell.as_vec3() {
+            attacks.write(combat::AttackAttempt {
+                attacker: entity,
+                target: player,
+            });
+            continue;
+        }
+
+        agent_pos.0 = next_pos.0;
+        commands
+            .entity(entity)
+            .remove::<NextPos>()
+            .insert(Cell::at_grid_coords(agent_pos.as_ref()));
     }
 }
 

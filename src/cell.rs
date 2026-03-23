@@ -81,6 +81,10 @@ impl Cell {
     pub fn y(&self) -> i32 {
         self.y
     }
+
+    pub fn as_vec3(&self) -> UVec3 {
+        UVec3::new(self.x as u32, self.y as u32, 0)
+    }
 }
 
 impl Display for Cell {
@@ -113,9 +117,15 @@ impl From<&Cell> for IVec2 {
     }
 }
 
+impl From<Cell> for UVec3 {
+    fn from(value: Cell) -> Self {
+        value.as_vec3()
+    }
+}
+
 impl From<&Cell> for UVec3 {
     fn from(value: &Cell) -> Self {
-        UVec3::new(value.x as u32, value.y as u32, 0)
+        value.as_vec3()
     }
 }
 
