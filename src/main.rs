@@ -529,13 +529,13 @@ fn process_interactions(
                         log.add("Opened door.", colors::KENNEY_BLUE);
                     }
                     *is_open = true;
-                    *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
+                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
                 }
             }
             Interactable::Chest { is_open, contents } => {
                 if !*is_open {
                     *is_open = true;
-                    *tile_idx = tile_idx.opened_version().unwrap_or(*tile_idx);
+                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
                     info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);

@@ -68,7 +68,7 @@ pub struct Highlighted;
 /// A marker component for tiles occupied by an actor.
 pub struct Occupied;
 
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq)]
 /// A marker component for tiles that are currently being previewed, such as a tile being hovered over.
 pub struct TilePreview(Option<TileIdx>);
 

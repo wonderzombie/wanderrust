@@ -229,13 +229,13 @@ pub fn sync_actor_light_levels(
             .copied()
             .unwrap_or(spec.light_level);
 
-        if revealed.0 {
+        actor_vis.set_if_neq(if revealed.0 {
             actor_sprite.color = Color::WHITE.with_alpha(level.into());
-            *actor_vis = Visibility::Visible;
+            Visibility::Visible
         } else {
             actor_sprite.color = Color::BLACK.with_alpha(0.0);
-            *actor_vis = Visibility::Hidden;
-        }
+            Visibility::Hidden
+        });
     }
 }
 
