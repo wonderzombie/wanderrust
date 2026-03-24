@@ -19,8 +19,6 @@ pub enum Turn {
     Idling,
     /// Waiting to take their turn.
     Waiting,
-    /// They have begun acting and may be acting for some time.
-    Acting,
     /// They are done with their turn.
     Done,
 }
