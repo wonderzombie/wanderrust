@@ -102,27 +102,32 @@ fn main() {
                     tilemap::spawn_tilemap,
                     tilemap::initialize_tile_storage,
                 )
-                    .chain(),
+                    .chain()
+                    .in_set(Systems::SetupTiles),
                 load_sounds,
             ),
         )
         .add_systems(
             Startup,
             (
-                spawn_grid.after(tilemap::initialize_tile_storage),
-                setup_interactables.after(tilemap::initialize_tile_storage),
+                spawn_grid,
+                setup_interactables,
                 actors::setup_player,
-                fov::setup_fov.after(tilemap::initialize_tile_storage),
+                fov::setup_fov,
                 setup_camera,
             ),
         )
         .add_systems(
             PostStartup,
-            (
-                add_test_npc.run_if(run_once),
-                add_test_emitters.run_if(run_once),
-                add_test_portals.run_if(run_once),
-            ),
+            (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities), // .run_if(run_once),
+        )
+        .add_systems(
+            PostStartup,
+            (|mut next_state: ResMut<NextState<GameState>>| {
+                println!("going to await input");
+                next_state.set(GameState::AwaitingInput);
+            })
+            .after(Systems::SpawnTestEntities),
         )
         .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
@@ -137,32 +142,43 @@ fn main() {
             Update,
             (
                 actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
-                process_actions,
-                process_interactions,
-                process_dialogue,
-                inventory::process_acquisitions,
-                combat::process_attacks,
-                handle_pending_transition,
-            )
-                .chain(),
+                (
+                    process_actions,
+                    process_interactions,
+                    process_dialogue,
+                    inventory::process_acquisitions,
+                    combat::process_attacks,
+                    handle_pending_transition,
+                )
+                    .chain()
+                    .in_set(Systems::Ramifications),
+            ),
         )
         .add_systems(
             PostUpdate,
             (
                 map::sync_tiles,
-                sync_actor_sprites,
-                actors::sync_occupied_tiles,
-                actors::update_actor_transforms,
-                update_camera.after(update_actor_transforms),
-                update_spatial_index,
-                fov::update_fov_model.after(map::sync_tiles),
-                fov::update_fov_markers.after(fov::update_fov_model),
-                light::update_emitter_lights.after(fov::update_fov_markers),
-                light::sync_actor_light_levels.after(light::update_emitter_lights),
-                check_mob_fov.after(fov::update_fov_model),
-                pathfind_agents.after(check_mob_fov),
-                move_agents
-                    .after(pathfind_agents)
+                (
+                    actors::sync_actor_sprites,
+                    actors::update_actor_transforms,
+                    actors::sync_occupied_tiles,
+                )
+                    .in_set(Systems::ActorSync)
+                    .after(map::sync_tiles),
+                update_camera.after(Systems::ActorSync),
+                update_spatial_index.after(Systems::ActorSync),
+                (fov::update_fov_model, fov::update_fov_markers)
+                    .chain()
+                    .in_set(Systems::Fov)
+                    .after(Systems::ActorSync),
+                (light::update_emitter_lights, light::sync_actor_light_levels)
+                    .chain()
+                    .in_set(Systems::Light)
+                    .after(Systems::Fov),
+                (check_mob_fov, pathfind_agents, move_agents)
+                    .chain()
+                    .in_set(Systems::Mobs)
+                    .after(Systems::Fov)
                     .run_if(in_state(GameState::Ramifying)),
             ),
         )
@@ -172,6 +188,17 @@ fn main() {
         .add_systems(Last, map::update_tile_visuals)
         .add_systems(Last, process_turns.run_if(in_state(GameState::Ramifying)))
         .run();
+}
+
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Systems {
+    SetupTiles,
+    SpawnTestEntities,
+    Ramifications,
+    ActorSync,
+    Fov,
+    Light,
+    Mobs,
 }
 
 #[derive(Component, Debug, Default, PartialEq, Eq)]
