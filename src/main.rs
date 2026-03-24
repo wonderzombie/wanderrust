@@ -186,7 +186,13 @@ fn main() {
         // TODO: consider whether to combine update_grid and update_spatial_index.
         .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_systems(Last, map::update_tile_visuals)
-        .add_systems(Last, process_turns.run_if(in_state(GameState::Ramifying)))
+        .add_systems(OnEnter(GameState::Ramifying), on_enter_ramifying)
+        .add_systems(
+            Last,
+            (finalize_waiting_turns, check_turns_complete)
+                .chain()
+                .run_if(in_state(GameState::Ramifying)),
+        )
         .run();
 }
 
@@ -214,19 +220,42 @@ pub enum Turn {
     Done,
 }
 
-/// Resets all actors' turns to `Turn::Waiting` at the beginning of ramifying.
-fn on_begin_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
-    for mut turn in actors.iter_mut() {
-        *turn = Turn::Waiting;
+impl Turn {
+    pub fn complete(&self) -> bool {
+        self == &Turn::Done || self == &Turn::Idling
     }
 }
 
-fn process_turns(
-    actors: Query<&Turn, (With<Actor>, Without<Player>)>,
+/// Resets all actors' turns to `Turn::Waiting` at the beginning of ramifying.
+fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
+    for mut turn in actors.iter_mut() {
+        if turn.as_ref() != &Turn::Idling {
+            turn.set_if_neq(Turn::Waiting);
+        }
+    }
+}
+
+fn finalize_waiting_turns(
+    mut actors: Query<
+        (&mut Turn, Option<&Pathfind>, Option<&NextPos>),
+        (With<Actor>, Without<Player>),
+    >,
+) {
+    for (mut turn, pathfind, next_pos) in actors.iter_mut() {
+        if *turn == Turn::Waiting && pathfind.is_none() && next_pos.is_none() {
+            info!("finalizing waiting actor to Done (no pending path/move)");
+            *turn = Turn::Done;
+        }
+    }
+}
+
+fn check_turns_complete(
+    turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    let all_done = actors.iter().all(|turn| *turn == Turn::Done);
-    if all_done {
+    let all_done = turn_actors.iter().all(Turn::complete);
+    if all_done || turn_actors.is_empty() {
+        info!("non-player actors all done; back to awaiting input");
         next_state.set(GameState::AwaitingInput);
     }
 }
@@ -286,6 +315,7 @@ fn add_test_npc(
         Vision(3),
         AgentPos(cell.into()),
         AgentOfGrid(*grid_entity),
+        Turn::Idling,
     ));
 }
 
@@ -368,7 +398,7 @@ fn check_mob_fov(
     mut commands: Commands,
     fov: Res<Fov>,
     visions: Query<(Entity, &TileIdx, &Cell, &Vision), (With<AgentOfGrid>, Without<Player>)>,
-    player: Query<&Cell, (With<Player>, Changed<Cell>)>,
+    player: Query<&Cell, With<Player>>,
 ) {
     let Some(player_cell) = player.single().ok() else {
         return;
@@ -376,7 +406,10 @@ fn check_mob_fov(
     for (entity, tile, mob_cell, mob_vision) in visions.iter() {
         let view = fov.from(mob_cell.into(), mob_vision.0);
         if view.has(player_cell.into()) {
-            commands.entity(entity).insert(Alerted);
+            commands
+                .entity(entity)
+                .insert(Alerted)
+                .insert(Turn::Waiting);
             info!(
                 "{:?} @ {} detected player at {}",
                 tile, mob_cell, player_cell
@@ -387,7 +420,7 @@ fn check_mob_fov(
 
 fn pathfind_agents(
     mut commands: Commands,
-    player: Single<&Cell, (With<Player>, Changed<Cell>)>,
+    player: Single<&Cell, With<Player>>,
     query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
 ) {
     for entity in &query {
@@ -413,8 +446,13 @@ fn move_agents(
     mut commands: Commands,
 ) {
     for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
+        if turn.complete() {
+            info!("not moving done/idle entity {:?}", entity);
+            continue;
+        }
+
         info!(
-            "alerted entity {} moving from {:?} to {:?}",
+            "entity {} moving from {:?} to {:?}",
             entity, agent_pos, next_pos
         );
 
@@ -425,14 +463,13 @@ fn move_agents(
                 attacker: entity,
                 target: player,
             });
-            continue;
+        } else {
+            agent_pos.0 = next_pos.0;
+            commands
+                .entity(entity)
+                .remove::<NextPos>()
+                .insert(Cell::at_grid_coords(agent_pos.as_ref()));
         }
-
-        agent_pos.0 = next_pos.0;
-        commands
-            .entity(entity)
-            .remove::<NextPos>()
-            .insert(Cell::at_grid_coords(agent_pos.as_ref()));
         *turn = Turn::Done;
     }
 }
