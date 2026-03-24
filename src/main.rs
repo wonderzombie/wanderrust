@@ -558,9 +558,10 @@ fn process_actions(
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
             // Changing the [Cell] via insertion will cause the system to move the player sprite.
-            let mut entity_cmd = commands.entity(action.entity);
-            entity_cmd.insert((action.target_cell, PreviousCell(action.origin_cell)));
-            commands.trigger(Moved(action.entity));
+            commands
+                .entity(action.entity)
+                .insert((action.target_cell, PreviousCell(action.origin_cell)))
+                .trigger(Moved);
 
             log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             continue;
