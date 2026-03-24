@@ -20,7 +20,6 @@ pub enum Interactable {
     },
     Speaker {
         nameplate: String,
-        text: String,
     },
     Combatant,
 }

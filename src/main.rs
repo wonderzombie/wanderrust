@@ -218,7 +218,6 @@ fn add_test_npc(
         TileIdx::Skeleton,
         interactions::Interactable::Speaker {
             nameplate: "Mr. Boney".into(),
-            text: "Hello".into(),
         },
         interactions::Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
     ));
