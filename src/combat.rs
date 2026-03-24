@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{colors, event_log::MessageLog};
+use crate::{actors::Dead, colors, event_log::MessageLog};
 
 #[derive(Component, Debug, Default)]
 pub struct CombatStats {
@@ -27,16 +27,19 @@ pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats
 /// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
 /// Interaction execution is handled by [process_interactions].
 pub fn process_attacks(
-    mut combatants: Query<&mut CombatStats>,
+    mut commands: Commands,
+    mut combatants: Query<(Entity, &mut CombatStats)>,
     mut attacks: MessageReader<AttackAttempt>,
     mut log: ResMut<MessageLog>,
 ) {
     for attack in attacks.read() {
-        let Ok([attacker, mut defender]) =
-            combatants.get_many_mut([attack.attacker, attack.target])
+        let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
             continue;
         };
+
+        let (defender_entity, mut defender) = defender;
+        let (_, attacker) = attacker;
 
         if defender.is_dead {
             log.add(
@@ -65,7 +68,13 @@ pub fn process_attacks(
                     format!("{} is dead", defender.nameplate),
                     colors::KENNEY_RED,
                 );
+                commands.entity(defender_entity).insert(Dead);
             }
+        } else {
+            log.add(
+                format!("{} does no damage", attacker.nameplate),
+                colors::KENNEY_GOLD,
+            )
         }
     }
 }

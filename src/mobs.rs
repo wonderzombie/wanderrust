@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::{Alerted, Player},
+    actors::{Alerted, Dead, Player},
     cell::Cell,
     combat,
     fov::{Fov, Vision},
@@ -78,5 +78,11 @@ pub fn move_agents(
                 .insert(Cell::at_grid_coords(agent_pos.as_ref()));
         }
         *turn = Turn::Done;
+    }
+}
+
+pub fn handle_dead_mobs(mut commands: Commands, query: Query<Entity, (With<Dead>, With<Turn>)>) {
+    for entity in &query {
+        commands.entity(entity).remove::<Turn>();
     }
 }

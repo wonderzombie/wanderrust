@@ -183,11 +183,14 @@ fn main() {
         .add_systems(
             Last,
             (
-                gamestate::finalize_waiting_turns,
-                gamestate::check_turns_complete,
-            )
-                .chain()
-                .run_if(in_state(GameState::Ramifying)),
+                (
+                    gamestate::finalize_waiting_turns,
+                    gamestate::check_turns_complete,
+                )
+                    .chain()
+                    .run_if(in_state(GameState::Ramifying)),
+                mobs::handle_dead_mobs.after(Systems::Mobs),
+            ),
         )
         .run();
 }
