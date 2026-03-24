@@ -6,6 +6,7 @@ mod combat;
 mod editor;
 mod event_log;
 mod fov;
+mod gamestate;
 mod inventory;
 mod light;
 mod map;
@@ -39,6 +40,7 @@ use crate::{
     editor::DesiredZoom,
     event_log::MessageLog,
     fov::{Fov, Vision},
+    gamestate::GameState,
     inventory::*,
     light::{Emitter, LightLevel},
     tilemap::{EntryId, Portal, TilemapLayer, TilemapSpec},
@@ -72,6 +74,7 @@ fn main() {
         .add_message::<combat::AttackAttempt>()
         .add_message::<DialogueAttempt>()
         .add_message::<InteractionAttempt>()
+        .insert_state(GameState::Starting)
         .init_resource::<SpatialIndex>()
         .init_resource::<inventory::Inventory>()
         .init_resource::<editor::EditorState>()
@@ -91,18 +94,26 @@ fn main() {
         ))
         .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
-        .add_systems(Startup, spawn_grid.after(tilemap::initialize_tile_storage))
-        .add_systems(Startup, load_spritesheet)
+        .add_systems(
+            PreStartup,
+            (
+                (
+                    load_spritesheet,
+                    tilemap::spawn_tilemap,
+                    tilemap::initialize_tile_storage,
+                )
+                    .chain(),
+                load_sounds,
+            ),
+        )
         .add_systems(
             Startup,
             (
-                tilemap::spawn_tilemap.after(load_spritesheet),
-                tilemap::initialize_tile_storage.after(tilemap::spawn_tilemap),
+                spawn_grid.after(tilemap::initialize_tile_storage),
                 setup_interactables.after(tilemap::initialize_tile_storage),
-                actors::setup_player.after(load_spritesheet),
+                actors::setup_player,
                 fov::setup_fov.after(tilemap::initialize_tile_storage),
                 setup_camera,
-                load_sounds,
             ),
         )
         .add_systems(
@@ -116,10 +127,16 @@ fn main() {
         .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
         .add_systems(Update, on_sounds_loaded.run_if(run_once))
+        .add_systems(OnEnter(GameState::AwaitingInput), || {
+            println!("awaiting input");
+        })
+        .add_systems(OnExit(GameState::AwaitingInput), || {
+            println!("no longer awaiting input");
+        })
         .add_systems(
             Update,
             (
-                actors::handle_player_input,
+                actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
                 process_actions,
                 process_interactions,
                 process_dialogue,
@@ -144,14 +161,47 @@ fn main() {
                 light::sync_actor_light_levels.after(light::update_emitter_lights),
                 check_mob_fov.after(fov::update_fov_model),
                 pathfind_agents.after(check_mob_fov),
-                move_agents.after(pathfind_agents),
+                move_agents
+                    .after(pathfind_agents)
+                    .run_if(in_state(GameState::Ramifying)),
             ),
         )
         .add_systems(PostUpdate, combat::init_combatants)
         // TODO: consider whether to combine update_grid and update_spatial_index.
         .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_systems(Last, map::update_tile_visuals)
+        .add_systems(Last, process_turns.run_if(in_state(GameState::Ramifying)))
         .run();
+}
+
+#[derive(Component, Debug, Default, PartialEq, Eq)]
+pub enum Turn {
+    /// Isn't taking actions but may at some point in the future.
+    #[default]
+    Idling,
+    /// Waiting to take their turn.
+    Waiting,
+    /// They have begun acting and may be acting for some time.
+    Acting,
+    /// They are done with their turn.
+    Done,
+}
+
+/// Resets all actors' turns to `Turn::Waiting` at the beginning of ramifying.
+fn on_begin_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
+    for mut turn in actors.iter_mut() {
+        *turn = Turn::Waiting;
+    }
+}
+
+fn process_turns(
+    actors: Query<&Turn, (With<Actor>, Without<Player>)>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    let all_done = actors.iter().all(|turn| *turn == Turn::Done);
+    if all_done {
+        next_state.set(GameState::AwaitingInput);
+    }
 }
 
 fn add_test_npc(
@@ -218,7 +268,7 @@ fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>) {
         TileIdx::Torch,
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: Cell { x: 47, y: 47 },
+            cell: Cell { x: 50, y: 48 },
             ..default()
         },
         Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
@@ -330,12 +380,12 @@ impl Cell {
 }
 
 fn move_agents(
-    mut query: Query<(Entity, &mut AgentPos, &NextPos)>,
+    mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<combat::AttackAttempt>,
     mut commands: Commands,
 ) {
-    for (entity, mut agent_pos, next_pos) in query.iter_mut() {
+    for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         info!(
             "alerted entity {} moving from {:?} to {:?}",
             entity, agent_pos, next_pos
@@ -356,6 +406,7 @@ fn move_agents(
             .entity(entity)
             .remove::<NextPos>()
             .insert(Cell::at_grid_coords(agent_pos.as_ref()));
+        *turn = Turn::Done;
     }
 }
 
@@ -483,6 +534,7 @@ fn load_spritesheet(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut next: ResMut<NextState<GameState>>,
 ) {
     let texture: Handle<Image> = asset_server.load(SHEET_PATH);
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
@@ -497,6 +549,8 @@ fn load_spritesheet(
         texture: texture.clone(),
         layout: layout.clone(),
     });
+
+    next.set(GameState::Loading);
 }
 
 #[derive(Component, Debug)]
@@ -554,6 +608,7 @@ fn process_actions(
     mut interaction_attempts: MessageWriter<InteractionAttempt>,
     spatial_index: Res<SpatialIndex>,
 ) {
+    let mut acted = false;
     for action in actions.read() {
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
             // No entity at the target [Cell], so we can assume it's an empty walkable tile.
@@ -564,6 +619,7 @@ fn process_actions(
                 .trigger(Moved);
 
             log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
+            acted = true;
             continue;
         };
 
@@ -571,6 +627,7 @@ fn process_actions(
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
+            acted = true;
             continue;
         }
 
@@ -578,6 +635,11 @@ fn process_actions(
             interactor: action.entity,
             target: target_entity,
         });
+        acted = true;
+    }
+
+    if acted {
+        commands.set_state(GameState::Ramifying);
     }
 }
 

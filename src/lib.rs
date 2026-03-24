@@ -6,6 +6,7 @@ mod colors;
 mod combat;
 pub mod editor;
 mod event_log;
+pub mod gamestate;
 pub mod light;
 pub mod tilemap;
 pub mod tiles;
