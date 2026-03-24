@@ -114,12 +114,12 @@ fn main() {
         )
         .add_systems(
             PostStartup,
-            (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities), // .run_if(run_once),
+            (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities),
         )
         .add_systems(
             PostStartup,
             (|mut next_state: ResMut<NextState<GameState>>| {
-                println!("going to await input");
+                info!("going to await input");
                 next_state.set(GameState::AwaitingInput);
             })
             .after(Systems::SpawnTestEntities),
@@ -127,12 +127,6 @@ fn main() {
         .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
         .add_systems(Update, sounds::on_sounds_loaded.run_if(run_once))
-        .add_systems(OnEnter(GameState::AwaitingInput), || {
-            println!("awaiting input");
-        })
-        .add_systems(OnExit(GameState::AwaitingInput), || {
-            println!("no longer awaiting input");
-        })
         .add_systems(
             Update,
             (
