@@ -1,5 +1,6 @@
 mod actors;
 mod atlas;
+mod camera;
 mod cell;
 mod colors;
 mod combat;
@@ -7,44 +8,38 @@ mod editor;
 mod event_log;
 mod fov;
 mod gamestate;
+mod interactions;
 mod inventory;
 mod light;
 mod map;
+mod mobs;
 mod procgen;
 mod ptable;
+mod sounds;
 mod tilemap;
 mod tiles;
 
 use std::collections::HashMap;
 
-use bevy::{
-    asset::LoadedFolder,
-    audio::{PlaybackMode, Volume},
-    prelude::*,
-};
-
-use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
-use bevy_northstar::{
-    grid::{Grid, GridSettingsBuilder},
-    nav::Nav,
-    plugin::NorthstarPlugin,
-    prelude::*,
-};
-use rand::seq::IndexedRandom;
+use bevy::prelude::*;
 
 use crate::{
     actors::*,
     atlas::SpriteAtlas,
     cell::Cell,
     combat::CombatStats,
-    editor::DesiredZoom,
-    event_log::MessageLog,
-    fov::{Fov, Vision},
+    fov::Vision,
     gamestate::GameState,
-    inventory::*,
     light::{Emitter, LightLevel},
-    tilemap::{EntryId, Portal, TilemapLayer, TilemapSpec},
-    tiles::{MapTile, TileIdx, Walkable},
+    tilemap::{EntryId, Portal, TilemapSpec},
+    tiles::{TileIdx, Walkable},
+};
+use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_northstar::{
+    grid::{Grid, GridSettingsBuilder},
+    nav::Nav,
+    plugin::NorthstarPlugin,
+    prelude::*,
 };
 
 /// The path to the spritesheet image.
@@ -72,14 +67,14 @@ fn main() {
         .add_message::<actors::ActionAttempt>()
         .add_message::<inventory::Acquisition>()
         .add_message::<combat::AttackAttempt>()
-        .add_message::<DialogueAttempt>()
-        .add_message::<InteractionAttempt>()
+        .add_message::<interactions::DialogueAttempt>()
+        .add_message::<interactions::InteractionAttempt>()
         .insert_state(GameState::Starting)
         .init_resource::<SpatialIndex>()
         .init_resource::<inventory::Inventory>()
         .init_resource::<editor::EditorState>()
         .init_resource::<actors::PlayerStats>()
-        .init_resource::<Sounds>()
+        .init_resource::<sounds::Sounds>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
@@ -104,17 +99,17 @@ fn main() {
                 )
                     .chain()
                     .in_set(Systems::SetupTiles),
-                load_sounds,
+                sounds::load_sounds,
             ),
         )
         .add_systems(
             Startup,
             (
                 spawn_grid,
-                setup_interactables,
+                interactions::setup_interactables,
                 actors::setup_player,
                 fov::setup_fov,
-                setup_camera,
+                camera::setup_camera,
             ),
         )
         .add_systems(
@@ -131,7 +126,7 @@ fn main() {
         )
         .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
-        .add_systems(Update, on_sounds_loaded.run_if(run_once))
+        .add_systems(Update, sounds::on_sounds_loaded.run_if(run_once))
         .add_systems(OnEnter(GameState::AwaitingInput), || {
             println!("awaiting input");
         })
@@ -144,8 +139,8 @@ fn main() {
                 actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
                 (
                     process_actions,
-                    process_interactions,
-                    process_dialogue,
+                    interactions::process_interactions,
+                    interactions::process_dialogue,
                     inventory::process_acquisitions,
                     combat::process_attacks,
                     handle_pending_transition,
@@ -165,7 +160,7 @@ fn main() {
                 )
                     .in_set(Systems::ActorSync)
                     .after(map::sync_tiles),
-                update_camera.after(Systems::ActorSync),
+                camera::update_camera.after(Systems::ActorSync),
                 update_spatial_index.after(Systems::ActorSync),
                 (fov::update_fov_model, fov::update_fov_markers)
                     .chain()
@@ -175,7 +170,11 @@ fn main() {
                     .chain()
                     .in_set(Systems::Light)
                     .after(Systems::Fov),
-                (check_mob_fov, pathfind_agents, move_agents)
+                (
+                    mobs::check_mob_fov,
+                    mobs::pathfind_agents,
+                    mobs::move_agents,
+                )
                     .chain()
                     .in_set(Systems::Mobs)
                     .after(Systems::Fov)
@@ -186,10 +185,13 @@ fn main() {
         // TODO: consider whether to combine update_grid and update_spatial_index.
         .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_systems(Last, map::update_tile_visuals)
-        .add_systems(OnEnter(GameState::Ramifying), on_enter_ramifying)
+        .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
         .add_systems(
             Last,
-            (finalize_waiting_turns, check_turns_complete)
+            (
+                gamestate::finalize_waiting_turns,
+                gamestate::check_turns_complete,
+            )
                 .chain()
                 .run_if(in_state(GameState::Ramifying)),
         )
@@ -207,59 +209,6 @@ pub enum Systems {
     Mobs,
 }
 
-#[derive(Component, Debug, Default, PartialEq, Eq)]
-pub enum Turn {
-    /// Isn't taking actions but may at some point in the future.
-    #[default]
-    Idling,
-    /// Waiting to take their turn.
-    Waiting,
-    /// They have begun acting and may be acting for some time.
-    Acting,
-    /// They are done with their turn.
-    Done,
-}
-
-impl Turn {
-    pub fn complete(&self) -> bool {
-        self == &Turn::Done || self == &Turn::Idling
-    }
-}
-
-/// Resets all actors' turns to `Turn::Waiting` at the beginning of ramifying.
-fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
-    for mut turn in actors.iter_mut() {
-        if turn.as_ref() != &Turn::Idling {
-            turn.set_if_neq(Turn::Waiting);
-        }
-    }
-}
-
-fn finalize_waiting_turns(
-    mut actors: Query<
-        (&mut Turn, Option<&Pathfind>, Option<&NextPos>),
-        (With<Actor>, Without<Player>),
-    >,
-) {
-    for (mut turn, pathfind, next_pos) in actors.iter_mut() {
-        if *turn == Turn::Waiting && pathfind.is_none() && next_pos.is_none() {
-            info!("finalizing waiting actor to Done (no pending path/move)");
-            *turn = Turn::Done;
-        }
-    }
-}
-
-fn check_turns_complete(
-    turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
-    mut next_state: ResMut<NextState<GameState>>,
-) {
-    let all_done = turn_actors.iter().all(Turn::complete);
-    if all_done || turn_actors.is_empty() {
-        info!("non-player actors all done; back to awaiting input");
-        next_state.set(GameState::AwaitingInput);
-    }
-}
-
 fn add_test_npc(
     mut commands: Commands,
     atlas: Res<SpriteAtlas>,
@@ -273,11 +222,11 @@ fn add_test_npc(
         },
         Actor,
         TileIdx::Skeleton,
-        Interactable::Speaker {
+        interactions::Interactable::Speaker {
             nameplate: "Mr. Boney".into(),
             text: "Hello".into(),
         },
-        Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
+        interactions::Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
     ));
 
     commands.spawn((
@@ -288,7 +237,7 @@ fn add_test_npc(
             cell: Cell { x: 49, y: 49 },
             ..default()
         },
-        Interactable::Combatant,
+        interactions::Interactable::Combatant,
         CombatStats {
             nameplate: "Mr. Sandbag".into(),
             max_hp: 12,
@@ -306,7 +255,7 @@ fn add_test_npc(
             cell: cell,
             ..default()
         },
-        Interactable::Combatant,
+        interactions::Interactable::Combatant,
         CombatStats {
             nameplate: "Bat".into(),
             max_hp: 4,
@@ -315,7 +264,7 @@ fn add_test_npc(
         Vision(3),
         AgentPos(cell.into()),
         AgentOfGrid(*grid_entity),
-        Turn::Idling,
+        gamestate::Turn::Idling,
     ));
 }
 
@@ -394,141 +343,6 @@ fn update_grid(
     }
 }
 
-fn check_mob_fov(
-    mut commands: Commands,
-    fov: Res<Fov>,
-    visions: Query<(Entity, &TileIdx, &Cell, &Vision), (With<AgentOfGrid>, Without<Player>)>,
-    player: Query<&Cell, With<Player>>,
-) {
-    let Some(player_cell) = player.single().ok() else {
-        return;
-    };
-    for (entity, tile, mob_cell, mob_vision) in visions.iter() {
-        let view = fov.from(mob_cell.into(), mob_vision.0);
-        if view.has(player_cell.into()) {
-            commands
-                .entity(entity)
-                .insert(Alerted)
-                .insert(Turn::Waiting);
-            info!(
-                "{:?} @ {} detected player at {}",
-                tile, mob_cell, player_cell
-            );
-        }
-    }
-}
-
-fn pathfind_agents(
-    mut commands: Commands,
-    player: Single<&Cell, With<Player>>,
-    query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
-) {
-    for entity in &query {
-        commands
-            .entity(entity)
-            .insert(Pathfind::new_2d(player.x as u32, player.y as u32));
-    }
-}
-
-impl Cell {
-    pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
-        Self {
-            x: agent_pos.0.x as i32,
-            y: agent_pos.0.y as i32,
-        }
-    }
-}
-
-fn move_agents(
-    mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
-    player: Single<(Entity, &Cell), With<Player>>,
-    mut attacks: MessageWriter<combat::AttackAttempt>,
-    mut commands: Commands,
-) {
-    for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
-        if turn.complete() {
-            info!("not moving done/idle entity {:?}", entity);
-            continue;
-        }
-
-        info!(
-            "entity {} moving from {:?} to {:?}",
-            entity, agent_pos, next_pos
-        );
-
-        let (player, player_cell) = *player;
-
-        if next_pos.0 == player_cell.as_vec3() {
-            attacks.write(combat::AttackAttempt {
-                attacker: entity,
-                target: player,
-            });
-        } else {
-            agent_pos.0 = next_pos.0;
-            commands
-                .entity(entity)
-                .remove::<NextPos>()
-                .insert(Cell::at_grid_coords(agent_pos.as_ref()));
-        }
-        *turn = Turn::Done;
-    }
-}
-
-#[derive(Resource, Default)]
-struct Sounds {
-    lookup: HashMap<String, Handle<AudioSource>>,
-    folder: Handle<LoadedFolder>,
-    loaded: bool,
-}
-
-fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
-    info!("preparing to load sounds");
-    let handle = asset_server.load_folder("audio");
-
-    *sounds = Sounds {
-        folder: handle,
-        loaded: false,
-        ..default()
-    };
-}
-
-fn on_sounds_loaded(
-    mut commands: Commands,
-    mut sounds: ResMut<Sounds>,
-    loaded_folders: Res<Assets<LoadedFolder>>,
-    asset_server: Res<AssetServer>,
-) {
-    if sounds.loaded {
-        return;
-    }
-
-    let handle = asset_server.load_folder("audio");
-
-    let Some(folder) = loaded_folders.get(&handle) else {
-        info!("Sounds not ready");
-        return;
-    };
-
-    info!("sounds loaded; initializing");
-    sounds.lookup = folder
-        .handles
-        .iter()
-        .filter_map(|handle| {
-            let audio_handle = handle.clone().try_typed::<AudioSource>().ok()?;
-            let path = asset_server.get_path(handle.id())?;
-            let name = path.path().file_stem()?.to_string_lossy().into_owned();
-            Some((name, audio_handle))
-        })
-        .collect();
-
-    sounds.loaded = true;
-    sounds.folder = handle;
-
-    commands.add_observer(on_moved_sounds);
-
-    info!("finished initializing sounds");
-}
-
 #[derive(Resource, Default, Debug, PartialEq, Eq)]
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 pub struct SpatialIndex {
@@ -561,25 +375,6 @@ impl SpatialIndex {
     pub fn is_occupied(&self, cell: Cell) -> bool {
         self.occupied.contains_key(&cell)
     }
-}
-
-const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
-
-fn setup_camera(mut commands: Commands, spec: Res<TilemapSpec>) {
-    let size = spec.size;
-    // Spawn the camera using a 2D orthographic projection.
-    commands.spawn((
-        Camera2d,
-        Projection::Orthographic(OrthographicProjection {
-            scale: 0.5,
-            ..OrthographicProjection::default_2d()
-        }),
-        Transform::from_xyz(
-            (size.width as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
-            (size.height as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
-            *CAMERA_LAYER,
-        ),
-    ));
 }
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
@@ -617,59 +412,14 @@ fn load_spritesheet(
     next.set(GameState::Loading);
 }
 
-#[derive(Component, Debug)]
-/// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
-pub enum Interactable {
-    Door {
-        is_open: bool,
-        requires: Option<Item>,
-    },
-    Chest {
-        is_open: bool,
-        contents: Inventory,
-    },
-    Speaker {
-        nameplate: String,
-        text: String,
-    },
-    Combatant,
-}
-
-const GRASS_FOOTSTEPS: [&str; 5] = [
-    "footstep_grass_000",
-    "footstep_grass_001",
-    "footstep_grass_002",
-    "footstep_grass_003",
-    "footstep_grass_004",
-];
-
-fn on_moved_sounds(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
-    let mut rng = rand::rng();
-
-    let rand_footstep: &'static str = GRASS_FOOTSTEPS.choose(&mut rng).unwrap();
-    let Some(footstep) = sounds.lookup.get(rand_footstep) else {
-        error!("footstep sound not found: {}", rand_footstep);
-        return;
-    };
-
-    commands.spawn((
-        AudioPlayer::new(footstep.clone()),
-        PlaybackSettings {
-            mode: PlaybackMode::Despawn,
-            volume: Volume::Linear(0.1),
-            ..default()
-        },
-    ));
-}
-
 /// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
-/// Interaction execution is handled by [process_interactions].
+/// Interaction execution is handled by [interactions::process_interactions].
 fn process_actions(
     mut commands: Commands,
     mut log: ResMut<event_log::MessageLog>,
     mut actions: MessageReader<ActionAttempt>,
     portals: Query<&Portal>,
-    mut interaction_attempts: MessageWriter<InteractionAttempt>,
+    mut interaction_attempts: MessageWriter<interactions::InteractionAttempt>,
     spatial_index: Res<SpatialIndex>,
 ) {
     let mut acted = false;
@@ -695,7 +445,7 @@ fn process_actions(
             continue;
         }
 
-        interaction_attempts.write(InteractionAttempt {
+        interaction_attempts.write(interactions::InteractionAttempt {
             interactor: action.entity,
             target: target_entity,
         });
@@ -704,119 +454,6 @@ fn process_actions(
 
     if acted {
         commands.set_state(GameState::Ramifying);
-    }
-}
-
-#[derive(Message, Debug, Copy, Clone)]
-struct InteractionAttempt {
-    interactor: Entity,
-    target: Entity,
-}
-
-#[derive(Message, Debug, Copy, Clone)]
-struct DialogueAttempt {
-    pub entity: Entity,
-}
-
-/// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
-fn process_interactions(
-    mut attempts: MessageReader<InteractionAttempt>,
-    mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
-    mut acquisitions: MessageWriter<Acquisition>,
-    mut attacks: MessageWriter<combat::AttackAttempt>,
-    mut speech: MessageWriter<DialogueAttempt>,
-    player_inventory: Res<Inventory>,
-    mut log: ResMut<event_log::MessageLog>,
-) {
-    for attempt in attempts.read() {
-        let Ok((entity, mut tile_idx, mut interactable)) = interactables.get_mut(attempt.target)
-        else {
-            info!(
-                "Interaction attempted with entity {:?}, but it's not interactable.",
-                attempt.target
-            );
-            continue;
-        };
-
-        match interactable.as_mut() {
-            Interactable::Door { is_open, requires } => {
-                if !*is_open {
-                    if let Some(required_item) = requires {
-                        if !player_inventory.has_item(required_item) {
-                            info!("Player lacks required item: {}", required_item.0);
-                            log.add("Locked.", colors::KENNEY_BLUE);
-                            continue;
-                        } else {
-                            info!("Player opens the door with {:?}.", required_item);
-                            log.add(
-                                format!("Opened door with {}.", required_item),
-                                colors::KENNEY_BLUE,
-                            );
-                        }
-                    } else {
-                        info!("Player opens the door.");
-                        log.add("Opened door.", colors::KENNEY_BLUE);
-                    }
-                    *is_open = true;
-                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
-                }
-            }
-            Interactable::Chest { is_open, contents } => {
-                if !*is_open {
-                    *is_open = true;
-                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
-                    info!("Player opens chest: {:?}", contents);
-                    log.add("Opened chest.", colors::KENNEY_BLUE);
-                    log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                    acquisitions.write(Acquisition {
-                        items: contents.clone(),
-                    });
-                }
-            }
-            Interactable::Speaker { nameplate, .. } => {
-                info!("Player talks to {}.", nameplate);
-                // log.add(format!("{}: {}", nameplate, text), colors::KENNEY_BLUE);
-                speech.write(DialogueAttempt { entity });
-            }
-            Interactable::Combatant => {
-                attacks.write(combat::AttackAttempt {
-                    attacker: attempt.interactor,
-                    target: entity,
-                });
-            }
-        }
-    }
-}
-
-#[derive(Component, Debug, Default)]
-pub struct Dialogue {
-    idx: usize,
-    phrases: Vec<String>,
-}
-
-impl Dialogue {
-    pub fn advance(&mut self) -> &str {
-        let phrase = &self.phrases[self.idx];
-        self.idx = (self.idx + 1) % self.phrases.len();
-        phrase
-    }
-
-    pub fn phrases(phrases: Vec<String>) -> Self {
-        Self { idx: 0, phrases }
-    }
-}
-
-fn process_dialogue(
-    mut speech: MessageReader<DialogueAttempt>,
-    mut log: ResMut<MessageLog>,
-    mut dialogues: Query<&mut Dialogue>,
-) {
-    for attempt in speech.read() {
-        let Ok(mut dialogue) = dialogues.get_mut(attempt.entity) else {
-            continue;
-        };
-
-        log.add(dialogue.advance(), colors::KENNEY_BLUE);
     }
 }
 
@@ -853,56 +490,4 @@ fn handle_pending_transition(
     );
 
     commands.remove_resource::<PendingTransition>();
-}
-
-fn update_camera(
-    mut camera_query: Query<&mut Transform, With<Camera2d>>,
-    player_query: Query<&Cell, With<Player>>,
-    zoom_opt: Option<Res<DesiredZoom>>,
-) {
-    let Ok(player_cell) = player_query.single() else {
-        error!("No player entity found in the world.");
-        return;
-    };
-
-    let Ok(mut camera_transform) = camera_query.single_mut() else {
-        error!("No camera entity found in the world.");
-        return;
-    };
-
-    camera_transform.translation.x =
-        (player_cell.x as f32 * tiles::TILE_SIZE_PX) + (tiles::TILE_SIZE_PX / 2.0);
-    camera_transform.translation.y =
-        (player_cell.y as f32 * tiles::TILE_SIZE_PX) + (tiles::TILE_SIZE_PX / 2.0);
-    let zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
-    camera_transform.scale = Vec3::splat(zoom);
-}
-
-pub fn setup_interactables(
-    mut commands: Commands,
-    tiles: Query<(Entity, &TileIdx), With<MapTile>>,
-) {
-    for (entity, tile_idx) in tiles.iter() {
-        if !tile_idx.is_interactable() {
-            continue;
-        }
-
-        let bundle = match tile_idx {
-            TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
-                is_open: false,
-                contents: Inventory::with_item(Item("gold".to_string()), 10),
-            }),
-            TileIdx::DoorBrownThickClosed1
-            | TileIdx::DoorBrownThickClosed2
-            | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
-                is_open: false,
-                requires: None,
-            }),
-            _ => None,
-        };
-
-        if let Some(bundle) = bundle {
-            commands.entity(entity).insert(bundle);
-        }
-    }
 }

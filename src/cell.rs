@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Add, Div, Mul, Sub};
 
 use bevy::prelude::*;
+use bevy_northstar::prelude::AgentPos;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -84,6 +85,13 @@ impl Cell {
 
     pub fn as_vec3(&self) -> UVec3 {
         UVec3::new(self.x as u32, self.y as u32, 0)
+    }
+
+    pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
+        Self {
+            x: agent_pos.0.x as i32,
+            y: agent_pos.0.y as i32,
+        }
     }
 }
 
