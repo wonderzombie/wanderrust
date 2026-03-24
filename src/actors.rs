@@ -125,12 +125,15 @@ pub fn handle_player_input(
     input: Res<ButtonInput<KeyCode>>,
     player_query: Query<(Entity, &Cell), With<Player>>,
 ) {
+    if !input.is_changed() {
+        return;
+    }
     let Some(direction) = get_direction(&input) else {
         return;
     };
 
     let Ok((player_entity, player_cell)) = player_query.single() else {
-        warn!("No player entity found in the world.");
+        error!("No player entity found in the world.");
         return;
     };
 
