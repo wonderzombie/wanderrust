@@ -248,7 +248,7 @@ fn add_test_npc(
         TileIdx::Bat,
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: cell,
+            cell,
             ..default()
         },
         interactions::Interactable::Combatant,
