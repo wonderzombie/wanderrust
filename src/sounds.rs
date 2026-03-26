@@ -27,7 +27,7 @@ pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
     };
 }
 
-pub fn on_sounds_loaded(
+pub fn on_loaded(
     mut commands: Commands,
     mut sounds: ResMut<Sounds>,
     loaded_folders: Res<Assets<LoadedFolder>>,

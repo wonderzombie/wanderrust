@@ -10,7 +10,7 @@ use crate::{
     tiles::TileIdx,
 };
 
-pub fn check_mob_fov(
+pub fn check_fov(
     mut commands: Commands,
     fov: Res<Fov>,
     visions: Query<(Entity, &TileIdx, &Cell, &Vision), (With<AgentOfGrid>, Without<Player>)>,
@@ -34,7 +34,7 @@ pub fn check_mob_fov(
     }
 }
 
-pub fn pathfind_agents(
+pub fn pathfind(
     mut commands: Commands,
     player: Single<&Cell, With<Player>>,
     query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
@@ -81,7 +81,7 @@ pub fn move_agents(
     }
 }
 
-pub fn handle_dead_mobs(mut commands: Commands, query: Query<Entity, (With<Dead>, With<Turn>)>) {
+pub fn handle_dead(mut commands: Commands, query: Query<Entity, (With<Dead>, With<Turn>)>) {
     for entity in &query {
         commands.entity(entity).remove::<Turn>();
     }

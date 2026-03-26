@@ -93,7 +93,7 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
 }
 
 /// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
-pub fn sync_actor_sprites(
+pub fn sync_sprites(
     mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
 ) {
     for (mut sprite, tile_idx) in pieces.iter_mut() {

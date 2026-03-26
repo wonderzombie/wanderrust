@@ -26,7 +26,7 @@ pub fn setup_camera(mut commands: Commands, spec: Res<TilemapSpec>) {
     ));
 }
 
-pub fn update_camera(
+pub fn update(
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
     player_query: Query<&Cell, With<Player>>,
     zoom_opt: Option<Res<DesiredZoom>>,

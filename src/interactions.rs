@@ -136,10 +136,7 @@ pub fn process_dialogue(
     }
 }
 
-pub fn setup_interactables(
-    mut commands: Commands,
-    tiles: Query<(Entity, &TileIdx), With<MapTile>>,
-) {
+pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), With<MapTile>>) {
     for (entity, tile_idx) in tiles.iter() {
         if !tile_idx.is_interactable() {
             continue;

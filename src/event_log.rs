@@ -9,7 +9,7 @@ use bevy::prelude::*;
 
 use crate::colors::ColorExt;
 
-pub fn setup_egui_fonts(mut contexts: EguiContexts) {
+pub fn setup_fonts(mut contexts: EguiContexts) {
     let Ok(ctx) = contexts.ctx_mut() else {
         warn!("Egui context not ready yet");
         return;
@@ -35,7 +35,7 @@ pub fn setup_egui_fonts(mut contexts: EguiContexts) {
 }
 
 /// Draws the message log UI using Egui using [MessageLog] resource.
-pub fn draw_message_log_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
+pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };

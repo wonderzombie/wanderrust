@@ -108,7 +108,7 @@ fn main() {
             Startup,
             (
                 spawn_grid,
-                interactions::setup_interactables,
+                interactions::setup,
                 actors::setup_player,
                 fov::setup_fov,
                 camera::setup_camera,
@@ -120,9 +120,9 @@ fn main() {
         )
         .add_systems(OnEnter(Screen::Title), title_screen::setup)
         .add_systems(OnExit(Screen::Title), title_screen::discard)
-        .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
-        .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
-        .add_systems(Update, sounds::on_sounds_loaded.run_if(run_once))
+        .add_systems(Update, event_log::setup_fonts.run_if(run_once))
+        .add_systems(EguiPrimaryContextPass, event_log::draw_ui)
+        .add_systems(Update, sounds::on_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
@@ -145,13 +145,13 @@ fn main() {
             (
                 map::sync_tiles,
                 (
-                    actors::sync_actor_sprites,
+                    actors::sync_sprites,
                     actors::update_actor_transforms,
                     actors::sync_occupied_tiles,
                 )
                     .in_set(Systems::ActorSync)
                     .after(map::sync_tiles),
-                camera::update_camera.after(Systems::ActorSync),
+                camera::update.after(Systems::ActorSync),
                 update_spatial_index.after(Systems::ActorSync),
                 (fov::update_fov_model, fov::update_fov_markers)
                     .chain()
@@ -161,11 +161,7 @@ fn main() {
                     .chain()
                     .in_set(Systems::Light)
                     .after(Systems::Fov),
-                (
-                    mobs::check_mob_fov,
-                    mobs::pathfind_agents,
-                    mobs::move_agents,
-                )
+                (mobs::check_fov, mobs::pathfind, mobs::move_agents)
                     .chain()
                     .in_set(Systems::Mobs)
                     .after(Systems::Fov)
@@ -175,18 +171,18 @@ fn main() {
         .add_systems(PostUpdate, combat::init_combatants)
         // TODO: consider whether to combine update_grid and update_spatial_index.
         .add_systems(PostUpdate, update_grid.after(update_spatial_index))
-        .add_systems(Last, map::update_tile_visuals)
         .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
         .add_systems(
             Last,
             (
+                map::update_tile_visuals,
                 (
                     gamestate::finalize_waiting_turns,
                     gamestate::check_turns_complete,
                 )
                     .chain()
                     .run_if(in_state(GameState::Ramifying)),
-                mobs::handle_dead_mobs.after(Systems::Mobs),
+                mobs::handle_dead.after(Systems::Mobs),
             ),
         )
         .run();
