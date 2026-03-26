@@ -1,4 +1,4 @@
-use crate::{inventory, tiles::TileIdx};
+use crate::inventory;
 use bevy::prelude::*;
 use rand::{RngExt, seq::IndexedRandom};
 
