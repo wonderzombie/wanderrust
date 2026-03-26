@@ -17,8 +17,8 @@ pub struct Alerted;
 #[derive(Component, Debug)]
 pub struct Dead;
 
-#[derive(Component, Debug)]
 /// A marker component for entities that perform actions in the world, such as the player or NPCs.
+#[derive(Component, Debug)]
 pub struct Actor;
 
 #[derive(Component, Debug)]
@@ -27,8 +27,8 @@ pub struct Player;
 #[derive(Component, Debug, Deref)]
 pub struct PreviousCell(pub Cell);
 
-#[derive(Bundle, Default, Clone, Debug)]
 /// A bundle for map pieces that includes a sprite, cell position, and transform.
+#[derive(Bundle, Default, Clone, Debug)]
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
@@ -114,8 +114,8 @@ pub fn update_actor_transforms(
     }
 }
 
-#[derive(Message, Debug)]
 /// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
+#[derive(Message, Debug)]
 pub struct ActionAttempt {
     pub entity: Entity,
     pub origin_cell: Cell,
@@ -171,6 +171,8 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
     }
 }
 
+/// Syncs the [Occupied] component on tiles based on actor positions, adding or removing as needed.
+/// An Occupied tile is not visible even under partially transparent sprites.
 pub fn sync_occupied_tiles(
     mut commands: Commands,
     actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
