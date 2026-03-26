@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::gamestate::Screen;
+use crate::gamestate::{GameState, Screen};
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -55,6 +55,7 @@ pub fn system(
         match interaction {
             Interaction::Pressed => {
                 commands.set_state_if_neq(Screen::Playing);
+                commands.set_state_if_neq(GameState::AwaitingInput);
             }
             _ => {}
         }
