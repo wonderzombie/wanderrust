@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::AddAssign};
 
 use bevy::{
     ecs::{
@@ -42,6 +42,20 @@ impl From<&[Item]> for Inventory {
     }
 }
 
+impl AddAssign<Inventory> for Inventory {
+    fn add_assign(&mut self, rhs: Inventory) {
+        for (item, count) in rhs.0 {
+            self.add_item(item, count);
+        }
+    }
+}
+
+impl AddAssign<(Item, usize)> for Inventory {
+    fn add_assign(&mut self, rhs: (Item, usize)) {
+        self.add_item(rhs.0, rhs.1);
+    }
+}
+
 impl Inventory {
     /// Adds an [Item] to this [Inventory], incrementing its count if it already exists.
     pub fn add_item(&mut self, item: Item, count: usize) {
@@ -82,6 +96,10 @@ impl Inventory {
             .iter()
             .map(|(k, v)| format!("{} {} {}", prefix, v, k))
             .collect::<Vec<_>>()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 }
 
