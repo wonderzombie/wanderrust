@@ -289,7 +289,8 @@ pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_global_tile_observers)
+        app.insert_resource(EditorState::default())
+            .add_systems(Startup, setup_global_tile_observers)
             .add_systems(
                 Update,
                 (

@@ -73,7 +73,6 @@ fn main() {
         .insert_state(GameState::Starting)
         .init_resource::<SpatialIndex>()
         .init_resource::<inventory::Inventory>()
-        .init_resource::<editor::EditorState>()
         .init_resource::<actors::PlayerStats>()
         .init_resource::<sounds::Sounds>()
         .insert_resource(CLEAR_COLOR)
