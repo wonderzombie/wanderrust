@@ -71,7 +71,6 @@ fn main() {
         .add_message::<interactions::DialogueAttempt>()
         .add_message::<interactions::InteractionAttempt>()
         .insert_state(GameState::Starting)
-        .insert_state(Screen::Title)
         .init_resource::<SpatialIndex>()
         .init_resource::<inventory::Inventory>()
         .init_resource::<editor::EditorState>()
@@ -91,6 +90,7 @@ fn main() {
         ))
         .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
+        .add_plugins(title_screen::TitleScreenPlugin)
         .add_systems(
             PreStartup,
             (
@@ -118,15 +118,12 @@ fn main() {
             PostStartup,
             (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities),
         )
-        .add_systems(OnEnter(Screen::Title), title_screen::setup)
-        .add_systems(OnExit(Screen::Title), title_screen::discard)
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_ui)
         .add_systems(Update, sounds::on_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
-                title_screen::system.run_if(in_state(Screen::Title)),
                 actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
                 (
                     process_actions,

@@ -10,6 +10,17 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 #[derive(Component, Debug)]
 pub struct TitleScreen;
 
+pub struct TitleScreenPlugin;
+
+impl Plugin for TitleScreenPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_state(Screen::Title)
+            .add_systems(OnEnter(Screen::Title), setup)
+            .add_systems(OnExit(Screen::Title), discard)
+            .add_systems(Update, system.run_if(in_state(Screen::Title)));
+    }
+}
+
 pub fn title_screen(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
     (
