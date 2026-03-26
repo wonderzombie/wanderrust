@@ -8,7 +8,7 @@ use crate::{
     fov::{Fov, Vision},
     gamestate::Turn,
     inventory,
-    loot::{FixedLoot, MobLootTable},
+    loot::{FixedLoot, LootTable},
     tiles::TileIdx,
 };
 
@@ -85,22 +85,20 @@ pub fn move_agents(
 
 pub fn handle_dead(
     mut commands: Commands,
-    mob_loot: Res<MobLootTable>,
-    query: Query<(Entity, &TileIdx, Option<&FixedLoot>), (With<Dead>, With<Turn>)>,
+    query: Query<(Entity, Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
     mut acquisitions: MessageWriter<inventory::Acquisition>,
 ) {
-    for (entity, tile_idx, loot_opt) in &query {
+    for (entity, fixed_loot_opt, loot_opt) in &query {
         commands.entity(entity).remove::<Turn>();
 
         let mut acquired = inventory::Inventory::default();
 
         if let Some(loot) = loot_opt {
-            acquired += loot.0.clone();
+            acquired += loot.roll();
         }
 
-        if mob_loot.contains_key(tile_idx) {
-            let loot = mob_loot.roll(*tile_idx);
-            acquired += loot;
+        if let Some(fixed) = fixed_loot_opt {
+            acquired += fixed.0.clone();
         }
 
         if !acquired.is_empty() {
