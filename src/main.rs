@@ -18,6 +18,7 @@ mod ptable;
 mod sounds;
 mod tilemap;
 mod tiles;
+mod title_screen;
 
 use std::collections::HashMap;
 
@@ -117,15 +118,15 @@ fn main() {
             PostStartup,
             (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities),
         )
-        .add_systems(OnEnter(Screen::Title), setup_title_screen)
-        .add_systems(OnExit(Screen::Title), discard_title_screen)
+        .add_systems(OnEnter(Screen::Title), title_screen::setup)
+        .add_systems(OnExit(Screen::Title), title_screen::discard)
         .add_systems(Update, event_log::setup_egui_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_message_log_ui)
         .add_systems(Update, sounds::on_sounds_loaded.run_if(run_once))
         .add_systems(
             Update,
             (
-                title_screen_system.run_if(in_state(Screen::Title)),
+                title_screen::system.run_if(in_state(Screen::Title)),
                 actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
                 (
                     process_actions,
@@ -200,70 +201,6 @@ pub enum Systems {
     Fov,
     Light,
     Mobs,
-}
-
-/// Set up and show the title screen using Bevy's UI APIs.
-fn setup_title_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(title_screen(asset_server));
-}
-
-#[derive(Component, Debug)]
-pub struct TitleScreen;
-
-fn title_screen(asset_server: Res<AssetServer>) -> impl Bundle {
-    let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
-    (
-        TitleScreen,
-        BackgroundColor(Color::BLACK),
-        Node {
-            width: percent(100),
-            height: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            ..default()
-        },
-        children![
-            (
-                Text::new("ADVENTUREGAME"),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 54.0,
-                    ..default()
-                },
-                TextLayout::new_with_justify(Justify::Center),
-            ),
-            (
-                Button,
-                Text::new("START"),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 33.0,
-                    ..default()
-                },
-                TextLayout::new_with_justify(Justify::Center),
-            )
-        ],
-    )
-}
-
-fn title_screen_system(
-    mut commands: Commands,
-    interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
-) {
-    for (_, interaction) in interactions.iter() {
-        match interaction {
-            Interaction::Pressed => {
-                commands.set_state_if_neq(Screen::Playing);
-            }
-            _ => {}
-        }
-    }
-}
-
-/// Despawn the title screen.
-fn discard_title_screen(entity: Single<Entity, With<TitleScreen>>, mut commands: Commands) {
-    commands.entity(*entity).despawn();
 }
 
 fn add_test_npc(
