@@ -11,6 +11,7 @@ mod gamestate;
 mod interactions;
 mod inventory;
 mod light;
+mod loot;
 mod map;
 mod mobs;
 mod procgen;
@@ -75,7 +76,7 @@ fn main() {
         .init_resource::<inventory::Inventory>()
         .init_resource::<actors::PlayerStats>()
         .init_resource::<sounds::Sounds>()
-        .init_resource::<mobs::LootTable>()
+        .init_resource::<loot::RandLootTable>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency

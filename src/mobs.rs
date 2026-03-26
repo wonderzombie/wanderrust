@@ -1,7 +1,6 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
-use rand::RngExt;
 
 use crate::{
     actors::{Alerted, Dead, Player},
@@ -10,6 +9,7 @@ use crate::{
     fov::{Fov, Vision},
     gamestate::Turn,
     inventory,
+    loot::{FixedLoot, RandLootTable},
     tiles::TileIdx,
 };
 
@@ -86,8 +86,8 @@ pub fn move_agents(
 
 pub fn handle_dead(
     mut commands: Commands,
-    loot_table: Res<LootTable>,
-    query: Query<(Entity, &TileIdx, Option<&Loot>), (With<Dead>, With<Turn>)>,
+    mob_loot: Res<RandLootTable>,
+    query: Query<(Entity, &TileIdx, Option<&FixedLoot>), (With<Dead>, With<Turn>)>,
     mut acquisitions: MessageWriter<inventory::Acquisition>,
 ) {
     for (entity, tile_idx, loot_opt) in &query {
@@ -99,30 +99,13 @@ pub fn handle_dead(
             acquired += loot.0.clone();
         }
 
-        if loot_table.0.contains_key(tile_idx) {
-            let loot = loot_table.roll(*tile_idx);
+        if mob_loot.contains_key(tile_idx) {
+            let loot = mob_loot.roll(*tile_idx);
             acquired += loot;
         }
 
         if !acquired.is_empty() {
             acquisitions.write(inventory::Acquisition { items: acquired });
-        }
-    }
-}
-
-#[derive(Component, Debug)]
-pub struct Loot(pub inventory::Inventory);
-
-#[derive(Resource, Default, Clone)]
-pub struct LootTable(HashMap<TileIdx, (inventory::Item, (usize, usize))>);
-
-impl LootTable {
-    pub fn roll(&self, tile: TileIdx) -> inventory::Inventory {
-        if let Some((item, (min, max))) = self.0.get(&tile) {
-            let qty = rand::rng().random_range(*min..=*max);
-            inventory::Inventory::with_items(&[(item.clone(), qty)])
-        } else {
-            inventory::Inventory::default()
         }
     }
 }
