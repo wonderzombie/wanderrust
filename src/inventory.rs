@@ -10,7 +10,7 @@ use bevy::{
     platform::collections::HashMap,
 };
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 /// A simple wrapper around a string to represent an item in the game world.
 pub struct Item(pub String);
 
@@ -42,6 +42,17 @@ impl From<&[Item]> for Inventory {
     }
 }
 
+impl From<&[(Item, usize)]> for Inventory {
+    /// Creates a new [Inventory] from a slice of [Item]s and their quantities.
+    fn from(items: &[(Item, usize)]) -> Self {
+        let mut inventory = HashMap::new();
+        for (item, count) in items.iter() {
+            *inventory.entry(item.clone()).or_insert(0usize) += *count;
+        }
+        Inventory(inventory)
+    }
+}
+
 impl AddAssign<Inventory> for Inventory {
     fn add_assign(&mut self, rhs: Inventory) {
         for (item, count) in rhs.0 {
@@ -54,6 +65,11 @@ impl AddAssign<(Item, usize)> for Inventory {
     fn add_assign(&mut self, rhs: (Item, usize)) {
         self.add_item(rhs.0, rhs.1);
     }
+}
+
+/// Returns the default [Inventory] with no items.
+pub fn empty() -> Inventory {
+    Inventory::default()
 }
 
 impl Inventory {
