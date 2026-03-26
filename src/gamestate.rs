@@ -4,6 +4,13 @@ use bevy_northstar::prelude::*;
 use crate::actors::{Actor, Player};
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Screen {
+    #[default]
+    Title,
+    Playing,
+}
+
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GameState {
     #[default]
     Starting,
