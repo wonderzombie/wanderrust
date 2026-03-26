@@ -30,7 +30,7 @@ use crate::{
     cell::Cell,
     combat::CombatStats,
     fov::Vision,
-    gamestate::{GameState, Screen},
+    gamestate::GameState,
     light::{Emitter, LightLevel},
     tilemap::{EntryId, Portal, TilemapSpec},
     tiles::{TileIdx, Walkable},
