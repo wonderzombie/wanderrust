@@ -1,6 +1,7 @@
 use std::ops::Add;
 
 use bevy::prelude::*;
+use bevy_northstar::prelude::Blocking;
 
 use crate::{
     atlas::SpriteAtlas,
@@ -71,15 +72,10 @@ pub struct Moved(pub Entity);
 
 pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
-        Player,
         Actor,
-        PieceBundle {
-            sprite: atlas.sprite(),
-            cell: spec.start,
-            transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
-            ..default()
-        },
+        Player,
         TileIdx::Player,
+        Blocking,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
         CombatStats {
             nameplate: "Player".into(),
@@ -87,6 +83,12 @@ pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<S
             attack: 2,
             defense: 1,
             hp: 10,
+            ..default()
+        },
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: spec.start,
+            transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
             ..default()
         },
     ));
