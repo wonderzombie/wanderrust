@@ -20,7 +20,7 @@ impl Display for Item {
     }
 }
 
-#[derive(Resource, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Resource, Default, Debug, Clone, PartialEq, Eq)]
 /// A resource representing the player's inventory, which is a mapping of items to their quantities.
 pub struct Inventory(HashMap<Item, usize>);
 
@@ -59,6 +59,15 @@ impl Inventory {
     pub fn with_item(item: Item, count: usize) -> Self {
         let mut inventory = HashMap::new();
         inventory.insert(item, count);
+        Inventory(inventory)
+    }
+
+    /// Creates a new [Inventory] with multiple [Item]s and counts.
+    pub fn with_items(items: &[(Item, usize)]) -> Self {
+        let mut inventory = HashMap::new();
+        for (item, count) in items.iter() {
+            inventory.insert(item.clone(), *count);
+        }
         Inventory(inventory)
     }
 
