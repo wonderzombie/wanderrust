@@ -99,7 +99,7 @@ fn main() {
                     tilemap::initialize_tile_storage,
                 )
                     .chain()
-                    .in_set(Systems::SetupTiles),
+                    .in_set(GameSystem::SetupTiles),
                 sounds::load_sounds,
             ),
         )
@@ -115,7 +115,8 @@ fn main() {
         )
         .add_systems(
             PostStartup,
-            (add_test_npc, add_test_emitters, add_test_portals).in_set(Systems::SpawnTestEntities),
+            (add_test_npc, add_test_emitters, add_test_portals)
+                .in_set(GameSystem::SpawnTestEntities),
         )
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_ui)
@@ -133,7 +134,7 @@ fn main() {
                     handle_pending_transition,
                 )
                     .chain()
-                    .in_set(Systems::Ramifications),
+                    .in_set(GameSystem::Ramifications),
             ),
         )
         .add_systems(
@@ -145,22 +146,22 @@ fn main() {
                     actors::update_actor_transforms,
                     actors::sync_occupied_tiles,
                 )
-                    .in_set(Systems::ActorSync)
+                    .in_set(GameSystem::ActorSync)
                     .after(map::sync_tiles),
-                camera::update.after(Systems::ActorSync),
-                update_spatial_index.after(Systems::ActorSync),
+                camera::update.after(GameSystem::ActorSync),
+                update_spatial_index.after(GameSystem::ActorSync),
                 (fov::update_fov_model, fov::update_fov_markers)
                     .chain()
-                    .in_set(Systems::Fov)
-                    .after(Systems::ActorSync),
+                    .in_set(GameSystem::Fov)
+                    .after(GameSystem::ActorSync),
                 (light::update_emitter_lights, light::sync_actor_light_levels)
                     .chain()
-                    .in_set(Systems::Light)
-                    .after(Systems::Fov),
+                    .in_set(GameSystem::Light)
+                    .after(GameSystem::Fov),
                 (mobs::check_fov, mobs::pathfind, mobs::move_agents)
                     .chain()
-                    .in_set(Systems::Mobs)
-                    .after(Systems::Fov)
+                    .in_set(GameSystem::Mobs)
+                    .after(GameSystem::Fov)
                     .run_if(in_state(GameState::Ramifying)),
             ),
         )
@@ -178,14 +179,14 @@ fn main() {
                 )
                     .chain()
                     .run_if(in_state(GameState::Ramifying)),
-                mobs::handle_dead.after(Systems::Mobs),
+                mobs::handle_dead.after(GameSystem::Mobs),
             ),
         )
         .run();
 }
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Systems {
+pub enum GameSystem {
     SetupTiles,
     SpawnTestEntities,
     Ramifications,
