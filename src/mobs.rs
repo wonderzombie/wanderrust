@@ -7,6 +7,7 @@ use crate::{
     combat,
     fov::{Fov, Vision},
     gamestate::Turn,
+    inventory,
     tiles::TileIdx,
 };
 
@@ -81,8 +82,22 @@ pub fn move_agents(
     }
 }
 
-pub fn handle_dead(mut commands: Commands, query: Query<Entity, (With<Dead>, With<Turn>)>) {
-    for entity in &query {
+pub fn handle_dead(
+    mut commands: Commands,
+    query: Query<(Entity, Option<&Loot>), (With<Dead>, With<Turn>)>,
+    mut acquisitions: MessageWriter<inventory::Acquisition>,
+) {
+    for (entity, loot_opt) in &query {
         commands.entity(entity).remove::<Turn>();
+
+        if let Some(loot) = loot_opt {
+            acquisitions.write(inventory::Acquisition {
+                items: loot.0.clone(),
+            });
+        }
     }
 }
+
+#[derive(Component, Debug)]
+pub struct Loot(pub inventory::Inventory);
+
