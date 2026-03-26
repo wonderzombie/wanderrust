@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
-
 use crate::{
     actors::{Alerted, Dead, Player},
     cell::Cell,
@@ -9,7 +8,7 @@ use crate::{
     fov::{Fov, Vision},
     gamestate::Turn,
     inventory,
-    loot::{FixedLoot, RandLootTable},
+    loot::{FixedLoot, MobLootTable},
     tiles::TileIdx,
 };
 
@@ -86,7 +85,7 @@ pub fn move_agents(
 
 pub fn handle_dead(
     mut commands: Commands,
-    mob_loot: Res<RandLootTable>,
+    mob_loot: Res<MobLootTable>,
     query: Query<(Entity, &TileIdx, Option<&FixedLoot>), (With<Dead>, With<Turn>)>,
     mut acquisitions: MessageWriter<inventory::Acquisition>,
 ) {

@@ -92,15 +92,6 @@ impl Inventory {
         Inventory(inventory)
     }
 
-    /// Creates a new [Inventory] with multiple [Item]s and counts.
-    pub fn with_items(items: &[(Item, usize)]) -> Self {
-        let mut inventory = HashMap::new();
-        for (item, count) in items.iter() {
-            inventory.insert(item.clone(), *count);
-        }
-        Inventory(inventory)
-    }
-
     pub fn has_item(&self, item: &Item) -> bool {
         self.0.contains_key(item)
     }
