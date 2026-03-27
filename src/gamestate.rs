@@ -65,7 +65,6 @@ pub fn check_turns_complete(
 ) {
     let all_done = turn_actors.iter().all(Turn::complete);
     if all_done || turn_actors.is_empty() {
-        info!("non-player actors all done; back to awaiting input");
         next_state.set(GameState::AwaitingInput);
     }
 }
