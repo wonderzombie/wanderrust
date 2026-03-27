@@ -19,6 +19,7 @@ use bevy::prelude::*;
 /// - ` ` = empty space (not walkable)
 /// - `b` = brown chest
 /// - `w` = white chest
+///
 /// See also [`TilemapSpec::KEY`].
 #[allow(dead_code)]
 pub const MAP: &str = r#"

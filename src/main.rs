@@ -144,7 +144,7 @@ fn main() {
                 map::sync_tiles,
                 (
                     actors::sync_sprites,
-                    actors::update_actor_transforms,
+                    actors::update_transforms,
                     actors::sync_occupied_tiles,
                 )
                     .in_set(GameSystem::ActorSync)

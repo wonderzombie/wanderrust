@@ -106,9 +106,7 @@ pub fn sync_sprites(
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
-pub fn update_actor_transforms(
-    mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>,
-) {
+pub fn update_transforms(mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
