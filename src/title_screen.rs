@@ -63,12 +63,9 @@ pub fn system(
     interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
 ) {
     for (_, interaction) in interactions.iter() {
-        match interaction {
-            Interaction::Pressed => {
-                commands.set_state_if_neq(Screen::Playing);
-                commands.set_state_if_neq(GameState::AwaitingInput);
-            }
-            _ => {}
+        if interaction == &Interaction::Pressed {
+            commands.set_state_if_neq(Screen::Playing);
+            commands.set_state_if_neq(GameState::AwaitingInput);
         }
     }
 }
