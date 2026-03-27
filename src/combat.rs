@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use bevy_northstar::prelude::AgentOfGrid;
 
-use crate::{actors::Dead, colors, event_log::MessageLog};
+use crate::{actors::Dead, colors, event_log::MessageLog, gamestate::Turn};
 
 #[derive(Component, Debug, Default)]
 pub struct CombatStats {
@@ -68,7 +69,11 @@ pub fn process_attacks(
                     format!("{} is dead", defender.nameplate),
                     colors::KENNEY_RED,
                 );
-                commands.entity(defender_entity).insert(Dead);
+                commands
+                    .entity(defender_entity)
+                    .insert(Dead)
+                    .remove::<AgentOfGrid>()
+                    .remove::<Turn>();
             }
         } else {
             log.add(

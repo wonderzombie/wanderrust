@@ -15,7 +15,10 @@ use crate::{
 pub fn check_fov(
     mut commands: Commands,
     fov: Res<Fov>,
-    visions: Query<(Entity, &TileIdx, &Cell, &Vision), (With<AgentOfGrid>, Without<Player>)>,
+    visions: Query<
+        (Entity, &TileIdx, &Cell, &Vision),
+        (With<AgentOfGrid>, Without<Dead>, Without<Player>),
+    >,
     player: Query<&Cell, With<Player>>,
 ) {
     let Some(player_cell) = player.single().ok() else {
@@ -84,13 +87,10 @@ pub fn move_agents(
 }
 
 pub fn handle_dead(
-    mut commands: Commands,
-    query: Query<(Entity, Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
+    query: Query<(Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
     mut acquisitions: MessageWriter<inventory::Acquisition>,
 ) {
-    for (entity, fixed_loot_opt, loot_opt) in &query {
-        commands.entity(entity).remove::<Turn>();
-
+    for (fixed_loot_opt, loot_opt) in &query {
         let mut acquired = inventory::Inventory::default();
 
         if let Some(loot) = loot_opt {
