@@ -24,10 +24,10 @@ pub fn get_sample_rect_cells(size: u32, cell: &Cell) -> [Cell; 4] {
 }
 
 /// Returns a bilinear sample of the cell's value at the given depth.
-pub fn get_bilinear_sample(size: u32, cell: &Cell, depth: u64) -> f32 {
-    let points = get_sample_rect_cells(size, cell);
+pub fn get_bilinear_sample(region_size: u32, cell: &Cell, depth: u64) -> f32 {
+    let points = get_sample_rect_cells(region_size, cell);
 
-    let size = size as f32;
+    let size = region_size as f32;
     // tx and ty will be a fraction of `size`.
     let tx = (cell.x as f32).rem_euclid(size) / size;
     let ty = (cell.y as f32).rem_euclid(size) / size;
