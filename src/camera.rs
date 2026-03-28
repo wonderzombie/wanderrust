@@ -48,3 +48,14 @@ pub fn update(
     let zoom = zoom_opt.map_or(1.0, |zoom| zoom.0);
     camera_transform.scale = Vec3::splat(zoom);
 }
+
+pub fn visible_cell_range(camera: &Camera, player_cell: Cell, tile_size: f32) -> (Cell, Cell) {
+    let viewport_size = camera.logical_viewport_size().unwrap();
+    let half_w = (viewport_size.x / tile_size / 2.0).ceil() as i32;
+    let half_h = (viewport_size.y / tile_size / 2.0).ceil() as i32;
+
+    let tl = Cell::new(player_cell.x - half_w, player_cell.y - half_h);
+    let br = Cell::new(player_cell.x + half_w, player_cell.y + half_h);
+
+    (tl, br)
+}
