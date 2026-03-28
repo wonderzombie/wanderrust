@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.18.0", default-features = false, features = ["2d", "debug", "mouse", "sprite_picking"] }
+bevy = { version = "0.18.1", default-features = false, features = ["dynamic_linking", "2d", "debug", "mouse", "sprite_picking"] }
 bevy_egui = "0.39.1"
 bevy_northstar = "0.6.1"
 fxhash = "0.2.1"
@@ -17,3 +17,7 @@ rand = "0.10.0"
 rfd = "0.17.2"
 ron = "0.12.0"
 serde = { version = "1.0.228", features = ["derive"] }
+log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+
+[profile.dev]
+opt-level = 1
