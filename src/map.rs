@@ -258,7 +258,7 @@ pub fn sync_tiles(
             Entity,
             &mut Sprite,
             &TileIdx,
-            (Option<&TilePreview>, Option<&Walkable>, Option<&Opaque>),
+            AnyOf<(&TilePreview, &Walkable, &Opaque)>,
         ),
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
@@ -301,26 +301,19 @@ pub fn update_tile_visuals(
         (
             &mut Sprite,
             &mut Visibility,
-            Option<&Occupied>,
-            Option<&Highlighted>,
-            Option<&Revealed>,
-            Option<&TilePreview>,
-            Option<&LightLevel>,
-        ),
-        (
-            With<MapTile>,
-            Or<(
-                Changed<Occupied>,
-                Changed<Highlighted>,
-                Changed<Revealed>,
-                Changed<TilePreview>,
-                Changed<LightLevel>,
+            AnyOf<(
+                &Occupied,
+                &Highlighted,
+                &Revealed,
+                &TilePreview,
+                &LightLevel,
             )>,
         ),
+        With<MapTile>,
     >,
     map_spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, occupied, highlighted, revealed, preview_opt, light_level) in
+    for (mut sprite, mut vis, (occupied, highlighted, revealed, preview_opt, light_level)) in
         tiles.iter_mut()
     {
         let revealed = revealed.is_some_and(|r| r.0);
