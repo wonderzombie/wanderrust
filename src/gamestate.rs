@@ -46,12 +46,9 @@ pub fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
 }
 
 pub fn finalize_waiting_turns(
-    mut actors: Query<
-        (&mut Turn, Option<&Pathfind>, Option<&NextPos>),
-        (With<Actor>, Without<Player>),
-    >,
+    mut actors: Query<(&mut Turn, AnyOf<(&Pathfind, &NextPos)>), (With<Actor>, Without<Player>)>,
 ) {
-    for (mut turn, pathfind, next_pos) in actors.iter_mut() {
+    for (mut turn, (pathfind, next_pos)) in actors.iter_mut() {
         if *turn == Turn::Waiting && pathfind.is_none() && next_pos.is_none() {
             info!("finalizing waiting actor to Done (no pending path/move)");
             *turn = Turn::Done;
