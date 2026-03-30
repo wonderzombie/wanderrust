@@ -35,6 +35,7 @@ pub struct PieceBundle {
     pub cell: Cell,
     pub transform: Transform,
     pub visibility: Visibility,
+    pub pickable: Pickable,
 }
 
 #[derive(Resource, Debug)]

@@ -32,7 +32,7 @@ use crate::{
     cell::Cell,
     gamestate::GameState,
     tilemap::{EntryId, Portal, TilemapSpec},
-    tiles::{TileIdx, Walkable},
+    tiles::{MapTile, TileIdx, Walkable},
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{
@@ -110,6 +110,7 @@ fn main() {
                 actors::setup_player,
                 fov::setup_fov,
                 camera::setup_camera,
+                add_click_observer,
             ),
         )
         .add_systems(
@@ -197,6 +198,24 @@ pub enum GameSystem {
     Fov,
     Light,
     Mobs,
+}
+
+fn add_click_observer(mut commands: Commands) {
+    commands.add_observer(
+        |on: On<Pointer<Click>>,
+         entities: Query<(&TileIdx, &Cell)>,
+         mut log: ResMut<event_log::MessageLog>| {
+            match entities.get(on.event_target()) {
+                Ok((tile_idx, cell)) => {
+                    log.add(format!("{} = {:?}", cell, tile_idx), Color::WHITE);
+                }
+                Err(err) => {
+                    trace!("couldn't get_entity() on.event_target(): {:?}", err);
+                    return;
+                }
+            };
+        },
+    );
 }
 
 fn spawn_grid(mut commands: Commands, spec: Res<TilemapSpec>) {

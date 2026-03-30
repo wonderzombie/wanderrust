@@ -164,7 +164,11 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     commands.add_observer(
         |on: On<Pointer<Click>>,
          mut tiles: Query<&mut TileIdx, With<MapTile>>,
-         editor: Res<EditorContext>| {
+         editor: Res<EditorContext>,
+         state: Res<State<EditorState>>| {
+            if state.get() != &EditorState::Enabled {
+                return;
+            }
             let mut tile_idx = get_entity!(tiles, on);
             *tile_idx = match on.button {
                 PointerButton::Primary => editor.active_tile,
@@ -189,7 +193,6 @@ pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, Wit
     for tile in tiles.iter() {
         commands
             .entity(tile)
-            .remove::<Pickable>()
             // TODO: we could try to remove TilePreview. Removing it means it won't be updated
             // though so we set the TilePreview to the default [`None`].
             .insert(TilePreview::default());

@@ -46,11 +46,11 @@ pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
         .show(ctx, |ui| {
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Body,
-                egui::FontId::new(18.0, egui::FontFamily::Proportional),
+                egui::FontId::new(14.0, egui::FontFamily::Proportional),
             );
 
             for (msg, color) in log.as_color_text() {
-                ui.set_min_width(172.0);
+                ui.set_min_width(188.0);
                 ui.colored_label(color.to_egui(), msg);
             }
         });

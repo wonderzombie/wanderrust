@@ -261,13 +261,16 @@ pub fn sync_tiles(
             Option<&TilePreview>,
             Option<&Walkable>,
             Option<&Opaque>,
+            Option<&Pickable>,
         ),
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so
     // we apply most changes in some unconditional fashion.
-    for (entity, mut sprite, tile_idx, preview_opt, walkable_opt, opaque_opt) in tiles.iter_mut() {
+    for (entity, mut sprite, tile_idx, preview_opt, walkable_opt, opaque_opt, pickable_opt) in
+        tiles.iter_mut()
+    {
         let mut entity_command = commands.entity(entity);
 
         // If there's a preview, we should apply that tile index instead.
@@ -291,6 +294,13 @@ pub fn sync_tiles(
             entity_command.remove::<Opaque>();
         } else if !tile_idx.is_transparent() && opaque_opt.is_none() {
             entity_command.insert(Opaque);
+        }
+
+        if pickable_opt.is_none() {
+            entity_command.insert(Pickable {
+                should_block_lower: false,
+                is_hoverable: true,
+            });
         }
     }
 }
