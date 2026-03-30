@@ -25,8 +25,6 @@ pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats
     }
 }
 
-/// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
-/// Interaction execution is handled by [process_interactions].
 pub fn process_attacks(
     mut commands: Commands,
     mut combatants: Query<(Entity, &mut CombatStats)>,
