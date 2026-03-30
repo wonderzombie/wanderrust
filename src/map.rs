@@ -258,15 +258,16 @@ pub fn sync_tiles(
             Entity,
             &mut Sprite,
             &TileIdx,
-            AnyOf<(&TilePreview, &Walkable, &Opaque)>,
+            Option<&TilePreview>,
+            Option<&Walkable>,
+            Option<&Opaque>,
         ),
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so
     // we apply most changes in some unconditional fashion.
-    for (entity, mut sprite, tile_idx, props) in tiles.iter_mut() {
-        let (preview_opt, walkable_opt, opaque_opt) = props;
+    for (entity, mut sprite, tile_idx, preview_opt, walkable_opt, opaque_opt) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
 
         // If there's a preview, we should apply that tile index instead.
