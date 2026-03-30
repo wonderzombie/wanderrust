@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use bevy::{
+    ecs::observer::ObservedBy,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures},
 };
@@ -16,13 +17,19 @@ use crate::{
 };
 const DATA_DIR: &str = "data";
 
+#[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
+pub enum EditorState {
+    Disabled,
+    Enabled,
+}
+
 #[derive(Resource)]
-pub struct EditorState {
+pub struct EditorContext {
     pub active_tile: tiles::TileIdx,
     pub active_tile_idx: usize,
 }
 
-impl Default for EditorState {
+impl Default for EditorContext {
     fn default() -> Self {
         Self {
             active_tile: tiles::TileIdx::Grass,
@@ -59,7 +66,7 @@ pub fn on_zoom_button_input(
 /// Handles button input, updating the active tile and logging events.
 pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
-    mut editor_state: ResMut<EditorState>,
+    mut editor_state: ResMut<EditorContext>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
     if !input.is_changed() {
@@ -136,7 +143,7 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     commands.add_observer(
         |on: On<Pointer<Over>>,
          mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
-         editor: Res<EditorState>| {
+         editor: Res<EditorContext>| {
             let preview_opt = get_entity!(tiles, on);
             if let Some(mut preview) = preview_opt {
                 preview.set(editor.active_tile);
@@ -157,7 +164,7 @@ pub fn setup_global_tile_observers(mut commands: Commands) {
     commands.add_observer(
         |on: On<Pointer<Click>>,
          mut tiles: Query<&mut TileIdx, With<MapTile>>,
-         editor: Res<EditorState>| {
+         editor: Res<EditorContext>| {
             let mut tile_idx = get_entity!(tiles, on);
             *tile_idx = match on.button {
                 PointerButton::Primary => editor.active_tile,
@@ -175,6 +182,23 @@ pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<
             .entity(tile)
             .insert(Pickable::default())
             .insert(TilePreview::default());
+    }
+}
+
+pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
+    for tile in tiles.iter() {
+        commands
+            .entity(tile)
+            .remove::<Pickable>()
+            // TODO: we could try to remove TilePreview. Removing it means it won't be updated
+            // though so we set the TilePreview to the default [`None`].
+            .insert(TilePreview::default());
+    }
+}
+
+pub fn remove_global_tile_observers(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
+    for tile in tiles.iter() {
+        commands.entity(tile).remove::<ObservedBy>();
     }
 }
 
@@ -285,27 +309,53 @@ pub fn save_map(
     }
 }
 
+pub fn on_editor_toggle(
+    input: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<EditorState>>,
+    mut next_state: ResMut<NextState<EditorState>>,
+) {
+    if input.just_pressed(KeyCode::F1) {
+        let next = match **current_state {
+            EditorState::Enabled => EditorState::Disabled,
+            EditorState::Disabled => EditorState::Enabled,
+        };
+        next_state.set(next);
+    }
+}
+
 pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(EditorState::default())
-            .add_systems(Startup, setup_global_tile_observers)
+        app.add_systems(Startup, setup_global_tile_observers)
             .add_systems(
                 Update,
                 (
-                    add_editor_components,
-                    on_button_input,
-                    on_zoom_button_input,
-                    on_toggle_fov,
-                    handle_map_operations,
-                )
-                    .chain(),
+                    (
+                        // This should run in case any map tiles have been added/removed.
+                        add_editor_components,
+                        on_button_input,
+                        on_zoom_button_input,
+                        on_toggle_fov,
+                        handle_map_operations,
+                    )
+                        .chain()
+                        .run_if(in_state(EditorState::Enabled)),
+                    on_editor_toggle,
+                ),
+            )
+            .add_systems(
+                OnExit(EditorState::Enabled),
+                // These only need to run once per transition to Disabled.
+                (remove_editor_components, remove_global_tile_observers),
             )
             .add_systems(
                 PostUpdate,
-                (poll_load_dialog, poll_save_dialog, load_map, save_map),
+                (poll_load_dialog, poll_save_dialog, load_map, save_map)
+                    .run_if(in_state(EditorState::Enabled)),
             )
+            .insert_resource(EditorContext::default())
+            .insert_state(EditorState::Disabled)
             .add_message::<MapLoadMessage>()
             .add_message::<MapSaveMessage>();
     }
