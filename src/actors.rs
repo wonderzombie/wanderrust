@@ -127,7 +127,7 @@ pub struct ActionAttempt {
 pub fn handle_player_input(
     mut events: MessageWriter<ActionAttempt>,
     input: Res<ButtonInput<KeyCode>>,
-    player_query: Query<(Entity, &Cell), With<Player>>,
+    player_query: Single<(Entity, &Cell), With<Player>>,
 ) {
     if !input.is_changed() {
         return;
@@ -136,10 +136,7 @@ pub fn handle_player_input(
         return;
     };
 
-    let Ok((player_entity, player_cell)) = player_query.single() else {
-        error!("No player entity found in the world.");
-        return;
-    };
+    let (player_entity, player_cell) = *player_query;
 
     events.write(ActionAttempt {
         entity: player_entity,
