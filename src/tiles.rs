@@ -44,32 +44,32 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize
 }
 
-#[derive(Component, Default, Debug, Clone, Copy)]
 /// A marker component for entities that represent tiles on the map, which can have properties like walkability and opacity.
+#[derive(Component, Default, Debug, Clone, Copy)]
 pub struct MapTile;
 
-#[derive(Component, Debug, Clone, Copy)]
 /// A marker component for tiles that can be walked on by actors, such as the player or NPCs.
+#[derive(Component, Debug, Clone, Copy)]
 pub struct Walkable;
 
-#[derive(Component, Debug, Clone, Copy)]
 /// A marker component for tiles that block line of sight, affecting field of view calculations.
+#[derive(Component, Debug, Clone, Copy)]
 pub struct Opaque;
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
 /// A marker component for tiles that are currently revealed to the player.
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Revealed(pub bool);
 
-#[derive(Component, Default, Debug, Clone, Copy)]
 /// A marker component for tiles that are currently highlighted, typically by cursor.
+#[derive(Component, Default, Debug, Clone, Copy)]
 pub struct Highlighted;
 
-#[derive(Component, Default, Debug, Clone, Copy)]
 /// A marker component for tiles occupied by an actor.
+#[derive(Component, Default, Debug, Clone, Copy)]
 pub struct Occupied;
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq)]
 /// A marker component for tiles that are currently being previewed, such as a tile being hovered over.
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq)]
 pub struct TilePreview(Option<TileIdx>);
 
 impl TilePreview {

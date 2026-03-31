@@ -6,8 +6,8 @@ use bevy::{
     sprite::Sprite,
 };
 
-#[derive(Resource, Debug)]
 /// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
+#[derive(Resource, Debug)]
 pub struct SpriteAtlas {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,

@@ -10,8 +10,8 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Resource, Debug, Deref, DerefMut)]
 /// Newtype for field of view model that's a Resource and which tracks which cells are transparent for visibility calculations.
+#[derive(Resource, Debug, Deref, DerefMut)]
 pub struct Fov(Mrpas);
 
 impl Fov {
@@ -23,7 +23,6 @@ impl Fov {
     }
 }
 
-#[derive(Resource, Debug, Deref, DerefMut)]
 /// Newtype for a read-only clone of an existing Mrpas model configured for one
 /// viewer's origin and max_distance.
 ///
@@ -31,6 +30,7 @@ impl Fov {
 /// the model (i.e. map of opaque/transparent positions) *and* the currently
 /// computed (active) field of view. `clear_field_of_view()` is required before
 /// `compute_field_of_view()`, and they both mutate the model.
+#[derive(Resource, Debug, Deref, DerefMut)]
 pub struct View(Mrpas);
 
 impl View {

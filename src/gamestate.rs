@@ -29,8 +29,8 @@ pub enum GameState {
     Ramifying,
 }
 
-#[derive(Component, Debug, Default, PartialEq, Eq)]
 /// Represents the current turn state of an actor.
+#[derive(Component, Debug, Default, PartialEq, Eq)]
 pub enum Turn {
     /// Isn't taking actions but may at some point in the future.
     #[default]

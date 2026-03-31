@@ -253,8 +253,8 @@ fn update_grid(
     }
 }
 
-#[derive(Resource, Default, Debug, PartialEq, Eq)]
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
+#[derive(Resource, Default, Debug, PartialEq, Eq)]
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }
@@ -365,9 +365,9 @@ fn process_actions(
     }
 }
 
+/// The destination will be marked by this EntryId.
 #[derive(Resource, Debug)]
 struct PendingTransition {
-    /// The destination will be marked by this EntryId.
     arrive_at: EntryId,
 }
 

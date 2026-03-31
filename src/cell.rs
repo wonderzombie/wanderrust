@@ -5,6 +5,8 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::AgentPos;
 use serde::{Deserialize, Serialize};
 
+/// A simple struct representing a cell in the grid-based world, with integer coordinates.
+/// i32 allows us to use offsets without extra fuss compared to unsigned integers.
 #[derive(
     Component,
     Default,
@@ -19,8 +21,6 @@ use serde::{Deserialize, Serialize};
     Ord,
     PartialOrd,
 )]
-/// A simple struct representing a cell in the grid-based world, with integer coordinates.
-/// i32 allows us to use offsets without extra fuss compared to unsigned integers.
 pub struct Cell {
     pub x: i32,
     pub y: i32,
