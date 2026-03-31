@@ -4,7 +4,7 @@ use crate::gamestate::{GameState, Screen};
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(title_screen(asset_server));
+    commands.spawn(screen_bundle(asset_server));
 }
 
 #[derive(Component, Debug)]
@@ -17,11 +17,11 @@ impl Plugin for TitleScreenPlugin {
         app.insert_state(Screen::Title)
             .add_systems(OnEnter(Screen::Title), setup)
             .add_systems(OnExit(Screen::Title), discard)
-            .add_systems(Update, system.run_if(in_state(Screen::Title)));
+            .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
     }
 }
 
-pub fn title_screen(asset_server: Res<AssetServer>) -> impl Bundle {
+pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
     (
         TitleScreen,
@@ -58,7 +58,7 @@ pub fn title_screen(asset_server: Res<AssetServer>) -> impl Bundle {
     )
 }
 
-pub fn system(
+pub fn interaction_system(
     mut commands: Commands,
     interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
 ) {
