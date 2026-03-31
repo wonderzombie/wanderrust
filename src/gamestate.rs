@@ -30,6 +30,7 @@ pub enum GameState {
 }
 
 #[derive(Component, Debug, Default, PartialEq, Eq)]
+/// Represents the current turn state of an actor.
 pub enum Turn {
     /// Isn't taking actions but may at some point in the future.
     #[default]
@@ -46,7 +47,7 @@ impl Turn {
     }
 }
 
-/// Resets all actors' turns to `Turn::Waiting` at the beginning of ramifying.
+/// Resets all actors' turns to [`Turn::Waiting`] at the beginning of ramifying.
 pub fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
     for mut turn in actors.iter_mut() {
         if turn.as_ref() != &Turn::Idling {
@@ -55,6 +56,7 @@ pub fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
     }
 }
 
+/// Finalizes [`Turn::Waiting`] actors by setting their turn to `Turn::Done` if they have no pending path or move.
 pub fn finalize_waiting_turns(
     mut actors: Query<(&mut Turn, AnyOf<(&Pathfind, &NextPos)>), (With<Actor>, Without<Player>)>,
 ) {
@@ -66,6 +68,7 @@ pub fn finalize_waiting_turns(
     }
 }
 
+/// Checks if all actors are done with their turns and transitions to `GameState::AwaitingInput` if so.
 pub fn check_turns_complete(
     turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
     mut next_state: ResMut<NextState<GameState>>,
