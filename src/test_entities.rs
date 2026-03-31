@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_northstar::{
     grid::Grid,
-    prelude::{AgentOfGrid, AgentPos, CardinalNeighborhood},
+    prelude::{AgentOfGrid, AgentPos, Blocking, CardinalNeighborhood},
 };
 
 use crate::{
@@ -22,13 +22,14 @@ pub(crate) fn add_test_npc(
     grid_entity: Single<Entity, With<Grid<CardinalNeighborhood>>>,
 ) {
     commands.spawn((
+        Actor,
+        TileIdx::Skeleton,
+        Blocking,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
             ..default()
         },
-        Actor,
-        TileIdx::Skeleton,
         interactions::Interactable::Speaker {
             nameplate: "Mr. Boney".into(),
         },
@@ -38,6 +39,7 @@ pub(crate) fn add_test_npc(
     commands.spawn((
         Actor,
         TileIdx::Skeleton,
+        Blocking,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 49, y: 49 },
@@ -56,6 +58,7 @@ pub(crate) fn add_test_npc(
     commands.spawn((
         Actor,
         TileIdx::Bat,
+        Blocking,
         PieceBundle {
             sprite: atlas.sprite(),
             cell,
@@ -78,6 +81,7 @@ pub(crate) fn add_test_emitters(mut commands: Commands, atlas: Res<SpriteAtlas>)
     commands.spawn((
         Actor,
         TileIdx::Torch,
+        Blocking,
         PieceBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 48 },
