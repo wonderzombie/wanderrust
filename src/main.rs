@@ -64,11 +64,11 @@ fn main() {
         )
         .add_plugins(EguiPlugin::default())
         .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
-        .add_message::<actors::ActionAttempt>()
+        .add_message::<actors::Action>()
         .add_message::<inventory::Acquisition>()
-        .add_message::<combat::AttackAttempt>()
-        .add_message::<interactions::DialogueAttempt>()
-        .add_message::<interactions::InteractionAttempt>()
+        .add_message::<combat::Attack>()
+        .add_message::<interactions::Listen>()
+        .add_message::<interactions::Examine>()
         .insert_state(GameState::Starting)
         .init_resource::<SpatialIndex>()
         .init_resource::<inventory::Inventory>()
@@ -324,9 +324,9 @@ fn load_spritesheet(
 fn process_actions(
     mut commands: Commands,
     mut log: ResMut<event_log::MessageLog>,
-    mut actions: MessageReader<ActionAttempt>,
+    mut actions: MessageReader<Action>,
     portals: Query<&Portal>,
-    mut interaction_attempts: MessageWriter<interactions::InteractionAttempt>,
+    mut interaction_attempts: MessageWriter<interactions::Examine>,
     spatial_index: Res<SpatialIndex>,
 ) {
     let mut acted = false;
@@ -352,7 +352,7 @@ fn process_actions(
             continue;
         }
 
-        interaction_attempts.write(interactions::InteractionAttempt {
+        interaction_attempts.write(interactions::Examine {
             interactor: action.entity,
             target: target_entity,
         });

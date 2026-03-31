@@ -14,7 +14,7 @@ pub struct CombatStats {
 }
 
 #[derive(Message, Debug, Copy, Clone)]
-pub struct AttackAttempt {
+pub struct Attack {
     pub attacker: Entity,
     pub target: Entity,
 }
@@ -28,7 +28,7 @@ pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats
 pub fn process_attacks(
     mut commands: Commands,
     mut combatants: Query<(Entity, &mut CombatStats)>,
-    mut attacks: MessageReader<AttackAttempt>,
+    mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
 ) {
     for attack in attacks.read() {

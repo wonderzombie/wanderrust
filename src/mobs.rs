@@ -54,7 +54,7 @@ pub fn pathfind(
 pub fn move_agents(
     mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
     player: Single<(Entity, &Cell), With<Player>>,
-    mut attacks: MessageWriter<combat::AttackAttempt>,
+    mut attacks: MessageWriter<combat::Attack>,
     mut commands: Commands,
 ) {
     for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
@@ -71,7 +71,7 @@ pub fn move_agents(
         let (player, player_cell) = *player;
 
         if next_pos.0 == player_cell.as_vec3() {
-            attacks.write(combat::AttackAttempt {
+            attacks.write(combat::Attack {
                 attacker: entity,
                 target: player,
             });

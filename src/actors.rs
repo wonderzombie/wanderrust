@@ -12,6 +12,7 @@ use crate::{
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
+/// Represents an entity that is currently alerted to a nearby threat, typically the player.
 #[derive(Component, Debug)]
 pub struct Alerted;
 
@@ -28,7 +29,8 @@ pub struct Player;
 #[derive(Component, Debug, Deref)]
 pub struct PreviousCell(pub Cell);
 
-/// A bundle for map pieces that includes a sprite, cell position, and transform.
+/// A bundle for map pieces that includes a sprite, cell position, transform, and pickable.
+/// Pickable is specific to Bevy's sprite picking system.
 #[derive(Bundle, Default, Clone, Debug)]
 pub struct PieceBundle {
     pub sprite: Sprite,
@@ -71,6 +73,7 @@ const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 #[derive(EntityEvent, Debug)]
 pub struct Moved(pub Entity);
 
+/// Spawns the player entity at the start position of the tilemap on the player's layer.
 pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
     commands.spawn((
         Actor,
@@ -117,7 +120,7 @@ pub fn update_transforms(mut pieces: Query<(&Cell, &mut Transform), (With<Actor>
 
 /// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
 #[derive(Message, Debug)]
-pub struct ActionAttempt {
+pub struct Action {
     pub entity: Entity,
     pub origin_cell: Cell,
     pub target_cell: Cell,
@@ -125,7 +128,7 @@ pub struct ActionAttempt {
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.
 pub fn handle_player_input(
-    mut events: MessageWriter<ActionAttempt>,
+    mut events: MessageWriter<Action>,
     input: Res<ButtonInput<KeyCode>>,
     player_query: Single<(Entity, &Cell), With<Player>>,
 ) {
@@ -138,7 +141,7 @@ pub fn handle_player_input(
 
     let (player_entity, player_cell) = *player_query;
 
-    events.write(ActionAttempt {
+    events.write(Action {
         entity: player_entity,
         origin_cell: *player_cell,
         target_cell: player_cell.add(direction),

@@ -25,23 +25,23 @@ pub enum Interactable {
 }
 
 #[derive(Message, Debug, Copy, Clone)]
-pub struct InteractionAttempt {
+pub struct Examine {
     pub interactor: Entity,
     pub target: Entity,
 }
 
 #[derive(Message, Debug, Copy, Clone)]
-pub struct DialogueAttempt {
+pub struct Listen {
     pub entity: Entity,
 }
 
 /// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
 pub fn process_interactions(
-    mut attempts: MessageReader<InteractionAttempt>,
+    mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
     mut acquisitions: MessageWriter<Acquisition>,
-    mut attacks: MessageWriter<combat::AttackAttempt>,
-    mut speech: MessageWriter<DialogueAttempt>,
+    mut attacks: MessageWriter<combat::Attack>,
+    mut speech: MessageWriter<Listen>,
     player_inventory: Res<Inventory>,
     mut log: ResMut<MessageLog>,
 ) {
@@ -92,10 +92,10 @@ pub fn process_interactions(
             }
             Interactable::Speaker { nameplate, .. } => {
                 info!("Player talks to {}.", nameplate);
-                speech.write(DialogueAttempt { entity });
+                speech.write(Listen { entity });
             }
             Interactable::Combatant => {
-                attacks.write(combat::AttackAttempt {
+                attacks.write(combat::Attack {
                     attacker: attempt.interactor,
                     target: entity,
                 });
@@ -123,7 +123,7 @@ impl Dialogue {
 }
 
 pub fn process_dialogue(
-    mut speech: MessageReader<DialogueAttempt>,
+    mut speech: MessageReader<Listen>,
     mut log: ResMut<MessageLog>,
     mut dialogues: Query<&mut Dialogue>,
 ) {
