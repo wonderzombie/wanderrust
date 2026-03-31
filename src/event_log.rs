@@ -7,7 +7,7 @@ use bevy_egui::{
 
 use bevy::prelude::*;
 
-use crate::colors::ColorExt;
+use crate::{colors::ColorExt, gamestate::WorldClock};
 
 pub fn setup_fonts(mut contexts: EguiContexts) {
     let Ok(ctx) = contexts.ctx_mut() else {
@@ -35,7 +35,7 @@ pub fn setup_fonts(mut contexts: EguiContexts) {
 }
 
 /// Draws the message log UI using Egui using [MessageLog] resource.
-pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
+pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>, ticks: Res<WorldClock>) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -49,10 +49,25 @@ pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
                 egui::FontId::new(14.0, egui::FontFamily::Proportional),
             );
 
+            ui.set_min_width(188.0);
             for (msg, color) in log.as_color_text() {
-                ui.set_min_width(188.0);
                 ui.colored_label(color.to_egui(), msg);
             }
+        });
+
+    egui::Area::new(egui::Id::new("Ticks"))
+        .anchor(Align2::RIGHT_TOP, Vec2::ZERO)
+        .show(ctx, |ui| {
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Body,
+                egui::FontId::new(14.0, egui::FontFamily::Proportional),
+            );
+
+            ui.set_min_width(128.);
+            ui.colored_label(
+                Color::WHITE.to_egui(),
+                format!("Ticks: {:}", *ticks).to_ascii_uppercase(),
+            );
         });
 }
 

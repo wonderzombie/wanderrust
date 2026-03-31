@@ -1,7 +1,17 @@
 use bevy::prelude::*;
 use bevy_northstar::prelude::*;
+use std::fmt::Display;
 
 use crate::actors::{Actor, Player};
+
+#[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct WorldClock(usize);
+
+impl Display for WorldClock {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Screen {
@@ -59,9 +69,11 @@ pub fn finalize_waiting_turns(
 pub fn check_turns_complete(
     turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut ticks: ResMut<WorldClock>,
 ) {
     let all_done = turn_actors.iter().all(Turn::complete);
     if all_done || turn_actors.is_empty() {
         next_state.set(GameState::AwaitingInput);
+        ticks.0 += 1;
     }
 }

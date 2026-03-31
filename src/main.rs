@@ -74,6 +74,7 @@ fn main() {
         .init_resource::<inventory::Inventory>()
         .init_resource::<actors::PlayerStats>()
         .init_resource::<sounds::Sounds>()
+        .init_resource::<gamestate::WorldClock>()
         .insert_resource(CLEAR_COLOR)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
