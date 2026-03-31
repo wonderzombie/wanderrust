@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "mrpas", "wanderl2r"]
+members = [".", "mrpas"]
 
 [package]
 name = "wanderrust"
