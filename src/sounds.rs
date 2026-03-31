@@ -12,7 +12,7 @@ use crate::actors::Moved;
 #[derive(Resource, Default)]
 pub struct Sounds {
     lookup: HashMap<String, Handle<AudioSource>>,
-    folder: Handle<LoadedFolder>,
+    folder_handle: Handle<LoadedFolder>,
     loaded: bool,
 }
 
@@ -21,7 +21,7 @@ pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
     let handle = asset_server.load_folder("audio");
 
     *sounds = Sounds {
-        folder: handle,
+        folder_handle: handle,
         loaded: false,
         ..default()
     };
@@ -37,14 +37,20 @@ pub fn on_loaded(
         return;
     }
 
-    let handle = asset_server.load_folder("audio");
+    // `folder` will always be present.
+    let state = asset_server.recursive_dependency_load_state(sounds.folder_handle.id());
 
-    let Some(folder) = loaded_folders.get(&handle) else {
-        info!("Sounds not ready");
+    if !state.is_loaded() {
+        info!("LoadState: sounds not ready");
+        return;
+    }
+
+    let Some(folder) = loaded_folders.get(&sounds.folder_handle) else {
+        info!("Assets: sounds not ready");
         return;
     };
 
-    info!("sounds loaded; initializing");
+    info!("sounds loaded & accessible; initializing");
     sounds.lookup = folder
         .handles
         .iter()
@@ -57,11 +63,8 @@ pub fn on_loaded(
         .collect();
 
     sounds.loaded = true;
-    sounds.folder = handle;
-
     commands.add_observer(on_moved_sounds);
-
-    info!("finished initializing sounds");
+    info!("✅ finished initializing sounds");
 }
 
 const GRASS_FOOTSTEPS: [&str; 5] = [
