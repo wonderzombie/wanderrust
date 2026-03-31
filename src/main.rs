@@ -32,7 +32,7 @@ use crate::{
     cell::Cell,
     gamestate::GameState,
     tilemap::{EntryId, Portal, TilemapSpec},
-    tiles::{MapTile, TileIdx, Walkable},
+    tiles::{TileIdx, Walkable},
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{
@@ -211,9 +211,8 @@ fn add_click_observer(mut commands: Commands) {
                 }
                 Err(err) => {
                     trace!("couldn't get_entity() on.event_target(): {:?}", err);
-                    return;
                 }
-            };
+            }
         },
     );
 }
