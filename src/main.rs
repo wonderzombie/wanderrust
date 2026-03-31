@@ -322,8 +322,7 @@ fn load_spritesheet(
     next.set(GameState::Loading);
 }
 
-/// Routes [ActionAttempt] messages to one of four outcomes: move, portal, interact, or blocked.
-/// Interaction execution is handled by [interactions::process_interactions].
+/// Routes [`Action`] messages. Interaction execution is handled in [`Examine`].
 fn process_actions(
     mut commands: Commands,
     mut actions: MessageReader<Action>,
@@ -334,8 +333,8 @@ fn process_actions(
     let mut acted = false;
     for action in actions.read() {
         let Some(target_entity) = spatial_index.get(action.target_cell) else {
-            // No entity at the target [Cell], so we can assume it's an empty walkable tile.
-            // Changing the [Cell] via insertion will cause the system to move the player sprite.
+            // No entity at the target [`Cell`], so we can assume it's an empty walkable tile.
+            // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
             commands
                 .entity(action.entity)
                 .insert((action.target_cell, PreviousCell(action.origin_cell)))
@@ -365,14 +364,14 @@ fn process_actions(
     }
 }
 
-/// The destination will be marked by this EntryId.
+/// The destination will be marked by this [`EntryId`].
 #[derive(Resource, Debug)]
 struct PendingTransition {
     arrive_at: EntryId,
 }
 
 /// Handles the pending transition, if any.
-/// Matches the EntryId in PendingTransition with the portals' EntryId to find the destination cell.
+/// Matches the [`EntryId`] in [`PendingTransition`] with the portals' [`EntryId`] to find the destination cell.
 fn handle_pending_transition(
     mut commands: Commands,
     pending_transition: Option<ResMut<PendingTransition>>,
