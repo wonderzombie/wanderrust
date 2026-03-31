@@ -218,6 +218,8 @@ pub fn spawn_tilemap(
     spec.id.set(map_entity);
     spawn_maptiles_from_spec(&spec, &sheet, &mut commands);
     commands.entity(map_entity).insert(spec.id);
+
+    info!("ℹ️ done spawning tilemap")
 }
 
 /// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
@@ -264,7 +266,7 @@ pub fn initialize_tile_storage(
     for (cell, entity) in tiles.iter() {
         storage.set(cell, entity);
     }
-    info!("stored tiles: {}", storage.len());
+    info!("✅ stored tiles: {}", storage.len());
     commands.entity(map_entity).insert(storage);
 }
 
@@ -357,7 +359,7 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         }
     }
 
-    info!("tile breakdown ({} types) {:#?}", tally.len(), tally);
+    info!("ℹ️ tile breakdown ({} types) {:#?}", tally.len(), tally);
 
     if missing > 0 {
         warn!("{} tiles in storage are not entities", missing);

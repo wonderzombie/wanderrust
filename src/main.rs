@@ -245,7 +245,7 @@ fn update_grid(
     }
 
     if count > 0 {
-        info!("updated grid, set {} tiles", count);
+        info!("ℹ️ updated grid, set {} tiles", count);
         grid.build();
     }
 }
@@ -385,7 +385,7 @@ fn handle_pending_transition(
     info!("looking for {:?} in {:?}", transition.arrive_at, portals);
     for (portal, cell) in &portals {
         if portal.id == transition.arrive_at {
-            info!("portal to {:?} at cell {:?}", portal.arrive_at, cell);
+            info!("ℹ️ portal to {:?} at cell {:?}", portal.arrive_at, cell);
             commands.entity(*player).insert(*cell);
             commands.remove_resource::<PendingTransition>();
             return;

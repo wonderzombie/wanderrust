@@ -64,7 +64,7 @@ pub fn move_agents(
         }
 
         info!(
-            "entity {} moving from {:?} to {:?}",
+            "ℹ️ entity {} moving from {:?} to {:?}",
             entity, agent_pos, next_pos
         );
 
