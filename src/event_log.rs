@@ -40,13 +40,17 @@ pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>, ticks: Res<Worl
         return;
     };
 
+    let mut visuals = egui::Visuals::default();
+    visuals.window_fill = Color::BLACK.with_alpha(0.2).to_egui();
+    ctx.set_visuals(visuals);
+
     // TODO: set visuals.extreme_bg_color to hide area behind log.
     egui::Area::new(egui::Id::new("Messages"))
         .anchor(Align2::RIGHT_BOTTOM, Vec2::ZERO)
         .show(ctx, |ui| {
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Body,
-                egui::FontId::new(14.0, egui::FontFamily::Proportional),
+                egui::FontId::new(16.0, egui::FontFamily::Proportional),
             );
 
             ui.set_min_width(188.0);
@@ -60,7 +64,7 @@ pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>, ticks: Res<Worl
         .show(ctx, |ui| {
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Body,
-                egui::FontId::new(14.0, egui::FontFamily::Proportional),
+                egui::FontId::new(18.0, egui::FontFamily::Proportional),
             );
 
             ui.set_min_width(128.);
