@@ -323,7 +323,6 @@ fn load_spritesheet(
 /// Interaction execution is handled by [interactions::process_interactions].
 fn process_actions(
     mut commands: Commands,
-    mut log: ResMut<event_log::MessageLog>,
     mut actions: MessageReader<Action>,
     portals: Query<&Portal>,
     mut interaction_attempts: MessageWriter<interactions::Examine>,
