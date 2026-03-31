@@ -7,8 +7,8 @@ use crate::{
     tiles::{MapTile, TileIdx},
 };
 
-#[derive(Component, Debug)]
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
+#[derive(Component, Debug)]
 pub enum Interactable {
     Door {
         is_open: bool,
@@ -24,12 +24,14 @@ pub enum Interactable {
     Combatant,
 }
 
+/// Examine is a general word for interactions.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Examine {
     pub interactor: Entity,
     pub target: Entity,
 }
 
+/// The player listens to the NPC.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Listen {
     pub entity: Entity,
@@ -104,6 +106,9 @@ pub fn process_interactions(
     }
 }
 
+/// A component representing the dialogue of an NPC.
+///
+/// This component is used to store and manage the dialogue of an NPC, including the current phrase and the list of phrases.
 #[derive(Component, Debug, Default)]
 pub struct Dialogue {
     idx: usize,
@@ -122,6 +127,7 @@ impl Dialogue {
     }
 }
 
+/// Processes the dialogue of an NPC when the player listens to it.
 pub fn process_dialogue(
     mut speech: MessageReader<Listen>,
     mut log: ResMut<MessageLog>,
@@ -136,6 +142,9 @@ pub fn process_dialogue(
     }
 }
 
+/// Sets up interactable objects in the world, such as doors and chests, based on the tile indices.
+///
+/// Mostly this means interactables that have such as an open/closed sprite.
 pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), With<MapTile>>) {
     for (entity, tile_idx) in tiles.iter() {
         if !tile_idx.is_interactable() {
