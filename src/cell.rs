@@ -97,7 +97,7 @@ impl Cell {
 
 impl Display for Cell {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Cell({},{})", self.x, self.y)
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 

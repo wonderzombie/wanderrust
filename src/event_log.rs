@@ -7,7 +7,7 @@ use bevy_egui::{
 
 use bevy::prelude::*;
 
-use crate::{colors::ColorExt, gamestate::WorldClock};
+use crate::{actors::Player, cell::Cell, colors::ColorExt, gamestate::WorldClock};
 
 pub fn setup_fonts(mut contexts: EguiContexts) {
     let Ok(ctx) = contexts.ctx_mut() else {
@@ -35,7 +35,12 @@ pub fn setup_fonts(mut contexts: EguiContexts) {
 }
 
 /// Draws the message log UI using Egui using [MessageLog] resource.
-pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>, ticks: Res<WorldClock>) {
+pub fn draw_ui(
+    mut contexts: EguiContexts,
+    log: Res<MessageLog>,
+    ticks: Res<WorldClock>,
+    cell: Single<&Cell, With<Player>>,
+) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -71,6 +76,10 @@ pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>, ticks: Res<Worl
             ui.colored_label(
                 Color::WHITE.to_egui(),
                 format!("Ticks: {:}", *ticks).to_ascii_uppercase(),
+            );
+            ui.colored_label(
+                Color::WHITE.to_egui(),
+                format!("Cell: {:}", *cell).to_ascii_uppercase(),
             );
         });
 }

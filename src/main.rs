@@ -339,7 +339,6 @@ fn process_actions(
                 .insert((action.target_cell, PreviousCell(action.origin_cell)))
                 .trigger(Moved);
 
-            log.add(format!("{}", action.target_cell), colors::KENNEY_OFF_WHITE);
             acted = true;
             continue;
         };
