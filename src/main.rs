@@ -30,7 +30,7 @@ use crate::{
     actors::*,
     atlas::SpriteAtlas,
     cell::Cell,
-    gamestate::GameState,
+    gamestate::{GameState, Screen},
     tilemap::{EntryId, Portal, TilemapSpec},
     tiles::{TileIdx, Walkable},
 };
@@ -124,7 +124,10 @@ fn main() {
                 .in_set(GameSystem::SpawnTestEntities),
         )
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
-        .add_systems(EguiPrimaryContextPass, event_log::draw_ui)
+        .add_systems(
+            EguiPrimaryContextPass,
+            event_log::draw_ui.run_if(in_state(Screen::Playing)),
+        )
         .add_systems(Update, sounds::on_loaded)
         .add_systems(
             Update,
