@@ -27,20 +27,10 @@ pub fn setup_camera(mut commands: Commands, spec: Res<TilemapSpec>) {
 }
 
 pub fn update(
-    mut camera_query: Query<&mut Transform, With<Camera2d>>,
-    player_query: Query<&Cell, With<Player>>,
+    mut camera_transform: Single<&mut Transform, With<Camera2d>>,
+    player_cell: Single<&Cell, With<Player>>,
     zoom_opt: Option<Res<DesiredZoom>>,
 ) {
-    let Ok(player_cell) = player_query.single() else {
-        error!("No player entity found in the world.");
-        return;
-    };
-
-    let Ok(mut camera_transform) = camera_query.single_mut() else {
-        error!("No camera entity found in the world.");
-        return;
-    };
-
     camera_transform.translation.x =
         (player_cell.x as f32 * tiles::TILE_SIZE_PX) + (tiles::TILE_SIZE_PX / 2.0);
     camera_transform.translation.y =
@@ -49,13 +39,12 @@ pub fn update(
     camera_transform.scale = Vec3::splat(zoom);
 }
 
-pub fn visible_cell_range(camera: &Camera, player_cell: Cell, tile_size: f32) -> (Cell, Cell) {
-    let viewport_size = camera.logical_viewport_size().unwrap();
-    let half_w = (viewport_size.x / tile_size / 2.0).ceil() as i32;
-    let half_h = (viewport_size.y / tile_size / 2.0).ceil() as i32;
+pub fn visible_cell_range(viewport_size: Vec2, origin_cell: Cell) -> (Cell, Cell) {
+    let half_w = (viewport_size.x / tiles::TILE_SIZE_PX / 2.0).ceil() as i32;
+    let half_h = (viewport_size.y / tiles::TILE_SIZE_PX / 2.0).ceil() as i32;
 
-    let tl = Cell::new(player_cell.x - half_w, player_cell.y - half_h);
-    let br = Cell::new(player_cell.x + half_w, player_cell.y + half_h);
+    let tl = Cell::new(origin_cell.x - half_w, origin_cell.y - half_h);
+    let br = Cell::new(origin_cell.x + half_w, origin_cell.y + half_h);
 
     (tl, br)
 }
