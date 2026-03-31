@@ -125,7 +125,7 @@ fn main() {
         )
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(EguiPrimaryContextPass, event_log::draw_ui)
-        .add_systems(Update, sounds::on_loaded.run_if(run_once))
+        .add_systems(Update, sounds::on_loaded)
         .add_systems(
             Update,
             (
