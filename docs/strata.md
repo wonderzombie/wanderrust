@@ -30,3 +30,68 @@ Not in scope:
   - move the player to the new stratum
   - if `Above`, `Below` changes visual appearance
   - If `Below`, `Above` disappears altogether.
+
+- Deduce active stratum from player's Cell -> TileStorage -> tiles. 
+- Then show/hide based on parent.
+
+## proposal one
+
+### stratum is a concept and a `MapTile` component
+
+- Keep TilemapSpec (mostly?) as-is.
+- Keep Stratum as a marker for tiles, and keep enum (for now).
+- Keep (TileIdx, Cell, Stratum) for now.
+- Portals gets Stratum, too: (Portal, Cell, Stratum).
+
+
+### initialization / creation / layout:
+
+- Each stratum's entities are children of `TilemapLayer` which is a child of `TilemapId`.
+- `TilemapLayer` entity gets `Visibility` for show/hide.
+- `TilemapLayer` _might_ look like `TilemapLayer(Stratum)`.
+
+### usage / flow
+
+
+#### one 
+- The active stratum _might_ be deduced from the cell the player is standing on.
+
+- Get player cell.
+- Get tile entity.
+- Get "active" stratum for tile.
+- Get TilemapLayer for active-and-not
+
+```rust
+pub fn update_strata(
+    cell: Single<(&Cell, Option<&PreviousCell>), With<Player>>,
+    storage: Single<&TileStorage>,
+    tiles: Query<(&Stratum, &ChildOf), With<MapTile>>,
+    layers: Query<&TilemapLayer, With<TargetedBy>>,
+) {
+    
+}
+```
+
+This approach involves fairly minimal changes to the existing code.
+
+#### two
+
+It _might_ be simpler to:
+- mark `TilemapLayer` with `ActiveLayer` _and_ `Stratum`.
+- keep `Stratum` on disk for now, but not in memory
+- use Relationships to get `TilemapLayer`
+
+
+Initialization from `TilemapSpec` or `SavedTilemap` will have to change. We can start from the perspective of `tiles`. 
+
+- create TilemapId as usual
+- partition tiles by Stratum
+- create each `TilemapLayer(Stratum)` as child of `TilemapId`
+- spawn that stratum in a batch as child of `TilemapLayer`
+- NEW: tag `TilemapLayer` with `ActiveLayer`. 
+
+To discern whether to update active stratum or not:
+
+- use player &Cell to get Entity from TileStorage
+- use tile Entity to lookup into `<ChildOf, With<MapTile>>`.
+- use `Single<&TilemapLayer, With<ActiveLayer>>`.
