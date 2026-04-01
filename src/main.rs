@@ -24,7 +24,10 @@ mod title_screen;
 
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::{CursorIcon, CursorOptions, CustomCursor, CustomCursorImage},
+};
 
 use crate::{
     actors::*,
@@ -101,6 +104,7 @@ fn main() {
                     .chain()
                     .in_set(GameSystem::SetupTiles),
                 sounds::load_sounds,
+                set_mouse_cursor.after(GameSystem::SetupTiles),
             ),
         )
         .add_systems(
@@ -202,6 +206,28 @@ pub enum GameSystem {
     Fov,
     Light,
     Mobs,
+}
+
+fn set_mouse_cursor(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    window: Single<Entity, With<Window>>,
+    atlas: Res<SpriteAtlas>,
+) {
+    let handle: Handle<Image> =
+        asset_server.load("kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png");
+
+    let index = tiles::atlas_idx(35, 10);
+    commands
+        .entity(*window)
+        .insert(CursorIcon::Custom(CustomCursor::Image(CustomCursorImage {
+            handle: handle,
+            texture_atlas: Some(TextureAtlas {
+                layout: atlas.layout.clone(),
+                index,
+            }),
+            ..default()
+        })));
 }
 
 fn add_click_observer(mut commands: Commands) {
