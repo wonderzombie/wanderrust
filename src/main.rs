@@ -26,7 +26,7 @@ use std::collections::HashMap;
 
 use bevy::{
     prelude::*,
-    window::{CursorIcon, CursorOptions, CustomCursor, CustomCursorImage},
+    window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
 
 use crate::{
@@ -221,7 +221,7 @@ fn set_mouse_cursor(
     commands
         .entity(*window)
         .insert(CursorIcon::Custom(CustomCursor::Image(CustomCursorImage {
-            handle: handle,
+            handle,
             texture_atlas: Some(TextureAtlas {
                 layout: atlas.layout.clone(),
                 index,
@@ -274,7 +274,6 @@ fn click_observer(
         }
         Err(err) => {
             trace!("couldn't get_entity() on.event_target(): {:?}", err);
-            return;
         }
     }
 }
