@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::Add;
 
 use bevy::prelude::*;
@@ -124,6 +125,16 @@ pub struct Action {
     pub entity: Entity,
     pub origin_cell: Cell,
     pub target_cell: Cell,
+}
+
+impl Display for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Action(entity={:?}, origin_cell={}, target_cell={})",
+            self.entity, self.origin_cell, self.target_cell
+        )
+    }
 }
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.

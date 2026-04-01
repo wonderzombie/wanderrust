@@ -47,6 +47,13 @@ impl Cell {
         }
     }
 
+    pub fn from_vec(vec: Vec2) -> Self {
+        Cell {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+
     pub fn as_vec(&self) -> Vec2 {
         Vec2::new(self.x as f32, self.y as f32)
     }

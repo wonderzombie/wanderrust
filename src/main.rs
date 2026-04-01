@@ -205,20 +205,52 @@ pub enum GameSystem {
 }
 
 fn add_click_observer(mut commands: Commands) {
-    commands.add_observer(
-        |on: On<Pointer<Click>>,
-         entities: Query<(&TileIdx, &Cell)>,
-         mut log: ResMut<event_log::MessageLog>| {
-            match entities.get(on.event_target()) {
-                Ok((tile_idx, cell)) => {
-                    log.add(format!("{} = {:?}", cell, tile_idx), Color::WHITE);
+    commands.add_observer(click_observer);
+}
+
+fn click_observer(
+    on: On<Pointer<Click>>,
+    input: Res<ButtonInput<KeyCode>>,
+    tile_cells: Query<(&TileIdx, &Cell)>,
+    player: Single<(Entity, &Cell), With<Player>>,
+    mut log: ResMut<event_log::MessageLog>,
+    mut actions: MessageWriter<Action>,
+) {
+    let (entity, &origin_cell) = *player;
+    match tile_cells.get(on.event_target()) {
+        Ok((tile_idx, &cell)) => {
+            let orig = origin_cell;
+            let delta = orig - cell;
+
+            if !input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
+                // Find direction relative to the player
+                let d = delta.as_vec().normalize_or_zero();
+                if d == Vec2::ZERO {
+                    return;
                 }
-                Err(err) => {
-                    trace!("couldn't get_entity() on.event_target(): {:?}", err);
+                let direction = Cell::from_vec(d);
+                let target_cell = origin_cell - direction;
+
+                if target_cell == origin_cell {
+                    return;
                 }
+
+                let action = Action {
+                    entity,
+                    origin_cell,
+                    target_cell,
+                };
+                info!("action: {:?}", action);
+                actions.write(action);
+            } else {
+                log.add(format!("{} = {:?}", cell, tile_idx), Color::WHITE);
             }
-        },
-    );
+        }
+        Err(err) => {
+            trace!("couldn't get_entity() on.event_target(): {:?}", err);
+            return;
+        }
+    }
 }
 
 fn spawn_grid(mut commands: Commands, spec: Res<TilemapSpec>) {
@@ -332,12 +364,14 @@ fn process_actions(
 ) {
     let mut acted = false;
     for action in actions.read() {
-        let Some(target_entity) = spatial_index.get(action.target_cell) else {
+        let direction = action.target_cell - action.origin_cell;
+        let adjusted_cell = action.origin_cell + direction;
+        let Some(target_entity) = spatial_index.get(adjusted_cell) else {
             // No entity at the target [`Cell`], so we can assume it's an empty walkable tile.
             // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
             commands
                 .entity(action.entity)
-                .insert((action.target_cell, PreviousCell(action.origin_cell)))
+                .insert((adjusted_cell, PreviousCell(action.origin_cell)))
                 .trigger(Moved);
 
             acted = true;
