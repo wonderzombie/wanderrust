@@ -52,6 +52,18 @@ const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
 fn main() {
+    let args = std::env::args().collect::<Vec<_>>();
+
+    let tilemap_spec = if args.len() > 1 && args[1] == "-s" {
+        TilemapSpec::from_str(map::MAP)
+    } else {
+        TilemapSpec::with_ptable(
+            procgen::biome_ptable(),
+            procgen::tile_idx_for_cell,
+            (100, 100),
+        )
+    };
+
     App::new()
         .add_plugins(
             DefaultPlugins
@@ -85,11 +97,7 @@ fn main() {
             // we have no specifically sprite picking camera yet
             require_markers: false,
         })
-        .insert_resource(TilemapSpec::with_ptable(
-            procgen::biome_ptable(),
-            procgen::tile_idx_for_cell,
-            (100, 100),
-        ))
+        .insert_resource(tilemap_spec)
         .insert_resource(event_log::MessageLog::new(10))
         .add_plugins(editor::EditorPlugin)
         .add_plugins(title_screen::TitleScreenPlugin)
