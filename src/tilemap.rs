@@ -29,18 +29,6 @@ impl TilemapId {
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Stratum(pub Entity, pub usize);
 
-#[derive(Component, Default, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum StratumKind {
-    #[default]
-    Below,
-}
-
-impl StratumKind {
-    pub fn all() -> impl Iterator<Item = Self> {
-        [Self::Below].into_iter()
-    }
-}
-
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug)]
 pub struct TilemapSpec {
@@ -49,9 +37,10 @@ pub struct TilemapSpec {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<(TileIdx, Cell, StratumKind)>,
+    pub tiles: Vec<(TileIdx, Cell)>,
     pub start: Cell,
     pub light_level: LightLevel,
+    pub nstrata: usize,
 }
 
 #[derive(Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
@@ -174,7 +163,7 @@ pub struct Portal {
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
-    pub tiles: Vec<(TileIdx, StratumKind)>,
+    pub tiles: Vec<TileIdx>,
     pub size: Dimensions,
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
@@ -191,7 +180,6 @@ pub struct TileBundle {
     pub sprite: Sprite,
     pub revealed: Revealed,
     pub child_of: ChildOf,
-    pub stratum: StratumKind,
     pub vis: Visibility,
 }
 
@@ -226,10 +214,8 @@ pub fn spawn_tilemap(
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
     // TODO: replace this with better logic.
-    let all = StratumKind::all().collect::<Vec<_>>();
-    let rev_strata = all.iter().rev();
 
-    for (i, _) in rev_strata.enumerate() {
+    for i in 0..spec.nstrata {
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
@@ -252,14 +238,14 @@ pub fn spawn_tilemap(
 fn spawn_maptiles_from_spec(
     parent: Entity,
     size: &Dimensions,
-    tiles: &Vec<(TileIdx, Cell, StratumKind)>,
+    tiles: &Vec<(TileIdx, Cell)>,
     layer: f32,
     sheet: &SpriteAtlas,
     commands: &mut Commands,
 ) {
     let bundles: Vec<TileBundle> = tiles
         .iter()
-        .map(|(tile_idx, cell, stratum)| {
+        .map(|(tile_idx, cell)| {
             let pos = size.cell_to_pos(cell);
 
             // TODO: replace [MapTile] with [MapId] here and elsewhere.
@@ -272,7 +258,6 @@ fn spawn_maptiles_from_spec(
                 sprite: sheet.sprite_from_idx(*tile_idx),
                 revealed: Revealed(false),
                 child_of: ChildOf(parent),
-                stratum: *stratum,
                 vis: Visibility::Inherited,
             }
         })
@@ -308,7 +293,6 @@ pub fn save_map(
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
     all_portals: &Query<(&Portal, &Cell)>,
-    strata: &Query<&StratumKind, With<MapTile>>,
 ) -> SavedTilemap {
     // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
     // We don't need to store coordinates since the map size is fixed and known at load time
@@ -318,13 +302,9 @@ pub fn save_map(
         .iter()
         // If there's an entity in storage, use that entity as a lookup into the [`TileIdx`] query.
         .map(|&entity_opt| {
-            let Some(entity) = entity_opt else {
-                return (TileIdx::default(), StratumKind::default());
-            };
-            let tile_idx = all_tiles.get(entity).copied().unwrap_or_default();
-            let stratum = strata.get(entity).copied().unwrap_or_default();
-
-            (tile_idx, stratum)
+            entity_opt
+                .and_then(|e| all_tiles.get(e).ok().copied())
+                .unwrap_or_default()
         })
         .collect::<Vec<_>>();
 
@@ -383,7 +363,7 @@ pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut Til
         if let Some(entity) = storage.get(&flipped_cell) {
             commands.entity(entity).insert(*source_tile);
             tally
-                .entry(source_tile.0)
+                .entry(*source_tile)
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
         } else {
