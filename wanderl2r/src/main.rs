@@ -2,7 +2,7 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use wanderrust::light::LightLevel;
-use wanderrust::tilemap::{Dimensions, SavedTilemap, Stratum};
+use wanderrust::tilemap::{Dimensions, SavedTilemap, StratumKind};
 
 use clap::Parser;
 use wanderrust::cell::Cell;
@@ -110,10 +110,10 @@ fn get_cell(tile_info: &Map<String, Value>) -> Option<Cell> {
 fn fill_map(
     atlas_to_tile_idx: &HashMap<usize, TileIdx>,
     cell_to_atlas_idx: HashMap<Cell, usize>,
-) -> (Vec<(TileIdx, Stratum)>, Dimensions) {
+) -> (Vec<(TileIdx, StratumKind)>, Dimensions) {
     let dims = calculate_dimensions(&cell_to_atlas_idx);
 
-    let out: Vec<(TileIdx, Stratum)> = (0..dims.ntiles() as usize)
+    let out: Vec<(TileIdx, StratumKind)> = (0..dims.ntiles() as usize)
         .map(|idx| {
             let cell = dims.idx_to_cell(idx as u32);
             // We are effectively joining these two HashMaps. However, we also
@@ -122,7 +122,7 @@ fn fill_map(
             cell_to_atlas_idx
                 .get(&cell)
                 .and_then(|&src_idx| atlas_to_tile_idx.get(&src_idx))
-                .map(|&tile_idx| (tile_idx, Stratum::default()))
+                .map(|&tile_idx| (tile_idx, StratumKind::default()))
                 .unwrap_or_default()
         })
         .collect();

@@ -12,7 +12,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage, TilemapSpec},
+    tilemap::{self, Portal, SavedTilemap, StratumKind, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -299,7 +299,7 @@ pub fn save_map(
     storage: Single<&mut TileStorage>,
     all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
     all_portals: Query<(&Portal, &Cell)>,
-    all_strata: Query<&Stratum, With<MapTile>>,
+    all_strata: Query<&StratumKind, With<MapTile>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {

@@ -27,7 +27,7 @@ impl TilemapId {
 }
 
 #[derive(Component, Default, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Stratum {
+pub enum StratumKind {
     Above,
     #[default]
     Below,
@@ -41,7 +41,7 @@ pub struct TilemapSpec {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<(TileIdx, Cell, Stratum)>,
+    pub tiles: Vec<(TileIdx, Cell, StratumKind)>,
     pub start: Cell,
     pub light_level: LightLevel,
 }
@@ -166,7 +166,7 @@ pub struct Portal {
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
-    pub tiles: Vec<(TileIdx, Stratum)>,
+    pub tiles: Vec<(TileIdx, StratumKind)>,
     pub size: Dimensions,
     pub layer: TilemapLayer,
     pub portals: Vec<(Portal, Cell)>,
@@ -183,7 +183,7 @@ pub struct TileBundle {
     pub sprite: Sprite,
     pub revealed: Revealed,
     pub child_of: ChildOf,
-    pub stratum: Stratum,
+    pub stratum: StratumKind,
 }
 
 #[derive(Bundle, Default)]
@@ -276,7 +276,7 @@ pub fn save_map(
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
     all_portals: &Query<(&Portal, &Cell)>,
-    strata: &Query<&Stratum, With<MapTile>>,
+    strata: &Query<&StratumKind, With<MapTile>>,
 ) -> SavedTilemap {
     // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
     // We don't need to store coordinates since the map size is fixed and known at load time
@@ -287,7 +287,7 @@ pub fn save_map(
         // If there's an entity in storage, use that entity as a lookup into the [`TileIdx`] query.
         .map(|&entity_opt| {
             let Some(entity) = entity_opt else {
-                return (TileIdx::default(), Stratum::default());
+                return (TileIdx::default(), StratumKind::default());
             };
             let tile_idx = all_tiles.get(entity).copied().unwrap_or_default();
             let stratum = strata.get(entity).copied().unwrap_or_default();
