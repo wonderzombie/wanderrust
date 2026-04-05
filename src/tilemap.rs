@@ -26,11 +26,19 @@ impl TilemapId {
     }
 }
 
+#[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Stratum(pub Entity, pub usize);
+
 #[derive(Component, Default, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StratumKind {
-    Above,
     #[default]
     Below,
+}
+
+impl StratumKind {
+    pub fn all() -> impl Iterator<Item = Self> {
+        [Self::Below].into_iter()
+    }
 }
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
@@ -184,6 +192,7 @@ pub struct TileBundle {
     pub revealed: Revealed,
     pub child_of: ChildOf,
     pub stratum: StratumKind,
+    pub vis: Visibility,
 }
 
 #[derive(Bundle, Default)]
@@ -216,20 +225,42 @@ pub fn spawn_tilemap(
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
-    spawn_maptiles_from_spec(&spec, &sheet, &mut commands);
+    // TODO: replace this with better logic.
+    let all = StratumKind::all().collect::<Vec<_>>();
+    let rev_strata = all.iter().rev();
+
+    for (i, _) in rev_strata.enumerate() {
+        let strat_id = commands
+            .spawn((Visibility::Visible, Transform::default()))
+            .id();
+        spawn_maptiles_from_spec(
+            strat_id,
+            &spec.size,
+            &spec.tiles,
+            *spec.layer,
+            &sheet,
+            &mut commands,
+        );
+        commands.entity(strat_id).insert(Stratum(strat_id, i));
+    }
     commands.entity(map_entity).insert(spec.id);
 
     info!("ℹ️ done spawning tilemap")
 }
 
 /// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
-fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &mut Commands) {
-    let parent = spec.id.0.unwrap();
-    let bundles: Vec<TileBundle> = spec
-        .tiles
+fn spawn_maptiles_from_spec(
+    parent: Entity,
+    size: &Dimensions,
+    tiles: &Vec<(TileIdx, Cell, StratumKind)>,
+    layer: f32,
+    sheet: &SpriteAtlas,
+    commands: &mut Commands,
+) {
+    let bundles: Vec<TileBundle> = tiles
         .iter()
         .map(|(tile_idx, cell, stratum)| {
-            let pos = spec.size.cell_to_pos(cell);
+            let pos = size.cell_to_pos(cell);
 
             // TODO: replace [MapTile] with [MapId] here and elsewhere.
             TileBundle {
@@ -237,11 +268,12 @@ fn spawn_maptiles_from_spec(spec: &TilemapSpec, sheet: &SpriteAtlas, commands: &
                 tile_idx: *tile_idx,
                 cell: *cell,
                 // This puts the tile at the correct z-order based on the layer.
-                transform: Transform::from_xyz(pos.x, pos.y, *spec.layer),
+                transform: Transform::from_xyz(pos.x, pos.y, layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
                 revealed: Revealed(false),
                 child_of: ChildOf(parent),
                 stratum: *stratum,
+                vis: Visibility::Inherited,
             }
         })
         .collect();
