@@ -121,3 +121,123 @@ But is this much better than `Query<&TileStorage, With<ActiveStratum>>`? Yes, in
 ### yet another approach
 
 Some as-yet undesigned type *like* TileStorage, but Stratum-aware. Setting the active stratum also updates TileStorage so that `Single<&TileStorage>` will always operate on the active stratum.
+
+## seralizing & deserializing
+
+This is almost a whole thing. :P
+
+Originally, we had `Stratum` as a Component on a MapTile so we could have `(TileIdx, Cell, Stratum)` as an "absolute" position: this is a tile at Cell on Stratum. We can tell just by looking at the triple where it goes. This makes saving and loading easier.
+
+### aside: SavedTilemap
+
+There's one major difference between SavedTilemap and TilemapSpec: SavedTilemap's `tiles` are `Vec<(TileIdx, Stratum)>`, meaning that for any given SavedTilemap, `saved.size.ntiles() == tiles.len()`, which allows something like `tiles.iter().enumerate()` to use `i` and `size` to derive Cells. What's stored on disk is `ntiles` number of tiles, even if 90% of them are blank. It also has `Vec<(Portal, Cell)>`.
+
+There's not much reason why TilemapSpec couldn't take this over.
+
+### save & load map
+
+Save and load both use a combination of TilemapSpec, TileStorage, and SavedTilemap.
+
+- TilemapSpec is a/the "pristine" version of the map. It tells you how to make it, what the defaults are, etc.
+
+- TileStorage contains `ntiles` worth of `Option<Entity>` and includes `size` so we can map cells like `(1, 2)` to `Some(entity)` or `None`.
+- TileStorage represents the map as it is at any given moment
+- Save: TilemapSpec -> TileStorage -> SavedTilemap
+- Load: SavedTilemap -> TileStorage -- **no TilemapSpec involved**, just `size` and others
+
+- SavedTilemap represents tiles as `Vec<TileIdx, Stratum>` and in this way it mirrors `TileStorage`. 
+- The rest of it mirrors `TilemapSpec`: size, light_level, layer.
+
+### aside: strata in Godot
+
+My Godot implementation used a Node2D at the root, like `SmugglersCave`, and had another Node2D for a stratum like `TheCave`, and in `TheCave`, we expect `_level`, the `TileMapLayer`. Everything interesting belonging to a map — actors, monsters, interactables — was a child of TileMapLayer.
+
+In this way it was very simple to limit processing just to the visible stratum, the TileMapLayer.
+
+
+## learning from prototypes: okay fine it's a HashMap
+
+With the prototypes doing their job, we now move on to a less invasive approach to implementation, and honestly one of my favorite approaches: **no functional changes**. :P 
+
+If we build for N strata and keep it at 1 it simplifies our problem considerably. 
+
+A major principle here is to avoid significantly changing the way the system acquires and interacts with its inputs. 
+
+1. Going from `Res<Fov>` to `Query<(&Children, &Fov)>` is totally fine. 
+1. *Except* for the `setup_foo` example where we insert `Foo` on a stratum, we can avoid thinking about such altogether.
+1. To find out the stratum for the player, `Single<&ChildOf, With<Player>>`. `With<Foo>` does some very heavy lifting here & elsewhere. `ChildOf` gives us an Entity suitable for `Query`'s `get()`.  
+1. Detect active stratum changes via `Single<&ChildOf, (With<Player>, Changed<ChildOf>)>`.
+1. Change active stratum via `Single<&mut ChildOf, With<Player>>`. **NB: `ChildOf` is the source of truth; `Children` is populated by Bevy.**
+1. Toggle between `Visibility::Hidden` and `Visibility::Inherited`. 
+
+### done
+
+- `TileCell` is (TileIdx, Cell) and `PortalCell` is (Portal, Cell).
+- `TilemapSpec` has `all_tiles: HashMap<StratumId, Vec<TileCell>>` and `all_portals: HashMap<StratumId, Vec<PortalCell>>`.
+- A `Stratum` is defined as `Stratum(Entity, StratumId)`. `StratumId` is defined as `Stratum(i32)`. 
+- A `Stratum` entity is parent to its tiles and portals.
+- `TileStorage`, `Fov`, and `SpatialIndex` are Components on `Stratum` because each stratum will have different geometry.
+- Tiles get `Visibility::Inherited` when "visible" of `Visibility::Visible`. 
+
+One characteristic of this approach that's fallen out is that queries have gotten _considerably_ simpler. I think the hierarchical model is underrated. `Children` and `ChildOf` allow us to switch between "views" of the problem very easily. Both QueryData and QueryFilter become a **lot** simpler.
+
+#### example: update_spatial_index
+
+```rust
+fn update_spatial_index(
+    query: Query<(&Children, &mut SpatialIndex)>,
+    tiles: Query<&Cell, Without<Walkable>>,
+) {
+```
+
+1. query for the child entities of any entity with a spatial index (i.e. stratum)
+2. enumerate the cells for all not-walkable entities
+1. `query` drives iteration and mutation; `tiles` is the read-only lookup. 
+
+#### example: setup_fov
+
+```rust
+pub fn setup_fov(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    stratum_children: Query<(&Stratum, &Children)>,
+    tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
+) {
+```
+
+1. Read-only `stratum_children` gives us 1) something to attach Fov to as well as 2) all the child entities of same, MapTile or otherwise. 
+1. Read-only `tiles` implicitly maps a Stratum's child entities to `(&Cell, &TileIdx)`. -- In theory, this should be `With<Opaque>`, but that's too close to a functional change in `setup_fov`.
+2. `fov` is initialized based on size in `spec`, populated via `is_transparent()` and attached to stratum.
+
+#### example: update_fov_markers
+
+```rust
+pub fn update_fov_markers(
+    all_fov: Query<(&Children, &Fov)>,
+    player_query: Single<(&Cell, &ChildOf), With<Player>>,
+    player_stats: Res<PlayerStats>,
+    mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
+) {
+```
+
+1. `all_fov` has every `fov` for every stratum-entity alongside all the tiles which are children of that same stratum.
+1. `player_query` with `ChildOf` gives us a stratum-entity to retrieve from `all_fov`.
+1. `tiles` is a comprehensive list of cells and revealed status. child_tiles, aka `all_fov.0`, drives iteration and `tiles` is the means of mutation.
+
+
+
+### pending
+
+**`mobs::check_fov`**. Still uses `Res<Fov>`.
+
+**`process_actions`**. This relies on `Res<SpatialIndex>`. A naive query might be: `Query<&SpatialIndex>` paired with `Single<&ChildOf, With<Player>>` into `indices.get(player_child_of)`. *This is an area where ActiveStratum or some equivalent could make sense*: higher-level gameplay concepts like actions shouldn't really care about this.
+
+**`LightMap` and `update_emitter_lights`.** This is straightforward with one exception: `Local<LightMap>`. The prior impl made great use of this. Now there exists one for each Stratum. `Query<(&Emitter, &ChildOf, &Cell, Option<&PreviousCell>), Changed<Cell>>` gives us the emitter, where it is now, and where it was before, if any.
+
+Consider an abstraction that contains both `Cell` and `PreviousCell`. If `Cell` changes, `PreviousCell` must exist/change — they don't make much sense without each other. Maybe it's as simple as a `QueryData` type like `Mover`.
+
+Consider `AgentPos`, `NextPos`, and/or `AgentOfGrid` could benefit from something similar (lower priority because `mobs.rs` is the only thing that uses it.) Or, again, QueryData type or type alias. 
+
+**`Grid`**. `spawn_grid` and `update_grid` should operate on children of strata. 
+
+Consider moving all grid-related functionality from `mobs` and `main` to something like `nav`.
