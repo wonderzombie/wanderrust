@@ -145,6 +145,7 @@ impl TilemapSpec {
             tiles,
             layer: MAP_LAYER,
             start,
+            nstrata: 1,
             light_level: LightLevel::Night,
             ..default()
         }
@@ -293,32 +294,30 @@ pub fn sync_tiles(
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 /// TODO: consider whether or how function signature might be simplified.
 pub fn update_tile_visuals(
-    mut tiles: Query<
-        (
-            &mut Sprite,
-            &mut Visibility,
-            AnyOf<(
-                &Occupied,
-                &Highlighted,
-                &Revealed,
-                &TilePreview,
-                &LightLevel,
-            )>,
-        ),
-        With<MapTile>,
-    >,
-    map_spec: Res<TilemapSpec>,
+    mut tiles: Query<(
+        &mut Sprite,
+        &mut Visibility,
+        AnyOf<(
+            &Occupied,
+            &Highlighted,
+            &Revealed,
+            &TilePreview,
+            &LightLevel,
+            &MapTile,
+        )>,
+    )>,
+    spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, (occupied, highlighted, revealed, preview_opt, light_level)) in
+    for (mut sprite, mut vis, (occupied, highlighted, revealed, preview_opt, light_level, _)) in
         tiles.iter_mut()
     {
         let revealed = revealed.is_some_and(|r| r.0);
         let highlighted = highlighted.is_some();
-        let adjusted_light = light_level.copied().unwrap_or(map_spec.light_level);
+        let adjusted_light = light_level.copied().unwrap_or(spec.light_level);
         let has_actor = occupied.is_some();
 
         *vis = if revealed && !has_actor {
-            Visibility::Visible
+            Visibility::Inherited
         } else {
             Visibility::Hidden
         };

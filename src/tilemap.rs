@@ -4,7 +4,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use std::fmt::Display;
+use std::{fmt::Display, ops::Neg};
 
 use crate::{
     atlas::SpriteAtlas,
@@ -27,7 +27,7 @@ impl TilemapId {
 }
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Stratum(pub Entity, pub usize);
+pub struct Stratum(pub Entity, pub i32);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug)]
@@ -216,6 +216,7 @@ pub fn spawn_tilemap(
     // TODO: replace this with better logic.
 
     for i in 0..spec.nstrata {
+        let i = (i as i32).neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
@@ -223,15 +224,18 @@ pub fn spawn_tilemap(
             strat_id,
             &spec.size,
             &spec.tiles,
-            *spec.layer,
+            i as f32,
             &sheet,
             &mut commands,
         );
         commands.entity(strat_id).insert(Stratum(strat_id, i));
     }
-    commands.entity(map_entity).insert(spec.id);
+    commands
+        .entity(map_entity)
+        .insert(spec.id)
+        .insert(Visibility::Visible);
 
-    info!("ℹ️ done spawning tilemap")
+    info!("ℹ️\tdone spawning tilemap")
 }
 
 /// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
@@ -270,21 +274,29 @@ fn spawn_maptiles_from_spec(
 pub fn initialize_tile_storage(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    tiles: Query<(&Cell, Entity), With<MapTile>>,
+    strata: Query<(&Stratum, &Children)>,
+    tiles: Query<&Cell, With<MapTile>>,
 ) {
-    let map_entity = spec
-        .id
-        .get()
-        .expect("TilemapSpec is missing a map entity ID");
+    info!("storing maps by cell by stratum");
+    info!("there are {} strata", strata.iter().len());
 
-    info!("storing maps by cell");
-
-    let mut storage = TileStorage::new(spec.size);
-    for (cell, entity) in tiles.iter() {
-        storage.set(cell, entity);
+    let mut num_cells = 0;
+    for (stratum, children) in strata {
+        let mut storage = TileStorage::new(spec.size);
+        for entity in children.iter() {
+            if let Some(cell) = tiles.get(entity).ok() {
+                storage.set(cell, entity);
+                num_cells += 1;
+            }
+        }
+        info!(
+            "✅\tstratum {}: set {} cells of {} tile entities",
+            stratum.1,
+            num_cells,
+            storage.len(),
+        );
+        commands.entity(stratum.0).insert(storage);
     }
-    info!("✅ stored tiles: {}", storage.len());
-    commands.entity(map_entity).insert(storage);
 }
 
 /// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
