@@ -314,6 +314,23 @@ pub fn initialize_tile_storage(
     }
 }
 
+pub fn setup_portals(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    strat_storage: Query<(&Stratum, &TileStorage)>,
+) {
+    for (Stratum(_, id), storage) in strat_storage.iter() {
+        if let Some(portals_cells) = spec.all_portals.get(id) {
+            for (portal, cell) in portals_cells {
+                if let Some(entity) = storage.get(cell) {
+                    commands.entity(entity).insert(portal.clone());
+                    info!("inserted portal {:?} at {:?}", portal, cell);
+                }
+            }
+        }
+    }
+}
+
 /// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
 pub fn save_map(
     spec: &Res<TilemapSpec>,

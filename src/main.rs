@@ -108,6 +108,7 @@ fn main() {
                     load_spritesheet,
                     tilemap::spawn_tilemap,
                     tilemap::initialize_tile_storage,
+                    tilemap::setup_portals,
                 )
                     .chain()
                     .in_set(GameSystem::SetupTiles),
