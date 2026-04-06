@@ -199,10 +199,7 @@ pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<Ed
 /// Adds [Pickable] and [TilePreview] components to newly added [MapTile] entities.
 pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<MapTile>>) {
     for tile in tiles.iter() {
-        commands
-            .entity(tile)
-            .insert(Pickable::default())
-            .insert(TilePreview::default());
+        commands.entity(tile).insert(TilePreview::default());
     }
 }
 
