@@ -34,8 +34,8 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     gamestate::{GameState, Screen},
-    tilemap::{EntryId, Portal, TilemapSpec},
-    tiles::{TileIdx, Walkable},
+    tilemap::{EntryId, Portal, Stratum, TilemapSpec},
+    tiles::{MapTile, TileIdx, Walkable},
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{
@@ -113,7 +113,6 @@ fn main() {
                     .chain()
                     .in_set(GameSystem::SetupTiles),
                 sounds::load_sounds,
-                set_mouse_cursor.after(GameSystem::SetupTiles),
             ),
         )
         .add_systems(
@@ -125,17 +124,19 @@ fn main() {
                 fov::setup_fov,
                 camera::setup_camera,
                 add_click_observer,
+                setup_spatial_indices,
+                set_mouse_cursor,
             ),
         )
-        .add_systems(
-            PostStartup,
-            (
-                test_entities::add_test_npc,
-                test_entities::add_test_emitters,
-                test_entities::add_test_portals,
-            )
-                .in_set(GameSystem::SpawnTestEntities),
-        )
+        // .add_systems(
+        //     PostStartup,
+        //     (
+        //         test_entities::add_test_npc,
+        //         test_entities::add_test_emitters,
+        //         test_entities::add_test_portals,
+        //     )
+        //         .in_set(GameSystem::SpawnTestEntities),
+        // )
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(
             EguiPrimaryContextPass,
@@ -320,7 +321,7 @@ fn update_grid(
 }
 
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
-#[derive(Resource, Default, Debug, PartialEq, Eq)]
+#[derive(Resource, Component, Default, Debug, PartialEq, Eq)]
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }
@@ -361,6 +362,22 @@ fn update_spatial_index(
     index.clear();
     for (entity, cell) in query.iter() {
         index.insert(*cell, entity);
+    }
+}
+
+fn setup_spatial_indices(
+    mut commands: Commands,
+    stratum_children: Query<(&Stratum, &Children)>,
+    tiles: Query<&Cell, Without<Walkable>>,
+) {
+    for (strat, children) in stratum_children.iter() {
+        let mut index = SpatialIndex::default();
+        for child in children.iter() {
+            if let Some(cell) = tiles.get(child).ok() {
+                index.insert(*cell, child);
+            }
+        }
+        commands.entity(strat.0).insert(index);
     }
 }
 
