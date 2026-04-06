@@ -2,7 +2,7 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{Dimensions, TilemapLayer, TilemapSpec};
+use crate::tilemap::{Dimensions, EntryId, Portal, TilemapLayer, TilemapSpec};
 use crate::tiles::{
     Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
 };
@@ -77,6 +77,8 @@ impl TilemapSpec {
         ('I', TileIdx::Torch),
         ('i', TileIdx::Candle),
         (' ', TileIdx::Blank),
+        ('s', TileIdx::StairsDown),
+        ('S', TileIdx::StairsUp),
     ];
 
     fn tile_for(c: char) -> Option<TileIdx> {
@@ -96,7 +98,9 @@ impl TilemapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let tiles = vec![TilemapSpec::parse_map_str(map_str)];
+        let all_tiles = vec![TilemapSpec::parse_map_str(map_str)];
+
+        let all_portals = vec![TilemapSpec::parse_portals(&all_tiles[0])];
 
         TilemapSpec {
             size: Dimensions {
@@ -104,10 +108,11 @@ impl TilemapSpec {
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            tiles,
+            all_tiles,
             layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
             light_level: LightLevel::Dark,
+            all_portals,
             ..default()
         }
     }
@@ -137,7 +142,8 @@ impl TilemapSpec {
         let tiles = TilemapSpec::parse_map_str(one);
         let tiles2 = TilemapSpec::parse_map_str(two);
         TilemapSpec {
-            tiles: vec![tiles, tiles2],
+            all_tiles: vec![tiles1, tiles2],
+            all_portals: vec![portals1, portals2],
             start,
             light_level,
             ..default()
@@ -160,7 +166,7 @@ impl TilemapSpec {
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
-        let tiles = vec![
+        let all_tiles = vec![
             (0..tiles)
                 .map(|i| {
                     let cell = Cell::from_idx(size.0, i as usize);
@@ -179,7 +185,7 @@ impl TilemapSpec {
                 height: size.1,
                 tile_size: DEFAULT_TILE_SIZE,
             },
-            tiles,
+            all_tiles,
             layer: MAP_LAYER,
             start,
             light_level: LightLevel::Night,
@@ -212,14 +218,14 @@ mod tests {
         let spec = TilemapSpec::from_str("");
         assert_eq!(spec.size.width, 0);
         assert_eq!(spec.size.height, 0);
-        assert!(spec.tiles[0].is_empty());
+        assert!(spec.all_tiles[0].is_empty());
     }
 
     #[test]
     fn spaces_and_unknown_chars_excluded() {
         // '?' (unknown) should produce no tiles
         let spec = TilemapSpec::from_str("?");
-        assert!(spec.tiles[0].is_empty());
+        assert!(spec.all_tiles[0].is_empty());
     }
 
     #[test]
@@ -227,7 +233,7 @@ mod tests {
         // One of each known character on a single row; check tile indices in order
         let spec = TilemapSpec::from_str("#.XDObwTtUu");
         let tile_types: Vec<TileIdx> = spec
-            .tiles
+            .all_tiles
             .first()
             .unwrap()
             .iter()
@@ -256,7 +262,7 @@ mod tests {
         // "#." on row 0 → wall at (0,0), blank at (1,0)
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
         let spec = TilemapSpec::from_str("#.\n.#");
-        let tiles = &spec.tiles;
+        let tiles = &spec.all_tiles;
         assert_eq!(tiles[0][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
         assert_eq!(tiles[0][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
         assert_eq!(tiles[0][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));

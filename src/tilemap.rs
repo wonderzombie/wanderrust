@@ -33,7 +33,8 @@ pub struct TilemapSpec {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<Vec<(TileIdx, Cell)>>,
+    pub all_tiles: Vec<Vec<(TileIdx, Cell)>>,
+    pub all_portals: Vec<Vec<(Portal, Cell)>>,
     pub start: Cell,
     pub light_level: LightLevel,
 }
@@ -208,10 +209,9 @@ pub fn spawn_tilemap(
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
-    // TODO: replace this with better logic.
 
-    for i in 0..spec.tiles.len() {
-        let tiles = &spec.tiles[i];
+    for i in 0..spec.all_tiles.len() {
+        let tiles = &spec.all_tiles[i];
         let i = (i as i32).neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
