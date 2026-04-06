@@ -24,6 +24,24 @@ pub enum Interactable {
     Combatant,
 }
 
+impl Interactable {
+    pub fn from(tile_idx: TileIdx) -> Option<Interactable> {
+        match tile_idx {
+            TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
+                is_open: false,
+                contents: Inventory::with_item(Item("gold".to_string()), 10),
+            }),
+            TileIdx::DoorBrownThickClosed1
+            | TileIdx::DoorBrownThickClosed2
+            | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
+                is_open: false,
+                requires: None,
+            }),
+            _ => None,
+        }
+    }
+}
+
 /// Examine is a general word for interactions.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Examine {
@@ -146,27 +164,12 @@ pub fn process_dialogue(
 ///
 /// Mostly this means interactables that have such as an open/closed sprite.
 pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), With<MapTile>>) {
-    for (entity, tile_idx) in tiles.iter() {
-        if !tile_idx.is_interactable() {
-            continue;
-        }
-
-        let bundle = match tile_idx {
-            TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
-                is_open: false,
-                contents: Inventory::with_item(Item("gold".to_string()), 10),
-            }),
-            TileIdx::DoorBrownThickClosed1
-            | TileIdx::DoorBrownThickClosed2
-            | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
-                is_open: false,
-                requires: None,
-            }),
-            _ => None,
-        };
-
-        if let Some(bundle) = bundle {
+    let mut count = 0;
+    for (entity, &tile_idx) in tiles.iter() {
+        if let Some(bundle) = Interactable::from(tile_idx) {
+            count += 1;
             commands.entity(entity).insert(bundle);
         }
     }
+    info!("inserted {} interactables", count);
 }

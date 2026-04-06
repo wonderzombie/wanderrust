@@ -134,6 +134,12 @@ pub struct Action {
     pub target_cell: Cell,
 }
 
+impl Action {
+    pub fn adjusted_cell(&self) -> Cell {
+        self.origin_cell + (self.target_cell - self.origin_cell)
+    }
+}
+
 impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

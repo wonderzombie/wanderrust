@@ -446,12 +446,23 @@ fn process_actions(
     mut actions: MessageReader<Action>,
     portals: Query<&Portal>,
     mut interaction_attempts: MessageWriter<interactions::Examine>,
-    spatial_index: Res<SpatialIndex>,
+    all_spatial: Query<&SpatialIndex>,
+    actors: Query<&ChildOf, With<Actor>>,
 ) {
     let mut acted = false;
     for action in actions.read() {
-        let direction = action.target_cell - action.origin_cell;
-        let adjusted_cell = action.origin_cell + direction;
+        let Some(spatial_index) = actors
+            .get(action.entity)
+            .and_then(|e| all_spatial.get(e.parent()))
+            .ok()
+        else {
+            warn!("Failed to get spatial index for entity {:?}", action.entity);
+            continue;
+        };
+        acted = true;
+
+        let adjusted_cell = action.adjusted_cell();
+
         let Some(target_entity) = spatial_index.get(adjusted_cell) else {
             // No entity at the target [`Cell`], so we can assume it's an empty walkable tile.
             // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
@@ -460,7 +471,6 @@ fn process_actions(
                 .insert((adjusted_cell, PreviousCell(action.origin_cell)))
                 .trigger(Moved);
 
-            acted = true;
             continue;
         };
 
@@ -468,7 +478,6 @@ fn process_actions(
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
-            acted = true;
             continue;
         }
 
@@ -476,7 +485,6 @@ fn process_actions(
             interactor: action.entity,
             target: target_entity,
         });
-        acted = true;
     }
 
     if acted {
