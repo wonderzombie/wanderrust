@@ -9,7 +9,7 @@ use crate::{
     cell::Cell,
     combat::CombatStats,
     light::{Emitter, LightLevel},
-    tilemap::{TileStorage, TilemapLayer, TilemapSpec},
+    tilemap::{Stratum, TileStorage, TilemapLayer, TilemapSpec},
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
@@ -75,8 +75,15 @@ const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 pub struct Moved(pub Entity);
 
 /// Spawns the player entity at the start position of the tilemap on the player's layer.
-pub fn setup_player(mut commands: Commands, spec: Res<TilemapSpec>, atlas: Res<SpriteAtlas>) {
+pub fn setup_player(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    atlas: Res<SpriteAtlas>,
+    strata: Query<Entity, With<Stratum>>,
+) {
     commands.spawn((
+        // TODO: figure out the real active stratum.
+        ChildOf(strata.iter().next().unwrap()),
         Actor,
         Player,
         TileIdx::Player,

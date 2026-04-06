@@ -119,7 +119,7 @@ impl TilemapSpec {
             all_tiles,
             layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
-            light_level: LightLevel::Dark,
+            light_level: LightLevel::Bright,
             all_portals,
             ..default()
         }

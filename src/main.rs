@@ -356,12 +356,16 @@ impl SpatialIndex {
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
 fn update_spatial_index(
-    mut index: ResMut<SpatialIndex>,
-    query: Query<(Entity, &Cell), Without<Walkable>>,
+    query: Query<(&Children, &mut SpatialIndex), With<Stratum>>,
+    tiles: Query<&Cell, Without<Walkable>>,
 ) {
-    index.clear();
-    for (entity, cell) in query.iter() {
-        index.insert(*cell, entity);
+    for (children, mut index) in query {
+        index.clear();
+        for &child in children {
+            if let Some(cell) = tiles.get(child).ok() {
+                index.insert(*cell, child);
+            }
+        }
     }
 }
 

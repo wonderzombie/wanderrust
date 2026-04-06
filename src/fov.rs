@@ -6,12 +6,12 @@ use crate::{
     Player,
     actors::PlayerStats,
     cell::Cell,
-    tilemap::TilemapSpec,
+    tilemap::{Stratum, TilemapSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
 /// Newtype for field of view model that's a Resource and which tracks which cells are transparent for visibility calculations.
-#[derive(Resource, Debug, Deref, DerefMut)]
+#[derive(Resource, Component, Debug, Deref, DerefMut)]
 pub struct Fov(Mrpas);
 
 impl Fov {
@@ -48,58 +48,76 @@ pub struct Vision(pub u32);
 pub fn setup_fov(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
+    stratum_children: Query<(&Stratum, &Children)>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
-    let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
-
     let mut tiles_count = 0;
     let mut opaque_count = 0;
-    fov.clear_field_of_view(); // initializes current FOV to "zero"
-    for (cell, tile_idx) in tiles.iter() {
-        // Sets individual points in the model to transparent-or-not.
-        fov.set_transparent(cell.into(), tile_idx.is_transparent());
-        tiles_count += 1;
-        if !tile_idx.is_transparent() {
-            opaque_count += 1;
+
+    for (strat, children) in stratum_children {
+        info!("checking {} children", children.iter().len());
+        let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
+        for &child in children {
+            if let Some((cell, tile_idx)) = tiles.get(child).ok() {
+                // Sets individual points in the model to transparent-or-not.
+                fov.set_transparent(cell.into(), tile_idx.is_transparent());
+                tiles_count += 1;
+                if !tile_idx.is_transparent() {
+                    opaque_count += 1;
+                }
+            }
         }
+        fov.clear_field_of_view(); // initializes current FOV to "zero"
+        commands.entity(strat.0).insert(fov);
+
+        info!(
+            "✅ Initialized FOV model with {} tiles, {} opaque.",
+            tiles_count, opaque_count
+        )
     }
-
-    info!(
-        "✅ Initialized FOV model with {} tiles, {} opaque.",
-        tiles_count, opaque_count
-    );
-
-    commands.insert_resource(fov);
 }
 
 /// Updates the field of view model based on the type of tile's transparency-or-not.
 pub fn update_fov_model(
-    mut fov: ResMut<Fov>,
-    query: Query<(&Cell, &TileIdx), (Changed<TileIdx>, With<MapTile>)>,
+    mut all_fov: Query<&mut Fov>,
+    query: Query<(&Cell, &TileIdx, &ChildOf), (Changed<TileIdx>, With<MapTile>)>,
 ) {
-    for (cell, tile_idx) in query.iter() {
-        fov.set_transparent(cell.into(), tile_idx.is_transparent());
+    for (cell, tile_idx, child_of) in query.iter() {
+        if let Some(mut fov) = all_fov.get_mut(child_of.parent()).ok() {
+            fov.set_transparent(cell.into(), tile_idx.is_transparent());
+        }
     }
 }
 
 /// Updates the [Revealed] status of [MapTile]s based on the player's [Fov].
 /// Uses the [View] type to avoid mutating `Res<Fov>`.
 pub fn update_fov_markers(
-    fov: Res<Fov>,
-    player_query: Query<&Cell, With<Player>>,
+    // fov: Res<Fov>,
+    mut all_fov: Query<(&Children, &mut Fov)>,
+    player_query: Single<(&Cell, &ChildOf), With<Player>>,
     player_stats: Res<PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
-    let Ok(player_cell) = player_query.single() else {
-        warn!("No player entity found in the world.");
+    // TODO: figure out the real active stratum that the player is on.
+    // See also [`setup_player`].
+    let (cell, player_child_of) = *player_query;
+
+    let parent_strat = player_child_of.parent();
+    let Some((child_tiles, player_fov)) = all_fov.get_mut(parent_strat).ok() else {
+        error!("No Fov found for player's stratum.");
         return;
     };
 
-    let view = fov.from(player_cell.into(), player_stats.vision_range);
-    for (cell, mut revealed) in tiles.iter_mut() {
-        let should_reveal = view.has(cell.into());
-        if should_reveal != revealed.0 {
-            revealed.0 = should_reveal;
+    let view = player_fov.from(cell.into(), player_stats.vision_range);
+
+    // Since we got these tiles as children of `all_fov`, aka Stratum
+    // we can look up each in `tiles`, which is constrained to `MapTile`.
+    for &entity in child_tiles {
+        if let Some((cell, mut revealed)) = tiles.get_mut(entity).ok() {
+            let should_reveal = view.has(cell.into());
+            if should_reveal != revealed.0 {
+                revealed.0 = should_reveal;
+            }
         }
     }
 }
