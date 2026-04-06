@@ -228,7 +228,9 @@ pub fn update_fov_markers(
 
 ### pending
 
-**`mobs::check_fov`**. Still uses `Res<Fov>`.
+**`Grid` and `Fov` and `mobs::check_fov`**. Still uses `Res<Fov>`. `spawn_grid` and `update_grid` should operate on children of strata. 
+
+Consider moving specifically grid-related functionality from `mobs` and `main` to something like `nav`.
 
 **`process_actions`**. This relies on `Res<SpatialIndex>`. A naive query might be: `Query<&SpatialIndex>` paired with `Single<&ChildOf, With<Player>>` into `indices.get(player_child_of)`. *This is an area where ActiveStratum or some equivalent could make sense*: higher-level gameplay concepts like actions shouldn't really care about this.
 
@@ -236,8 +238,4 @@ pub fn update_fov_markers(
 
 Consider an abstraction that contains both `Cell` and `PreviousCell`. If `Cell` changes, `PreviousCell` must exist/change — they don't make much sense without each other. Maybe it's as simple as a `QueryData` type like `Mover`.
 
-Consider `AgentPos`, `NextPos`, and/or `AgentOfGrid` could benefit from something similar (lower priority because `mobs.rs` is the only thing that uses it.) Or, again, QueryData type or type alias. 
-
-**`Grid`**. `spawn_grid` and `update_grid` should operate on children of strata. 
-
-Consider moving all grid-related functionality from `mobs` and `main` to something like `nav`.
+Consider `AgentPos`, `NextPos`, and/or `AgentOfGrid` could benefit from something similar (lower priority because `mobs.rs` is the only thing that uses it.) Or, again, QueryData type or type alias.
