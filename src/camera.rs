@@ -39,6 +39,8 @@ pub fn update(
     camera_transform.scale = Vec3::splat(zoom);
 }
 
+// TODO: we can use this to determine which cells are visible and need to be rendered.
+#[allow(dead_code)]
 pub fn visible_cell_range(viewport_size: Vec2, origin_cell: Cell) -> (Cell, Cell) {
     let half_w = (viewport_size.x / tiles::TILE_SIZE_PX / 2.0).ceil() as i32;
     let half_h = (viewport_size.y / tiles::TILE_SIZE_PX / 2.0).ceil() as i32;

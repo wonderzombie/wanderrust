@@ -77,23 +77,25 @@ impl TilemapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let tiles = lines
-            .iter()
-            .enumerate()
-            .flat_map(|(y, line)| {
-                line.chars().enumerate().filter_map(move |(x, ch)| {
-                    TilemapSpec::tile_for(ch).map(|idx| {
-                        (
-                            idx,
-                            Cell {
-                                x: x as i32,
-                                y: y as i32,
-                            },
-                        )
+        let tiles = vec![
+            lines
+                .iter()
+                .enumerate()
+                .flat_map(|(y, line)| {
+                    line.chars().enumerate().filter_map(move |(x, ch)| {
+                        TilemapSpec::tile_for(ch).map(|idx| {
+                            (
+                                idx,
+                                Cell {
+                                    x: x as i32,
+                                    y: y as i32,
+                                },
+                            )
+                        })
                     })
                 })
-            })
-            .collect::<Vec<_>>();
+                .collect::<Vec<_>>(),
+        ];
 
         TilemapSpec {
             size: Dimensions {
@@ -125,14 +127,16 @@ impl TilemapSpec {
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
-        let tiles = (0..tiles)
-            .map(|i| {
-                let cell = Cell::from_idx(size.0, i as usize);
-                let tile_idx = fx(&cell, &table);
-                tally.entry(tile_idx).and_modify(|e| *e += 1).or_insert(1);
-                (tile_idx, cell)
-            })
-            .collect();
+        let tiles = vec![
+            (0..tiles)
+                .map(|i| {
+                    let cell = Cell::from_idx(size.0, i as usize);
+                    let tile_idx = fx(&cell, &table);
+                    tally.entry(tile_idx).and_modify(|e| *e += 1).or_insert(1);
+                    (tile_idx, cell)
+                })
+                .collect(),
+        ];
 
         info!("tile breakdown: {:#?}", tally);
 
@@ -145,7 +149,6 @@ impl TilemapSpec {
             tiles,
             layer: MAP_LAYER,
             start,
-            nstrata: 1,
             light_level: LightLevel::Night,
             ..default()
         }
@@ -190,7 +193,13 @@ mod tests {
     fn character_mappings() {
         // One of each known character on a single row; check tile indices in order
         let spec = TilemapSpec::from_str("#.XDObwTtUu");
-        let tile_types: Vec<TileIdx> = spec.tiles.iter().map(|(idx, _)| *idx).collect();
+        let tile_types: Vec<TileIdx> = spec
+            .tiles
+            .first()
+            .unwrap()
+            .iter()
+            .map(|(idx, _)| *idx)
+            .collect();
         assert_eq!(
             tile_types,
             vec![
@@ -215,10 +224,10 @@ mod tests {
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
         let spec = TilemapSpec::from_str("#.\n.#");
         let tiles = &spec.tiles;
-        assert_eq!(tiles[0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
-        assert_eq!(tiles[1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
-        assert_eq!(tiles[2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
-        assert_eq!(tiles[3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
+        assert_eq!(tiles[0][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
+        assert_eq!(tiles[0][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
+        assert_eq!(tiles[0][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
+        assert_eq!(tiles[0][3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
     }
 
     #[test]

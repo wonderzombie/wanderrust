@@ -17,10 +17,6 @@ use crate::{
 pub struct TilemapId(Option<Entity>);
 
 impl TilemapId {
-    pub fn get(&self) -> Option<Entity> {
-        self.0
-    }
-
     pub fn set(&mut self, id: Entity) {
         self.0.replace(id);
     }
@@ -37,10 +33,9 @@ pub struct TilemapSpec {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub tiles: Vec<(TileIdx, Cell)>,
+    pub tiles: Vec<Vec<(TileIdx, Cell)>>,
     pub start: Cell,
     pub light_level: LightLevel,
-    pub nstrata: usize,
 }
 
 #[derive(Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
@@ -215,7 +210,8 @@ pub fn spawn_tilemap(
     spec.id.set(map_entity);
     // TODO: replace this with better logic.
 
-    for i in 0..spec.nstrata {
+    for i in 0..spec.tiles.len() {
+        let tiles = &spec.tiles[i];
         let i = (i as i32).neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
@@ -223,7 +219,7 @@ pub fn spawn_tilemap(
         spawn_maptiles_from_spec(
             strat_id,
             &spec.size,
-            &spec.tiles,
+            &tiles,
             i as f32,
             &sheet,
             &mut commands,
