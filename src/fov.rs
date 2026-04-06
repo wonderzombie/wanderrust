@@ -92,8 +92,7 @@ pub fn update_fov_model(
 /// Updates the [Revealed] status of [MapTile]s based on the player's [Fov].
 /// Uses the [View] type to avoid mutating `Res<Fov>`.
 pub fn update_fov_markers(
-    // fov: Res<Fov>,
-    mut all_fov: Query<(&Children, &mut Fov)>,
+    all_fov: Query<(&Children, &Fov)>,
     player_query: Single<(&Cell, &ChildOf), With<Player>>,
     player_stats: Res<PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
@@ -103,7 +102,7 @@ pub fn update_fov_markers(
     let (cell, player_child_of) = *player_query;
 
     let parent_strat = player_child_of.parent();
-    let Some((child_tiles, player_fov)) = all_fov.get_mut(parent_strat).ok() else {
+    let Some((child_tiles, player_fov)) = all_fov.get(parent_strat).ok() else {
         error!("No Fov found for player's stratum.");
         return;
     };

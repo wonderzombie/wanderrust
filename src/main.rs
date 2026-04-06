@@ -356,7 +356,7 @@ impl SpatialIndex {
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
 fn update_spatial_index(
-    query: Query<(&Children, &mut SpatialIndex), With<Stratum>>,
+    query: Query<(&Children, &mut SpatialIndex)>,
     tiles: Query<&Cell, Without<Walkable>>,
 ) {
     for (children, mut index) in query {
