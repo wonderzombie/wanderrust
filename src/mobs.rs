@@ -14,26 +14,30 @@ use crate::{
 
 pub fn check_fov(
     mut commands: Commands,
-    fov: Res<Fov>,
-    visions: Query<
-        (Entity, &TileIdx, &Cell, &Vision),
+    all_fov: Query<&Fov>,
+    active_mobs: Query<
+        (Entity, &ChildOf, &Cell, &Vision),
         (With<AgentOfGrid>, Without<Dead>, Without<Player>),
     >,
-    player: Query<&Cell, With<Player>>,
+    player_cell: Single<&Cell, With<Player>>,
 ) {
-    let Some(player_cell) = player.single().ok() else {
-        return;
-    };
-    for (entity, tile, mob_cell, mob_vision) in visions.iter() {
-        let view = fov.from(mob_cell.into(), mob_vision.0);
-        if view.has(player_cell.into()) {
+    let player_cell: (i32, i32) = (*player_cell).into();
+    for (mob_entity, mob_child_of, mob_cell, mob_vision) in active_mobs.iter() {
+        let Some(fov) = all_fov.get(mob_child_of.parent()).ok() else {
+            warn!("No Fov found for entity {:?}", mob_child_of.parent());
+            continue;
+        };
+
+        let view = fov.from(mob_cell.into(), mob_vision.range());
+
+        if view.has(player_cell) {
             commands
-                .entity(entity)
+                .entity(mob_entity)
                 .insert(Alerted)
                 .insert(Turn::Waiting);
             info!(
-                "{:?} @ {} detected player at {}",
-                tile, mob_cell, player_cell
+                "{:?} @ {} detected player at {:?}",
+                mob_entity, mob_cell, player_cell
             );
         }
     }
