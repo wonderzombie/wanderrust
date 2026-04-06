@@ -46,14 +46,16 @@ pub type PortalCell = (Portal, Cell);
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug)]
 pub struct TilemapSpec {
-    /// MapTile entities will be created as children of this entity.
+    /// Stratum entities will be created as children of this entity.
     pub id: TilemapId,
     pub size: Dimensions,
     pub layer: TilemapLayer,
-    /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
+    /// Tiles and portals keyed by StratumId drive tilemap creation.
     pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
     pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
+    /// Starting point for the player.
     pub start: Cell,
+    /// The minimum light level for the area.
     pub light_level: LightLevel,
 }
 
@@ -267,7 +269,6 @@ fn spawn_maptiles_from_spec(
         .map(|(tile_idx, cell)| {
             let pos = size.cell_to_pos(cell);
 
-            // TODO: replace [MapTile] with [MapId] here and elsewhere.
             TileBundle {
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
