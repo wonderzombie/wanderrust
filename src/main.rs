@@ -25,6 +25,7 @@ mod title_screen;
 use std::collections::HashMap;
 
 use bevy::{
+    platform::collections::HashSet,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
@@ -288,35 +289,65 @@ fn click_observer(
     }
 }
 
-fn spawn_grid(mut commands: Commands, spec: Res<TilemapSpec>) {
-    let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
-        .chunk_size(16)
-        .default_impassable()
-        .build();
+type CardinalGrid = Grid<CardinalNeighborhood>;
 
-    commands.spawn(Grid::<CardinalNeighborhood>::new(&grid_settings));
+fn spawn_grid(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    strata: Query<Entity, With<Stratum>>,
+) {
+    for stratum in strata {
+        let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
+            .chunk_size(16)
+            .default_impassable()
+            .build();
+
+        let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
+
+        commands.entity(stratum).insert(grid);
+    }
 }
 
 fn update_grid(
-    grid: Single<&mut Grid<CardinalNeighborhood>>,
-    tiles: Query<(&Cell, Option<&Walkable>), Changed<TileIdx>>,
+    mut grid: Query<(Entity, &mut CardinalGrid)>,
+    changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
 ) {
-    let mut grid = grid.into_inner();
-
     let mut count = 0;
-    for (cell, walkable_opt) in tiles.iter() {
-        let nav = if walkable_opt.is_some() {
+    let mut changed_grids: HashSet<Entity> = HashSet::new();
+
+    for (cell, child_of, walkable_opt) in changed_tiles {
+        let Some((entity, mut grid)) = grid.get_mut(child_of.0).ok() else {
+            error!(
+                "failed to get grid for cell {:?} child_of {:?}",
+                cell, child_of
+            );
+            continue;
+        };
+
+        let prev_nav = grid.nav(cell.into());
+        let next_nav = if walkable_opt.is_some() {
             Nav::Passable(1)
         } else {
             Nav::Impassable
         };
-        grid.set_nav(cell.into(), nav);
-        count += 1;
+
+        // This handles the case where `prev_nav` is `None`, or when
+        // `Some(prev_nav) != Some(next_nav)`.
+        if prev_nav != Some(next_nav) {
+            grid.set_nav(cell.into(), next_nav);
+            changed_grids.insert(entity);
+            count += 1;
+        }
     }
 
+    changed_grids.iter().for_each(|&entity| {
+        if let Some((_, mut grid)) = grid.get_mut(entity).ok() {
+            grid.build();
+        }
+    });
+
     if count > 0 {
-        info!("ℹ️ updated grid, set {} tiles", count);
-        grid.build();
+        info!("ℹ️\tupdated grid, set {} tiles", count);
     }
 }
 
