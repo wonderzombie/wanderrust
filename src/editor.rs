@@ -27,6 +27,7 @@ pub enum EditorState {
 pub struct EditorContext {
     pub active_tile: tiles::TileIdx,
     pub active_tile_idx: usize,
+    pub observers: Vec<Entity>,
 }
 
 impl Default for EditorContext {
@@ -34,6 +35,7 @@ impl Default for EditorContext {
         Self {
             active_tile: tiles::TileIdx::Grass,
             active_tile_idx: default(),
+            observers: Vec::new(),
         }
     }
 }
@@ -139,44 +141,59 @@ macro_rules! get_entity {
 }
 
 /// Sets up global tile observers that highlight and preview tiles when the pointer is over them.
-pub fn setup_global_tile_observers(mut commands: Commands) {
-    commands.add_observer(
-        |on: On<Pointer<Over>>,
-         mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
-         editor: Res<EditorContext>| {
-            let preview_opt = get_entity!(tiles, on);
-            if let Some(mut preview) = preview_opt {
-                preview.set(editor.active_tile);
-            }
-        },
-    );
-    commands.add_observer(
-        |on: On<Pointer<Out>>,
-         mut commands: Commands,
-         mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>| {
-            let preview_opt = get_entity!(tiles, on);
-            commands.entity(on.event_target()).remove::<Highlighted>();
-            if let Some(mut preview) = preview_opt {
-                preview.clear();
-            }
-        },
-    );
-    commands.add_observer(
-        |on: On<Pointer<Click>>,
-         mut tiles: Query<&mut TileIdx, With<MapTile>>,
-         editor: Res<EditorContext>,
-         state: Res<State<EditorState>>| {
-            if state.get() != &EditorState::Enabled {
-                return;
-            }
-            let mut tile_idx = get_entity!(tiles, on);
-            *tile_idx = match on.button {
-                PointerButton::Primary => editor.active_tile,
-                PointerButton::Secondary => TileIdx::Blank,
-                _ => *tile_idx,
-            };
-        },
-    );
+pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
+    for &obs in editor.observers.iter() {
+        commands.entity(obs).despawn()
+    }
+    editor.observers.clear();
+
+    let over_obs = commands
+        .add_observer(
+            |on: On<Pointer<Over>>,
+             mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
+             editor: Res<EditorContext>| {
+                let preview_opt = get_entity!(tiles, on);
+                if let Some(mut preview) = preview_opt {
+                    preview.set(editor.active_tile);
+                }
+            },
+        )
+        .id();
+    let out_obs = commands
+        .add_observer(
+            |on: On<Pointer<Out>>,
+             mut commands: Commands,
+             mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>| {
+                let preview_opt = get_entity!(tiles, on);
+                commands.entity(on.event_target()).remove::<Highlighted>();
+                if let Some(mut preview) = preview_opt {
+                    preview.clear();
+                }
+            },
+        )
+        .id();
+    let click_obs = commands
+        .add_observer(
+            |on: On<Pointer<Click>>,
+             mut tiles: Query<&mut TileIdx, With<MapTile>>,
+             editor: Res<EditorContext>,
+             state: Res<State<EditorState>>| {
+                if state.get() != &EditorState::Enabled {
+                    return;
+                }
+                let mut tile_idx = get_entity!(tiles, on);
+                *tile_idx = match on.button {
+                    PointerButton::Primary => editor.active_tile,
+                    PointerButton::Secondary => TileIdx::Blank,
+                    _ => *tile_idx,
+                };
+            },
+        )
+        .id();
+
+    editor
+        .observers
+        .extend_from_slice(&[over_obs, out_obs, click_obs]);
 }
 
 /// Adds [Pickable] and [TilePreview] components to newly added [MapTile] entities.
@@ -199,10 +216,11 @@ pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, Wit
     }
 }
 
-pub fn remove_global_tile_observers(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
-    for tile in tiles.iter() {
-        commands.entity(tile).remove::<ObservedBy>();
+pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
+    for &obs in editor.observers.iter() {
+        commands.entity(obs).despawn();
     }
+    editor.observers.clear();
 }
 
 /// Represents a task (a dialog) which results in a [`PathBuf`] (a file path).
