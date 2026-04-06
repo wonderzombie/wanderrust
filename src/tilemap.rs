@@ -22,8 +22,26 @@ impl TilemapId {
     }
 }
 
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct StratumId(pub i32);
+
+impl From<i32> for StratumId {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
+impl Display for StratumId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Stratum: {}", self.0)
+    }
+}
+
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Stratum(pub Entity, pub i32);
+pub struct Stratum(pub Entity, pub StratumId);
+
+pub type TileCell = (TileIdx, Cell);
+pub type PortalCell = (Portal, Cell);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug)]
@@ -33,8 +51,8 @@ pub struct TilemapSpec {
     pub size: Dimensions,
     pub layer: TilemapLayer,
     /// A vector of tile indices and their corresponding cell positions. This will drive tilemap creation.
-    pub all_tiles: Vec<Vec<(TileIdx, Cell)>>,
-    pub all_portals: Vec<Vec<(Portal, Cell)>>,
+    pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
+    pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
     pub start: Cell,
     pub light_level: LightLevel,
 }
@@ -210,21 +228,22 @@ pub fn spawn_tilemap(
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
 
-    for i in 0..spec.all_tiles.len() {
-        let tiles = &spec.all_tiles[i];
-        let i = (i as i32).neg();
+    for (id, tile_cells) in spec.all_tiles.iter() {
+        let i = (id.0 as i32).neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
         spawn_maptiles_from_spec(
             strat_id,
             &spec.size,
-            &tiles,
+            &tile_cells,
             i as f32,
             &sheet,
             &mut commands,
         );
-        commands.entity(strat_id).insert(Stratum(strat_id, i));
+        commands
+            .entity(strat_id)
+            .insert(Stratum(strat_id, i.into()));
     }
     commands
         .entity(map_entity)

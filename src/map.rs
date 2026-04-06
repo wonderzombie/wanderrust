@@ -2,7 +2,9 @@ use crate::cell::Cell;
 use crate::colors;
 use crate::light::LightLevel;
 use crate::ptable::ProbabilityTable;
-use crate::tilemap::{Dimensions, EntryId, Portal, TilemapLayer, TilemapSpec};
+use crate::tilemap::{
+    Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapLayer, TilemapSpec,
+};
 use crate::tiles::{
     Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
 };
@@ -98,9 +100,15 @@ impl TilemapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let all_tiles = vec![TilemapSpec::parse_map_str(map_str)];
+        let id = StratumId(0);
+        let all_tiles: HashMap<StratumId, Vec<TileCell>> =
+            vec![(id, TilemapSpec::parse_map_str(map_str))]
+                .into_iter()
+                .collect();
 
-        let all_portals = vec![TilemapSpec::parse_portals(&all_tiles[0])];
+        let all_portals = vec![(id, TilemapSpec::parse_portals(&all_tiles[&id]))]
+            .into_iter()
+            .collect();
 
         TilemapSpec {
             size: Dimensions {
@@ -117,7 +125,30 @@ impl TilemapSpec {
         }
     }
 
-    fn parse_map_str(map_str: &str) -> Vec<(TileIdx, Cell)> {
+    fn parse_portals(tiles: &[(TileIdx, Cell)]) -> Vec<PortalCell> {
+        tiles
+            .iter()
+            .filter_map(|(idx, cell)| match *idx {
+                TileIdx::StairsDown => Some((
+                    Portal {
+                        id: EntryId(format!("{:?}", TileIdx::StairsDown)),
+                        arrive_at: EntryId(format!("{:?}", TileIdx::StairsUp)),
+                    },
+                    *cell,
+                )),
+                TileIdx::StairsUp => Some((
+                    Portal {
+                        id: EntryId(format!("{:?}", TileIdx::StairsUp)),
+                        arrive_at: EntryId(format!("{:?}", TileIdx::StairsDown)),
+                    },
+                    *cell,
+                )),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+    }
+
+    fn parse_map_str(map_str: &str) -> Vec<TileCell> {
         let lines: Vec<&str> = map_str.lines().collect();
         lines
             .iter()
@@ -139,11 +170,19 @@ impl TilemapSpec {
     }
 
     pub fn from_strs(one: &str, two: &str, start: Cell, light_level: LightLevel) -> Self {
-        let tiles = TilemapSpec::parse_map_str(one);
+        let id1 = StratumId(0);
+        let id2 = StratumId(1);
+        let tiles1 = TilemapSpec::parse_map_str(one);
+        let portals1 = TilemapSpec::parse_portals(&tiles1);
         let tiles2 = TilemapSpec::parse_map_str(two);
+        let portals2 = TilemapSpec::parse_portals(&tiles2);
         TilemapSpec {
-            all_tiles: vec![tiles1, tiles2],
-            all_portals: vec![portals1, portals2],
+            all_tiles: vec![(id1, tiles1), (id2, tiles2)]
+                .into_iter()
+                .collect::<HashMap<StratumId, Vec<TileCell>>>(),
+            all_portals: vec![(id1, portals1), (id2, portals2)]
+                .into_iter()
+                .collect::<HashMap<StratumId, Vec<PortalCell>>>(),
             start,
             light_level,
             ..default()
@@ -166,7 +205,8 @@ impl TilemapSpec {
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
-        let all_tiles = vec![
+        let all_tiles = vec![(
+            StratumId(0),
             (0..tiles)
                 .map(|i| {
                     let cell = Cell::from_idx(size.0, i as usize);
@@ -175,7 +215,9 @@ impl TilemapSpec {
                     (tile_idx, cell)
                 })
                 .collect(),
-        ];
+        )]
+        .into_iter()
+        .collect();
 
         info!("tile breakdown: {:#?}", tally);
 
@@ -218,14 +260,14 @@ mod tests {
         let spec = TilemapSpec::from_str("");
         assert_eq!(spec.size.width, 0);
         assert_eq!(spec.size.height, 0);
-        assert!(spec.all_tiles[0].is_empty());
+        assert!(spec.all_tiles[&StratumId(0)].is_empty());
     }
 
     #[test]
     fn spaces_and_unknown_chars_excluded() {
         // '?' (unknown) should produce no tiles
         let spec = TilemapSpec::from_str("?");
-        assert!(spec.all_tiles[0].is_empty());
+        assert!(spec.all_tiles[&StratumId(0)].is_empty());
     }
 
     #[test]
@@ -234,9 +276,8 @@ mod tests {
         let spec = TilemapSpec::from_str("#.XDObwTtUu");
         let tile_types: Vec<TileIdx> = spec
             .all_tiles
-            .first()
-            .unwrap()
-            .iter()
+            .values()
+            .flatten()
             .map(|(idx, _)| *idx)
             .collect();
         assert_eq!(
@@ -263,10 +304,11 @@ mod tests {
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
         let spec = TilemapSpec::from_str("#.\n.#");
         let tiles = &spec.all_tiles;
-        assert_eq!(tiles[0][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
-        assert_eq!(tiles[0][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
-        assert_eq!(tiles[0][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
-        assert_eq!(tiles[0][3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
+        let id = StratumId(0);
+        assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
+        assert_eq!(tiles[&id][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
+        assert_eq!(tiles[&id][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
+        assert_eq!(tiles[&id][3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
     }
 
     #[test]
