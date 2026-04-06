@@ -55,7 +55,7 @@ fn main() {
     let args = std::env::args().collect::<Vec<_>>();
 
     let tilemap_spec = if args.len() > 1 && args[1] == "-s" {
-        TilemapSpec::from_str(map::MAP)
+        TilemapSpec::from_str(map::MAP_ZERO)
     } else {
         TilemapSpec::with_ptable(
             procgen::biome_ptable(),

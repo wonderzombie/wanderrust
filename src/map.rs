@@ -22,7 +22,7 @@ use bevy::prelude::*;
 ///
 /// See also [`TilemapSpec::KEY`].
 #[allow(dead_code)]
-pub const MAP: &str = r#"
+pub const MAP_ZERO: &str = r#"
 ####################
 #.................#
 #.................#
@@ -37,6 +37,23 @@ pub const MAP: &str = r#"
 #....#............D
 #.X..#...#....###.#
 #.............###.#
+###################"#;
+
+pub const MAP_ONE: &str = r#"
+###################
+#.................#
+#.................#
+#.................#
+#.................#
+#.................#
+#....I............#
+#...###...........#
+#.......i.........#
+#.b.w.D.O. .......#
+#.................#
+#.i...............D
+#.X.....I.....###.#
+#.i...........###.#
 ###################"#;
 
 /// MAP_LAYER is the layer for the map tilemap.
@@ -57,6 +74,8 @@ impl TilemapSpec {
         ('t', TileIdx::GreenTree2),
         ('U', TileIdx::DoubleGreenTree1),
         ('u', TileIdx::DoubleGreenTree2),
+        ('I', TileIdx::Torch),
+        ('i', TileIdx::Candle),
         (' ', TileIdx::Blank),
     ];
 
@@ -77,25 +96,7 @@ impl TilemapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let tiles = vec![
-            lines
-                .iter()
-                .enumerate()
-                .flat_map(|(y, line)| {
-                    line.chars().enumerate().filter_map(move |(x, ch)| {
-                        TilemapSpec::tile_for(ch).map(|idx| {
-                            (
-                                idx,
-                                Cell {
-                                    x: x as i32,
-                                    y: y as i32,
-                                },
-                            )
-                        })
-                    })
-                })
-                .collect::<Vec<_>>(),
-        ];
+        let tiles = vec![TilemapSpec::parse_map_str(map_str)];
 
         TilemapSpec {
             size: Dimensions {
@@ -107,6 +108,38 @@ impl TilemapSpec {
             layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
             light_level: LightLevel::Dark,
+            ..default()
+        }
+    }
+
+    fn parse_map_str(map_str: &str) -> Vec<(TileIdx, Cell)> {
+        let lines: Vec<&str> = map_str.lines().collect();
+        lines
+            .iter()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.char_indices().filter_map(move |(x, c)| {
+                    TilemapSpec::tile_for(c).map(|idx| {
+                        (
+                            idx,
+                            Cell {
+                                x: x as i32,
+                                y: y as i32,
+                            },
+                        )
+                    })
+                })
+            })
+            .collect::<Vec<_>>()
+    }
+
+    pub fn from_strs(one: &str, two: &str, start: Cell, light_level: LightLevel) -> Self {
+        let tiles = TilemapSpec::parse_map_str(one);
+        let tiles2 = TilemapSpec::parse_map_str(two);
+        TilemapSpec {
+            tiles: vec![tiles, tiles2],
+            start,
+            light_level,
             ..default()
         }
     }
@@ -179,14 +212,14 @@ mod tests {
         let spec = TilemapSpec::from_str("");
         assert_eq!(spec.size.width, 0);
         assert_eq!(spec.size.height, 0);
-        assert!(spec.tiles.is_empty());
+        assert!(spec.tiles[0].is_empty());
     }
 
     #[test]
     fn spaces_and_unknown_chars_excluded() {
         // '?' (unknown) should produce no tiles
         let spec = TilemapSpec::from_str("?");
-        assert!(spec.tiles.is_empty());
+        assert!(spec.tiles[0].is_empty());
     }
 
     #[test]
