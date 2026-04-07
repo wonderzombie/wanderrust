@@ -33,7 +33,7 @@ use bevy::{
 use crate::{
     actors::*,
     atlas::SpriteAtlas,
-    cell::Cell,
+    cell::{Cell, PreviousCell},
     gamestate::{GameState, Screen},
     tilemap::{EntryId, Portal, Stratum, TilemapSpec},
     tiles::{TileIdx, Walkable},

@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::{Alerted, Dead, Player, PreviousCell},
-    cell::Cell,
+    actors::{Alerted, Dead, Player},
+    cell::{Cell, PreviousCell},
     combat,
     fov::{Fov, Vision},
     gamestate::Turn,

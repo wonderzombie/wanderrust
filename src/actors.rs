@@ -6,7 +6,7 @@ use bevy_northstar::prelude::Blocking;
 
 use crate::{
     atlas::SpriteAtlas,
-    cell::Cell,
+    cell::{Cell, PreviousCell},
     combat::CombatStats,
     light::{Emitter, LightLevel},
     tilemap::{Stratum, TileStorage, TilemapLayer, TilemapSpec},
@@ -31,15 +31,13 @@ pub struct Actor;
 #[derive(Component, Debug)]
 pub struct Player;
 
-#[derive(Component, Debug, Deref)]
-pub struct PreviousCell(pub Cell);
-
 /// A bundle for map pieces that includes a sprite, cell position, transform, and pickable.
 /// Pickable is specific to Bevy's sprite picking system.
 #[derive(Bundle, Default, Clone, Debug)]
 pub struct PieceBundle {
     pub sprite: Sprite,
     pub cell: Cell,
+    pub prev_cell: PreviousCell,
     pub transform: Transform,
     pub visibility: Visibility,
     pub pickable: Pickable,

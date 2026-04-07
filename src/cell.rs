@@ -26,6 +26,11 @@ pub struct Cell {
     pub y: i32,
 }
 
+#[derive(
+    Component, Default, Debug, Deref, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize,
+)]
+pub struct PreviousCell(pub Cell);
+
 impl Cell {
     pub fn new(x: i32, y: i32) -> Self {
         Cell { x, y }
