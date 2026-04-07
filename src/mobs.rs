@@ -16,7 +16,12 @@ pub fn check_fov(
     all_fov: Query<&Fov>,
     active_mobs: Query<
         (Entity, &ChildOf, &Cell, &Vision),
-        (With<AgentOfGrid>, Without<Dead>, Without<Player>),
+        (
+            With<AgentOfGrid>,
+            Without<Alerted>,
+            Without<Dead>,
+            Without<Player>,
+        ),
     >,
     player_cell: Single<&Cell, With<Player>>,
 ) {

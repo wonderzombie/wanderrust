@@ -153,6 +153,54 @@ impl StratumLightMap {
             default: level,
         }
     }
+
+    /// Applies this StratumLightMap to the given [`TileStorage`].
+    pub fn apply(&self, commands: &mut Commands, storage: &TileStorage) {
+        let prev: HashSet<Cell> = self.prev.keys().copied().collect();
+        let curr: HashSet<Cell> = self.curr.keys().copied().collect();
+
+        // Cells in the old [`LightMap`] that aren't in the new one are no longer
+        // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
+        // accordingly.
+        prev.difference(&curr)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                Some(tile)
+            })
+            .for_each(|tile| {
+                commands.entity(tile).insert(self.default);
+            });
+
+        // Cells in the new [`LightMap`] that aren't in the old one receive light
+        // from the emitter. These cells probably had the default light level for
+        // the area before this. The map has already handled overlapping emitters,
+        // so we apply the map.
+        curr.difference(&prev)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                let level = self.curr.get(c)?;
+                Some((level, tile))
+            })
+            .for_each(|(level, tile)| {
+                commands.entity(tile).insert(*level);
+            });
+
+        // Cells in the old [`LightMap`] that *are* in the new map *may* need to
+        // change intensity. When two overlapping emitters have different light
+        // levels and one moves away, we restore tiles to the light level from the
+        // lower-intensity emitter.
+        prev.intersection(&curr)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                let new_level = self.curr.get(c)?;
+                let old_level = self.prev.get(c)?;
+
+                (old_level != new_level).then_some((tile, new_level))
+            })
+            .for_each(|(tile, new_level)| {
+                commands.entity(tile).insert(*new_level);
+            });
+    }
 }
 
 pub fn setup(
@@ -233,53 +281,9 @@ pub fn update_strata_maps(
 pub fn update_strata_light_levels(
     mut commands: Commands,
     all_strata_maps: Query<(&TileStorage, &StratumLightMap), Changed<StratumLightMap>>,
-    spec: Res<TilemapSpec>,
 ) {
     for (storage, light_map) in all_strata_maps.iter() {
-        let prev: HashSet<Cell> = light_map.prev.keys().copied().collect();
-        let curr: HashSet<Cell> = light_map.curr.keys().copied().collect();
-
-        // Cells in the old [`LightMap`] that aren't in the new one are no longer
-        // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
-        // accordingly.
-        prev.difference(&curr)
-            .filter_map(|c| {
-                let tile = storage.get(c)?;
-                Some(tile)
-            })
-            .for_each(|tile| {
-                commands.entity(tile).insert(spec.light_level);
-            });
-
-        // Cells in the new [`LightMap`] that aren't in the old one receive light
-        // from the emitter. These cells probably had the default light level for
-        // the area before this. The map has already handled overlapping emitters,
-        // so we apply the map.
-        curr.difference(&prev)
-            .filter_map(|c| {
-                let tile = storage.get(c)?;
-                let level = light_map.curr.get(c)?;
-                Some((level, tile))
-            })
-            .for_each(|(level, tile)| {
-                commands.entity(tile).insert(*level);
-            });
-
-        // Cells in the old [`LightMap`] that *are* in the new map *may* need to
-        // change intensity. When two overlapping emitters have different light
-        // levels and one moves away, we restore tiles to the light level from the
-        // lower-intensity emitter.
-        prev.intersection(&curr)
-            .filter_map(|c| {
-                let tile = storage.get(c)?;
-                let new_level = light_map.curr.get(c)?;
-                let old_level = light_map.prev.get(c)?;
-
-                (old_level != new_level).then_some((tile, new_level))
-            })
-            .for_each(|(tile, new_level)| {
-                commands.entity(tile).insert(*new_level);
-            });
+        light_map.apply(&mut commands, storage);
     }
 }
 
