@@ -66,3 +66,22 @@ Here there is a fork in the road, however:
 
 1. `HashMap<StratumId, LightMap>` because `all_emitter_maps` will have many strata; or
 1. `itertools` has various group-related operations, so something like `all_emitter_maps.iter().into_grouping_map<ChildOf, LightMap>().collect()`.
+
+## Work complete
+
+Major changes to the lighting pipeline:
+
+- `setup` detects modified TileIdx and inserts an Emitter where needed
+- Update emitter maps: recalculates per-Emitter light maps, inserts on Emitter entity
+- Update strata maps: merges Emitters per Stratum into StratumLightMap
+- Update strata light levels: applies StratumLightMap
+
+StratumLightMap:
+
+- takes a default light level
+- has prev and curr in order to calculate diffs between old/new
+- has `apply` which takes `mut Commands` and `TileStorage` to insert correct light levels,
+- `apply` calculates each set difference *and* intersection between prev and curr
+
+Emitter:
+- has `from_tile` to generate an Emitter based on type
