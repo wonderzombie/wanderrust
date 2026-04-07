@@ -8,6 +8,7 @@ mod editor;
 mod event_log;
 mod fov;
 mod gamestate;
+mod grid;
 mod interactions;
 mod inventory;
 mod light;
@@ -25,7 +26,6 @@ mod title_screen;
 use std::collections::HashMap;
 
 use bevy::{
-    platform::collections::HashSet,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
@@ -39,12 +39,7 @@ use crate::{
     tiles::{TileIdx, Walkable},
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
-use bevy_northstar::{
-    grid::{Grid, GridSettingsBuilder},
-    nav::Nav,
-    plugin::NorthstarPlugin,
-    prelude::*,
-};
+use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
@@ -119,7 +114,7 @@ fn main() {
         .add_systems(
             Startup,
             (
-                spawn_grid,
+                grid::spawn_grid,
                 actors::setup_player,
                 fov::setup_fov,
                 camera::setup_camera,
@@ -188,7 +183,7 @@ fn main() {
                     .chain()
                     .in_set(GameSystem::Light)
                     .after(GameSystem::Fov),
-                (mobs::check_fov, mobs::pathfind, mobs::move_agents)
+                (mobs::check_fov, grid::pathfind, grid::move_agents)
                     .chain()
                     .in_set(GameSystem::Mobs)
                     .after(GameSystem::Fov)
@@ -197,7 +192,7 @@ fn main() {
         )
         .add_systems(PostUpdate, combat::init_combatants)
         // TODO: consider whether to combine update_grid and update_spatial_index.
-        .add_systems(PostUpdate, update_grid.after(update_spatial_index))
+        .add_systems(PostUpdate, grid::update_grid.after(update_spatial_index))
         .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
         .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
         .add_systems(
@@ -302,68 +297,6 @@ fn click_observer(
         Err(err) => {
             trace!("couldn't get_entity() on.event_target(): {:?}", err);
         }
-    }
-}
-
-type CardinalGrid = Grid<CardinalNeighborhood>;
-
-fn spawn_grid(
-    mut commands: Commands,
-    spec: Res<TilemapSpec>,
-    strata: Query<Entity, With<Stratum>>,
-) {
-    for stratum in strata {
-        let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
-            .chunk_size(16)
-            .default_impassable()
-            .build();
-
-        let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
-
-        commands.entity(stratum).insert(grid);
-    }
-}
-
-fn update_grid(
-    mut grid: Query<(Entity, &mut CardinalGrid)>,
-    changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
-) {
-    let mut count = 0;
-    let mut changed_grids: HashSet<Entity> = HashSet::new();
-
-    for (cell, child_of, walkable_opt) in changed_tiles {
-        let Some((entity, mut grid)) = grid.get_mut(child_of.0).ok() else {
-            error!(
-                "failed to get grid for cell {:?} child_of {:?}",
-                cell, child_of
-            );
-            continue;
-        };
-
-        let prev_nav = grid.nav(cell.into());
-        let next_nav = if walkable_opt.is_some() {
-            Nav::Passable(1)
-        } else {
-            Nav::Impassable
-        };
-
-        // This handles the case where `prev_nav` is `None`, or when
-        // `Some(prev_nav) != Some(next_nav)`.
-        if prev_nav != Some(next_nav) {
-            grid.set_nav(cell.into(), next_nav);
-            changed_grids.insert(entity);
-            count += 1;
-        }
-    }
-
-    changed_grids.iter().for_each(|&entity| {
-        if let Ok((_, mut grid)) = grid.get_mut(entity) {
-            grid.build();
-        }
-    });
-
-    if count > 0 {
-        info!("ℹ️\tupdated grid, set {} tiles", count);
     }
 }
 
