@@ -330,6 +330,7 @@ mod tests {
 #[derive(QueryData)]
 #[query_data(derive(Debug))]
 pub struct SyncProps {
+    _mt: &'static MapTile,
     tile_preview: Option<&'static TilePreview>,
     walkable: Option<&'static Walkable>,
     opaque: Option<&'static Opaque>,
@@ -341,7 +342,7 @@ pub fn sync_tiles(
     mut commands: Commands,
     mut tiles: Query<
         (Entity, &mut Sprite, &TileIdx, SyncProps),
-        (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
+        Or<(Changed<TileIdx>, Changed<TilePreview>)>,
     >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so
