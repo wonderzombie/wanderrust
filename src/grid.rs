@@ -30,16 +30,8 @@ impl SpatialIndex {
         self.occupied.insert(cell, entity);
     }
 
-    pub fn remove(&mut self, cell: Cell) {
-        self.occupied.remove(&cell);
-    }
-
     pub fn get(&self, cell: Cell) -> Option<Entity> {
         self.occupied.get(&cell).copied()
-    }
-
-    pub fn is_occupied(&self, cell: Cell) -> bool {
-        self.occupied.contains_key(&cell)
     }
 }
 
