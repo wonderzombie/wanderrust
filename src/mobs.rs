@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::{Alerted, Dead, Player},
+    actors::{Alerted, Dead, Player, PreviousCell},
     cell::Cell,
     combat,
     fov::{Fov, Vision},
@@ -60,18 +60,18 @@ pub fn pathfind(
 }
 
 pub fn move_agents(
-    mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
+    mut query: Query<(Entity, &Cell, &mut AgentPos, &NextPos, &mut Turn)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<combat::Attack>,
     mut commands: Commands,
 ) {
-    for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
+    for (entity, cell, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         if turn.complete() {
             info!("not moving done/idle entity {:?}", entity);
             continue;
         }
 
-        info!(
+        trace!(
             "ℹ️ entity {} moving from {:?} to {:?}",
             entity, agent_pos, next_pos
         );
@@ -88,7 +88,8 @@ pub fn move_agents(
             commands
                 .entity(entity)
                 .remove::<NextPos>()
-                .insert(Cell::at_grid_coords(agent_pos.as_ref()));
+                .insert(Cell::at_grid_coords(agent_pos.as_ref()))
+                .insert(PreviousCell(*cell));
         }
         *turn = Turn::Done;
     }
