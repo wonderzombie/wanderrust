@@ -222,9 +222,9 @@ pub fn update_strata_maps(
             },
         );
 
-        let mut stratum_map = all_strata
-            .get_mut(stratum_entity)
-            .unwrap_or_else(|_| panic!("unable to get stratum map for entity {:?}", stratum_entity));
+        let mut stratum_map = all_strata.get_mut(stratum_entity).unwrap_or_else(|_| {
+            panic!("unable to get stratum map for entity {:?}", stratum_entity)
+        });
         stratum_map.prev = stratum_map.curr.clone();
         stratum_map.curr = merged;
     }
