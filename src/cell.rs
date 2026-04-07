@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Sub};
 
 use bevy::prelude::*;
 use bevy_northstar::prelude::AgentPos;
@@ -189,39 +189,6 @@ impl Div<i32> for &Cell {
         Cell {
             x: self.x / rhs,
             y: self.y / rhs,
-        }
-    }
-}
-
-impl Div<u32> for &Cell {
-    type Output = Cell;
-
-    fn div(self, rhs: u32) -> Cell {
-        Cell {
-            x: self.x / rhs as i32,
-            y: self.y / rhs as i32,
-        }
-    }
-}
-
-impl Mul<i32> for Cell {
-    type Output = Cell;
-
-    fn mul(self, rhs: i32) -> Cell {
-        Cell {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
-    }
-}
-
-impl Mul<u32> for Cell {
-    type Output = Cell;
-
-    fn mul(self, rhs: u32) -> Cell {
-        Cell {
-            x: self.x * rhs as i32,
-            y: self.y * rhs as i32,
         }
     }
 }

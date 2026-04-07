@@ -50,12 +50,6 @@ pub struct Emitter {
     outer: LightRing,
 }
 
-impl From<(LightRing, LightRing)> for Emitter {
-    fn from(value: (LightRing, LightRing)) -> Self {
-        Emitter::from_rings(value.0, value.1)
-    }
-}
-
 impl Emitter {
     pub fn new(inner: (LightLevel, i32), outer: (LightLevel, i32)) -> Self {
         Emitter::from_rings(LightRing::from(inner), LightRing::from(outer))
@@ -84,6 +78,7 @@ impl Emitter {
         None
     }
 
+    // Used in test.
     #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
         self.inner.thickness + self.outer.thickness
