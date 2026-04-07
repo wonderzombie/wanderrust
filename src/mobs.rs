@@ -60,12 +60,12 @@ pub fn pathfind(
 }
 
 pub fn move_agents(
-    mut query: Query<(Entity, &Cell, &mut AgentPos, &NextPos, &mut Turn)>,
+    mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<combat::Attack>,
     mut commands: Commands,
 ) {
-    for (entity, cell, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
+    for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         if turn.complete() {
             info!("not moving done/idle entity {:?}", entity);
             continue;

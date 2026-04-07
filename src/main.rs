@@ -484,7 +484,7 @@ fn process_actions(
             // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
             commands
                 .entity(action.entity)
-                .insert((adjusted_cell))
+                .insert(adjusted_cell)
                 .trigger(Moved);
 
             continue;
