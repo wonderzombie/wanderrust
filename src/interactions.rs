@@ -1,6 +1,8 @@
 use bevy::{platform::collections::HashSet, prelude::*};
 
-use crate::{colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx};
+use crate::{
+    actors::DisplayName, colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx,
+};
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 #[derive(Component, Debug)]
@@ -13,9 +15,7 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
-    Speaker {
-        nameplate: String,
-    },
+    Speaker,
     Combatant,
 }
 
@@ -56,7 +56,12 @@ pub struct Listen {
 /// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
 pub fn process_interactions(
     mut attempts: MessageReader<Examine>,
-    mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable)>,
+    mut interactables: Query<(
+        Entity,
+        &mut TileIdx,
+        &mut Interactable,
+        Option<&DisplayName>,
+    )>,
     mut acquisitions: MessageWriter<Acquisition>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
@@ -64,7 +69,8 @@ pub fn process_interactions(
     mut log: ResMut<MessageLog>,
 ) {
     for attempt in attempts.read() {
-        let Ok((entity, mut tile_idx, mut interactable)) = interactables.get_mut(attempt.target)
+        let Ok((entity, mut tile_idx, mut interactable, name_opt)) =
+            interactables.get_mut(attempt.target)
         else {
             info!(
                 "Interaction attempted with entity {:?}, but it's not interactable.",
@@ -108,8 +114,11 @@ pub fn process_interactions(
                     });
                 }
             }
-            Interactable::Speaker { nameplate, .. } => {
-                info!("Player talks to {}.", nameplate);
+            Interactable::Speaker => {
+                info!(
+                    "Player talks to {}.",
+                    name_opt.map_or("someone", |n| n.0.as_str())
+                );
                 speech.write(Listen { entity });
             }
             Interactable::Combatant => {

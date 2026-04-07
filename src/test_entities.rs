@@ -5,7 +5,7 @@ use bevy_northstar::{
 };
 
 use crate::{
-    actors::{Actor, PieceBundle, Player},
+    actors::{Actor, DisplayName, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
     combat::CombatStats,
@@ -37,9 +37,8 @@ pub(crate) fn add_test_npc(
             cell: Cell { x: 53, y: 53 },
             ..default()
         },
-        interactions::Interactable::Speaker {
-            nameplate: "Mr. Boney".into(),
-        },
+        DisplayName("Mr. Boney".into()),
+        interactions::Interactable::Speaker,
         interactions::Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
         ChildOf(active_stratum),
     ));
@@ -53,9 +52,9 @@ pub(crate) fn add_test_npc(
             cell: Cell { x: 49, y: 49 },
             ..default()
         },
+        DisplayName("Mr. Sandbag".into()),
         interactions::Interactable::Combatant,
         CombatStats {
-            nameplate: "Mr. Sandbag".into(),
             max_hp: 12,
             ..default()
         },
@@ -73,9 +72,9 @@ pub(crate) fn add_test_npc(
             cell,
             ..default()
         },
+        DisplayName("Bat".into()),
         interactions::Interactable::Combatant,
         CombatStats {
-            nameplate: "Bat".into(),
             max_hp: 4,
             ..default()
         },

@@ -13,6 +13,10 @@ use crate::{
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
+/// Represents the user-visible display name for an actor.
+#[derive(Component, Debug)]
+pub struct DisplayName(pub String);
+
 /// Represents an entity that is currently alerted to a nearby threat, typically the player.
 #[derive(Component, Debug)]
 pub struct Alerted;
@@ -89,8 +93,8 @@ pub fn setup_player(
         TileIdx::Player,
         Blocking,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
+        DisplayName("Player".into()),
         CombatStats {
-            nameplate: "Player".into(),
             max_hp: 10,
             attack: 2,
             defense: 1,
