@@ -14,6 +14,12 @@ use bevy::{
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct Item(pub String);
 
+impl Item {
+    pub fn from(name: impl AsRef<str>) -> Self {
+        Item(name.as_ref().to_string())
+    }
+}
+
 impl Display for Item {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -74,8 +80,9 @@ pub fn empty() -> Inventory {
 
 impl Inventory {
     /// Adds an [Item] to this [Inventory], incrementing its count if it already exists.
-    pub fn add_item(&mut self, item: Item, count: usize) {
+    pub fn add_item(&mut self, item: Item, count: usize) -> &mut Self {
         *self.0.entry(item).or_insert(0) += count;
+        self
     }
 
     /// Merges another [Inventory] into this one, adding each [Item]'s count.

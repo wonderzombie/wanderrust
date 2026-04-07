@@ -1,11 +1,6 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 
-use crate::{
-    colors, combat,
-    event_log::MessageLog,
-    inventory::*,
-    tiles::{MapTile, TileIdx},
-};
+use crate::{colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx};
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 #[derive(Component, Debug)]
@@ -39,6 +34,9 @@ impl Interactable {
             }),
             _ => None,
         }
+        .inspect(|t| {
+            dbg!(t);
+        })
     }
 }
 
@@ -163,13 +161,25 @@ pub fn process_dialogue(
 /// Sets up interactable objects in the world, such as doors and chests, based on the tile indices.
 ///
 /// Mostly this means interactables that have such as an open/closed sprite.
-pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), With<MapTile>>) {
+pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
     let mut count = 0;
+    let mut uniq: HashSet<TileIdx> = HashSet::new();
     for (entity, &tile_idx) in tiles.iter() {
-        if let Some(bundle) = Interactable::from(tile_idx) {
+        uniq.insert(tile_idx);
+        if tile_idx.is_interactable() {
             count += 1;
-            commands.entity(entity).insert(bundle);
+
+            if let Some(bundle) = Interactable::from(tile_idx) {
+                commands.entity(entity).insert(bundle);
+            } else {
+                warn!(
+                    "found interactable tile without Interactable: {:?}",
+                    tile_idx
+                );
+            }
         }
     }
-    info!("inserted {} interactables", count);
+    if count > 0 {
+        info!("found {} interactable tiles", count);
+    }
 }

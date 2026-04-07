@@ -129,15 +129,17 @@ fn main() {
                 light::setup,
             ),
         )
-        // .add_systems(
-        //     PostStartup,
-        //     (
-        //         test_entities::add_test_npc,
-        //         test_entities::add_test_emitters,
-        //         test_entities::add_test_portals,
-        //     )
-        //         .in_set(GameSystem::SpawnTestEntities),
-        // )
+        .add_systems(
+            PostStartup,
+            (
+                test_entities::add_test_npc,
+                test_entities::add_test_emitters,
+                test_entities::add_test_portals,
+                test_entities::add_test_chests,
+            )
+                .in_set(GameSystem::SpawnTestEntities),
+        )
+        .add_systems(Update, interactions::setup)
         .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(
             EguiPrimaryContextPass,
