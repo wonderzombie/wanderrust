@@ -9,7 +9,6 @@ use crate::{
     gamestate::Turn,
     inventory,
     loot::{FixedLoot, LootTable},
-    tiles::TileIdx,
 };
 
 pub fn check_fov(

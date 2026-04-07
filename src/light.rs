@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::tilemap::{Stratum, TilemapSpec};
+use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed, TileIdx};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
@@ -163,7 +163,7 @@ pub fn setup(
 ) {
     let mut count = 0;
     for (entity, tile_idx) in tiles {
-        let Some(emitter) = Emitter::from_tile(&tile_idx) else {
+        let Some(emitter) = Emitter::from_tile(tile_idx) else {
             continue;
         };
         commands.entity(entity).insert(emitter);
@@ -224,7 +224,7 @@ pub fn update_strata_maps(
 
         let mut stratum_map = all_strata
             .get_mut(stratum_entity)
-            .expect(format!("unable to get stratum map for entity {:?}", stratum_entity).as_str());
+            .unwrap_or_else(|_| panic!("unable to get stratum map for entity {:?}", stratum_entity));
         stratum_map.prev = stratum_map.curr.clone();
         stratum_map.curr = merged;
     }

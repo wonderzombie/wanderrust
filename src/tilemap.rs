@@ -231,14 +231,14 @@ pub fn spawn_tilemap(
     spec.id.set(map_entity);
 
     for (id, tile_cells) in spec.all_tiles.iter() {
-        let i = (id.0 as i32).neg();
+        let i = id.0.neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
         spawn_maptiles_from_spec(
             strat_id,
             &spec.size,
-            &tile_cells,
+            tile_cells,
             i as f32,
             &sheet,
             &mut commands,
@@ -300,7 +300,7 @@ pub fn initialize_tile_storage(
     for (stratum, children) in strata {
         let mut storage = TileStorage::new(spec.size);
         for entity in children.iter() {
-            if let Some(cell) = tiles.get(entity).ok() {
+            if let Ok(cell) = tiles.get(entity) {
                 storage.set(cell, entity);
                 num_cells += 1;
             }

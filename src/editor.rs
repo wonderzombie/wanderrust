@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use bevy::{
-    ecs::observer::ObservedBy,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures},
 };

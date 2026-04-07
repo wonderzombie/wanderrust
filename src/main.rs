@@ -36,7 +36,7 @@ use crate::{
     cell::Cell,
     gamestate::{GameState, Screen},
     tilemap::{EntryId, Portal, Stratum, TilemapSpec},
-    tiles::{MapTile, TileIdx, Walkable},
+    tiles::{TileIdx, Walkable},
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{
@@ -348,7 +348,7 @@ fn update_grid(
     }
 
     changed_grids.iter().for_each(|&entity| {
-        if let Some((_, mut grid)) = grid.get_mut(entity).ok() {
+        if let Ok((_, mut grid)) = grid.get_mut(entity) {
             grid.build();
         }
     });
@@ -400,7 +400,7 @@ fn update_spatial_index(
     for (children, mut index) in query {
         index.clear();
         for &child in children {
-            if let Some(cell) = tiles.get(child).ok() {
+            if let Ok(cell) = tiles.get(child) {
                 index.insert(*cell, child);
             }
         }
@@ -415,7 +415,7 @@ fn setup_spatial_indices(
     for (strat, children) in stratum_children.iter() {
         let mut index = SpatialIndex::default();
         for child in children.iter() {
-            if let Some(cell) = tiles.get(child).ok() {
+            if let Ok(cell) = tiles.get(child) {
                 index.insert(*cell, child);
             }
         }

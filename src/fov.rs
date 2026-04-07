@@ -64,7 +64,7 @@ pub fn setup_fov(
         info!("checking {} children", children.iter().len());
         let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
         for &child in children {
-            if let Some((cell, tile_idx)) = tiles.get(child).ok() {
+            if let Ok((cell, tile_idx)) = tiles.get(child) {
                 // Sets individual points in the model to transparent-or-not.
                 fov.set_transparent(cell.into(), tile_idx.is_transparent());
                 tiles_count += 1;
@@ -89,7 +89,7 @@ pub fn update_fov_model(
     query: Query<(&Cell, &TileIdx, &ChildOf), (Changed<TileIdx>, With<MapTile>)>,
 ) {
     for (cell, tile_idx, child_of) in query.iter() {
-        if let Some(mut fov) = all_fov.get_mut(child_of.parent()).ok() {
+        if let Ok(mut fov) = all_fov.get_mut(child_of.parent()) {
             fov.set_transparent(cell.into(), tile_idx.is_transparent());
         }
     }
@@ -118,7 +118,7 @@ pub fn update_fov_markers(
     // Since we got these tiles as children of `all_fov`, aka Stratum
     // we can look up each in `tiles`, which is constrained to `MapTile`.
     for &entity in child_tiles {
-        if let Some((cell, mut revealed)) = tiles.get_mut(entity).ok() {
+        if let Ok((cell, mut revealed)) = tiles.get_mut(entity) {
             let should_reveal = view.has(cell.into());
             if should_reveal != revealed.0 {
                 revealed.0 = should_reveal;
