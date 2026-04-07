@@ -261,7 +261,7 @@ pub fn spawn_tilemap(
 fn spawn_maptiles_from_spec(
     parent: Entity,
     size: &Dimensions,
-    tiles: &Vec<(TileIdx, Cell)>,
+    tiles: &[(TileIdx, Cell)],
     layer: f32,
     sheet: &SpriteAtlas,
     commands: &mut Commands,
