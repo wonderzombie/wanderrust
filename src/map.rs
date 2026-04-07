@@ -1,14 +1,15 @@
-use crate::cell::Cell;
-use crate::colors;
-use crate::light::LightLevel;
-use crate::ptable::ProbabilityTable;
-use crate::tilemap::{
-    Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapLayer, TilemapSpec,
-};
-use crate::tiles::{
-    Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable,
+use crate::{
+    cell::Cell,
+    colors,
+    light::LightLevel,
+    ptable::ProbabilityTable,
+    tilemap::{
+        Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapLayer, TilemapSpec,
+    },
+    tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
+use bevy::ecs::query::QueryData;
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
@@ -381,33 +382,32 @@ pub fn sync_tiles(
     }
 }
 
+#[derive(QueryData)]
+#[query_data(derive(Debug))]
+pub struct TileProps {
+    _mt: &'static MapTile,
+    occupied: Option<&'static Occupied>,
+    highlighted: Option<&'static Highlighted>,
+    revealed: Option<&'static Revealed>,
+    tile_preview: Option<&'static TilePreview>,
+    light_level: Option<&'static LightLevel>,
+}
+
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 /// TODO: consider whether or how function signature might be simplified.
 pub fn update_tile_visuals(
-    mut tiles: Query<(
-        &mut Sprite,
-        &mut Visibility,
-        AnyOf<(
-            &Occupied,
-            &Highlighted,
-            &Revealed,
-            &TilePreview,
-            &LightLevel,
-            &MapTile,
-        )>,
-    )>,
+    mut tiles: Query<(&mut Sprite, &mut Visibility, TileProps)>,
     spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, (occupied, highlighted, revealed, preview_opt, light_level, _)) in
-        tiles.iter_mut()
-    {
-        let revealed = revealed.is_some_and(|r| r.0);
-        let highlighted = highlighted.is_some();
-        let adjusted_light = light_level.copied().unwrap_or(spec.light_level);
-        let has_actor = occupied.is_some();
+    for (mut sprite, mut vis, p) in tiles.iter_mut() {
+        let revealed = p.revealed.is_some_and(|r| r.0);
+        let highlighted = p.highlighted.is_some();
+        let preview_active = p.tile_preview.is_some_and(TilePreview::is_active);
+        let adjusted_light = p.light_level.copied().unwrap_or(spec.light_level);
+        let has_actor = p.occupied.is_some();
 
         *vis = if revealed && !has_actor {
-            Visibility::Inherited
+            Visibility::Visible
         } else {
             Visibility::Hidden
         };
@@ -420,7 +420,7 @@ pub fn update_tile_visuals(
             Color::NONE
         };
 
-        if preview_opt.is_some_and(TilePreview::is_active) {
+        if preview_active {
             sprite.color.set_alpha(0.5);
         }
     }
