@@ -39,9 +39,6 @@ use crate::{
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
-/// The path to the spritesheet image.
-const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
-
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
@@ -98,7 +95,7 @@ fn main() {
             PreStartup,
             (
                 (
-                    load_spritesheet,
+                    atlas::load_spritesheet,
                     tilemap::spawn_tilemap,
                     tilemap::initialize_tile_storage,
                     tilemap::setup_portals,
@@ -296,30 +293,6 @@ fn click_observer(
             trace!("couldn't get_entity() on.event_target(): {:?}", err);
         }
     }
-}
-
-/// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
-fn load_spritesheet(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut next: ResMut<NextState<GameState>>,
-) {
-    let texture: Handle<Image> = asset_server.load(SHEET_PATH);
-    let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
-        UVec2::splat(tiles::TILE_SIZE_PX as u32),
-        tiles::SHEET_SIZE_G.x,
-        tiles::SHEET_SIZE_G.y,
-        None,
-        None,
-    ));
-
-    commands.insert_resource(SpriteAtlas {
-        texture: texture.clone(),
-        layout: layout.clone(),
-    });
-
-    next.set(GameState::Loading);
 }
 
 /// Routes [`Action`] messages. Interaction execution is handled in [`Examine`].
