@@ -196,7 +196,7 @@ pub fn update_emitter_maps(
     }
 
     if count > 0 {
-        info!("updated {} emitter maps", count);
+        trace!("updated {} emitter maps", count);
     }
 }
 
