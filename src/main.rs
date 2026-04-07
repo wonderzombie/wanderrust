@@ -132,7 +132,7 @@ fn main() {
         .add_systems(
             PostStartup,
             (
-                test_entities::add_test_npc,
+                test_entities::add_test_mobs,
                 test_entities::add_test_emitters,
                 test_entities::add_test_portals,
                 test_entities::add_test_chests,

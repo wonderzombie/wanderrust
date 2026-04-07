@@ -18,7 +18,7 @@ use crate::{
     tiles::TileIdx,
 };
 
-pub(crate) fn add_test_npc(
+pub(crate) fn add_test_mobs(
     mut commands: Commands,
     atlas: Res<SpriteAtlas>,
     grid_entity: Query<Entity, With<Grid<CardinalNeighborhood>>>,
