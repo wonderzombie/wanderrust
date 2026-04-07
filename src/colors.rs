@@ -1,3 +1,4 @@
+// Don't warn about unused colors.
 #![allow(dead_code)]
 
 use bevy::color::Color;

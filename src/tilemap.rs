@@ -86,18 +86,6 @@ impl Dimensions {
             y: (idx / self.width) as i32,
         }
     }
-
-    #[inline]
-    #[allow(dead_code)]
-    pub fn cell_to_idx(&self, cell: &Cell) -> u32 {
-        cell.x as u32 + cell.y as u32 * self.width
-    }
-
-    #[inline]
-    #[allow(dead_code)]
-    pub const fn ntiles(&self) -> u32 {
-        self.width * self.height
-    }
 }
 
 impl PartialOrd for Dimensions {
@@ -147,6 +135,7 @@ impl TileStorage {
         self.tiles.len()
     }
 
+    // Silences a warning re: `len()` but not `is_empty()`.
     #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.tiles.is_empty()
