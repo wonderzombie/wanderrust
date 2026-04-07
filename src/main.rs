@@ -73,20 +73,16 @@ fn main() {
                     ..default()
                 }),
         )
-        .add_plugins(EguiPlugin::default())
-        .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
         .add_message::<actors::Action>()
         .add_message::<inventory::Acquisition>()
         .add_message::<combat::Attack>()
-        .add_message::<interactions::Listen>()
-        .add_message::<interactions::Examine>()
-        .insert_state(GameState::Starting)
-        .init_resource::<SpatialIndex>()
-        .init_resource::<inventory::Inventory>()
         .init_resource::<actors::PlayerStats>()
-        .init_resource::<sounds::Sounds>()
         .init_resource::<gamestate::WorldClock>()
+        .init_resource::<inventory::Inventory>()
+        .init_resource::<sounds::Sounds>()
+        .init_resource::<SpatialIndex>()
         .insert_resource(CLEAR_COLOR)
+        .insert_state(GameState::Starting)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
             picking_mode: SpritePickingMode::BoundingBox,
@@ -95,8 +91,11 @@ fn main() {
         })
         .insert_resource(tilemap_spec)
         .insert_resource(event_log::MessageLog::new(10))
+        .add_plugins(EguiPlugin::default())
+        .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
         .add_plugins(editor::EditorPlugin)
         .add_plugins(title_screen::TitleScreenPlugin)
+        .add_plugins(interactions::plugin)
         .add_systems(
             PreStartup,
             (
@@ -134,13 +133,10 @@ fn main() {
             )
                 .in_set(GameSystem::SpawnTestEntities),
         )
-        .add_systems(Update, interactions::setup)
-        .add_systems(Update, event_log::setup_fonts.run_if(run_once))
         .add_systems(
             EguiPrimaryContextPass,
             event_log::draw_ui.run_if(in_state(Screen::Playing)),
         )
-        .add_systems(Update, sounds::on_loaded)
         .add_systems(
             Update,
             (
@@ -155,6 +151,9 @@ fn main() {
                 )
                     .chain()
                     .in_set(GameSystem::Ramifications),
+                interactions::setup,
+                sounds::on_loaded,
+                event_log::setup_fonts.run_if(run_once),
             ),
         )
         .add_systems(
@@ -169,6 +168,7 @@ fn main() {
                     .in_set(GameSystem::ActorSync)
                     .after(map::sync_tiles),
                 camera::update.after(GameSystem::ActorSync),
+                // TODO: consider whether this should go into `grid.rs`
                 update_spatial_index.after(GameSystem::ActorSync),
                 (fov::update_fov_model, fov::update_fov_markers)
                     .chain()
@@ -183,16 +183,16 @@ fn main() {
                     .chain()
                     .in_set(GameSystem::Light)
                     .after(GameSystem::Fov),
+                // TODO: consider if check_fov should be in fov
                 (mobs::check_fov, grid::pathfind, grid::move_agents)
                     .chain()
                     .in_set(GameSystem::Mobs)
                     .after(GameSystem::Fov)
                     .run_if(in_state(GameState::Ramifying)),
+                combat::init_combatants,
+                grid::update_grid.after(update_spatial_index),
             ),
         )
-        .add_systems(PostUpdate, combat::init_combatants)
-        // TODO: consider whether to combine update_grid and update_spatial_index.
-        .add_systems(PostUpdate, grid::update_grid.after(update_spatial_index))
         .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
         .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
         .add_systems(

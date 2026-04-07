@@ -192,3 +192,7 @@ pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<Tile
         info!("found {} interactable tiles", count);
     }
 }
+
+pub fn plugin(app: &mut App) {
+    app.add_message::<Listen>().add_message::<Examine>();
+}
