@@ -209,6 +209,8 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
+const MAP_LAYER: TilemapLayer = TilemapLayer(-3.0);
+
 /// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
 /// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].
 pub fn spawn_tilemap(
@@ -230,8 +232,8 @@ pub fn spawn_tilemap(
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
 
-    for (id, tile_cells) in spec.all_tiles.iter() {
-        let i = id.0.neg();
+    for (strat_id, tile_cells) in spec.all_tiles.iter() {
+        let i = strat_id.0.neg();
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
@@ -239,7 +241,7 @@ pub fn spawn_tilemap(
             strat_id,
             &spec.size,
             tile_cells,
-            i as f32,
+            i as f32 + *MAP_LAYER,
             &sheet,
             &mut commands,
         );
