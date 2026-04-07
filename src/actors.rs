@@ -202,17 +202,15 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
 /// An Occupied tile is not visible even under partially transparent sprites.
 pub fn sync_occupied_tiles(
     mut commands: Commands,
-    actors: Query<(&Cell, Option<&PreviousCell>), (With<Actor>, Changed<Cell>)>,
+    actors: Query<(&Cell, &PreviousCell), (With<Actor>, Changed<Cell>)>,
     storage: Single<&TileStorage>,
 ) {
-    for (curr_cell, prev_cell_opt) in actors.iter() {
+    for (curr_cell, prev_cell) in actors.iter() {
         if let Some(tile) = storage.get(curr_cell) {
             commands.entity(tile).insert(Occupied);
         }
 
-        if let Some(prev_cell) = prev_cell_opt
-            && let Some(prev_tile) = storage.get(prev_cell)
-        {
+        if let Some(prev_tile) = storage.get(prev_cell) {
             commands.entity(prev_tile).remove::<Occupied>();
         }
     }

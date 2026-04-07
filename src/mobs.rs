@@ -3,7 +3,7 @@ use bevy_northstar::prelude::*;
 
 use crate::{
     actors::{Alerted, Dead, Player},
-    cell::{Cell, PreviousCell},
+    cell::Cell,
     combat,
     fov::{Fov, Vision},
     gamestate::Turn,
@@ -88,8 +88,7 @@ pub fn move_agents(
             commands
                 .entity(entity)
                 .remove::<NextPos>()
-                .insert(Cell::at_grid_coords(agent_pos.as_ref()))
-                .insert(PreviousCell(*cell));
+                .insert(Cell::at_grid_coords(agent_pos.as_ref()));
         }
         *turn = Turn::Done;
     }

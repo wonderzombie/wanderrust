@@ -199,6 +199,7 @@ fn main() {
         // TODO: consider whether to combine update_grid and update_spatial_index.
         .add_systems(PostUpdate, update_grid.after(update_spatial_index))
         .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
+        .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
         .add_systems(
             Last,
             (
@@ -224,6 +225,14 @@ pub enum GameSystem {
     Fov,
     Light,
     Mobs,
+}
+
+fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
+    for (curr, mut prev) in query.iter_mut() {
+        if curr.is_changed() {
+            *prev = PreviousCell(*curr);
+        }
+    }
 }
 
 fn set_mouse_cursor(
@@ -475,7 +484,7 @@ fn process_actions(
             // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
             commands
                 .entity(action.entity)
-                .insert((adjusted_cell, PreviousCell(action.origin_cell)))
+                .insert((adjusted_cell))
                 .trigger(Moved);
 
             continue;
