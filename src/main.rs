@@ -80,7 +80,6 @@ fn main() {
         .init_resource::<sounds::Sounds>()
         .init_resource::<grid::SpatialIndex>()
         .insert_resource(CLEAR_COLOR)
-        .insert_state(GameState::Starting)
         .insert_resource(SpritePickingSettings {
             // clicking on a sprite ignores alpha transparency
             picking_mode: SpritePickingMode::BoundingBox,
@@ -89,6 +88,7 @@ fn main() {
         })
         .insert_resource(tilemap_spec)
         .insert_resource(event_log::MessageLog::new(10))
+        .insert_state(GameState::Starting)
         .add_plugins(EguiPlugin::default())
         .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
         .add_plugins(editor::EditorPlugin)
