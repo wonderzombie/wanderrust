@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use rand::{RngExt, seq::IndexedRandom};
 
 /// FixedLoot is used for deterministic loot drops.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct FixedLoot(pub inventory::Inventory);
 
 /// A LootTable represents a collection of potential "drops." Each drop
