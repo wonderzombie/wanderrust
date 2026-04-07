@@ -1,4 +1,7 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::{
+    platform::collections::{HashMap, HashSet},
+    prelude::*,
+};
 use bevy_northstar::prelude::*;
 
 use crate::{
@@ -11,6 +14,67 @@ use crate::{
 };
 
 type CardinalGrid = Grid<CardinalNeighborhood>;
+
+/// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
+#[derive(Resource, Component, Default, Debug, PartialEq, Eq)]
+pub struct SpatialIndex {
+    occupied: HashMap<Cell, Entity>,
+}
+
+impl SpatialIndex {
+    pub fn clear(&mut self) {
+        self.occupied.clear();
+    }
+
+    pub fn insert(&mut self, cell: Cell, entity: Entity) {
+        self.occupied.insert(cell, entity);
+    }
+
+    pub fn remove(&mut self, cell: Cell) {
+        self.occupied.remove(&cell);
+    }
+
+    pub fn get(&self, cell: Cell) -> Option<Entity> {
+        self.occupied.get(&cell).copied()
+    }
+
+    pub fn is_occupied(&self, cell: Cell) -> bool {
+        self.occupied.contains_key(&cell)
+    }
+}
+
+/// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
+pub(crate) fn update_spatial_index(
+    query: Query<(&Children, &mut SpatialIndex)>,
+    tiles: Query<&Cell, Without<Walkable>>,
+) {
+    for (children, mut index) in query {
+        index.clear();
+        for &child in children {
+            if let Ok(cell) = tiles.get(child) {
+                index.insert(*cell, child);
+            }
+        }
+    }
+}
+
+pub(crate) fn setup_spatial_indices(
+    mut commands: Commands,
+    stratum_children: Query<(&Stratum, &Children)>,
+    tiles: Query<&Cell, Without<Walkable>>,
+) {
+    for (strat, children) in stratum_children.iter() {
+        let mut index = SpatialIndex::default();
+        for child in children.iter() {
+            if let Ok(cell) = tiles.get(child) {
+                index.insert(*cell, child);
+            }
+        }
+        commands.entity(strat.0).insert(index);
+    }
+}
+
+/// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 
 pub fn spawn_grid(
     mut commands: Commands,
