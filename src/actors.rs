@@ -17,6 +17,12 @@ use crate::{
 #[derive(Component, Debug)]
 pub struct DisplayName(pub String);
 
+impl Display for DisplayName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// Represents an entity that is currently alerted to a nearby threat, typically the player.
 #[derive(Component, Debug)]
 pub struct Alerted;

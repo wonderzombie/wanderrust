@@ -1,11 +1,15 @@
 use bevy::prelude::*;
 use bevy_northstar::prelude::AgentOfGrid;
 
-use crate::{actors::Dead, colors, event_log::MessageLog, gamestate::Turn};
+use crate::{
+    actors::{Dead, DisplayName},
+    colors,
+    event_log::MessageLog,
+    gamestate::Turn,
+};
 
 #[derive(Component, Debug, Default)]
 pub struct CombatStats {
-    pub nameplate: String,
     pub hp: i32,
     pub max_hp: i32,
     pub attack: i32,
@@ -27,7 +31,7 @@ pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &mut CombatStats)>,
+    mut combatants: Query<(Entity, &DisplayName, &mut CombatStats)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
 ) {
@@ -37,19 +41,19 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_entity, mut defender) = defender;
-        let (_, attacker) = attacker;
+        let (defender_entity, defender_name, mut defender) = defender;
+        let (_, attacker_name, attacker) = attacker;
 
         if defender.is_dead {
             log.add(
-                format!("{} is already dead", defender.nameplate),
+                format!("{} is already dead", defender_name),
                 colors::KENNEY_GOLD,
             );
             continue;
         }
 
         log.add(
-            format!("{} attacks {}", attacker.nameplate, defender.nameplate),
+            format!("{} attacks {}", attacker_name, defender_name),
             colors::KENNEY_GOLD,
         );
 
@@ -57,16 +61,13 @@ pub fn process_attacks(
         if damage >= 0 {
             defender.hp = defender.hp.saturating_sub(damage);
             log.add(
-                format!("{} hits {}!", attacker.nameplate, defender.nameplate),
+                format!("{} hits {}!", attacker_name, defender_name),
                 colors::KENNEY_GOLD,
             );
 
             if defender.hp <= 0 {
                 defender.is_dead = true;
-                log.add(
-                    format!("{} is dead", defender.nameplate),
-                    colors::KENNEY_RED,
-                );
+                log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
                 commands
                     .entity(defender_entity)
                     .insert(Dead)
@@ -75,7 +76,7 @@ pub fn process_attacks(
             }
         } else {
             log.add(
-                format!("{} does no damage", attacker.nameplate),
+                format!("{} does no damage", attacker_name),
                 colors::KENNEY_GOLD,
             )
         }
