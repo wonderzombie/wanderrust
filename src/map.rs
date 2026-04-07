@@ -327,28 +327,32 @@ mod tests {
     }
 }
 
+#[derive(QueryData)]
+#[query_data(derive(Debug))]
+pub struct SyncProps {
+    tile_preview: Option<&'static TilePreview>,
+    walkable: Option<&'static Walkable>,
+    opaque: Option<&'static Opaque>,
+    pickable: Option<&'static Pickable>,
+}
+
 /// Sync [TileIdx] and [Sprite] visuals along with their gameplay properties.
 pub fn sync_tiles(
     mut commands: Commands,
     mut tiles: Query<
-        (
-            Entity,
-            &mut Sprite,
-            &TileIdx,
-            Option<&TilePreview>,
-            Option<&Walkable>,
-            Option<&Opaque>,
-            Option<&Pickable>,
-        ),
+        (Entity, &mut Sprite, &TileIdx, SyncProps),
         (With<MapTile>, Or<(Changed<TileIdx>, Changed<TilePreview>)>),
     >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so
     // we apply most changes in some unconditional fashion.
-    for (entity, mut sprite, tile_idx, preview_opt, walkable_opt, opaque_opt, pickable_opt) in
-        tiles.iter_mut()
-    {
+    for (entity, mut sprite, tile_idx, sync_props) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
+
+        let preview_opt = sync_props.tile_preview;
+        let walkable_opt = sync_props.walkable;
+        let opaque_opt = sync_props.opaque;
+        let pickable_opt = sync_props.pickable;
 
         // If there's a preview, we should apply that tile index instead.
         let next_idx = preview_opt.and_then(|it| it.get()).unwrap_or(*tile_idx);
@@ -384,7 +388,7 @@ pub fn sync_tiles(
 
 #[derive(QueryData)]
 #[query_data(derive(Debug))]
-pub struct TileProps {
+pub struct VisualProps {
     _mt: &'static MapTile,
     occupied: Option<&'static Occupied>,
     highlighted: Option<&'static Highlighted>,
@@ -396,7 +400,7 @@ pub struct TileProps {
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 /// TODO: consider whether or how function signature might be simplified.
 pub fn update_tile_visuals(
-    mut tiles: Query<(&mut Sprite, &mut Visibility, TileProps)>,
+    mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
     spec: Res<TilemapSpec>,
 ) {
     for (mut sprite, mut vis, p) in tiles.iter_mut() {
