@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use crate::tilemap::TilemapSpec;
-use crate::tiles::{MapTile, Revealed};
+use crate::tilemap::{Stratum, TilemapSpec};
+use crate::tiles::{MapTile, Revealed, TileIdx};
 use crate::{cell::Cell, tilemap::TileStorage};
 use bevy::platform::collections::HashSet;
 use bevy::prelude::*;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -68,6 +69,21 @@ impl Emitter {
         Self { inner, outer }
     }
 
+    fn from_tile(tile_idx: &TileIdx) -> Option<Self> {
+        if tile_idx.is_emitter() {
+            match tile_idx {
+                TileIdx::Torch => {
+                    return Some(Emitter::new((LightLevel::Bright, 1), (LightLevel::Dim, 1)));
+                }
+                TileIdx::Candle => {
+                    return Some(Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)));
+                }
+                _ => return None,
+            }
+        }
+        None
+    }
+
     #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
         self.inner.thickness + self.outer.thickness
@@ -78,7 +94,7 @@ impl Emitter {
     /// outer covers an *additional* `outer.thickness` beyond that.
     /// E.g. "bright light for 1 tile, dim light for an additional 1 tile" →
     /// `Emitter::new((Bright, 1), (Dim, 1))`.
-    pub fn light_cells(&self, origin: Cell) -> LightMap {
+    pub fn light_cells(&self, origin: &Cell) -> LightMap {
         let outer_radius = self.inner.thickness + self.outer.thickness;
         let mut cell_map = HashMap::default();
         for dx in -outer_radius..=outer_radius {
@@ -122,87 +138,149 @@ impl LightMap {
     }
 }
 
-/// Updates the [`LightMap`] of each [`Emitter`] in the tilemap.
-///
-/// Uses the [`Emitter::light_cells`] method to compute the light emitted by each [`Emitter`]
-/// and [`LightMap::merge_with`] to combine the results. When no [`Emitter`] has changed [`Cell`],
-/// we return early, preserving the previous [`LightMap`].
-///
-/// Any [`Cell`] not in [`LightMap`] is initialized with [`TilemapSpec::light_level`].
-pub fn update_emitter_lights(
-    spec: Res<TilemapSpec>,
+#[derive(Component, Default, Debug)]
+pub struct StratumLightMap {
+    pub curr: LightMap,
+    pub prev: LightMap,
+    pub default: LightLevel,
+}
+
+impl StratumLightMap {
+    pub fn with_ambient(level: LightLevel) -> Self {
+        Self {
+            curr: LightMap::default(),
+            prev: LightMap::default(),
+            default: level,
+        }
+    }
+}
+
+pub fn setup(
     mut commands: Commands,
-    changed_emitters: Query<&Emitter, Changed<Cell>>,
-    all_emitters: Query<(Entity, &Emitter, &Cell)>,
-    storage: Single<&TileStorage>,
-    mut prev_map: Local<LightMap>,
+    tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
+    storage: Query<(Entity, &TileStorage)>,
+    spec: Res<TilemapSpec>,
 ) {
-    // If no [`Emitter`] has changed [`Cell`], there's no work to be done.
-    if changed_emitters.is_empty() {
+    let mut count = 0;
+    for (entity, tile_idx) in tiles {
+        let Some(emitter) = Emitter::from_tile(&tile_idx) else {
+            continue;
+        };
+        commands.entity(entity).insert(emitter);
+        count += 1;
+    }
+    if count > 0 {
+        info!("set up {} emitters", count);
+    }
+
+    count = 0;
+    for (entity, _) in storage.iter() {
+        commands
+            .entity(entity)
+            .insert(StratumLightMap::with_ambient(spec.light_level));
+        count += 1;
+    }
+    if count > 0 {
+        info!("set up {} strata light maps", count);
+    }
+}
+
+pub fn update_emitter_maps(
+    mut commands: Commands,
+    emitters: Query<(Entity, &Emitter, &Cell), Or<(Changed<Emitter>, Changed<Cell>)>>,
+) {
+    let mut count = 0;
+    for (entity, emitter, cell) in emitters.iter() {
+        commands.entity(entity).insert(emitter.light_cells(cell));
+        count += 1;
+    }
+
+    if count > 0 {
+        info!("updated {} emitter maps", count);
+    }
+}
+
+pub fn update_strata_maps(
+    mut all_strata: Query<&mut StratumLightMap>,
+    all_emitter_maps: Query<(&ChildOf, &LightMap)>,
+) {
+    if all_emitter_maps.is_empty() {
         return;
     }
 
-    let mut new_combined_map = LightMap(HashMap::new());
-    for (entity, emitter, &cell) in all_emitters.iter() {
-        // Important: updating the [`LightMap`] on the entity is not instantaneous
-        // because we are using [`Commands`].
-        let next_light_map = emitter.light_cells(cell);
-        commands.entity(entity).insert(next_light_map.clone());
+    let maps_by_stratum = all_emitter_maps
+        .iter()
+        .map(|(child_of, light_map)| (child_of.parent(), light_map))
+        .into_group_map();
 
-        // Merge this [`Emitter`]'s [`LightMap`] with the emitted-on cells accumulated so far.
-        // See also [`LightMap::merge_with`]
-        new_combined_map.merge_with(next_light_map);
+    for (stratum_entity, light_maps) in maps_by_stratum {
+        let merged: LightMap = light_maps.into_iter().fold(
+            LightMap(HashMap::new()),
+            |mut stratum_map, emitter_map| {
+                stratum_map.merge_with(emitter_map.clone());
+                stratum_map
+            },
+        );
+
+        let mut stratum_map = all_strata
+            .get_mut(stratum_entity)
+            .expect(format!("unable to get stratum map for entity {:?}", stratum_entity).as_str());
+        stratum_map.prev = stratum_map.curr.clone();
+        stratum_map.curr = merged;
     }
+}
 
-    let old_map_cells: HashSet<Cell> = prev_map.0.keys().copied().collect();
-    let new_map_cells: HashSet<Cell> = new_combined_map.keys().copied().collect();
+pub fn update_strata_light_levels(
+    mut commands: Commands,
+    all_strata_maps: Query<(&TileStorage, &StratumLightMap), Changed<StratumLightMap>>,
+    spec: Res<TilemapSpec>,
+) {
+    for (storage, light_map) in all_strata_maps.iter() {
+        let prev: HashSet<Cell> = light_map.prev.keys().copied().collect();
+        let curr: HashSet<Cell> = light_map.curr.keys().copied().collect();
 
-    // Cells in the old [`LightMap`] that aren't in the new one are no longer
-    // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
-    // accordingly.
-    old_map_cells
-        .difference(&new_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            Some(tile)
-        })
-        .for_each(|tile| {
-            commands.entity(tile).insert(spec.light_level);
-        });
+        // Cells in the old [`LightMap`] that aren't in the new one are no longer
+        // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
+        // accordingly.
+        prev.difference(&curr)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                Some(tile)
+            })
+            .for_each(|tile| {
+                commands.entity(tile).insert(spec.light_level);
+            });
 
-    // Cells in the new [`LightMap`] that aren't in the old one receive light
-    // from the emitter. These cells probably had the default light level for
-    // the area before this. The map has already handled overlapping emitters,
-    // so we apply the map.
-    new_map_cells
-        .difference(&old_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            let level = new_combined_map.get(c)?;
-            Some((level, tile))
-        })
-        .for_each(|(level, tile)| {
-            commands.entity(tile).insert(*level);
-        });
+        // Cells in the new [`LightMap`] that aren't in the old one receive light
+        // from the emitter. These cells probably had the default light level for
+        // the area before this. The map has already handled overlapping emitters,
+        // so we apply the map.
+        curr.difference(&prev)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                let level = light_map.curr.get(c)?;
+                Some((level, tile))
+            })
+            .for_each(|(level, tile)| {
+                commands.entity(tile).insert(*level);
+            });
 
-    // Cells in the old [`LightMap`] that *are* in the new map *may* need to
-    // change intensity. When two overlapping emitters have different light
-    // levels and one moves away, we restore tiles to the light level from the
-    // lower-intensity emitter.
-    old_map_cells
-        .intersection(&new_map_cells)
-        .filter_map(|c| {
-            let tile = storage.get(c)?;
-            let new_level = new_combined_map.get(c)?;
-            let old_level = prev_map.0.get(c)?;
+        // Cells in the old [`LightMap`] that *are* in the new map *may* need to
+        // change intensity. When two overlapping emitters have different light
+        // levels and one moves away, we restore tiles to the light level from the
+        // lower-intensity emitter.
+        prev.intersection(&curr)
+            .filter_map(|c| {
+                let tile = storage.get(c)?;
+                let new_level = light_map.curr.get(c)?;
+                let old_level = light_map.prev.get(c)?;
 
-            (old_level != new_level).then_some((tile, new_level))
-        })
-        .for_each(|(tile, new_level)| {
-            commands.entity(tile).insert(*new_level);
-        });
-
-    *prev_map = new_combined_map;
+                (old_level != new_level).then_some((tile, new_level))
+            })
+            .for_each(|(tile, new_level)| {
+                commands.entity(tile).insert(*new_level);
+            });
+    }
 }
 
 pub fn sync_actor_light_levels(
@@ -250,7 +328,7 @@ mod tests {
 
     fn cells_with_level(emitter: &Emitter, origin: Cell, level: LightLevel) -> Vec<Cell> {
         emitter
-            .light_cells(origin)
+            .light_cells(&origin)
             .iter()
             .filter(|&(_, l)| *l == level)
             .map(|(&c, _)| c)
@@ -260,7 +338,7 @@ mod tests {
     #[test]
     fn origin_always_receives_inner_level() {
         let e = emitter(1, 1);
-        let lit = e.light_cells(Cell::new(0, 0));
+        let lit = e.light_cells(&Cell::new(0, 0));
         let origin_level = lit
             .iter()
             .find(|&(c, _)| c == &Cell::new(0, 0))
@@ -282,7 +360,7 @@ mod tests {
         // Any cell at dist > 1 and ≤ 2 must be Dim, not Bright.
         let e = emitter(1, 1);
         let origin = Cell::new(5, 5);
-        let lit = e.light_cells(origin);
+        let lit = e.light_cells(&origin);
 
         for (cell, level) in lit.0 {
             let dist = cell.as_vec().distance(origin.as_vec());
@@ -298,7 +376,7 @@ mod tests {
     #[test]
     fn no_duplicate_cells() {
         let e = emitter(2, 2);
-        let lit = e.light_cells(Cell::new(0, 0));
+        let lit = e.light_cells(&Cell::new(0, 0));
         let mut seen = std::collections::HashSet::new();
         for (cell, _) in lit.0 {
             assert!(seen.insert(cell), "duplicate cell {:?}", cell);
@@ -309,7 +387,7 @@ mod tests {
     fn all_cells_within_total_radius() {
         let e = emitter(1, 2); // total radius = 3
         let origin = Cell::new(0, 0);
-        let lit = e.light_cells(origin);
+        let lit = e.light_cells(&origin);
         for (cell, _) in lit.0 {
             let dist = cell.as_vec().distance(origin.as_vec());
             assert!(
@@ -333,8 +411,8 @@ mod tests {
     fn light_cells_offset_by_origin() {
         // Results should be the same shape regardless of where the origin is.
         let e = emitter(1, 1);
-        let at_zero = e.light_cells(Cell::new(0, 0));
-        let at_ten = e.light_cells(Cell::new(10, 10));
+        let at_zero = e.light_cells(&Cell::new(0, 0));
+        let at_ten = e.light_cells(&Cell::new(10, 10));
 
         assert_eq!(at_zero.len(), at_ten.len());
 

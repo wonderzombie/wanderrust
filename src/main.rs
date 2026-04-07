@@ -120,13 +120,13 @@ fn main() {
             Startup,
             (
                 spawn_grid,
-                interactions::setup,
                 actors::setup_player,
                 fov::setup_fov,
                 camera::setup_camera,
                 add_click_observer,
                 setup_spatial_indices,
                 set_mouse_cursor,
+                light::setup,
             ),
         )
         // .add_systems(
@@ -177,7 +177,12 @@ fn main() {
                     .chain()
                     .in_set(GameSystem::Fov)
                     .after(GameSystem::ActorSync),
-                (light::update_emitter_lights, light::sync_actor_light_levels)
+                (
+                    light::update_emitter_maps,
+                    light::update_strata_maps,
+                    light::update_strata_light_levels,
+                    light::sync_actor_light_levels,
+                )
                     .chain()
                     .in_set(GameSystem::Light)
                     .after(GameSystem::Fov),
