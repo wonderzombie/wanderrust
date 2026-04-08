@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
@@ -34,7 +34,10 @@ pub fn process_attacks(
     mut combatants: Query<(Entity, &DisplayName, &mut CombatStats)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
+    asset_server: Res<AssetServer>,
 ) {
+    let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
+
     for attack in attacks.read() {
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
@@ -68,17 +71,77 @@ pub fn process_attacks(
             if defender.hp <= 0 {
                 defender.is_dead = true;
                 log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
+                spawn_floating_text(
+                    &mut commands,
+                    colors::KENNEY_RED,
+                    &font,
+                    defender_entity,
+                    "dead",
+                );
                 commands
                     .entity(defender_entity)
                     .insert(Dead)
                     .remove::<AgentOfGrid>()
                     .remove::<Turn>();
+            } else {
+                spawn_floating_text(&mut commands, Color::WHITE, &font, defender_entity, damage);
             }
         } else {
             log.add(
                 format!("{} does no damage", attacker_name),
                 colors::KENNEY_GOLD,
             )
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct FloatingText {
+    timer: Timer,
+    rise_speed: f32,
+}
+
+pub fn spawn_floating_text(
+    commands: &mut Commands,
+    color: Color,
+    font: &Handle<Font>,
+    target_entity: Entity,
+    amount: impl std::fmt::Display,
+) {
+    commands.spawn((
+        Text2d::new(format!("{amount}")),
+        ChildOf(target_entity),
+        Transform::from_xyz(8., 8., 0.),
+        TextColor(color),
+        Text2dShadow {
+            offset: Vec2::new(1., -1.),
+            ..Default::default()
+        },
+        FloatingText {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+            rise_speed: 32.,
+        },
+        TextFont {
+            font: font.clone(),
+            font_size: 12.,
+            ..Default::default()
+        },
+    ));
+}
+
+pub fn animate_floating_text(
+    mut commands: Commands,
+    delta: Res<Time>,
+    mut floating_numbers: Query<(Entity, &mut Transform, &mut TextColor, &mut FloatingText)>,
+) {
+    for (entity, mut transform, mut color, mut text) in floating_numbers.iter_mut() {
+        text.timer.tick(delta.delta());
+        transform.translation.y += text.rise_speed * delta.delta_secs();
+
+        color.set_alpha(1. - text.timer.fraction());
+
+        if text.timer.is_finished() {
+            commands.entity(entity).despawn();
         }
     }
 }

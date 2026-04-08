@@ -7,6 +7,8 @@ mod combat;
 pub mod editor;
 mod event_log;
 pub mod gamestate;
+mod interactions;
+mod inventory;
 pub mod light;
 pub mod tilemap;
 pub mod tiles;

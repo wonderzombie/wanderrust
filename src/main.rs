@@ -162,6 +162,7 @@ fn main() {
             interactions::setup,
             sounds::on_loaded,
             event_log::setup_fonts.run_if(run_once),
+            combat::animate_floating_text,
         ),
     )
     .add_systems(
