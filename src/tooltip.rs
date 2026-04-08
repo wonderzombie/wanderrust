@@ -29,7 +29,6 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>, atlas: Res<
         },
         TextColor(colors::KENNEY_OFF_WHITE),
         Text2d::new(""),
-        // children![TooltipText,],
         Visibility::Hidden,
     ));
 
@@ -104,6 +103,10 @@ fn over_observer(
 
     commands.entity(entity).insert((
         Visibility::Visible,
+        // TODO: use absolute world positioning rather than parenting. That is,
+        // parent the tooltip to the window after creation and don't change that.
+        // Instead, get the mouse coords in world space and move it there,
+        // alongside the adjustment implied by Transform below.
         ChildOf(over_entity),
         // Position relative to the over_entity, not the world origin.
         Transform::from_xyz(0., 16., 1.),
