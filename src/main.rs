@@ -27,6 +27,7 @@ use bevy::{
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use crate::{
     actors::*,
@@ -92,6 +93,7 @@ fn main() {
         .add_plugins(editor::EditorPlugin)
         .add_plugins(title_screen::TitleScreenPlugin)
         .add_plugins(interactions::plugin)
+        .add_plugins(WorldInspectorPlugin::new())
         .add_systems(
             PreStartup,
             (
