@@ -116,7 +116,7 @@ impl Emitter {
 }
 
 /// A map of cells to [`LightLevel`] values, representing the light emitted by an [`Emitter`].
-#[derive(Component, Default, Deref, Debug, Clone)]
+#[derive(Component, Default, Deref, Debug, Clone, PartialEq)]
 pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 impl LightMap {
@@ -264,6 +264,12 @@ pub fn update_strata_maps(
                 stratum_map
             },
         );
+
+        // If the this new merged map isn't different than current, skip.
+        let stratum_map = all_strata.get(stratum_entity).unwrap();
+        if stratum_map.curr == merged {
+            continue;
+        }
 
         let mut stratum_map = all_strata.get_mut(stratum_entity).unwrap_or_else(|_| {
             panic!("unable to get stratum map for entity {:?}", stratum_entity)
