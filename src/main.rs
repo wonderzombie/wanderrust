@@ -262,7 +262,7 @@ fn setup_mouse(mut commands: Commands, asset_server: Res<AssetServer>, atlas: Re
         sprite,
         Tooltip,
         TextFont {
-            font: font.clone().into(),
+            font: font.clone(),
             font_size: 8.,
             ..Default::default()
         },
@@ -291,7 +291,7 @@ where
 
     format!(
         "{} {} {}",
-        brackets.chars().nth(0).unwrap_or('?'),
+        brackets.chars().next().unwrap_or('?'),
         text,
         brackets.chars().nth(1).unwrap_or('?'),
     )
@@ -322,7 +322,7 @@ fn over_observer(
     let label = if player_opt.is_some() {
         " player ".to_string()
     } else if portal_opt.is_some() {
-        format!(" exit ")
+        " exit ".to_string()
     } else if let Some(name) = tile.label() {
         format!(" {name} ")
     } else {
