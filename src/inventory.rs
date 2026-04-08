@@ -8,10 +8,11 @@ use bevy::{
     },
     log::info,
     platform::collections::HashMap,
+    reflect::Reflect,
 };
 
 /// A simple wrapper around a string to represent an item in the game world.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect)]
 pub struct Item(pub String);
 
 impl Item {
@@ -27,7 +28,7 @@ impl Display for Item {
 }
 
 /// A resource representing the player's inventory, which is a mapping of items to their quantities.
-#[derive(Resource, Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect)]
 pub struct Inventory(HashMap<Item, usize>);
 
 impl From<HashMap<Item, usize>> for Inventory {

@@ -9,7 +9,18 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(
-    Component, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+    Component,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Reflect,
 )]
 pub enum LightLevel {
     Dark, // underground default — render nothing
@@ -32,7 +43,7 @@ impl From<LightLevel> for f32 {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Reflect)]
 struct LightRing {
     level: LightLevel,
     thickness: i32,
@@ -44,7 +55,7 @@ impl From<(LightLevel, i32)> for LightRing {
     }
 }
 
-#[derive(Component, Default, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Default, Debug, Copy, Clone, PartialEq, Eq, Reflect)]
 pub struct Emitter {
     inner: LightRing,
     outer: LightRing,
@@ -116,7 +127,7 @@ impl Emitter {
 }
 
 /// A map of cells to [`LightLevel`] values, representing the light emitted by an [`Emitter`].
-#[derive(Component, Default, Deref, Debug, Clone, PartialEq)]
+#[derive(Component, Default, Deref, Debug, Clone, Reflect, PartialEq)]
 pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 impl LightMap {
@@ -133,7 +144,7 @@ impl LightMap {
     }
 }
 
-#[derive(Component, Default, Debug)]
+#[derive(Component, Default, Debug, Reflect)]
 pub struct StratumLightMap {
     pub curr: LightMap,
     pub prev: LightMap,

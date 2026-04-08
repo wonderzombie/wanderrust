@@ -16,7 +16,7 @@ use crate::{
 type CardinalGrid = Grid<CardinalNeighborhood>;
 
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
-#[derive(Resource, Component, Default, Debug, PartialEq, Eq)]
+#[derive(Resource, Component, Default, Debug, PartialEq, Eq, Reflect)]
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }

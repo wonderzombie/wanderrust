@@ -157,6 +157,7 @@ pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<Ed
                 }
             },
         )
+        .insert(Name::new("editor over observer"))
         .id();
     let out_obs = commands
         .add_observer(
@@ -170,6 +171,7 @@ pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<Ed
                 }
             },
         )
+        .insert(Name::new("editor out observer"))
         .id();
     let click_obs = commands
         .add_observer(
@@ -188,6 +190,7 @@ pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<Ed
                 };
             },
         )
+        .insert(Name::new("editor click observer"))
         .id();
 
     editor
@@ -331,7 +334,9 @@ pub fn on_editor_toggle(
     mut next_state: ResMut<NextState<EditorState>>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
-    if input.just_pressed(KeyCode::Backspace) {
+    if input.just_pressed(KeyCode::Backspace)
+        && input.any_pressed([KeyCode::ShiftRight, KeyCode::ShiftLeft])
+    {
         let next = match **current_state {
             EditorState::Enabled => EditorState::Disabled,
             EditorState::Disabled => EditorState::Enabled,
