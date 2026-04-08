@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bevy::{math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
@@ -21,6 +23,12 @@ macro_rules! tiles {
             }
         }
     };
+}
+
+impl Display for TileIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", *self)
+    }
 }
 
 impl From<TileIdx> for usize {
@@ -166,7 +174,6 @@ tiles! {
     BoatDown = atlas_idx(10, 19),
     BoatRight = atlas_idx(11, 19),
 
-
     // Player
     Player = atlas_idx(27, 0),
 
@@ -190,7 +197,6 @@ tiles! {
 
 impl TileIdx {
     const WALKABLE: &'static [TileIdx] = &[
-        // Ground cover
         Blank,
         GrassBrown,
         Gravel,
@@ -247,6 +253,28 @@ impl TileIdx {
 
     const EMITTER: &'static [TileIdx] = &[Torch, Candle, Brazier];
 
+    const NAMES: &'static [(&'static [TileIdx], &'static str)] = &[
+        (
+            &[
+                DoorBrownThickClosed1,
+                DoorBrownThickClosed2,
+                DoorBrownThickClosed3,
+                DoorwayBrownThick,
+            ],
+            "door",
+        ),
+        (
+            &[
+                ChestBrownClosed,
+                ChestBrownOpen,
+                ChestWhiteClosed,
+                ChestWhiteOpen,
+            ],
+            "chest",
+        ),
+        (&[StairsUp, StairsDown], "stairs"),
+    ];
+
     pub fn is_walkable(&self) -> bool {
         Self::WALKABLE.contains(self)
     }
@@ -265,6 +293,16 @@ impl TileIdx {
 
     pub fn is_emitter(&self) -> bool {
         Self::EMITTER.contains(self)
+    }
+
+    pub fn label(&self) -> Option<&'static str> {
+        Self::NAMES.iter().find_map(|(tiles, name)| {
+            if tiles.contains(self) {
+                Some(*name)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn opened_version(&self) -> Option<TileIdx> {
