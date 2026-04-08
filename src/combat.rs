@@ -55,11 +55,6 @@ pub fn process_attacks(
             continue;
         }
 
-        log.add(
-            format!("{} attacks {}", attacker_name, defender_name),
-            colors::KENNEY_GOLD,
-        );
-
         let damage = attacker.attack - defender.defense;
         if damage >= 0 {
             defender.hp = defender.hp.saturating_sub(damage);
@@ -132,13 +127,20 @@ pub fn spawn_floating_text(
 pub fn animate_floating_text(
     mut commands: Commands,
     delta: Res<Time>,
-    mut floating_numbers: Query<(Entity, &mut Transform, &mut TextColor, &mut FloatingText)>,
+    mut floating_numbers: Query<(
+        Entity,
+        &mut Transform,
+        &mut TextColor,
+        &mut Text2dShadow,
+        &mut FloatingText,
+    )>,
 ) {
-    for (entity, mut transform, mut color, mut text) in floating_numbers.iter_mut() {
+    for (entity, mut transform, mut color, mut shadow, mut text) in floating_numbers.iter_mut() {
         text.timer.tick(delta.delta());
         transform.translation.y += text.rise_speed * delta.delta_secs();
 
         color.set_alpha(1. - text.timer.fraction());
+        shadow.color.set_alpha(1. - text.timer.fraction());
 
         if text.timer.is_finished() {
             commands.entity(entity).despawn();
