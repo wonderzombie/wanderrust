@@ -283,18 +283,17 @@ where
 {
     let brackets: &'static str = match interact_opt {
         Some(interactbl) => match interactbl {
-            Interactable::Speaker => "()",
-            Interactable::Door { .. } | Interactable::Chest { .. } => "  ",
             Interactable::Combatant => "<>",
+            _ => "  ",
         },
         None => "  ",
     };
 
     format!(
         "{} {} {}",
-        brackets.chars().nth(0).unwrap_or(' '),
+        brackets.chars().nth(0).unwrap_or('?'),
         text,
-        brackets.chars().nth(1).unwrap_or(' '),
+        brackets.chars().nth(1).unwrap_or('?'),
     )
 }
 
@@ -321,7 +320,7 @@ fn over_observer(
     };
 
     let label = if player_opt.is_some() {
-        "‹ Player ›".to_string()
+        " player ".to_string()
     } else if portal_opt.is_some() {
         format!(" exit ")
     } else if let Some(name) = tile.label() {
