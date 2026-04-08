@@ -27,7 +27,7 @@ use bevy::{
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::FilterQueryInspectorPlugin;
 
 use crate::{
     actors::*,
@@ -35,7 +35,8 @@ use crate::{
     cell::{Cell, PreviousCell},
     gamestate::{GameState, Screen},
     interactions::Interactable,
-    tilemap::{EntryId, Portal, TilemapSpec},
+    light::Emitter,
+    tilemap::{EntryId, Portal, Stratum, TilemapSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -44,10 +45,20 @@ use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
+fn insert_qf_plugins(app: &mut App) {
+    app.add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Interactable>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Emitter>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Stratum>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Portal>>::default());
+}
+
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
+    let str_map = args.iter().any(|it| it == "-s");
+    let query_filter_panes = args.iter().any(|it| it == "-i");
 
-    let tilemap_spec = if args.len() > 1 && args[1] == "-s" {
+    let tilemap_spec = if str_map {
         TilemapSpec::from_str(map::MAP_ZERO)
     } else {
         TilemapSpec::with_ptable(
@@ -55,6 +66,12 @@ fn main() {
             procgen::tile_idx_for_cell,
             (100, 100),
         )
+    };
+
+    let filter_query_inspector_plugin = if query_filter_panes {
+        insert_qf_plugins
+    } else {
+        |_app: &mut App| {}
     };
 
     App::new()
@@ -93,7 +110,7 @@ fn main() {
         .add_plugins(editor::EditorPlugin)
         .add_plugins(title_screen::TitleScreenPlugin)
         .add_plugins(interactions::plugin)
-        .add_plugins(WorldInspectorPlugin::new())
+        .add_plugins(filter_query_inspector_plugin)
         .add_systems(
             PreStartup,
             (
