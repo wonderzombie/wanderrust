@@ -3600,9 +3600,6 @@ dependencies = [
 [[package]]
 name = "mrpas"
 version = "0.1.0"
-dependencies = [
- "bevy_reflect",
-]
 
 [[package]]
 name = "naga"
