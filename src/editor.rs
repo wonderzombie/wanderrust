@@ -329,12 +329,14 @@ pub fn on_editor_toggle(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<EditorState>>,
     mut next_state: ResMut<NextState<EditorState>>,
+    mut log: ResMut<event_log::MessageLog>,
 ) {
-    if input.just_pressed(KeyCode::F1) {
+    if input.just_pressed(KeyCode::Backspace) {
         let next = match **current_state {
             EditorState::Enabled => EditorState::Disabled,
             EditorState::Disabled => EditorState::Enabled,
         };
+        log.add(format!("! editor: {:?} !", next), Color::WHITE);
         next_state.set(next);
     }
 }
