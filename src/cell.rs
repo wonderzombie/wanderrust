@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     Ord,
     PartialOrd,
+    Reflect,
 )]
 pub struct Cell {
     pub x: i32,

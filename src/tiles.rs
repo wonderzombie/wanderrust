@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use bevy::prelude::*;
 use bevy::{math::UVec2, prelude::Component};
 
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,7 @@ macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
-        #[derive(Component, Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Component, Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
         #[repr(usize)]
         pub enum TileIdx {
             #[default]

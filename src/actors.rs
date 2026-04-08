@@ -34,7 +34,7 @@ pub struct Dead;
 #[derive(Component, Debug)]
 pub struct Actor;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
 pub struct Player;
 
 /// A bundle for map pieces that includes a sprite, cell position, transform, and pickable.
@@ -92,6 +92,7 @@ pub fn setup_player(
     commands.spawn((
         // TODO: figure out the real active stratum.
         ChildOf(strata.iter().next().unwrap()),
+        Name::new("Player"),
         Actor,
         Player,
         TileIdx::Player,

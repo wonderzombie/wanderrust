@@ -12,7 +12,7 @@ use crate::{gamestate::GameState, tiles};
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 
 /// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Reflect)]
 pub struct SpriteAtlas {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,

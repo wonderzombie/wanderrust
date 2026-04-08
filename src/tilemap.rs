@@ -13,7 +13,7 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
+#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut, Reflect)]
 pub struct TilemapId(Option<Entity>);
 
 impl TilemapId {
@@ -22,7 +22,7 @@ impl TilemapId {
     }
 }
 
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
 pub struct StratumId(pub i32);
 
 impl From<i32> for StratumId {
@@ -37,14 +37,14 @@ impl Display for StratumId {
     }
 }
 
-#[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub struct Stratum(pub Entity, pub StratumId);
 
 pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug)]
+#[derive(Resource, Default, Debug, Reflect)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
     pub id: TilemapId,
@@ -59,10 +59,14 @@ pub struct TilemapSpec {
     pub light_level: LightLevel,
 }
 
-#[derive(Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq)]
+#[derive(
+    Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,
+)]
 pub struct TilemapLayer(pub f32);
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(
+    Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
+)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
@@ -150,7 +154,7 @@ impl TileStorage {
 }
 
 /// EntryId uniquely identifies a [`Portal`].
-#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq, Reflect)]
 pub struct EntryId(pub String);
 
 impl From<&str> for EntryId {
@@ -160,7 +164,7 @@ impl From<&str> for EntryId {
 }
 
 /// A Portal is a bidirectional link between two [`Cell`]s in the map.
-#[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq)]
+#[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq, Reflect)]
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
@@ -236,12 +240,14 @@ pub fn spawn_tilemap(
         );
         commands
             .entity(strat_id)
-            .insert(Stratum(strat_id, i.into()));
+            .insert(Stratum(strat_id, i.into()))
+            .insert(Name::new(format!("Stratum: {}", strat_id)));
     }
     commands
         .entity(map_entity)
         .insert(spec.id)
-        .insert(Visibility::Visible);
+        .insert(Visibility::Visible)
+        .insert(Name::new("Tilemap"));
 
     info!("ℹ️\tdone spawning tilemap")
 }
@@ -315,7 +321,10 @@ pub fn setup_portals(
         if let Some(portals_cells) = spec.all_portals.get(id) {
             for (portal, cell) in portals_cells {
                 if let Some(entity) = storage.get(cell) {
-                    commands.entity(entity).insert(portal.clone());
+                    commands
+                        .entity(entity)
+                        .insert(portal.clone())
+                        .insert(Name::new(format!("Portal: {:#?}", portal)));
                     info!("inserted portal {:?} at {:?}", portal, cell);
                 }
             }

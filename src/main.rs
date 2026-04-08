@@ -274,9 +274,15 @@ fn setup_mouse(mut commands: Commands, asset_server: Res<AssetServer>, atlas: Re
         Visibility::Hidden,
     ));
 
-    commands.add_observer(click_observer);
-    commands.add_observer(over_observer);
-    commands.add_observer(out_observer);
+    commands
+        .add_observer(click_observer)
+        .insert(Name::new("Click Observer"));
+    commands
+        .add_observer(over_observer)
+        .insert(Name::new("Over Observer"));
+    commands
+        .add_observer(out_observer)
+        .insert(Name::new("Out Observer"));
 }
 
 fn make_label<T>(text: T, interact_opt: Option<&Interactable>) -> String
