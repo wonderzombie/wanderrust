@@ -37,7 +37,7 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     light::Emitter,
-    tilemap::{EntryId, Portal, Stratum, TilemapSpec},
+    tilemap::{EntryId, Portal, Stratum, TilemapSpec}, tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
@@ -215,7 +215,8 @@ fn main() {
                 .run_if(in_state(GameState::Ramifying)),
             mobs::handle_dead.after(GameSystem::Mobs),
         ),
-    );
+    )
+    .add_observer(click_observer);
 
     if query_filter_panes {
         insert_qf_plugins(&mut app);
@@ -239,6 +240,49 @@ fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
     for (curr, mut prev) in query.iter_mut() {
         if curr.is_changed() {
             *prev = PreviousCell(*curr);
+        }
+    }
+}
+
+fn click_observer(
+    on: On<Pointer<Click>>,
+    tile_cells: Query<(&TileIdx, &Cell)>,
+    player: Single<(Entity, &Cell), With<Player>>,
+    mut log: ResMut<event_log::MessageLog>,
+    mut actions: MessageWriter<Action>,
+) {
+    let (entity, &origin_cell) = *player;
+    match tile_cells.get(on.event_target()) {
+        Ok((tile_idx, &cell)) => {
+            let orig = origin_cell;
+            let delta = orig - cell;
+
+            if on.button == PointerButton::Secondary {
+                // Find direction relative to the player
+                let d = delta.as_vec().normalize_or_zero();
+                if d == Vec2::ZERO {
+                    return;
+                }
+                let direction = Cell::from_vec(d);
+                let target_cell = origin_cell - direction;
+
+                if target_cell == origin_cell {
+                    return;
+                }
+
+                let action = Action {
+                    entity,
+                    origin_cell,
+                    target_cell,
+                };
+                info!("action: {:?}", action);
+                actions.write(action);
+            } else if on.button == PointerButton::Primary {
+                log.add(format!("{} = {}", cell, tile_idx), Color::WHITE);
+            }
+        }
+        Err(err) => {
+            trace!("couldn't get_entity() on.event_target(): {:?}", err);
         }
     }
 }
