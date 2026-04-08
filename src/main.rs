@@ -37,7 +37,8 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     light::Emitter,
-    tilemap::{EntryId, Portal, Stratum, TilemapSpec}, tiles::TileIdx,
+    tilemap::{EntryId, Portal, Stratum, TilemapSpec},
+    tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
