@@ -68,162 +68,160 @@ fn main() {
         )
     };
 
-    let filter_query_inspector_plugin = if query_filter_panes {
-        insert_qf_plugins
-    } else {
-        |_app: &mut App| {}
-    };
-
-    App::new()
-        .add_plugins(
-            DefaultPlugins
-                .set(ImagePlugin::default_nearest())
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        resolution: (800, 600).into(),
-                        title: "wanderrust".to_string(),
-                        ..default()
-                    }),
+    let mut app = App::new();
+    app.add_plugins(
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest())
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: (800, 600).into(),
+                    title: "wanderrust".to_string(),
                     ..default()
                 }),
-        )
-        .add_message::<actors::Action>()
-        .add_message::<inventory::Acquisition>()
-        .add_message::<combat::Attack>()
-        .init_resource::<actors::PlayerStats>()
-        .init_resource::<gamestate::WorldClock>()
-        .init_resource::<inventory::Inventory>()
-        .init_resource::<sounds::Sounds>()
-        .init_resource::<grid::SpatialIndex>()
-        .insert_resource(CLEAR_COLOR)
-        .insert_resource(SpritePickingSettings {
-            // clicking on a sprite ignores alpha transparency
-            picking_mode: SpritePickingMode::BoundingBox,
-            // we have no specifically sprite picking camera yet
-            require_markers: false,
-        })
-        .insert_resource(tilemap_spec)
-        .insert_resource(event_log::MessageLog::new(10))
-        .insert_state(GameState::Starting)
-        .add_plugins(EguiPlugin::default())
-        .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
-        .add_plugins(editor::EditorPlugin)
-        .add_plugins(title_screen::TitleScreenPlugin)
-        .add_plugins(interactions::plugin)
-        .add_plugins(filter_query_inspector_plugin)
-        .add_systems(
-            PreStartup,
+                ..default()
+            }),
+    )
+    .add_message::<actors::Action>()
+    .add_message::<inventory::Acquisition>()
+    .add_message::<combat::Attack>()
+    .init_resource::<actors::PlayerStats>()
+    .init_resource::<gamestate::WorldClock>()
+    .init_resource::<inventory::Inventory>()
+    .init_resource::<sounds::Sounds>()
+    .init_resource::<grid::SpatialIndex>()
+    .insert_resource(CLEAR_COLOR)
+    .insert_resource(SpritePickingSettings {
+        // clicking on a sprite ignores alpha transparency
+        picking_mode: SpritePickingMode::BoundingBox,
+        // we have no specifically sprite picking camera yet
+        require_markers: false,
+    })
+    .insert_resource(tilemap_spec)
+    .insert_resource(event_log::MessageLog::new(10))
+    .insert_state(GameState::Starting)
+    .add_plugins(EguiPlugin::default())
+    .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
+    .add_plugins(editor::EditorPlugin)
+    .add_plugins(title_screen::TitleScreenPlugin)
+    .add_plugins(interactions::plugin)
+    .add_systems(
+        PreStartup,
+        (
             (
-                (
-                    atlas::load_spritesheet,
-                    tilemap::spawn_tilemap,
-                    tilemap::initialize_tile_storage,
-                    tilemap::setup_portals,
-                )
-                    .chain()
-                    .in_set(GameSystem::SetupTiles),
-                sounds::load_sounds,
-            ),
-        )
-        .add_systems(
-            Startup,
-            (
-                grid::spawn_grid,
-                actors::setup_player,
-                fov::setup_fov,
-                camera::setup_camera,
-                setup_mouse,
-                grid::setup_spatial_indices,
-                set_mouse_cursor,
-                light::setup,
-            ),
-        )
-        .add_systems(
-            PostStartup,
-            (
-                test_entities::add_test_mobs,
-                test_entities::add_test_emitters,
-                test_entities::add_test_portals,
-                test_entities::add_test_chests,
+                atlas::load_spritesheet,
+                tilemap::spawn_tilemap,
+                tilemap::initialize_tile_storage,
+                tilemap::setup_portals,
             )
-                .in_set(GameSystem::SpawnTestEntities),
+                .chain()
+                .in_set(GameSystem::SetupTiles),
+            sounds::load_sounds,
+        ),
+    )
+    .add_systems(
+        Startup,
+        (
+            grid::spawn_grid,
+            actors::setup_player,
+            fov::setup_fov,
+            camera::setup_camera,
+            setup_mouse,
+            grid::setup_spatial_indices,
+            set_mouse_cursor,
+            light::setup,
+        ),
+    )
+    .add_systems(
+        PostStartup,
+        (
+            test_entities::add_test_mobs,
+            test_entities::add_test_emitters,
+            test_entities::add_test_portals,
+            test_entities::add_test_chests,
         )
-        .add_systems(
-            EguiPrimaryContextPass,
-            event_log::draw_ui.run_if(in_state(Screen::Playing)),
-        )
-        .add_systems(
-            Update,
+            .in_set(GameSystem::SpawnTestEntities),
+    )
+    .add_systems(
+        EguiPrimaryContextPass,
+        event_log::draw_ui.run_if(in_state(Screen::Playing)),
+    )
+    .add_systems(
+        Update,
+        (
+            actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
             (
-                actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
-                (
-                    process_actions,
-                    interactions::process_interactions,
-                    interactions::process_dialogue,
-                    inventory::process_acquisitions,
-                    combat::process_attacks,
-                    handle_pending_transition,
-                )
-                    .chain()
-                    .in_set(GameSystem::Ramifications),
-                interactions::setup,
-                sounds::on_loaded,
-                event_log::setup_fonts.run_if(run_once),
-            ),
-        )
-        .add_systems(
-            PostUpdate,
+                process_actions,
+                interactions::process_interactions,
+                interactions::process_dialogue,
+                inventory::process_acquisitions,
+                combat::process_attacks,
+                handle_pending_transition,
+            )
+                .chain()
+                .in_set(GameSystem::Ramifications),
+            interactions::setup,
+            sounds::on_loaded,
+            event_log::setup_fonts.run_if(run_once),
+        ),
+    )
+    .add_systems(
+        PostUpdate,
+        (
+            map::sync_tiles,
             (
-                map::sync_tiles,
-                (
-                    actors::sync_sprites,
-                    actors::update_transforms,
-                    actors::sync_occupied_tiles,
-                )
-                    .in_set(GameSystem::ActorSync)
-                    .after(map::sync_tiles),
-                camera::update.after(GameSystem::ActorSync),
-                // TODO: consider whether this should go into `grid.rs`
-                grid::update_spatial_index.after(GameSystem::ActorSync),
-                (fov::update_fov_model, fov::update_fov_markers)
-                    .chain()
-                    .in_set(GameSystem::Fov)
-                    .after(GameSystem::ActorSync),
-                (
-                    light::update_emitter_maps,
-                    light::update_strata_maps,
-                    light::update_strata_light_levels,
-                    light::sync_actor_light_levels,
-                )
-                    .chain()
-                    .in_set(GameSystem::Light)
-                    .after(GameSystem::Fov),
-                // TODO: consider if check_fov should be in fov
-                (mobs::check_fov, grid::pathfind, grid::move_agents)
-                    .chain()
-                    .in_set(GameSystem::Mobs)
-                    .after(GameSystem::Fov)
-                    .run_if(in_state(GameState::Ramifying)),
-                combat::init_combatants,
-                grid::update_grid.after(grid::update_spatial_index),
-            ),
-        )
-        .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
-        .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
-        .add_systems(
-            Last,
+                actors::sync_sprites,
+                actors::update_transforms,
+                actors::sync_occupied_tiles,
+            )
+                .in_set(GameSystem::ActorSync)
+                .after(map::sync_tiles),
+            camera::update.after(GameSystem::ActorSync),
+            // TODO: consider whether this should go into `grid.rs`
+            grid::update_spatial_index.after(GameSystem::ActorSync),
+            (fov::update_fov_model, fov::update_fov_markers)
+                .chain()
+                .in_set(GameSystem::Fov)
+                .after(GameSystem::ActorSync),
             (
-                map::update_tile_visuals,
-                (
-                    gamestate::finalize_waiting_turns,
-                    gamestate::check_turns_complete,
-                )
-                    .chain()
-                    .run_if(in_state(GameState::Ramifying)),
-                mobs::handle_dead.after(GameSystem::Mobs),
-            ),
-        )
-        .run();
+                light::update_emitter_maps,
+                light::update_strata_maps,
+                light::update_strata_light_levels,
+                light::sync_actor_light_levels,
+            )
+                .chain()
+                .in_set(GameSystem::Light)
+                .after(GameSystem::Fov),
+            // TODO: consider if check_fov should be in fov
+            (mobs::check_fov, grid::pathfind, grid::move_agents)
+                .chain()
+                .in_set(GameSystem::Mobs)
+                .after(GameSystem::Fov)
+                .run_if(in_state(GameState::Ramifying)),
+            combat::init_combatants,
+            grid::update_grid.after(grid::update_spatial_index),
+        ),
+    )
+    .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
+    .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
+    .add_systems(
+        Last,
+        (
+            map::update_tile_visuals,
+            (
+                gamestate::finalize_waiting_turns,
+                gamestate::check_turns_complete,
+            )
+                .chain()
+                .run_if(in_state(GameState::Ramifying)),
+            mobs::handle_dead.after(GameSystem::Mobs),
+        ),
+    );
+
+    if query_filter_panes {
+        insert_qf_plugins(&mut app);
+    }
+
+    app.run();
 }
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
