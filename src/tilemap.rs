@@ -13,7 +13,9 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut, Reflect)]
+#[derive(
+    Component, Copy, Clone, Default, Debug, Deref, DerefMut, Reflect, Serialize, Deserialize,
+)]
 pub struct TilemapId(Option<Entity>);
 
 impl TilemapId {
@@ -44,7 +46,7 @@ pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug, Reflect)]
+#[derive(Resource, Default, Debug, Reflect, Serialize, Deserialize)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
     pub id: TilemapId,
