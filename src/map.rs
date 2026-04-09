@@ -118,7 +118,6 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            layer: MAP_LAYER,
             start: Cell { x: 5, y: 5 },
             light_level: LightLevel::Bright,
             all_portals,
@@ -229,7 +228,6 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            layer: MAP_LAYER,
             start,
             light_level: LightLevel::Night,
             ..default()
@@ -318,12 +316,6 @@ mod tests {
         // start is always hardcoded to (5, 5).
         let spec = TilemapSpec::from_str("X..\n...\n...");
         assert_eq!(spec.start, Cell { x: 5, y: 5 });
-    }
-
-    #[test]
-    fn layer_uses_default() {
-        let spec = TilemapSpec::from_str("#");
-        assert_eq!(spec.layer, MAP_LAYER);
     }
 }
 

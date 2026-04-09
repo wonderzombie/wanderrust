@@ -51,7 +51,6 @@ pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
     pub id: TilemapId,
     pub size: Dimensions,
-    pub layer: TilemapLayer,
     /// Tiles and portals keyed by StratumId drive tilemap creation.
     pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
     pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
@@ -215,13 +214,12 @@ pub fn spawn_tilemap(
 ) {
     let tilemap_bundle = TilemapBundle {
         size: spec.size,
-        layer: spec.layer,
         ..default()
     };
 
     info!(
-        "initializing tilemap with size {:?} and layer {:?}",
-        spec.size, spec.layer
+        "initializing tilemap: {:?} ({}) {:?}",
+        spec.id, spec.size, spec.light_level
     );
 
     let map_entity = commands.spawn(tilemap_bundle).id();
