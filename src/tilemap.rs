@@ -49,13 +49,15 @@ pub type PortalCell = (Portal, Cell);
 #[derive(Resource, Default, Debug, Reflect, Serialize, Deserialize)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
+    #[serde(skip)]
     pub id: TilemapId,
     pub size: Dimensions,
     /// Tiles and portals keyed by StratumId drive tilemap creation.
     pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
+    #[serde(skip)]
     pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
     /// Starting point for the player.
-    pub start: Cell,
+    pub spawn_point: Cell,
     /// The minimum light level for the area.
     pub light_level: LightLevel,
 }

@@ -105,7 +105,7 @@ pub fn setup_player(
         },
         PieceBundle {
             sprite: atlas.sprite(),
-            cell: spec.start,
+            cell: spec.spawn_point,
             transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
             ..default()
         },
