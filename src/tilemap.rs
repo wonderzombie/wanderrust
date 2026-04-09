@@ -335,7 +335,7 @@ pub fn setup_portals(
 }
 
 /// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
-pub fn save_map(
+pub fn get_saved_tilemap(
     spec: &Res<TilemapSpec>,
     storage: &TileStorage,
     all_tiles: &Query<&TileIdx, With<MapTile>>,
@@ -370,7 +370,11 @@ pub fn save_map(
 }
 
 /// Loads a [`SavedTilemap`] into [`TileStorage`].
-pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
+pub fn load_saved_tilemap(
+    commands: &mut Commands,
+    saved: &SavedTilemap,
+    storage: &mut TileStorage,
+) {
     if saved.size > storage.size {
         error!(
             "saved map size {:?} exceeds storage size {:?}",

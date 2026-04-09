@@ -270,7 +270,7 @@ pub fn load_map(
     for message in load_messages.read() {
         let serialized = std::fs::read_to_string(&message.0).unwrap();
         let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
-        tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
+        tilemap::load_saved_tilemap(&mut commands, &deserialized, storage.as_mut());
     }
 }
 
@@ -319,7 +319,7 @@ pub fn save_map(
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     for message in save_messages.read() {
-        let saved = tilemap::save_map(&spec, &storage, &all_tiles, &all_portals);
+        let saved = tilemap::get_saved_tilemap(&spec, &storage, &all_tiles, &all_portals);
         if let Ok(serialized) = ron::to_string(&saved) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
