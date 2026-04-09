@@ -9,7 +9,7 @@ use crate::{
     cell::{Cell, PreviousCell},
     combat::CombatStats,
     light::{Emitter, LightLevel},
-    tilemap::{Stratum, TileStorage, TilemapLayer, TilemapSpec},
+    tilemap::{self, Stratum, TileStorage, TilemapSpec},
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
@@ -76,9 +76,6 @@ impl PlayerStats {
     }
 }
 
-const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
-const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
-
 #[derive(EntityEvent, Debug)]
 pub struct Moved(pub Entity);
 
@@ -109,7 +106,7 @@ pub fn setup_player(
         PieceBundle {
             sprite: atlas.sprite(),
             cell: spec.start,
-            transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
+            transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
             ..default()
         },
     ));
@@ -131,7 +128,7 @@ pub fn update_transforms(mut pieces: Query<(&Cell, &mut Transform), (With<Actor>
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
-        transform.translation.z = *ACTOR_LAYER;
+        transform.translation.z = *tilemap::ACTOR_LAYER;
     }
 }
 

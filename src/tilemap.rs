@@ -203,7 +203,9 @@ pub struct TilemapBundle {
     pub inherited_visibility: InheritedVisibility,
 }
 
-const MAP_LAYER: TilemapLayer = TilemapLayer(-3.0);
+pub(crate) const MAP_LAYER: TilemapLayer = TilemapLayer(-6.0);
+pub(crate) const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
+pub(crate) const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 
 /// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
 /// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].

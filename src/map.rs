@@ -3,9 +3,7 @@ use crate::{
     colors,
     light::LightLevel,
     ptable::ProbabilityTable,
-    tilemap::{
-        Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapLayer, TilemapSpec,
-    },
+    tilemap::{Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapSpec},
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
@@ -42,6 +40,7 @@ pub const MAP_ZERO: &str = r#"
 #.............###.#
 ###################"#;
 
+#[allow(dead_code)]
 pub const MAP_ONE: &str = r#"
 ###################
 #.................#
@@ -58,9 +57,6 @@ pub const MAP_ONE: &str = r#"
 #.X.....I.....###.#
 #.i...........###.#
 ###################"#;
-
-/// MAP_LAYER is the layer for the map tilemap.
-pub const MAP_LAYER: TilemapLayer = TilemapLayer(-6.);
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
@@ -169,6 +165,7 @@ impl TilemapSpec {
             .collect::<Vec<_>>()
     }
 
+    #[allow(dead_code)]
     pub fn from_strs(one: &str, two: &str, start: Cell, light_level: LightLevel) -> Self {
         let id1 = StratumId(0);
         let id2 = StratumId(1);
