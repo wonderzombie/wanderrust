@@ -46,7 +46,7 @@ pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug, Reflect, Serialize, Deserialize)]
+#[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
     #[serde(skip)]
@@ -157,7 +157,7 @@ impl TileStorage {
 }
 
 /// EntryId uniquely identifies a [`Portal`].
-#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq, Reflect)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Hash, Eq, PartialEq, Reflect)]
 pub struct EntryId(pub String);
 
 impl From<&str> for EntryId {
@@ -167,7 +167,9 @@ impl From<&str> for EntryId {
 }
 
 /// A Portal is a bidirectional link between two [`Cell`]s in the map.
-#[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq, Reflect)]
+#[derive(
+    Component, Serialize, Deserialize, Default, Debug, Hash, Clone, Eq, PartialEq, Reflect,
+)]
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
@@ -334,6 +336,67 @@ pub fn setup_portals(
             }
         }
     }
+}
+
+pub fn get_live_tiles(
+    size: &Dimensions,
+    strat_storage: &Query<(&Stratum, &TileStorage)>,
+    live_tiles: &Query<&TileIdx>,
+) -> HashMap<StratumId, Vec<(TileIdx, Cell)>> {
+    get_live_storage_items(size, strat_storage, live_tiles)
+}
+
+pub fn get_live_portals(
+    strat_storage: &Query<&Stratum>,
+    live_portals: &Query<(&Portal, &Cell, &ChildOf)>,
+) -> HashMap<StratumId, Vec<(Portal, Cell)>> {
+    get_item_cells(strat_storage, live_portals)
+}
+
+pub fn get_item_cells<T>(
+    strata: &Query<&Stratum>,
+    live_items: &Query<(&T, &Cell, &ChildOf)>,
+) -> HashMap<StratumId, Vec<(T, Cell)>>
+where
+    T: Component + Clone + Default + PartialEq,
+{
+    let mut out = HashMap::new();
+    for (item, cell, child_of) in live_items.iter() {
+        let Ok(stratum) = strata.get(child_of.parent()) else {
+            continue;
+        };
+        out.entry(stratum.1.clone())
+            .or_insert(Vec::new())
+            .push((item.clone(), cell.clone()));
+    }
+
+    out
+}
+
+pub fn get_live_storage_items<T>(
+    size: &Dimensions,
+    strat_storage: &Query<(&Stratum, &TileStorage)>,
+    live_items: &Query<&T>,
+) -> HashMap<StratumId, Vec<(T, Cell)>>
+where
+    T: Component + Clone + Default + PartialEq,
+{
+    let mut out = HashMap::new();
+    for (stratum, storage) in strat_storage.iter() {
+        for (i, entity_opt) in storage.tiles.iter().enumerate() {
+            let cell = size.idx_to_cell(i as u32);
+            if let Some(entity) = entity_opt
+                && let Ok(item) = live_items.get(*entity)
+            {
+                if *item != T::default() {
+                    out.entry(stratum.1.clone())
+                        .or_insert(Vec::new())
+                        .push((item.clone(), cell))
+                }
+            }
+        }
+    }
+    out
 }
 
 /// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
