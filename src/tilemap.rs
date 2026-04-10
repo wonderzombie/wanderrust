@@ -244,18 +244,21 @@ pub fn spawn_tilemap(
     spec.id.set(map_entity);
 
     for (strat_id, tile_cells) in spec.all_tiles.iter() {
+        // Use the ID as a negative index on the tilemap layer.
+        // That puts the 0th item at MAP_LAYER, the 1st at MAP_LAYER - 1.
         let i = strat_id.0.neg();
+        // Avoid warnings that children of this entity are missing components.
         let strat_id = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
-        spawn_maptiles_from_spec(
+        let bundles = generate_tile_bundles(
             strat_id,
             &spec.size,
             tile_cells,
             i as f32 + *MAP_LAYER,
             &sheet,
-            &mut commands,
         );
+        commands.spawn_batch(bundles);
         commands
             .entity(strat_id)
             .insert(Stratum(strat_id, i.into()))
@@ -270,19 +273,18 @@ pub fn spawn_tilemap(
     info!("ℹ️\tdone spawning tilemap")
 }
 
-/// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
-fn spawn_maptiles_from_spec(
+/// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children of a parent Entity.
+fn generate_tile_bundles(
     parent: Entity,
-    size: &Dimensions,
+    dim: &Dimensions,
     tiles: &[(TileIdx, Cell)],
     layer: f32,
     sheet: &SpriteAtlas,
-    commands: &mut Commands,
-) {
-    let bundles: Vec<TileBundle> = tiles
+) -> Vec<TileBundle> {
+    tiles
         .iter()
         .map(|(tile_idx, cell)| {
-            let pos = size.cell_to_pos(cell);
+            let pos = dim.cell_to_pos(cell);
 
             TileBundle {
                 map_tile: MapTile,
@@ -296,9 +298,7 @@ fn spawn_maptiles_from_spec(
                 vis: Visibility::Inherited,
             }
         })
-        .collect();
-
-    commands.spawn_batch(bundles);
+        .collect()
 }
 
 /// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
