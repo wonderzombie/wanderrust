@@ -6,16 +6,17 @@ use bevy::{
     sprite::Sprite,
 };
 
-use crate::{gamestate::GameState, tiles};
+use crate::tiles;
 
 /// The path to the spritesheet image.
 const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 
 /// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
-#[derive(Resource, Debug, Reflect)]
+#[derive(Resource, Debug, Default, Reflect)]
 pub struct SpriteAtlas {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
+    pub loaded: bool,
 }
 
 impl SpriteAtlas {
@@ -44,10 +45,9 @@ impl SpriteAtlas {
 
 /// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 pub(crate) fn load_spritesheet(
-    mut commands: Commands,
+    mut atlas: ResMut<SpriteAtlas>,
     asset_server: Res<AssetServer>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut next: ResMut<NextState<GameState>>,
 ) {
     let texture: Handle<Image> = asset_server.load(SHEET_PATH);
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
@@ -58,10 +58,23 @@ pub(crate) fn load_spritesheet(
         None,
     ));
 
-    commands.insert_resource(SpriteAtlas {
+    *atlas = SpriteAtlas {
         texture: texture.clone(),
         layout: layout.clone(),
-    });
+        loaded: false,
+    };
+}
 
-    next.set(GameState::Loading);
+pub(crate) fn on_loaded(mut atlas: ResMut<SpriteAtlas>, asset_server: Res<AssetServer>) {
+    if atlas.loaded {
+        return;
+    }
+
+    let state = asset_server.recursive_dependency_load_state(atlas.texture.id());
+    if !state.is_loaded() {
+        info!("LoadState: sprite texture not ready");
+        return;
+    }
+
+    atlas.loaded = state.is_loaded();
 }

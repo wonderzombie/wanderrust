@@ -13,7 +13,7 @@ use crate::actors::Moved;
 pub struct Sounds {
     lookup: HashMap<String, Handle<AudioSource>>,
     folder_handle: Handle<LoadedFolder>,
-    loaded: bool,
+    pub loaded: bool,
 }
 
 pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {

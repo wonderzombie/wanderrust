@@ -341,7 +341,7 @@ pub fn save_map(
             };
         }
 
-        info!("✅\tdone saving.")
+        info!("✅\tdone saving.\t✅")
     }
 }
 
