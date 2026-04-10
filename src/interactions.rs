@@ -1,7 +1,11 @@
 use bevy::{platform::collections::HashSet, prelude::*};
 
 use crate::{
-    actors::DisplayName, colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx,
+    actors::DisplayName,
+    colors, combat,
+    event_log::MessageLog,
+    inventory::{self, *},
+    tiles::TileIdx,
 };
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
@@ -53,7 +57,9 @@ pub struct Listen {
     pub entity: Entity,
 }
 
-/// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
+/// Processes [`Examine`] messages, executing the interaction between the player
+/// and an [`Interactable`] entity. Interaction fails if the target cell is
+/// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(
@@ -62,7 +68,7 @@ pub fn process_interactions(
         &mut Interactable,
         Option<&DisplayName>,
     )>,
-    mut acquisitions: MessageWriter<Acquisition>,
+    mut acquisitions: MessageWriter<inventory::Acquisition>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
     player_inventory: Res<Inventory>,
@@ -109,7 +115,7 @@ pub fn process_interactions(
                     info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                    acquisitions.write(Acquisition {
+                    acquisitions.write(inventory::Acquisition {
                         items: contents.clone(),
                     });
                 }
