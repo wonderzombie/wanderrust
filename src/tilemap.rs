@@ -63,9 +63,9 @@ pub struct TilemapSpec {
     pub id: TilemapId,
     pub size: Dimensions,
     /// Tiles and portals keyed by StratumId drive tilemap creation.
-    pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
+    pub all_tiles: StratTiles,
     #[serde(skip)]
-    pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
+    pub all_portals: StratPortals,
     /// Starting point for the player.
     pub spawn_point: Cell,
     /// The minimum light level for the area.
@@ -185,7 +185,8 @@ pub struct Portal {
     pub arrive_at: EntryId,
 }
 
-pub type PortalMap = HashMap<StratumId, Vec<(Portal, Cell)>>;
+pub type StratPortals = HashMap<StratumId, Vec<(Portal, Cell)>>;
+pub type StratTiles = HashMap<StratumId, Vec<(TileIdx, Cell)>>;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
@@ -361,7 +362,7 @@ pub fn get_live_tiles(
 pub fn get_live_portals(
     strat_storage: &Query<&Stratum>,
     live_portals: &Query<(&Portal, &Cell, &ChildOf)>,
-) -> PortalMap {
+) -> StratPortals {
     get_item_cells(strat_storage, live_portals)
 }
 

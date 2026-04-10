@@ -11,7 +11,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage, TilemapSpec},
+    tilemap::{self, Portal, SavedTilemap, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -330,7 +330,8 @@ pub fn save_map(
         }
 
         let mut strata = strat_storage.transmute_lens::<&Stratum>();
-        let portals: tilemap::PortalMap = tilemap::get_live_portals(&strata.query(), &all_portals);
+        let portals: tilemap::StratPortals =
+            tilemap::get_live_portals(&strata.query(), &all_portals);
         let path = message.0.with_file_name("portals.ron");
 
         info!("saving {:?}", path);
