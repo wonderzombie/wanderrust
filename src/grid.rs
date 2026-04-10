@@ -13,8 +13,6 @@ use crate::{
     tiles::{TileIdx, Walkable},
 };
 
-type CardinalGrid = Grid<CardinalNeighborhood>;
-
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 #[derive(Resource, Component, Default, Debug, PartialEq, Eq, Reflect)]
 pub struct SpatialIndex {
@@ -37,7 +35,7 @@ impl SpatialIndex {
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
 pub(crate) fn update_spatial_index(
-    query: Query<(&Children, &mut SpatialIndex)>,
+    query: Populated<(&Children, &mut SpatialIndex)>,
     tiles: Query<&Cell, Without<Walkable>>,
 ) {
     for (children, mut index) in query {
@@ -52,8 +50,8 @@ pub(crate) fn update_spatial_index(
 
 pub(crate) fn setup_spatial_indices(
     mut commands: Commands,
-    stratum_children: Query<(&Stratum, &Children)>,
-    tiles: Query<&Cell, Without<Walkable>>,
+    stratum_children: Populated<(&Stratum, &Children)>,
+    tiles: Populated<&Cell, Without<Walkable>>,
 ) {
     for (strat, children) in stratum_children.iter() {
         let mut index = SpatialIndex::default();
@@ -66,14 +64,14 @@ pub(crate) fn setup_spatial_indices(
     }
 }
 
-/// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
-
 pub fn spawn_grid(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    strata: Query<Entity, With<Stratum>>,
+    strata: Populated<Entity, With<Stratum>>,
 ) {
+    info!("spawning grid for {} strata", strata.count());
     for stratum in strata {
+        info!("spawning grid for {:?}", stratum);
         let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
             .chunk_size(16)
             .default_impassable()
@@ -82,24 +80,21 @@ pub fn spawn_grid(
         let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
 
         commands.entity(stratum).insert(grid);
+        dbg!(&stratum);
     }
 }
 
 pub fn update_grid(
-    mut grid: Query<(Entity, &mut CardinalGrid)>,
+    mut grid: Populated<(Entity, &mut CardinalGrid)>,
     changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
 ) {
     let mut count = 0;
     let mut changed_grids: HashSet<Entity> = HashSet::new();
 
     for (cell, child_of, walkable_opt) in changed_tiles {
-        let Some((entity, mut grid)) = grid.get_mut(child_of.0).ok() else {
-            error!(
-                "failed to get grid for cell {:?} child_of {:?}",
-                cell, child_of
-            );
-            continue;
-        };
+        let (entity, mut grid) = grid
+            .get_mut(child_of.0)
+            .expect("failed to get grid for cell; was grid initialized?");
 
         let prev_nav = grid.nav(cell.into());
         let next_nav = if walkable_opt.is_some() {
@@ -130,7 +125,7 @@ pub fn update_grid(
 pub fn pathfind(
     mut commands: Commands,
     player: Single<&Cell, With<Player>>,
-    query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
+    query: Populated<Entity, (Without<Pathfind>, With<Alerted>)>,
 ) {
     for entity in &query {
         commands
