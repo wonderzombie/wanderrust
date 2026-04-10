@@ -14,7 +14,17 @@ use crate::{
 };
 
 #[derive(
-    Component, Copy, Clone, Default, Debug, Deref, DerefMut, Reflect, Serialize, Deserialize,
+    Component,
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    Deref,
+    DerefMut,
+    Reflect,
+    Serialize,
+    Deserialize,
+    PartialEq,
 )]
 pub struct TilemapId(Option<Entity>);
 
@@ -46,7 +56,7 @@ pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize)]
+#[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
     #[serde(skip)]
@@ -174,6 +184,8 @@ pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
 }
+
+pub type PortalMap = HashMap<StratumId, Vec<(Portal, Cell)>>;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SavedTilemap {
@@ -349,7 +361,7 @@ pub fn get_live_tiles(
 pub fn get_live_portals(
     strat_storage: &Query<&Stratum>,
     live_portals: &Query<(&Portal, &Cell, &ChildOf)>,
-) -> HashMap<StratumId, Vec<(Portal, Cell)>> {
+) -> PortalMap {
     get_item_cells(strat_storage, live_portals)
 }
 

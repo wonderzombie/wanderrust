@@ -330,7 +330,7 @@ pub fn save_map(
         }
 
         let mut strata = strat_storage.transmute_lens::<&Stratum>();
-        let portals = tilemap::get_live_portals(&strata.query(), &all_portals);
+        let portals: tilemap::PortalMap = tilemap::get_live_portals(&strata.query(), &all_portals);
         let path = message.0.with_file_name("portals.ron");
 
         info!("saving {:?}", path);
