@@ -11,7 +11,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, TileStorage, TilemapSpec},
+    tilemap::{self, Portal, SavedTilemap, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -310,21 +310,37 @@ pub fn poll_save_dialog(
     }
 }
 
-/// Saves the map to disk using the provided [TileStorage] and [Query] of all tiles.
+/// Saves the map to disk using the provided queries.
 pub fn save_map(
     spec: Res<TilemapSpec>,
-    storage: Single<&mut TileStorage>,
-    all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
-    all_portals: Query<(&Portal, &Cell)>,
+    mut strat_storage: Query<(&Stratum, &TileStorage)>,
+    all_tiles: Query<&tiles::TileIdx>,
+    all_portals: Query<(&Portal, &Cell, &ChildOf)>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
+    let mut new_spec = spec.into_inner().clone();
     for message in save_messages.read() {
-        let saved = tilemap::get_saved_tilemap(&spec, &storage, &all_tiles, &all_portals);
-        if let Ok(serialized) = ron::to_string(&saved) {
+        info!("saving {:?}", message.0);
+        let tiles = tilemap::get_live_tiles(&new_spec.size, &strat_storage, &all_tiles);
+        new_spec.all_tiles = tiles;
+        if let Ok(serialized) = ron::to_string(&new_spec) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
             };
         }
+
+        let mut strata = strat_storage.transmute_lens::<&Stratum>();
+        let portals = tilemap::get_live_portals(&strata.query(), &all_portals);
+        let path = message.0.with_file_name("portals.ron");
+
+        info!("saving {:?}", path);
+        if let Ok(serialized) = ron::to_string(&portals) {
+            let Ok(_) = std::fs::write(&path, serialized) else {
+                continue;
+            };
+        }
+
+        info!("✅\tdone saving.")
     }
 }
 

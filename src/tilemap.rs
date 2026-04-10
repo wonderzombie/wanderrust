@@ -399,42 +399,7 @@ where
     out
 }
 
-/// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
-pub fn get_saved_tilemap(
-    spec: &Res<TilemapSpec>,
-    storage: &TileStorage,
-    all_tiles: &Query<&TileIdx, With<MapTile>>,
-    all_portals: &Query<(&Portal, &Cell)>,
-) -> SavedTilemap {
-    // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
-    // We don't need to store coordinates since the map size is fixed and known at load time
-    // AND because we provide a default, never skipping empty cells.
-    let tiles = storage
-        .tiles
-        .iter()
-        // If there's an entity in storage, use that entity as a lookup into the [`TileIdx`] query.
-        .map(|&entity_opt| {
-            entity_opt
-                .and_then(|e| all_tiles.get(e).ok().copied())
-                .unwrap_or_default()
-        })
-        .collect::<Vec<_>>();
-
-    let portals = all_portals
-        .iter()
-        .map(|(portal, cell)| (portal.clone(), *cell))
-        .collect::<Vec<_>>();
-
-    SavedTilemap {
-        tiles,
-        portals,
-        size: storage.size,
-        light_level: spec.light_level,
-        ..default()
-    }
-}
-
-/// Loads a [`SavedTilemap`] into [`TileStorage`].
+/// Saves the current /// Loads a [`SavedTilemap`] into [`TileStorage`].
 pub fn load_saved_tilemap(
     commands: &mut Commands,
     saved: &SavedTilemap,
