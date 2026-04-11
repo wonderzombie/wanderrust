@@ -3,8 +3,7 @@ use bevy::prelude::*;
 use mrpas::Mrpas;
 
 use crate::{
-    Player,
-    actors::PlayerStats,
+    actors::{Player, PlayerStats},
     cell::Cell,
     tilemap::{Stratum, TilemapSpec},
     tiles::{MapTile, Revealed, TileIdx},
@@ -42,6 +41,14 @@ impl View {
 
 #[derive(Component, Debug)]
 pub struct Vision(pub u32);
+
+pub const DEFAULT_VISION: u32 = 2;
+
+impl Default for Vision {
+    fn default() -> Self {
+        Self(2)
+    }
+}
 
 impl Vision {
     pub fn range(&self) -> u32 {

@@ -5,6 +5,7 @@ use crate::{
     actors::{Dead, DisplayName},
     colors,
     event_log::MessageLog,
+    fov::Vision,
     gamestate::Turn,
 };
 
@@ -15,6 +16,33 @@ pub struct CombatStats {
     pub attack: i32,
     pub defense: i32,
     pub is_dead: bool,
+}
+
+#[derive(Bundle)]
+pub struct Belligerent {
+    pub stats: CombatStats,
+    pub awareness: Awareness,
+    pub vision: Vision,
+}
+
+impl Belligerent {
+    pub fn new(stats: CombatStats) -> Self {
+        Self {
+            stats,
+            awareness: Awareness::default(),
+            vision: Vision::default(),
+        }
+    }
+}
+
+#[derive(Component, Debug, Default)]
+pub enum Awareness {
+    Sleeping,
+    #[default]
+    Idling,
+    Alerted,
+    Hunting,
+    Returning,
 }
 
 #[derive(Message, Debug, Copy, Clone)]

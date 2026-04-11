@@ -6,6 +6,7 @@ mod colors;
 mod combat;
 pub mod editor;
 mod event_log;
+mod fov;
 pub mod gamestate;
 mod interactions;
 mod inventory;
