@@ -44,14 +44,15 @@ impl Belligerent {
     }
 }
 
-#[derive(Component, Debug, Default)]
+/// Add Awareness if the Actor needs complex behavior related to the Player.
+#[derive(Component, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Awareness {
-    Sleeping,
+    // Oblivious,
     #[default]
     Idling,
+    // Returning,
     Alerted,
-    Hunting,
-    Returning,
+    // Hunting,
 }
 
 #[derive(Message, Debug, Copy, Clone)]

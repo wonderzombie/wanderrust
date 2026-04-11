@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::{Alerted, Dead, Player},
+    actors::{Dead, Player},
     cell::Cell,
+    combat::Awareness,
     fov::{Fov, Vision},
     gamestate::Turn,
     inventory,
@@ -14,18 +15,13 @@ pub fn check_fov(
     mut commands: Commands,
     all_fov: Query<&Fov>,
     active_mobs: Populated<
-        (Entity, &ChildOf, &Cell, &Vision),
-        (
-            With<AgentOfGrid>,
-            Without<Alerted>,
-            Without<Dead>,
-            Without<Player>,
-        ),
+        (Entity, &Awareness, &ChildOf, &Cell, &Vision),
+        (With<AgentOfGrid>, Without<Dead>, Without<Player>),
     >,
     player_cell: Single<&Cell, With<Player>>,
 ) {
     let player_cell: (i32, i32) = (*player_cell).into();
-    for (mob_entity, mob_child_of, mob_cell, mob_vision) in active_mobs.iter() {
+    for (mob_entity, awareness, mob_child_of, mob_cell, mob_vision) in active_mobs.iter() {
         let Some(fov) = all_fov.get(mob_child_of.parent()).ok() else {
             warn!("No Fov found for entity {:?}", mob_child_of.parent());
             continue;
@@ -33,11 +29,11 @@ pub fn check_fov(
 
         let view = fov.from(mob_cell.into(), mob_vision.range());
 
-        if view.has(player_cell) {
+        if view.has(player_cell) && awareness < &Awareness::Alerted {
             commands
                 .entity(mob_entity)
-                .insert(Alerted)
-                .insert(Turn::Waiting);
+                .insert(Awareness::Alerted)
+                .insert_if_new(Turn::Waiting);
             info!(
                 "{:?} @ {} detected player at {:?}",
                 mob_entity, mob_cell, player_cell
