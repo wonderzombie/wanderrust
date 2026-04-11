@@ -387,6 +387,33 @@ pub fn sync_tiles(
     }
 }
 
+/// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
+/// TODO: consider whether or how function signature might be simplified.
+pub fn update_tile_visuals(
+    mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
+    spec: Res<TilemapSpec>,
+) {
+    for (mut sprite, mut vis, p) in tiles.iter_mut() {
+        *vis = if p.revealed() && !p.occupied() {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+
+        sprite.color = if p.highlighted() {
+            colors::KENNEY_GOLD
+        } else if p.revealed() && !p.occupied() {
+            Color::WHITE.with_alpha(p.light_or(&spec.light_level).into())
+        } else {
+            Color::NONE
+        };
+
+        if p.preview_active() {
+            sprite.color.set_alpha(0.5);
+        }
+    }
+}
+
 #[derive(QueryData)]
 #[query_data(derive(Debug))]
 pub struct VisualProps {
@@ -398,35 +425,24 @@ pub struct VisualProps {
     light_level: Option<&'static LightLevel>,
 }
 
-/// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
-/// TODO: consider whether or how function signature might be simplified.
-pub fn update_tile_visuals(
-    mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
-    spec: Res<TilemapSpec>,
-) {
-    for (mut sprite, mut vis, p) in tiles.iter_mut() {
-        let revealed = p.revealed.is_some_and(|r| r.0);
-        let highlighted = p.highlighted.is_some();
-        let preview_active = p.tile_preview.is_some_and(TilePreview::is_active);
-        let adjusted_light = p.light_level.copied().unwrap_or(spec.light_level);
-        let has_actor = p.occupied.is_some();
+impl<'w, 's> VisualPropsItem<'w, 's> {
+    pub fn revealed(&self) -> bool {
+        self.revealed.is_some_and(|r| r.0)
+    }
 
-        *vis = if revealed && !has_actor {
-            Visibility::Inherited
-        } else {
-            Visibility::Hidden
-        };
+    pub const fn highlighted(&self) -> bool {
+        self.highlighted.is_some()
+    }
 
-        sprite.color = if highlighted {
-            colors::KENNEY_GOLD
-        } else if revealed && !has_actor {
-            Color::WHITE.with_alpha(adjusted_light.into())
-        } else {
-            Color::NONE
-        };
+    pub fn preview_active(&self) -> bool {
+        self.tile_preview.is_some_and(TilePreview::is_active)
+    }
 
-        if preview_active {
-            sprite.color.set_alpha(0.5);
-        }
+    pub fn light_or(&self, other: &LightLevel) -> LightLevel {
+        *self.light_level.unwrap_or(other)
+    }
+
+    pub const fn occupied(&self) -> bool {
+        self.occupied.is_some()
     }
 }
