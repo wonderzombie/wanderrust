@@ -10,7 +10,6 @@ use crate::{
     cell::Cell,
     combat::{Belligerent, CombatStats},
     fov::Vision,
-    gamestate,
     interactions::{self, Interactable},
     inventory::{Inventory, Item},
     light::{Emitter, LightLevel},
@@ -71,7 +70,6 @@ pub(crate) fn add_test_mobs(
             },
             3,
         ),
-        AgentPos(cell.into()),
         TileIdx::Bat,
         PieceBundle {
             sprite: atlas.sprite(),

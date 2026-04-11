@@ -5,15 +5,13 @@ use bevy::{
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::{Alerted, Player},
+    actors::Player,
     cell::Cell,
-    combat,
+    combat::{self},
     gamestate::Turn,
     tilemap::{Stratum, TilemapSpec},
     tiles::{TileIdx, Walkable},
 };
-
-type CardinalGrid = Grid<CardinalNeighborhood>;
 
 /// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
 #[derive(Resource, Component, Default, Debug, PartialEq, Eq, Reflect)]
@@ -66,14 +64,14 @@ pub(crate) fn setup_spatial_indices(
     }
 }
 
-/// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
-
 pub fn spawn_grid(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
     strata: Populated<Entity, With<Stratum>>,
 ) {
+    info!("spawning grid for {} strata", strata.count());
     for stratum in strata {
+        info!("spawning grid for {:?}", stratum);
         let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
             .chunk_size(16)
             .default_impassable()
@@ -93,13 +91,9 @@ pub fn update_grid(
     let mut changed_grids: HashSet<Entity> = HashSet::new();
 
     for (cell, child_of, walkable_opt) in changed_tiles {
-        let Some((entity, mut grid)) = grid.get_mut(child_of.0).ok() else {
-            error!(
-                "failed to get grid for cell {:?} child_of {:?}",
-                cell, child_of
-            );
-            continue;
-        };
+        let (entity, mut grid) = grid
+            .get_mut(child_of.0)
+            .expect("failed to get grid for cell; was grid initialized?");
 
         let prev_nav = grid.nav(cell.into());
         let next_nav = if walkable_opt.is_some() {
