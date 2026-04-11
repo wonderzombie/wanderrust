@@ -80,7 +80,6 @@ pub fn spawn_grid(
         let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
 
         commands.entity(stratum).insert(grid);
-        dbg!(&stratum);
     }
 }
 

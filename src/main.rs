@@ -183,7 +183,6 @@ fn main() {
         (
             // Runs when there's been a change to any tile and updates sprite & gameplay properties..
             map::sync_tiles,
-            // Any tile changing needs an update.
             (
                 actors::sync_sprites,
                 actors::update_transforms,

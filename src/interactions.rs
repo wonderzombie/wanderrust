@@ -38,9 +38,6 @@ impl Interactable {
             }),
             _ => None,
         }
-        .inspect(|t| {
-            dbg!(t);
-        })
     }
 }
 
