@@ -109,11 +109,8 @@ fn main() {
     .add_systems(Startup, (atlas::load_spritesheet, sounds::load_sounds))
     .add_systems(
         Update,
-        (
-            (finalize_starting, atlas::on_loaded, sounds::on_loaded)
-                .run_if(in_state(GameState::Starting)),
-            finalize_loading.run_if(in_state(GameState::Loading)),
-        ),
+        ((finalize_starting, atlas::on_loaded, sounds::on_loaded)
+            .run_if(in_state(GameState::Starting)),),
     )
     .add_systems(
         OnExit(GameState::Starting),
@@ -137,6 +134,7 @@ fn main() {
             )
                 .in_set(GameSystem::SetupGrid)
                 .after(GameSystem::SetupTiles),
+            finalize_loading.after(GameSystem::SetupGrid),
         ),
     )
     .add_systems(
@@ -183,7 +181,9 @@ fn main() {
     .add_systems(
         PostUpdate,
         (
+            // Runs when there's been a change to any tile and updates sprite & gameplay properties..
             map::sync_tiles,
+            // Any tile changing needs an update.
             (
                 actors::sync_sprites,
                 actors::update_transforms,
@@ -192,10 +192,12 @@ fn main() {
                 .in_set(GameSystem::ActorSync)
                 .after(map::sync_tiles),
             camera::update.after(GameSystem::ActorSync),
+            // Changes to tiles mean updates to pathing and "collision."
             (grid::update_spatial_index, grid::update_grid)
                 .chain()
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::ActorSync),
+            // Update the FOV model and/or markers.
             (fov::update_fov_model, fov::update_fov_markers)
                 .chain()
                 .in_set(GameSystem::Fov)
@@ -266,14 +268,7 @@ fn finalize_starting(
     }
 }
 
-fn finalize_loading(
-    mut next: ResMut<NextState<GameState>>,
-    grid: Query<&CardinalGrid, With<Stratum>>,
-) {
-    if grid.is_empty() {
-        warn!("grid is empty; skipping this check");
-        return;
-    }
+fn finalize_loading(mut next: ResMut<NextState<GameState>>) {
     next.set(GameState::AwaitingInput);
 }
 
