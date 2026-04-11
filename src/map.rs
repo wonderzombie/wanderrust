@@ -412,14 +412,14 @@ pub fn update_tile_visuals(
         let has_actor = p.occupied.is_some();
 
         *vis = if revealed && !has_actor {
-            Visibility::Visible
+            Visibility::Inherited
         } else {
             Visibility::Hidden
         };
 
         sprite.color = if highlighted {
             colors::KENNEY_GOLD
-        } else if revealed {
+        } else if revealed && !has_actor {
             Color::WHITE.with_alpha(adjusted_light.into())
         } else {
             Color::NONE
