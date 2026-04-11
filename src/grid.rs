@@ -37,7 +37,7 @@ impl SpatialIndex {
 
 /// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
 pub(crate) fn update_spatial_index(
-    query: Query<(&Children, &mut SpatialIndex)>,
+    query: Populated<(&Children, &mut SpatialIndex)>,
     tiles: Query<&Cell, Without<Walkable>>,
 ) {
     for (children, mut index) in query {
@@ -52,8 +52,8 @@ pub(crate) fn update_spatial_index(
 
 pub(crate) fn setup_spatial_indices(
     mut commands: Commands,
-    stratum_children: Query<(&Stratum, &Children)>,
-    tiles: Query<&Cell, Without<Walkable>>,
+    stratum_children: Populated<(&Stratum, &Children)>,
+    tiles: Populated<&Cell, Without<Walkable>>,
 ) {
     for (strat, children) in stratum_children.iter() {
         let mut index = SpatialIndex::default();
@@ -71,7 +71,7 @@ pub(crate) fn setup_spatial_indices(
 pub fn spawn_grid(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    strata: Query<Entity, With<Stratum>>,
+    strata: Populated<Entity, With<Stratum>>,
 ) {
     for stratum in strata {
         let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
@@ -86,7 +86,7 @@ pub fn spawn_grid(
 }
 
 pub fn update_grid(
-    mut grid: Query<(Entity, &mut CardinalGrid)>,
+    mut grid: Populated<(Entity, &mut CardinalGrid)>,
     changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
 ) {
     let mut count = 0;
@@ -130,7 +130,7 @@ pub fn update_grid(
 pub fn pathfind(
     mut commands: Commands,
     player: Single<&Cell, With<Player>>,
-    query: Query<Entity, (Without<Pathfind>, With<Alerted>)>,
+    query: Populated<Entity, (With<AgentOfGrid>, Without<Pathfind>)>,
 ) {
     for entity in &query {
         commands
@@ -140,7 +140,7 @@ pub fn pathfind(
 }
 
 pub fn move_agents(
-    mut query: Query<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
+    mut query: Populated<(Entity, &mut AgentPos, &NextPos, &mut Turn)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<combat::Attack>,
     mut commands: Commands,

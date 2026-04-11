@@ -13,7 +13,7 @@ use crate::{
 pub fn check_fov(
     mut commands: Commands,
     all_fov: Query<&Fov>,
-    active_mobs: Query<
+    active_mobs: Populated<
         (Entity, &ChildOf, &Cell, &Vision),
         (
             With<AgentOfGrid>,
@@ -47,7 +47,7 @@ pub fn check_fov(
 }
 
 pub fn handle_dead(
-    query: Query<(Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
+    query: Populated<(Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
     mut acquisitions: MessageWriter<inventory::Acquisition>,
 ) {
     for (fixed_loot_opt, loot_opt) in &query {
