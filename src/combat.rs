@@ -16,6 +16,9 @@ pub struct CombatStats {
     pub max_hp: i32,
     pub attack: i32,
     pub defense: i32,
+    // This is set by mutable access as the change will be immediate to the
+    // system at the moment it occurs. Using just [`Dead`] wouldn't apply it
+    // until the system that inserted it had finished running b/c [`Commands`].
     pub is_dead: bool,
 }
 
