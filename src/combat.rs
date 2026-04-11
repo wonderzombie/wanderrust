@@ -23,6 +23,7 @@ pub struct Belligerent {
     pub stats: CombatStats,
     pub awareness: Awareness,
     pub vision: Vision,
+    pub turn: Turn,
 }
 
 impl Belligerent {
@@ -31,6 +32,7 @@ impl Belligerent {
             stats,
             awareness: Awareness::default(),
             vision: Vision::default(),
+            turn: Turn::default(),
         }
     }
 }

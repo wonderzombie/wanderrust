@@ -8,7 +8,7 @@ use crate::{
     actors::{Actor, DisplayName, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
-    combat::CombatStats,
+    combat::{Belligerent, CombatStats},
     fov::Vision,
     gamestate,
     interactions::{self, Interactable},
