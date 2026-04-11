@@ -141,7 +141,7 @@ pub fn move_agents(
 ) {
     for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         if turn.complete() {
-            info!("not moving done/idle entity {:?}", entity);
+            trace!("not moving done/idle entity {:?}", entity);
             continue;
         }
 
