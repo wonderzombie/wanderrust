@@ -1,12 +1,13 @@
 use bevy::{prelude::*, sprite::Text2dShadow};
-use bevy_northstar::prelude::AgentOfGrid;
+use bevy_northstar::prelude::{AgentOfGrid, Blocking};
 
 use crate::{
-    actors::{Dead, DisplayName},
+    actors::{Actor, Dead, DisplayName},
     colors,
     event_log::MessageLog,
     fov::Vision,
     gamestate::Turn,
+    interactions::Interactable,
 };
 
 #[derive(Component, Debug, Default)]
@@ -24,15 +25,21 @@ pub struct Belligerent {
     pub awareness: Awareness,
     pub vision: Vision,
     pub turn: Turn,
+    pub interactable: Interactable,
+    pub blocking: Blocking,
+    pub actor: Actor,
 }
 
 impl Belligerent {
-    pub fn new(stats: CombatStats) -> Self {
+    pub fn new(stats: CombatStats, vision: u32) -> Self {
         Self {
             stats,
             awareness: Awareness::default(),
-            vision: Vision::default(),
+            vision: Vision(vision),
             turn: Turn::default(),
+            interactable: Interactable::Combatant,
+            blocking: Blocking::default(),
+            actor: Actor::default(),
         }
     }
 }

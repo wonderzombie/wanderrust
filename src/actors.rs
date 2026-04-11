@@ -31,7 +31,7 @@ pub struct Alerted;
 pub struct Dead;
 
 /// A marker component for entities that perform actions in the world, such as the player or NPCs.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Default)]
 pub struct Actor;
 
 #[derive(Component, Debug, Reflect)]

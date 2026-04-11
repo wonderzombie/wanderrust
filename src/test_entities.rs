@@ -64,25 +64,24 @@ pub(crate) fn add_test_mobs(
 
     let cell = Cell { x: 40, y: 40 };
     commands.spawn((
-        Actor,
+        Belligerent::new(
+            CombatStats {
+                max_hp: 7,
+                ..default()
+            },
+            3,
+        ),
+        AgentPos(cell.into()),
         TileIdx::Bat,
-        Blocking,
         PieceBundle {
             sprite: atlas.sprite(),
             cell,
             ..default()
         },
         DisplayName("Bat".into()),
-        interactions::Interactable::Combatant,
-        CombatStats {
-            max_hp: 4,
-            ..default()
-        },
-        Vision(3),
         AgentPos(cell.into()),
         AgentOfGrid(grid_entity),
         ChildOf(active_stratum),
-        gamestate::Turn::Idling,
     ));
 }
 
