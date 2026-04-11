@@ -11,6 +11,7 @@ use crate::{
     loot::{FixedLoot, LootTable},
 };
 
+/// Checks each mob's status and alerts mobs when the player enters their FOV.
 pub fn check_fov(
     mut commands: Commands,
     all_fov: Query<&Fov>,

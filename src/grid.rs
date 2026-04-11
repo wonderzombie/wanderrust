@@ -102,8 +102,9 @@ pub fn update_grid(
             Nav::Impassable
         };
 
-        // This handles the case where `prev_nav` is `None`, or when
-        // `Some(prev_nav) != Some(next_nav)`.
+        // This handles the case where `prev_nav` is `None` (there was nothing
+        // at that cell), or when `Some(prev_nav) != Some(next_nav)` (there is
+        // no change at that cell).
         if prev_nav != Some(next_nav) {
             grid.set_nav(cell.into(), next_nav);
             changed_grids.insert(entity);
