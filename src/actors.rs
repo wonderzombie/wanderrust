@@ -127,7 +127,9 @@ pub fn sync_sprites(
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
-pub fn update_transforms(mut pieces: Query<(&Cell, &mut Transform), (With<Actor>, Changed<Cell>)>) {
+pub fn update_transforms(
+    mut pieces: Query<(&Cell, &mut Transform), (Without<MapTile>, Changed<Cell>)>,
+) {
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
@@ -209,7 +211,7 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
 /// An Occupied tile is not visible even under partially transparent sprites.
 pub fn sync_occupied_tiles(
     mut commands: Commands,
-    actors: Query<(&Cell, &PreviousCell), (With<Actor>, Changed<Cell>)>,
+    actors: Query<(&Cell, &PreviousCell), (Without<MapTile>, Changed<Cell>)>,
     storage: Single<&TileStorage>,
 ) {
     for (curr_cell, prev_cell) in actors.iter() {
