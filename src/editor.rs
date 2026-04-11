@@ -11,6 +11,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
+    gamestate::GameState,
     tilemap::{self, Portal, SavedTilemap, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
@@ -262,7 +263,8 @@ pub fn poll_load_dialog(
 }
 
 /// Loads a map from a file path when indicated by a [MapLoadMessage].
-pub fn load_map(
+/// Uses unwrap.
+pub fn _load_map(
     mut commands: Commands,
     mut storage: Single<&mut TileStorage>,
     mut load_messages: MessageReader<MapLoadMessage>,
@@ -271,6 +273,27 @@ pub fn load_map(
         let serialized = std::fs::read_to_string(&message.0).unwrap();
         let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
         tilemap::load_saved_tilemap(&mut commands, &deserialized, storage.as_mut());
+    }
+}
+
+/// Loads a map from a spec at the behest of `load_messages` [`SystemParam`].
+/// Uses a lot of unwrap.
+pub fn on_load_map_message(
+    mut load_messages: MessageReader<MapLoadMessage>,
+    mut spec: ResMut<TilemapSpec>,
+    mut next: ResMut<NextState<GameState>>,
+) {
+    for message in load_messages.read() {
+        let serialized = std::fs::read_to_string(&message.0).unwrap();
+        let mut new_spec = ron::from_str::<TilemapSpec>(&serialized).unwrap();
+
+        let serialized = std::fs::read_to_string(&message.0.with_file_name("portals.ron")).unwrap();
+        let portals = ron::from_str::<StratPortals>(&serialized).unwrap();
+
+        new_spec.all_portals = portals;
+        *spec = new_spec;
+
+        next.set(GameState::Loading);
     }
 }
 
@@ -391,7 +414,12 @@ impl Plugin for EditorPlugin {
             )
             .add_systems(
                 PostUpdate,
-                (poll_load_dialog, poll_save_dialog, load_map, save_map)
+                (
+                    poll_load_dialog,
+                    poll_save_dialog,
+                    on_load_map_message,
+                    save_map,
+                )
                     .run_if(in_state(EditorState::Enabled)),
             )
             .insert_resource(EditorContext::default())
