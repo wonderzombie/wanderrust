@@ -84,32 +84,40 @@ pub fn setup_player(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
     atlas: Res<SpriteAtlas>,
+    player: Option<Single<Entity, With<Player>>>,
     strata: Query<Entity, With<Stratum>>,
 ) {
-    commands.spawn((
-        // TODO: figure out the real active stratum.
-        ChildOf(strata.iter().next().unwrap()),
-        Name::new("Player"),
-        Actor,
-        Player,
-        TileIdx::Player,
-        Blocking,
-        Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
-        DisplayName("Player".into()),
-        CombatStats {
-            max_hp: 10,
-            attack: 2,
-            defense: 1,
-            hp: 10,
-            ..default()
-        },
-        PieceBundle {
-            sprite: atlas.sprite(),
-            cell: spec.spawn_point,
-            transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
-            ..default()
-        },
-    ));
+    if let Some(entity) = player {
+        commands
+            .entity(*entity)
+            .insert(ChildOf(strata.iter().next().unwrap()));
+    } else {
+        info!("spawning player");
+        commands.spawn((
+            // TODO: figure out the real active stratum.
+            ChildOf(strata.iter().next().unwrap()),
+            Name::new("Player"),
+            Actor,
+            Player,
+            TileIdx::Player,
+            Blocking,
+            Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
+            DisplayName("Player".into()),
+            CombatStats {
+                max_hp: 10,
+                attack: 2,
+                defense: 1,
+                hp: 10,
+                ..default()
+            },
+            PieceBundle {
+                sprite: atlas.sprite(),
+                cell: spec.spawn_point,
+                transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
+                ..default()
+            },
+        ));
+    }
 }
 
 /// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
