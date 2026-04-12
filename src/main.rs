@@ -148,8 +148,6 @@ fn main() {
             test_entities::add_test_emitters,
             test_entities::add_test_portals,
             test_entities::add_test_chests,
-            // Forcing this to run after adding debug things.
-            interactions::setup,
         )
             .chain()
             .in_set(GameSystem::SpawnTestEntities)

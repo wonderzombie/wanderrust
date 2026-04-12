@@ -1,4 +1,4 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     actors::DisplayName,
@@ -174,14 +174,10 @@ pub fn process_dialogue(
 ///
 /// Mostly this means interactables that have such as an open/closed sprite.
 pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
-    let mut count = 0;
-    let mut uniq: HashSet<TileIdx> = HashSet::new();
     for (entity, &tile_idx) in tiles.iter() {
-        uniq.insert(tile_idx);
         if tile_idx.is_interactable() {
-            count += 1;
-
             if let Some(bundle) = Interactable::from(tile_idx) {
+                info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
                 commands.entity(entity).insert(bundle);
             } else {
                 warn!(
@@ -190,9 +186,6 @@ pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<Tile
                 );
             }
         }
-    }
-    if count > 0 {
-        info!("found {} interactable tiles", count);
     }
 }
 
