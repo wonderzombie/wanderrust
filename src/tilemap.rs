@@ -1,12 +1,10 @@
-use bevy::{
-    platform::collections::{HashMap, HashSet},
-    prelude::*,
-};
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
 
 use crate::{
+    actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
     light::LightLevel,
@@ -188,16 +186,6 @@ pub struct Portal {
 pub type StratPortals = HashMap<StratumId, Vec<(Portal, Cell)>>;
 pub type StratTiles = HashMap<StratumId, Vec<(TileIdx, Cell)>>;
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct SavedTilemap {
-    pub tiles: Vec<TileIdx>,
-    pub size: Dimensions,
-    pub layer: TilemapLayer,
-    pub portals: Vec<(Portal, Cell)>,
-    pub light_level: LightLevel,
-    pub flip_v: bool,
-}
-
 #[derive(Bundle, Clone)]
 pub struct TileBundle {
     pub map_tile: MapTile,
@@ -231,15 +219,15 @@ pub fn spawn_tilemap(
     mut spec: ResMut<TilemapSpec>,
     sheet: Res<SpriteAtlas>,
 ) {
-    let tilemap_bundle = TilemapBundle {
-        size: spec.size,
-        ..default()
-    };
-
     info!(
         "initializing tilemap: {:?} ({}) {:?}",
         spec.id, spec.size, spec.light_level
     );
+
+    let tilemap_bundle = TilemapBundle {
+        size: spec.size,
+        ..default()
+    };
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
@@ -247,23 +235,23 @@ pub fn spawn_tilemap(
     for (strat_id, tile_cells) in spec.all_tiles.iter() {
         // Use the ID as a negative index on the tilemap layer.
         // That puts the 0th item at MAP_LAYER, the 1st at MAP_LAYER - 1.
-        let i = strat_id.0.neg();
+        let strat_id = strat_id.0.neg();
         // Avoid warnings that children of this entity are missing components.
-        let strat_id = commands
+        let strat_entity = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
         let bundles = generate_tile_bundles(
-            strat_id,
+            strat_entity,
             &spec.size,
             tile_cells,
-            i as f32 + *MAP_LAYER,
+            strat_id as f32 + *MAP_LAYER,
             &sheet,
         );
         commands.spawn_batch(bundles);
         commands
-            .entity(strat_id)
-            .insert(Stratum(strat_id, i.into()))
-            .insert(Name::new(format!("Stratum: {}", strat_id)));
+            .entity(strat_entity)
+            .insert(Stratum(strat_entity, strat_id.into()))
+            .insert(Name::new(format!("Stratum: {}", strat_entity)));
     }
     commands
         .entity(map_entity)
@@ -271,7 +259,18 @@ pub fn spawn_tilemap(
         .insert(Visibility::Visible)
         .insert(Name::new("Tilemap"));
 
-    info!("ℹ️\tdone spawning tilemap")
+    info!("✅\tdone spawning tilemap\t✅")
+}
+
+pub fn despawn_tilemap(
+    mut commands: Commands,
+    player: Single<Entity, With<Player>>,
+    strata: Query<Entity, With<Stratum>>,
+) {
+    commands.entity(*player).remove::<ChildOf>();
+    for stratum in strata.iter() {
+        commands.entity(stratum).despawn();
+    }
 }
 
 /// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children of a parent Entity.
@@ -322,7 +321,7 @@ pub fn initialize_tile_storage(
             }
         }
         info!(
-            "✅\tstratum {}: set {} cells of {} tile entities",
+            "✅\tstratum {}: set {}/{} tile entities\t✅",
             stratum.1,
             num_cells,
             storage.len(),
@@ -336,13 +335,14 @@ pub fn setup_portals(
     spec: Res<TilemapSpec>,
     strat_storage: Query<(&Stratum, &TileStorage)>,
 ) {
-    for (Stratum(_, id), storage) in strat_storage.iter() {
-        if let Some(portals_cells) = spec.all_portals.get(id) {
-            for (portal, cell) in portals_cells {
-                if let Some(entity) = storage.get(cell) {
+    for (Stratum(strat_entity, id), storage) in strat_storage.iter() {
+        if let Some(portal_cells) = spec.all_portals.get(id) {
+            for (portal, cell) in portal_cells {
+                if let Some(tile_entity) = storage.get(cell) {
                     commands
-                        .entity(entity)
+                        .entity(tile_entity)
                         .insert(portal.clone())
+                        .insert(ChildOf(*strat_entity))
                         .insert(Name::new(format!("Portal: {:#?}", portal)));
                     info!("inserted portal {:?} at {:?}", portal, cell);
                 }
@@ -410,82 +410,4 @@ where
         }
     }
     out
-}
-
-/// Saves the current /// Loads a [`SavedTilemap`] into [`TileStorage`].
-pub fn load_saved_tilemap(
-    commands: &mut Commands,
-    saved: &SavedTilemap,
-    storage: &mut TileStorage,
-) {
-    if saved.size > storage.size {
-        error!(
-            "saved map size {:?} exceeds storage size {:?}",
-            saved.size, storage.size
-        );
-        return;
-    } else if saved.size != storage.size {
-        warn!(
-            "saved map size {:?} does not match storage size {:?}",
-            saved.size, storage.size
-        );
-    }
-
-    let mut tally = HashMap::<TileIdx, usize>::new();
-    let mut missing: usize = 0;
-
-    // We can derive cell from the source using its Dimensions and then
-    // pull the entity from storage thus to insert its new tile components.
-    for (source_idx, source_tile) in saved.tiles.iter().enumerate() {
-        let orig_cell = saved.size.idx_to_cell(source_idx as u32);
-        let mut flipped_cell = orig_cell;
-
-        if saved.flip_v {
-            flipped_cell.y = storage.size.height as i32 - 1 - flipped_cell.y;
-            println!(
-                "orig: {} => {}",
-                orig_cell,
-                storage.size.cell_to_pos(&orig_cell)
-            );
-            println!(
-                "{} => {}",
-                flipped_cell,
-                storage.size.cell_to_pos(&flipped_cell)
-            );
-        }
-
-        if let Some(entity) = storage.get(&flipped_cell) {
-            commands.entity(entity).insert(*source_tile);
-            tally
-                .entry(*source_tile)
-                .and_modify(|v| *v += 1)
-                .or_insert(1);
-        } else {
-            missing += 1;
-        }
-    }
-
-    info!("ℹ️ tile breakdown ({} types) {:#?}", tally.len(), tally);
-
-    if missing > 0 {
-        warn!("{} tiles in storage are not entities", missing);
-    }
-
-    let valid_ids = saved
-        .portals
-        .iter()
-        .map(|(portal, _)| portal.id.clone())
-        .collect::<HashSet<_>>();
-
-    for (portal, cell) in saved.portals.iter() {
-        // TODO: ensure that some validation occurs here and/or address the case where
-        // there aren't already enough tiles.
-        if let Some(entity) = storage.get(cell) {
-            if valid_ids.contains(&portal.id) {
-                commands.entity(entity).insert(portal.clone());
-            } else {
-                error!("portal id {:?} not found in valid_ids", portal.id);
-            }
-        }
-    }
 }

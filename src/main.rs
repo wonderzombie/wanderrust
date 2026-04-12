@@ -117,6 +117,13 @@ fn main() {
         (camera::setup_camera, tooltip::setup, set_mouse_cursor),
     )
     .add_systems(
+        OnTransition::<GameState> {
+            exited: GameState::AwaitingInput,
+            entered: GameState::Loading,
+        },
+        tilemap::despawn_tilemap,
+    )
+    .add_systems(
         OnEnter(GameState::Loading),
         (
             (
@@ -139,7 +146,7 @@ fn main() {
     )
     .add_systems(
         OnExit(GameState::Loading),
-        (grid::spawn_grid, actors::setup_player),
+        actors::setup_player,
     )
     .add_systems(
         OnEnter(GameState::AwaitingInput),

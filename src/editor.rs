@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use bevy::{
+    ecs::entity_disabling::Disabled,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures},
 };
@@ -12,7 +13,7 @@ use crate::{
     colors::KENNEY_RED,
     event_log,
     gamestate::GameState,
-    tilemap::{self, Portal, SavedTilemap, StratPortals, Stratum, TileStorage, TilemapSpec},
+    tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -262,20 +263,6 @@ pub fn poll_load_dialog(
     }
 }
 
-/// Loads a map from a file path when indicated by a [MapLoadMessage].
-/// Uses unwrap.
-pub fn _load_map(
-    mut commands: Commands,
-    mut storage: Single<&mut TileStorage>,
-    mut load_messages: MessageReader<MapLoadMessage>,
-) {
-    for message in load_messages.read() {
-        let serialized = std::fs::read_to_string(&message.0).unwrap();
-        let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
-        tilemap::load_saved_tilemap(&mut commands, &deserialized, storage.as_mut());
-    }
-}
-
 /// Loads a map from a spec at the behest of `load_messages` [`SystemParam`].
 /// Uses a lot of unwrap.
 pub fn on_load_map_message(
@@ -334,7 +321,7 @@ pub fn poll_save_dialog(
 }
 
 /// Saves the map to disk using the provided queries.
-pub fn save_map(
+pub fn on_save_map_message(
     spec: Res<TilemapSpec>,
     mut strat_storage: Query<(&Stratum, &TileStorage)>,
     all_tiles: Query<&tiles::TileIdx>,
@@ -418,7 +405,7 @@ impl Plugin for EditorPlugin {
                     poll_load_dialog,
                     poll_save_dialog,
                     on_load_map_message,
-                    save_map,
+                    on_save_map_message,
                 )
                     .run_if(in_state(EditorState::Enabled)),
             )
