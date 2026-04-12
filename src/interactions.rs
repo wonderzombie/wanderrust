@@ -13,8 +13,8 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
-    Speaker,
     #[default]
+    Speaker,
     Combatant,
 }
 

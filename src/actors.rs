@@ -7,7 +7,8 @@ use bevy_northstar::prelude::Blocking;
 use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    combat::CombatStats,
+    combat::{Belligerent, Health, Parameters},
+    fov::Vision,
     light::{Emitter, LightLevel},
     tilemap::{Stratum, TileStorage, TilemapLayer, TilemapSpec},
     tiles::{self, MapTile, Occupied, TileIdx},
@@ -88,11 +89,17 @@ pub fn setup_player(
         TileIdx::Player,
         Blocking,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
-        CombatStats {
-            max_hp: 10,
-            attack: 2,
-            defense: 1,
-            hp: 10,
+        Belligerent {
+            params: Parameters {
+                attack: 2,
+                defense: 1,
+                health: Health {
+                    hp: 10,
+                    max: 10,
+                    is_dead: false,
+                },
+                vision: Vision(5),
+            },
             ..default()
         },
         PieceBundle {

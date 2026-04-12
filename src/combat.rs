@@ -1,48 +1,46 @@
-use bevy::{prelude::*, sprite::Text2dShadow};
-use bevy_northstar::prelude::{AgentOfGrid, Blocking};
+use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
+use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
-    actors::{Actor, Dead},
-    colors,
-    event_log::MessageLog,
-    fov::Vision,
-    gamestate::Turn,
+    actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
     interactions::Interactable,
 };
 
-#[derive(Component, Debug, Default)]
-pub struct CombatStats {
+#[derive(Debug, Default, Copy, Clone)]
+pub struct Health {
     pub hp: i32,
-    pub max_hp: i32,
-    pub attack: i32,
-    pub defense: i32,
-    // This is set by mutable access as the change will be immediate to the
-    // system at the moment it occurs. Using just [`Dead`] wouldn't apply it
-    // until the system that inserted it had finished running b/c [`Commands`].
+    pub max: i32,
     pub is_dead: bool,
 }
 
-#[derive(Bundle)]
-pub struct Belligerent {
-    pub stats: CombatStats,
-    pub awareness: Awareness,
+#[derive(Component, Debug, Default, Clone, Copy)]
+pub struct Parameters {
+    pub attack: i32,
+    pub defense: i32,
+    pub health: Health,
     pub vision: Vision,
+}
+
+pub fn init_combatants(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
+    for mut it in combatants.iter_mut() {
+        it.health.hp = it.health.max;
+    }
+}
+
+#[derive(Bundle, Default)]
+pub struct Belligerent {
+    pub params: Parameters,
+    pub awareness: Awareness,
     pub turn: Turn,
     pub interactable: Interactable,
-    pub blocking: Blocking,
-    pub actor: Actor,
 }
 
 impl Belligerent {
-    pub fn new(stats: CombatStats, vision: u32) -> Self {
+    pub fn new(params: Parameters) -> Self {
         Self {
-            stats,
-            awareness: Awareness::default(),
-            vision: Vision(vision),
-            turn: Turn::default(),
+            params,
             interactable: Interactable::Combatant,
-            blocking: Blocking::default(),
-            actor: Actor::default(),
+            ..default()
         }
     }
 }
@@ -64,10 +62,12 @@ pub struct Attack {
     pub target: Entity,
 }
 
-pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats>>) {
-    for mut combatant in combatants.iter_mut() {
-        combatant.hp = combatant.max_hp;
-    }
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct CombatantStats {
+    pub entity: Entity,
+    pub name: &'static Name,
+    pub params: &'static mut Parameters,
 }
 
 pub fn process_attacks(
@@ -85,10 +85,10 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_entity, defender_name, mut defender) = defender;
+        let (defender_id, defender_name, mut defender) = defender;
         let (_, attacker_name, attacker) = attacker;
 
-        if defender.is_dead {
+        if defender.health.is_dead {
             log.add(
                 format!("{} is already dead", defender_name),
                 colors::KENNEY_GOLD,
@@ -98,29 +98,29 @@ pub fn process_attacks(
 
         let damage = attacker.attack - defender.defense;
         if damage >= 0 {
-            defender.hp = defender.hp.saturating_sub(damage);
+            defender.health.hp = defender.health.hp.saturating_sub(damage);
             log.add(
                 format!("{} hits {}!", attacker_name, defender_name),
                 colors::KENNEY_GOLD,
             );
 
-            if defender.hp <= 0 {
-                defender.is_dead = true;
+            if defender.health.hp <= 0 {
+                defender.health.is_dead = true;
                 log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
                 spawn_floating_text(
                     &mut commands,
                     colors::KENNEY_RED,
                     &font,
-                    defender_entity,
+                    defender_id,
                     "dead",
                 );
                 commands
-                    .entity(defender_entity)
+                    .entity(defender_id)
                     .insert(Dead)
                     .remove::<AgentOfGrid>()
                     .remove::<Turn>();
             } else {
-                spawn_floating_text(&mut commands, Color::WHITE, &font, defender_entity, damage);
+                spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
             }
         } else {
             log.add(

@@ -8,7 +8,7 @@ use crate::{
     actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
-    combat::{Belligerent, CombatStats},
+    combat::{Belligerent, Health, Parameters},
     fov::Vision,
     interactions::{self, Interactable},
     inventory::{Inventory, Item},
@@ -53,23 +53,29 @@ pub(crate) fn add_test_mobs(
         },
         Name::new("Mr.Sandbag"),
         interactions::Interactable::Combatant,
-        CombatStats {
-            max_hp: 12,
-            ..default()
-        },
-        Vision(5),
+        Belligerent::new(Parameters {
+            health: Health {
+                max: 12,
+                ..default()
+            },
+            attack: 0,
+            defense: 0,
+            vision: Vision(0),
+        }),
         ChildOf(active_stratum),
     ));
 
     let cell = Cell { x: 40, y: 40 };
     commands.spawn((
-        Belligerent::new(
-            CombatStats {
-                max_hp: 7,
-                ..default()
+        Belligerent::new(Parameters {
+            health: Health {
+                max: 7,
+                ..Default::default()
             },
-            3,
-        ),
+            attack: 1,
+            defense: 1,
+            vision: Vision::default(),
+        }),
         TileIdx::Bat,
         PieceBundle {
             sprite: atlas.sprite(),
