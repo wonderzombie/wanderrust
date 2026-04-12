@@ -7,7 +7,7 @@ use bevy_northstar::prelude::*;
 use crate::{
     actors::Player,
     cell::Cell,
-    combat::{self},
+    combat::{self, Awareness},
     gamestate::Turn,
     tilemap::{Stratum, TilemapSpec},
     tiles::{TileIdx, Walkable},
@@ -122,12 +122,16 @@ pub fn update_grid(
         info!("ℹ️\tupdated grid, set {} tiles", count);
     }
 }
+
 pub fn pathfind(
     mut commands: Commands,
-    player: Single<&Cell, With<Player>>,
-    query: Populated<Entity, (With<AgentOfGrid>, Without<Pathfind>)>,
+    player: Single<&Cell, (Changed<Cell>, With<Player>)>,
+    query: Populated<(Entity, &Awareness), With<AgentOfGrid>>,
 ) {
-    for entity in &query {
+    for (entity, awareness) in &query {
+        if *awareness != Awareness::Alerted {
+            continue;
+        }
         commands
             .entity(entity)
             .insert(Pathfind::new_2d(player.x as u32, player.y as u32));
