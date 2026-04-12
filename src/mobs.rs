@@ -34,7 +34,7 @@ pub fn check_fov(
             commands
                 .entity(mob_entity)
                 .insert(Awareness::Alerted)
-                .insert_if_new(Turn::Waiting);
+                .insert(Turn::Waiting);
             info!(
                 "{:?} @ {} detected player at {:?}",
                 mob_entity, mob_cell, player_cell
