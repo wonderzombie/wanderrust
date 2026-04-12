@@ -39,7 +39,7 @@ impl View {
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Copy, Clone, Debug)]
 pub struct Vision(pub u32);
 
 pub const DEFAULT_VISION: u32 = 2;
