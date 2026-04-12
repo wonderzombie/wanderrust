@@ -52,7 +52,6 @@ pub(crate) fn add_test_mobs(
             ..default()
         },
         Name::new("Mr.Sandbag"),
-        interactions::Interactable::Combatant,
         Belligerent::new(Parameters {
             health: Health {
                 max: 12,
