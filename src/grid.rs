@@ -125,16 +125,20 @@ pub fn update_grid(
 
 pub fn pathfind(
     mut commands: Commands,
-    player: Single<&Cell, (Changed<Cell>, With<Player>)>,
-    query: Populated<(Entity, &Awareness), With<AgentOfGrid>>,
+    player_cell: Single<&Cell, With<Player>>,
+    query: Populated<(Entity, &Awareness, Option<&Pathfind>), With<AgentOfGrid>>,
 ) {
-    for (entity, awareness) in &query {
+    let player_cell: Cell = *player_cell.into_inner();
+    for (entity, awareness, pathfind) in &query {
         if *awareness != Awareness::Alerted {
             continue;
         }
-        commands
-            .entity(entity)
-            .insert(Pathfind::new_2d(player.x as u32, player.y as u32));
+
+        if pathfind.is_none_or(|pf| pf.goal.eq(&player_cell.into())) {
+            commands
+                .entity(entity)
+                .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
+        }
     }
 }
 
