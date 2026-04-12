@@ -67,7 +67,7 @@ pub(crate) fn setup_spatial_indices(
 pub fn spawn_grid(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    strata: Populated<Entity, With<Stratum>>,
+    strata: Populated<Entity, (With<Stratum>, Without<CardinalGrid>)>,
 ) {
     info!("spawning grid for {} strata", strata.count());
     for stratum in strata {
