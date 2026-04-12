@@ -109,8 +109,8 @@ fn main() {
     .add_systems(Startup, (atlas::load_spritesheet, sounds::load_sounds))
     .add_systems(
         Update,
-        ((finalize_starting, atlas::on_loaded, sounds::on_loaded)
-            .run_if(in_state(GameState::Starting)),),
+        (finalize_starting, atlas::on_loaded, sounds::on_loaded)
+            .run_if(in_state(GameState::Starting)),
     )
     .add_systems(
         OnExit(GameState::Starting),
