@@ -48,7 +48,7 @@ impl Belligerent {
 }
 
 /// Add Awareness if the Actor needs complex behavior related to the Player.
-#[derive(Component, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Component, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Awareness {
     // Oblivious,
     #[default]
