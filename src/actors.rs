@@ -13,16 +13,6 @@ use crate::{
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
-/// Represents the user-visible display name for an actor.
-#[derive(Component, Debug)]
-pub struct DisplayName(pub String);
-
-impl Display for DisplayName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 /// Represents an entity that is currently alerted to a nearby threat, typically the player.
 #[derive(Component, Debug)]
 pub struct Alerted;
@@ -98,7 +88,6 @@ pub fn setup_player(
         TileIdx::Player,
         Blocking,
         Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
-        DisplayName("Player".into()),
         CombatStats {
             max_hp: 10,
             attack: 2,

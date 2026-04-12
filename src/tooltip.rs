@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    actors::{Actor, DisplayName, Player},
+    actors::{Actor, Player},
     atlas::SpriteAtlas,
     colors,
     interactions::Interactable,
@@ -64,7 +64,7 @@ fn over_observer(
             Entity,
             &TileIdx,
             Option<&Player>,
-            Option<&DisplayName>,
+            Option<&Name>,
             Option<&Interactable>,
             Option<&Portal>,
         ),
@@ -86,7 +86,7 @@ fn over_observer(
     } else if let Some(name) = tile.label() {
         format!(" {name} ")
     } else {
-        let ty = name_opt.map_or_else(|| format!("{tile}"), |n| n.0.clone());
+        let ty = name_opt.map_or_else(|| format!("{tile}"), |n| n.into());
         make_label(ty, interact_opt)
     };
 

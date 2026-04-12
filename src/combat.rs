@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, Blocking};
 
 use crate::{
-    actors::{Actor, Dead, DisplayName},
+    actors::{Actor, Dead},
     colors,
     event_log::MessageLog,
     fov::Vision,
@@ -72,7 +72,7 @@ pub fn init_combatants(mut combatants: Query<&mut CombatStats, Added<CombatStats
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &DisplayName, &mut CombatStats)>,
+    mut combatants: Query<(Entity, &Name, &mut Parameters)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,

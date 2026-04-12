@@ -1,11 +1,9 @@
 use bevy::{platform::collections::HashSet, prelude::*};
 
-use crate::{
-    actors::DisplayName, colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx,
-};
+use crate::{colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx};
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
-#[derive(Component, Debug, Reflect)]
+#[derive(Component, Debug, Default, Reflect)]
 pub enum Interactable {
     Door {
         is_open: bool,
@@ -16,6 +14,7 @@ pub enum Interactable {
         contents: Inventory,
     },
     Speaker,
+    #[default]
     Combatant,
 }
 
@@ -56,12 +55,7 @@ pub struct Listen {
 /// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
 pub fn process_interactions(
     mut attempts: MessageReader<Examine>,
-    mut interactables: Query<(
-        Entity,
-        &mut TileIdx,
-        &mut Interactable,
-        Option<&DisplayName>,
-    )>,
+    mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
     mut acquisitions: MessageWriter<Acquisition>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
@@ -117,7 +111,7 @@ pub fn process_interactions(
             Interactable::Speaker => {
                 info!(
                     "Player talks to {}.",
-                    name_opt.map_or("someone", |n| n.0.as_str())
+                    name_opt.map_or("someone", |n| n.as_str())
                 );
                 speech.write(Listen { entity });
             }

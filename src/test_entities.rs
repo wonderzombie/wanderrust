@@ -5,7 +5,7 @@ use bevy_northstar::{
 };
 
 use crate::{
-    actors::{Actor, DisplayName, PieceBundle, Player},
+    actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
     combat::{Belligerent, CombatStats},
@@ -36,7 +36,7 @@ pub(crate) fn add_test_mobs(
             cell: Cell { x: 53, y: 53 },
             ..default()
         },
-        DisplayName("Mr. Boney".into()),
+        Name::new("Mr. Boney"),
         interactions::Interactable::Speaker,
         interactions::Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
         ChildOf(active_stratum),
@@ -51,7 +51,7 @@ pub(crate) fn add_test_mobs(
             cell: Cell { x: 49, y: 49 },
             ..default()
         },
-        DisplayName("Mr. Sandbag".into()),
+        Name::new("Mr.Sandbag"),
         interactions::Interactable::Combatant,
         CombatStats {
             max_hp: 12,
@@ -76,7 +76,7 @@ pub(crate) fn add_test_mobs(
             cell,
             ..default()
         },
-        DisplayName("Bat".into()),
+        Name::new("Bat"),
         AgentPos(cell.into()),
         AgentOfGrid(grid_entity),
         ChildOf(active_stratum),
