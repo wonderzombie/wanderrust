@@ -66,7 +66,7 @@ pub fn finalize_waiting_turns(
 ) {
     for (mut turn, (pathfind, next_pos)) in actors.iter_mut() {
         if *turn == Turn::Waiting && pathfind.is_none() && next_pos.is_none() {
-            info!("finalizing waiting actor to Done (no pending path/move)");
+            trace!("finalizing waiting actor to Done (no pending path/move)");
             *turn = Turn::Done;
         }
     }
