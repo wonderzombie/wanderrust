@@ -42,8 +42,6 @@ impl View {
 #[derive(Component, Copy, Clone, Debug)]
 pub struct Vision(pub u32);
 
-pub const DEFAULT_VISION: u32 = 2;
-
 impl Default for Vision {
     fn default() -> Self {
         Self(2)
