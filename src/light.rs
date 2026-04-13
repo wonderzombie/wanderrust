@@ -325,7 +325,7 @@ pub fn sync_actor_light_levels(
 
         actor_vis.set_if_neq(if revealed.0 {
             actor_sprite.color = Color::WHITE.with_alpha(level.into());
-            Visibility::Visible
+            Visibility::Inherited
         } else {
             actor_sprite.color = Color::BLACK.with_alpha(0.0);
             Visibility::Hidden
