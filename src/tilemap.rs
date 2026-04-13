@@ -53,6 +53,21 @@ pub struct Stratum(pub Entity, pub StratumId);
 pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
+#[derive(
+    Resource, Deref, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
+)]
+pub struct ActiveStratum(Stratum);
+
+impl ActiveStratum {
+    pub fn entity(&self) -> Entity {
+        self.0.0
+    }
+
+    pub fn id(&self) -> StratumId {
+        self.0.1
+    }
+}
+
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 pub struct TilemapSpec {
@@ -200,8 +215,6 @@ pub struct TileBundle {
 
 #[derive(Bundle, Default)]
 pub struct TilemapBundle {
-    pub size: Dimensions,
-    pub layer: TilemapLayer,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
@@ -224,10 +237,7 @@ pub fn spawn_tilemap(
         spec.id, spec.size, spec.light_level
     );
 
-    let tilemap_bundle = TilemapBundle {
-        size: spec.size,
-        ..default()
-    };
+    let tilemap_bundle = TilemapBundle::default();
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
