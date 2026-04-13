@@ -1,0 +1,1 @@
+[((x:49,y:49),Skeleton,Combatant,(attack:0,defense:0,health:(hp:12,max:12,is_dead:false),vision:(0))),((x:50,y:49),Player,Speaker,(attack:2,defense:1,health:(hp:10,max:10,is_dead:false),vision:(5)))]

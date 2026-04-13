@@ -10,9 +10,10 @@ use bevy::{
     platform::collections::HashMap,
     reflect::Reflect,
 };
+use serde::{Deserialize, Serialize};
 
 /// A simple wrapper around a string to represent an item in the game world.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
 pub struct Item(pub String);
 
 impl Item {
@@ -28,7 +29,7 @@ impl Display for Item {
 }
 
 /// A resource representing the player's inventory, which is a mapping of items to their quantities.
-#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect)]
+#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 pub struct Inventory(HashMap<Item, usize>);
 
 impl From<HashMap<Item, usize>> for Inventory {

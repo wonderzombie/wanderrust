@@ -7,11 +7,13 @@ use bevy::{
 use rfd::AsyncFileDialog;
 
 use crate::{
-    actors::PlayerStats,
+    actors::{Actor, PlayerStats},
     cell::Cell,
     colors::KENNEY_RED,
+    combat::Parameters,
     event_log,
     gamestate::GameState,
+    interactions::Interactable,
     tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
@@ -325,13 +327,15 @@ pub fn on_save_map_message(
     mut strat_storage: Query<(&Stratum, &TileStorage)>,
     all_tiles: Query<&tiles::TileIdx>,
     all_portals: Query<(&Portal, &Cell, &ChildOf)>,
+    all_actors: Query<(&Cell, &TileIdx, &Interactable, &Parameters), With<Actor>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
     let mut new_spec = spec.into_inner().clone();
     for message in save_messages.read() {
-        info!("saving {:?}", message.0);
         let tiles = tilemap::get_live_tiles(&new_spec.size, &strat_storage, &all_tiles);
         new_spec.all_tiles = tiles;
+
+        info!("saving {:?}", message.0);
         if let Ok(serialized) = ron::to_string(&new_spec) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
@@ -345,6 +349,17 @@ pub fn on_save_map_message(
 
         info!("saving {:?}", path);
         if let Ok(serialized) = ron::to_string(&portals) {
+            let Ok(_) = std::fs::write(&path, serialized) else {
+                continue;
+            };
+        }
+
+        // TODO: de/serialize more than just this.
+        let actors = all_actors.iter().collect::<Vec<_>>();
+        let path = message.0.with_file_name("actors.ron");
+
+        info!("saving {:?}", path);
+        if let Ok(serialized) = ron::to_string(&actors) {
             let Ok(_) = std::fs::write(&path, serialized) else {
                 continue;
             };

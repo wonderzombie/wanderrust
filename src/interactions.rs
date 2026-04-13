@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     colors, combat,
@@ -8,7 +9,7 @@ use crate::{
 };
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
-#[derive(Component, Debug, Default, Reflect)]
+#[derive(Component, Debug, Default, Reflect, Serialize, Deserialize)]
 pub enum Interactable {
     Door {
         is_open: bool,
@@ -132,7 +133,7 @@ pub fn process_interactions(
 /// A component representing the dialogue of an NPC.
 ///
 /// This component is used to store and manage the dialogue of an NPC, including the current phrase and the list of phrases.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Serialize, Deserialize)]
 pub struct Dialogue {
     idx: usize,
     phrases: Vec<String>,
