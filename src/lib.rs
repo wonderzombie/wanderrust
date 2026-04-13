@@ -10,6 +10,7 @@ mod fov;
 pub mod gamestate;
 mod interactions;
 mod inventory;
+mod ldtk;
 pub mod light;
 pub mod tilemap;
 pub mod tiles;

@@ -11,6 +11,7 @@ mod gamestate;
 mod grid;
 mod interactions;
 mod inventory;
+mod ldtk;
 mod light;
 mod loot;
 mod map;

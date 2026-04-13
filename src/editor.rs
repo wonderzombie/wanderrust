@@ -14,6 +14,7 @@ use crate::{
     event_log,
     gamestate::GameState,
     interactions::Interactable,
+    ldtk,
     tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
@@ -315,21 +316,7 @@ pub fn on_load_ldtk_map_message(mut load_message: MessageReader<MapLoadLdtkMessa
         let serialized = std::fs::read_to_string(path).unwrap();
         let deserialized: LDtk = serde_json::from_str(&serialized).unwrap();
 
-        info!("loaded {} levels from LDtk", deserialized.levels.len());
-
-        for level in deserialized.levels {
-            info!("level {}", level.identifier);
-            if let Some(layer) = level.layer_instances {
-                for layer_inst in layer {
-                    info!(
-                        "layer id: {} ntiles: {} nentities: {}",
-                        layer_inst.identifier,
-                        layer_inst.grid_tiles.len(),
-                        layer_inst.entity_instances.len()
-                    )
-                }
-            }
-        }
+        let _ = ldtk::import(deserialized);
     }
 }
 
