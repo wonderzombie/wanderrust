@@ -388,9 +388,9 @@ where
         let Ok(stratum) = strata.get(child_of.parent()) else {
             continue;
         };
-        out.entry(stratum.1.clone())
+        out.entry(stratum.1)
             .or_insert(Vec::new())
-            .push((item.clone(), cell.clone()));
+            .push((item.clone(), *cell));
     }
 
     out
@@ -410,12 +410,11 @@ where
             let cell = size.idx_to_cell(i as u32);
             if let Some(entity) = entity_opt
                 && let Ok(item) = live_items.get(*entity)
+                && *item != T::default()
             {
-                if *item != T::default() {
-                    out.entry(stratum.1.clone())
-                        .or_insert(Vec::new())
-                        .push((item.clone(), cell))
-                }
+                out.entry(stratum.1)
+                    .or_insert(Vec::new())
+                    .push((item.clone(), cell))
             }
         }
     }

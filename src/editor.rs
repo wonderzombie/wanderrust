@@ -275,10 +275,10 @@ pub fn on_load_map_message(
         let serialized = std::fs::read_to_string(&message.0).unwrap();
         let mut new_spec = ron::from_str::<TilemapSpec>(&serialized).unwrap();
 
-        let serialized = std::fs::read_to_string(&message.0.with_file_name("portals.ron")).unwrap();
+        let serialized = std::fs::read_to_string(message.0.with_file_name("portals.ron")).unwrap();
         let portals = ron::from_str::<StratPortals>(&serialized).unwrap();
 
-        let serialized = std::fs::read_to_string(&message.0.with_file_name("actors.ron")).unwrap();
+        let serialized = std::fs::read_to_string(message.0.with_file_name("actors.ron")).unwrap();
         let _: Vec<(Cell, TileIdx, Interactable, Parameters)> =
             ron::from_str::<Vec<_>>(&serialized).unwrap();
 
