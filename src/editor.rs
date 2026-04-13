@@ -17,6 +17,9 @@ use crate::{
     tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
+
+use ldtk_json_rs::{self, ldtk_json::LDtk};
+
 const DATA_DIR: &str = "data";
 
 #[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
@@ -120,15 +123,28 @@ pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerS
 }
 
 /// Dispatches map-related operations based on keyboard input.
-pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<KeyCode>>) {
-    if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
+pub fn handle_map_operations(
+    commands: Commands,
+    mut input: ResMut<ButtonInput<KeyCode>>,
+    mut ldtk_load: MessageWriter<MapLoadLdtkMessage>,
+) {
+    if input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+        && input.just_released(KeyCode::KeyS)
+    {
         warn!("requested to save");
         input.clear();
         open_save_dialog(commands);
-    } else if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyL) {
+    } else if input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+        && input.just_released(KeyCode::KeyL)
+    {
         warn!("requested to load");
         input.clear();
         open_load_dialog(commands);
+    } else if input.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight])
+        && input.just_released(KeyCode::KeyL)
+    {
+        info!("loading canned ldtk filename");
+        ldtk_load.write(MapLoadLdtkMessage);
     }
 }
 
@@ -289,6 +305,34 @@ pub fn on_load_map_message(
     }
 }
 
+#[derive(Message, Debug)]
+pub struct MapLoadLdtkMessage;
+
+pub fn on_load_ldtk_map_message(mut load_message: MessageReader<MapLoadLdtkMessage>) {
+    for _ in load_message.read() {
+        let path: PathBuf = "data/ldtk/wndrs-proto.ldtk".into();
+
+        let serialized = std::fs::read_to_string(path).unwrap();
+        let deserialized: LDtk = serde_json::from_str(&serialized).unwrap();
+
+        info!("loaded {} levels from LDtk", deserialized.levels.len());
+
+        for level in deserialized.levels {
+            info!("level {}", level.identifier);
+            if let Some(layer) = level.layer_instances {
+                for layer_inst in layer {
+                    info!(
+                        "layer id: {} ntiles: {} nentities: {}",
+                        layer_inst.identifier,
+                        layer_inst.grid_tiles.len(),
+                        layer_inst.entity_instances.len()
+                    )
+                }
+            }
+        }
+    }
+}
+
 #[derive(Message)]
 pub struct MapSaveMessage(PathBuf);
 
@@ -424,11 +468,13 @@ impl Plugin for EditorPlugin {
                     poll_save_dialog,
                     on_load_map_message,
                     on_save_map_message,
+                    on_load_ldtk_map_message.run_if(on_message::<MapLoadLdtkMessage>),
                 )
                     .run_if(in_state(EditorState::Enabled)),
             )
             .insert_resource(EditorContext::default())
             .insert_state(EditorState::Disabled)
+            .add_message::<MapLoadLdtkMessage>()
             .add_message::<MapLoadMessage>()
             .add_message::<MapSaveMessage>();
     }
