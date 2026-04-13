@@ -67,7 +67,7 @@ pub(crate) fn setup_spatial_indices(
 pub fn spawn_grid(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    strata: Populated<Entity, With<Stratum>>,
+    strata: Populated<Entity, (With<Stratum>, Without<CardinalGrid>)>,
 ) {
     info!("spawning grid for {} strata", strata.count());
     for stratum in strata {
@@ -126,7 +126,7 @@ pub fn update_grid(
 pub fn pathfind(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
-    query: Populated<(Entity, &Awareness, Option<&Pathfind>), With<AgentOfGrid>>,
+    query: Populated<(Entity, &Awareness, Option<&Pathfind>)>,
 ) {
     let player_cell: Cell = *player_cell.into_inner();
     for (entity, awareness, pathfind) in &query {

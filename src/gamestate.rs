@@ -22,10 +22,14 @@ pub enum Screen {
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GameState {
+    /// Starting initiates loading assets. Loading starts when assets are loaded.
     #[default]
     Starting,
+    /// Loading occurs once assets are loaded, spawning tilemaps, et al.
     Loading,
+    /// AwaitingInput is when the game awaits input from the player.
     AwaitingInput,
+    /// Ramifying is when we realize the player's action.
     Ramifying,
 }
 

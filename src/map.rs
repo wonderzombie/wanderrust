@@ -3,9 +3,7 @@ use crate::{
     colors,
     light::LightLevel,
     ptable::ProbabilityTable,
-    tilemap::{
-        Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapLayer, TilemapSpec,
-    },
+    tilemap::{Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapSpec},
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
@@ -42,6 +40,7 @@ pub const MAP_ZERO: &str = r#"
 #.............###.#
 ###################"#;
 
+#[allow(dead_code)]
 pub const MAP_ONE: &str = r#"
 ###################
 #.................#
@@ -58,9 +57,6 @@ pub const MAP_ONE: &str = r#"
 #.X.....I.....###.#
 #.i...........###.#
 ###################"#;
-
-/// MAP_LAYER is the layer for the map tilemap.
-pub const MAP_LAYER: TilemapLayer = TilemapLayer(-6.);
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
@@ -118,8 +114,7 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            layer: MAP_LAYER,
-            start: Cell { x: 5, y: 5 },
+            spawn_point: Cell { x: 5, y: 5 },
             light_level: LightLevel::Bright,
             all_portals,
             ..default()
@@ -170,7 +165,8 @@ impl TilemapSpec {
             .collect::<Vec<_>>()
     }
 
-    pub fn from_strs(one: &str, two: &str, start: Cell, light_level: LightLevel) -> Self {
+    #[allow(dead_code)]
+    pub fn from_strs(one: &str, two: &str, spawn_point: Cell, light_level: LightLevel) -> Self {
         let id1 = StratumId(0);
         let id2 = StratumId(1);
         let tiles1 = TilemapSpec::parse_map_str(one);
@@ -184,7 +180,7 @@ impl TilemapSpec {
             all_portals: vec![(id1, portals1), (id2, portals2)]
                 .into_iter()
                 .collect::<HashMap<StratumId, Vec<PortalCell>>>(),
-            start,
+            spawn_point,
             light_level,
             ..default()
         }
@@ -195,13 +191,13 @@ impl TilemapSpec {
         fx: impl Fn(&Cell, &ProbabilityTable) -> TileIdx,
         size: (u32, u32),
     ) -> Self {
-        let start = Cell {
+        let spawn_point = Cell {
             x: size.0 as i32 / 2,
             y: size.1 as i32 / 2,
         };
         info!("=== map from procedure ===");
         let tiles = size.0 * size.1;
-        info!("start: {:?}", start);
+        info!("spawn_point: {:?}", spawn_point);
         info!("size: {:?}", size);
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
@@ -229,8 +225,7 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            layer: MAP_LAYER,
-            start,
+            spawn_point,
             light_level: LightLevel::Night,
             ..default()
         }
@@ -317,13 +312,7 @@ mod tests {
         // 'X' marks the intended start in ASCII but from_str ignores its position;
         // start is always hardcoded to (5, 5).
         let spec = TilemapSpec::from_str("X..\n...\n...");
-        assert_eq!(spec.start, Cell { x: 5, y: 5 });
-    }
-
-    #[test]
-    fn layer_uses_default() {
-        let spec = TilemapSpec::from_str("#");
-        assert_eq!(spec.layer, MAP_LAYER);
+        assert_eq!(spec.spawn_point, Cell { x: 5, y: 5 });
     }
 }
 

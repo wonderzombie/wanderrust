@@ -1,19 +1,29 @@
-use bevy::{
-    platform::collections::{HashMap, HashSet},
-    prelude::*,
-};
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
 
 use crate::{
+    actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut, Reflect)]
+#[derive(
+    Component,
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    Deref,
+    DerefMut,
+    Reflect,
+    Serialize,
+    Deserialize,
+    PartialEq,
+)]
 pub struct TilemapId(Option<Entity>);
 
 impl TilemapId {
@@ -43,18 +53,34 @@ pub struct Stratum(pub Entity, pub StratumId);
 pub type TileCell = (TileIdx, Cell);
 pub type PortalCell = (Portal, Cell);
 
+#[derive(
+    Resource, Deref, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
+)]
+pub struct ActiveStratum(Stratum);
+
+impl ActiveStratum {
+    pub fn entity(&self) -> Entity {
+        self.0.0
+    }
+
+    pub fn id(&self) -> StratumId {
+        self.0.1
+    }
+}
+
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug, Reflect)]
+#[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 pub struct TilemapSpec {
     /// Stratum entities will be created as children of this entity.
+    #[serde(skip)]
     pub id: TilemapId,
     pub size: Dimensions,
-    pub layer: TilemapLayer,
     /// Tiles and portals keyed by StratumId drive tilemap creation.
-    pub all_tiles: HashMap<StratumId, Vec<TileCell>>,
-    pub all_portals: HashMap<StratumId, Vec<PortalCell>>,
+    pub all_tiles: StratTiles,
+    #[serde(skip)]
+    pub all_portals: StratPortals,
     /// Starting point for the player.
-    pub start: Cell,
+    pub spawn_point: Cell,
     /// The minimum light level for the area.
     pub light_level: LightLevel,
 }
@@ -154,7 +180,7 @@ impl TileStorage {
 }
 
 /// EntryId uniquely identifies a [`Portal`].
-#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq, PartialEq, Reflect)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Hash, Eq, PartialEq, Reflect)]
 pub struct EntryId(pub String);
 
 impl From<&str> for EntryId {
@@ -164,21 +190,16 @@ impl From<&str> for EntryId {
 }
 
 /// A Portal is a bidirectional link between two [`Cell`]s in the map.
-#[derive(Component, Serialize, Deserialize, Debug, Hash, Clone, Eq, PartialEq, Reflect)]
+#[derive(
+    Component, Serialize, Deserialize, Default, Debug, Hash, Clone, Eq, PartialEq, Reflect,
+)]
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct SavedTilemap {
-    pub tiles: Vec<TileIdx>,
-    pub size: Dimensions,
-    pub layer: TilemapLayer,
-    pub portals: Vec<(Portal, Cell)>,
-    pub light_level: LightLevel,
-    pub flip_v: bool,
-}
+pub type StratPortals = HashMap<StratumId, Vec<(Portal, Cell)>>;
+pub type StratTiles = HashMap<StratumId, Vec<(TileIdx, Cell)>>;
 
 #[derive(Bundle, Clone)]
 pub struct TileBundle {
@@ -194,15 +215,15 @@ pub struct TileBundle {
 
 #[derive(Bundle, Default)]
 pub struct TilemapBundle {
-    pub size: Dimensions,
-    pub layer: TilemapLayer,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
     pub inherited_visibility: InheritedVisibility,
 }
 
-const MAP_LAYER: TilemapLayer = TilemapLayer(-3.0);
+pub(crate) const MAP_LAYER: TilemapLayer = TilemapLayer(-6.0);
+pub(crate) const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
+pub(crate) const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 
 /// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
 /// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].
@@ -211,37 +232,36 @@ pub fn spawn_tilemap(
     mut spec: ResMut<TilemapSpec>,
     sheet: Res<SpriteAtlas>,
 ) {
-    let tilemap_bundle = TilemapBundle {
-        size: spec.size,
-        layer: spec.layer,
-        ..default()
-    };
-
     info!(
-        "initializing tilemap with size {:?} and layer {:?}",
-        spec.size, spec.layer
+        "initializing tilemap: {:?} ({}) {:?}",
+        spec.id, spec.size, spec.light_level
     );
+
+    let tilemap_bundle = TilemapBundle::default();
 
     let map_entity = commands.spawn(tilemap_bundle).id();
     spec.id.set(map_entity);
 
     for (strat_id, tile_cells) in spec.all_tiles.iter() {
-        let i = strat_id.0.neg();
-        let strat_id = commands
+        // Use the ID as a negative index on the tilemap layer.
+        // That puts the 0th item at MAP_LAYER, the 1st at MAP_LAYER - 1.
+        let strat_id = strat_id.0.neg();
+        // Avoid warnings that children of this entity are missing components.
+        let strat_entity = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
-        spawn_maptiles_from_spec(
-            strat_id,
+        let bundles = generate_tile_bundles(
+            strat_entity,
             &spec.size,
             tile_cells,
-            i as f32 + *MAP_LAYER,
+            strat_id as f32 + *MAP_LAYER,
             &sheet,
-            &mut commands,
         );
+        commands.spawn_batch(bundles);
         commands
-            .entity(strat_id)
-            .insert(Stratum(strat_id, i.into()))
-            .insert(Name::new(format!("Stratum: {}", strat_id)));
+            .entity(strat_entity)
+            .insert(Stratum(strat_entity, strat_id.into()))
+            .insert(Name::new(format!("Stratum: {}", strat_entity)));
     }
     commands
         .entity(map_entity)
@@ -249,22 +269,32 @@ pub fn spawn_tilemap(
         .insert(Visibility::Visible)
         .insert(Name::new("Tilemap"));
 
-    info!("ℹ️\tdone spawning tilemap")
+    info!("✅\tdone spawning tilemap\t✅")
 }
 
-/// Spawns [`MapTile`] entities from a [`TilemapSpec`] in a batch.
-fn spawn_maptiles_from_spec(
+pub fn despawn_tilemap(
+    mut commands: Commands,
+    player: Single<Entity, With<Player>>,
+    strata: Query<Entity, With<Stratum>>,
+) {
+    commands.entity(*player).remove::<ChildOf>();
+    for stratum in strata.iter() {
+        commands.entity(stratum).despawn();
+    }
+}
+
+/// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children of a parent Entity.
+fn generate_tile_bundles(
     parent: Entity,
-    size: &Dimensions,
+    dim: &Dimensions,
     tiles: &[(TileIdx, Cell)],
     layer: f32,
     sheet: &SpriteAtlas,
-    commands: &mut Commands,
-) {
-    let bundles: Vec<TileBundle> = tiles
+) -> Vec<TileBundle> {
+    tiles
         .iter()
         .map(|(tile_idx, cell)| {
-            let pos = size.cell_to_pos(cell);
+            let pos = dim.cell_to_pos(cell);
 
             TileBundle {
                 map_tile: MapTile,
@@ -278,9 +308,7 @@ fn spawn_maptiles_from_spec(
                 vis: Visibility::Inherited,
             }
         })
-        .collect();
-
-    commands.spawn_batch(bundles);
+        .collect()
 }
 
 /// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
@@ -303,7 +331,7 @@ pub fn initialize_tile_storage(
             }
         }
         info!(
-            "✅\tstratum {}: set {} cells of {} tile entities",
+            "✅\tstratum {}: set {}/{} tile entities\t✅",
             stratum.1,
             num_cells,
             storage.len(),
@@ -317,13 +345,14 @@ pub fn setup_portals(
     spec: Res<TilemapSpec>,
     strat_storage: Query<(&Stratum, &TileStorage)>,
 ) {
-    for (Stratum(_, id), storage) in strat_storage.iter() {
-        if let Some(portals_cells) = spec.all_portals.get(id) {
-            for (portal, cell) in portals_cells {
-                if let Some(entity) = storage.get(cell) {
+    for (Stratum(strat_entity, id), storage) in strat_storage.iter() {
+        if let Some(portal_cells) = spec.all_portals.get(id) {
+            for (portal, cell) in portal_cells {
+                if let Some(tile_entity) = storage.get(cell) {
                     commands
-                        .entity(entity)
+                        .entity(tile_entity)
                         .insert(portal.clone())
+                        .insert(ChildOf(*strat_entity))
                         .insert(Name::new(format!("Portal: {:#?}", portal)));
                     info!("inserted portal {:?} at {:?}", portal, cell);
                 }
@@ -332,111 +361,63 @@ pub fn setup_portals(
     }
 }
 
-/// Saves the current state [`TileStorage`] as a [`SavedTilemap`].
-pub fn save_map(
-    spec: &Res<TilemapSpec>,
-    storage: &TileStorage,
-    all_tiles: &Query<&TileIdx, With<MapTile>>,
-    all_portals: &Query<(&Portal, &Cell)>,
-) -> SavedTilemap {
-    // Use storage to drive iteration and using all_tiles to resolve [`TileIdx`] for each entity.
-    // We don't need to store coordinates since the map size is fixed and known at load time
-    // AND because we provide a default, never skipping empty cells.
-    let tiles = storage
-        .tiles
-        .iter()
-        // If there's an entity in storage, use that entity as a lookup into the [`TileIdx`] query.
-        .map(|&entity_opt| {
-            entity_opt
-                .and_then(|e| all_tiles.get(e).ok().copied())
-                .unwrap_or_default()
-        })
-        .collect::<Vec<_>>();
-
-    let portals = all_portals
-        .iter()
-        .map(|(portal, cell)| (portal.clone(), *cell))
-        .collect::<Vec<_>>();
-
-    SavedTilemap {
-        tiles,
-        portals,
-        size: storage.size,
-        light_level: spec.light_level,
-        ..default()
-    }
+pub fn get_live_tiles(
+    size: &Dimensions,
+    strat_storage: &Query<(&Stratum, &TileStorage)>,
+    live_tiles: &Query<&TileIdx>,
+) -> HashMap<StratumId, Vec<(TileIdx, Cell)>> {
+    get_live_storage_items(size, strat_storage, live_tiles)
 }
 
-/// Loads a [`SavedTilemap`] into [`TileStorage`].
-pub fn load_map(commands: &mut Commands, saved: &SavedTilemap, storage: &mut TileStorage) {
-    if saved.size > storage.size {
-        error!(
-            "saved map size {:?} exceeds storage size {:?}",
-            saved.size, storage.size
-        );
-        return;
-    } else if saved.size != storage.size {
-        warn!(
-            "saved map size {:?} does not match storage size {:?}",
-            saved.size, storage.size
-        );
+pub fn get_live_portals(
+    strat_storage: &Query<&Stratum>,
+    live_portals: &Query<(&Portal, &Cell, &ChildOf)>,
+) -> StratPortals {
+    get_item_cells(strat_storage, live_portals)
+}
+
+pub fn get_item_cells<T>(
+    strata: &Query<&Stratum>,
+    live_items: &Query<(&T, &Cell, &ChildOf)>,
+) -> HashMap<StratumId, Vec<(T, Cell)>>
+where
+    T: Component + Clone + Default + PartialEq,
+{
+    let mut out = HashMap::new();
+    for (item, cell, child_of) in live_items.iter() {
+        let Ok(stratum) = strata.get(child_of.parent()) else {
+            continue;
+        };
+        out.entry(stratum.1.clone())
+            .or_insert(Vec::new())
+            .push((item.clone(), cell.clone()));
     }
 
-    let mut tally = HashMap::<TileIdx, usize>::new();
-    let mut missing: usize = 0;
+    out
+}
 
-    // We can derive cell from the source using its Dimensions and then
-    // pull the entity from storage thus to insert its new tile components.
-    for (source_idx, source_tile) in saved.tiles.iter().enumerate() {
-        let orig_cell = saved.size.idx_to_cell(source_idx as u32);
-        let mut flipped_cell = orig_cell;
-
-        if saved.flip_v {
-            flipped_cell.y = storage.size.height as i32 - 1 - flipped_cell.y;
-            println!(
-                "orig: {} => {}",
-                orig_cell,
-                storage.size.cell_to_pos(&orig_cell)
-            );
-            println!(
-                "{} => {}",
-                flipped_cell,
-                storage.size.cell_to_pos(&flipped_cell)
-            );
-        }
-
-        if let Some(entity) = storage.get(&flipped_cell) {
-            commands.entity(entity).insert(*source_tile);
-            tally
-                .entry(*source_tile)
-                .and_modify(|v| *v += 1)
-                .or_insert(1);
-        } else {
-            missing += 1;
-        }
-    }
-
-    info!("ℹ️ tile breakdown ({} types) {:#?}", tally.len(), tally);
-
-    if missing > 0 {
-        warn!("{} tiles in storage are not entities", missing);
-    }
-
-    let valid_ids = saved
-        .portals
-        .iter()
-        .map(|(portal, _)| portal.id.clone())
-        .collect::<HashSet<_>>();
-
-    for (portal, cell) in saved.portals.iter() {
-        // TODO: ensure that some validation occurs here and/or address the case where
-        // there aren't already enough tiles.
-        if let Some(entity) = storage.get(cell) {
-            if valid_ids.contains(&portal.id) {
-                commands.entity(entity).insert(portal.clone());
-            } else {
-                error!("portal id {:?} not found in valid_ids", portal.id);
+pub fn get_live_storage_items<T>(
+    size: &Dimensions,
+    strat_storage: &Query<(&Stratum, &TileStorage)>,
+    live_items: &Query<&T>,
+) -> HashMap<StratumId, Vec<(T, Cell)>>
+where
+    T: Component + Clone + Default + PartialEq,
+{
+    let mut out = HashMap::new();
+    for (stratum, storage) in strat_storage.iter() {
+        for (i, entity_opt) in storage.tiles.iter().enumerate() {
+            let cell = size.idx_to_cell(i as u32);
+            if let Some(entity) = entity_opt
+                && let Ok(item) = live_items.get(*entity)
+            {
+                if *item != T::default() {
+                    out.entry(stratum.1.clone())
+                        .or_insert(Vec::new())
+                        .push((item.clone(), cell))
+                }
             }
         }
     }
+    out
 }

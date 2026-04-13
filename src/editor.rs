@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use bevy::{
+    ecs::entity_disabling::Disabled,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures},
 };
@@ -11,7 +12,8 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{self, Portal, SavedTilemap, TileStorage, TilemapSpec},
+    gamestate::GameState,
+    tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -261,16 +263,24 @@ pub fn poll_load_dialog(
     }
 }
 
-/// Loads a map from a file path when indicated by a [MapLoadMessage].
-pub fn load_map(
-    mut commands: Commands,
-    mut storage: Single<&mut TileStorage>,
+/// Loads a map from a spec at the behest of `load_messages` [`SystemParam`].
+/// Uses a lot of unwrap.
+pub fn on_load_map_message(
     mut load_messages: MessageReader<MapLoadMessage>,
+    mut spec: ResMut<TilemapSpec>,
+    mut next: ResMut<NextState<GameState>>,
 ) {
     for message in load_messages.read() {
         let serialized = std::fs::read_to_string(&message.0).unwrap();
-        let deserialized = ron::from_str::<SavedTilemap>(&serialized).unwrap();
-        tilemap::load_map(&mut commands, &deserialized, storage.as_mut());
+        let mut new_spec = ron::from_str::<TilemapSpec>(&serialized).unwrap();
+
+        let serialized = std::fs::read_to_string(&message.0.with_file_name("portals.ron")).unwrap();
+        let portals = ron::from_str::<StratPortals>(&serialized).unwrap();
+
+        new_spec.all_portals = portals;
+        *spec = new_spec;
+
+        next.set(GameState::Loading);
     }
 }
 
@@ -310,21 +320,38 @@ pub fn poll_save_dialog(
     }
 }
 
-/// Saves the map to disk using the provided [TileStorage] and [Query] of all tiles.
-pub fn save_map(
+/// Saves the map to disk using the provided queries.
+pub fn on_save_map_message(
     spec: Res<TilemapSpec>,
-    storage: Single<&mut TileStorage>,
-    all_tiles: Query<&tiles::TileIdx, With<MapTile>>,
-    all_portals: Query<(&Portal, &Cell)>,
+    mut strat_storage: Query<(&Stratum, &TileStorage)>,
+    all_tiles: Query<&tiles::TileIdx>,
+    all_portals: Query<(&Portal, &Cell, &ChildOf)>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {
+    let mut new_spec = spec.into_inner().clone();
     for message in save_messages.read() {
-        let saved = tilemap::save_map(&spec, &storage, &all_tiles, &all_portals);
-        if let Ok(serialized) = ron::to_string(&saved) {
+        info!("saving {:?}", message.0);
+        let tiles = tilemap::get_live_tiles(&new_spec.size, &strat_storage, &all_tiles);
+        new_spec.all_tiles = tiles;
+        if let Ok(serialized) = ron::to_string(&new_spec) {
             let Ok(_) = std::fs::write(&message.0, serialized) else {
                 continue;
             };
         }
+
+        let mut strata = strat_storage.transmute_lens::<&Stratum>();
+        let portals: tilemap::StratPortals =
+            tilemap::get_live_portals(&strata.query(), &all_portals);
+        let path = message.0.with_file_name("portals.ron");
+
+        info!("saving {:?}", path);
+        if let Ok(serialized) = ron::to_string(&portals) {
+            let Ok(_) = std::fs::write(&path, serialized) else {
+                continue;
+            };
+        }
+
+        info!("✅\tdone saving.\t✅")
     }
 }
 
@@ -374,7 +401,12 @@ impl Plugin for EditorPlugin {
             )
             .add_systems(
                 PostUpdate,
-                (poll_load_dialog, poll_save_dialog, load_map, save_map)
+                (
+                    poll_load_dialog,
+                    poll_save_dialog,
+                    on_load_map_message,
+                    on_save_map_message,
+                )
                     .run_if(in_state(EditorState::Enabled)),
             )
             .insert_resource(EditorContext::default())

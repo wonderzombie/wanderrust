@@ -89,6 +89,7 @@ fn main() {
     .init_resource::<gamestate::WorldClock>()
     .init_resource::<inventory::Inventory>()
     .init_resource::<sounds::Sounds>()
+    .init_resource::<atlas::SpriteAtlas>()
     .init_resource::<grid::SpatialIndex>()
     .insert_resource(CLEAR_COLOR)
     .insert_resource(SpritePickingSettings {
@@ -105,42 +106,59 @@ fn main() {
     .add_plugins(editor::EditorPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(interactions::plugin)
+    .add_systems(Startup, (atlas::load_spritesheet, sounds::load_sounds))
     .add_systems(
-        PreStartup,
+        Update,
+        (finalize_starting, atlas::on_loaded, sounds::on_loaded)
+            .run_if(in_state(GameState::Starting)),
+    )
+    .add_systems(
+        OnExit(GameState::Starting),
+        (camera::setup_camera, tooltip::setup, set_mouse_cursor),
+    )
+    .add_systems(
+        OnTransition::<GameState> {
+            exited: GameState::AwaitingInput,
+            entered: GameState::Loading,
+        },
+        tilemap::despawn_tilemap,
+    )
+    .add_systems(
+        OnEnter(GameState::Loading),
         (
             (
-                atlas::load_spritesheet,
                 tilemap::spawn_tilemap,
                 tilemap::initialize_tile_storage,
                 tilemap::setup_portals,
             )
                 .chain()
                 .in_set(GameSystem::SetupTiles),
-            sounds::load_sounds,
+            (
+                grid::setup_spatial_indices,
+                grid::spawn_grid,
+                light::setup,
+                fov::setup_fov,
+            )
+                .in_set(GameSystem::SetupGrid)
+                .after(GameSystem::SetupTiles),
+            finalize_loading.after(GameSystem::SetupGrid),
         ),
     )
     .add_systems(
-        Startup,
-        (
-            grid::spawn_grid,
-            actors::setup_player,
-            fov::setup_fov,
-            camera::setup_camera,
-            tooltip::setup,
-            grid::setup_spatial_indices,
-            set_mouse_cursor,
-            light::setup,
-        ),
+        OnExit(GameState::Loading),
+        actors::setup_player,
     )
     .add_systems(
-        PostStartup,
+        OnEnter(GameState::AwaitingInput),
         (
             test_entities::add_test_mobs,
             test_entities::add_test_emitters,
             test_entities::add_test_portals,
             test_entities::add_test_chests,
         )
-            .in_set(GameSystem::SpawnTestEntities),
+            .chain()
+            .in_set(GameSystem::SpawnTestEntities)
+            .run_if(run_once),
     )
     .add_systems(
         EguiPrimaryContextPass,
@@ -161,14 +179,14 @@ fn main() {
                 .chain()
                 .in_set(GameSystem::Ramifications),
             interactions::setup,
-            sounds::on_loaded,
-            event_log::setup_fonts.run_if(run_once),
+            event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
         ),
     )
     .add_systems(
         PostUpdate,
         (
+            // Runs when there's been a change to any tile and updates sprite & gameplay properties..
             map::sync_tiles,
             (
                 actors::sync_sprites,
@@ -178,8 +196,12 @@ fn main() {
                 .in_set(GameSystem::ActorSync)
                 .after(map::sync_tiles),
             camera::update.after(GameSystem::ActorSync),
-            // TODO: consider whether this should go into `grid.rs`
-            grid::update_spatial_index.after(GameSystem::ActorSync),
+            // Changes to tiles mean updates to pathing and "collision."
+            (grid::update_spatial_index, grid::update_grid)
+                .chain()
+                .in_set(GameSystem::Grid)
+                .after(GameSystem::ActorSync),
+            // Update the FOV model and/or markers.
             (fov::update_fov_model, fov::update_fov_markers)
                 .chain()
                 .in_set(GameSystem::Fov)
@@ -196,11 +218,10 @@ fn main() {
             // TODO: consider if check_fov should be in fov
             (mobs::check_fov, grid::pathfind, grid::move_agents)
                 .chain()
-                .in_set(GameSystem::Mobs)
+                .in_set(GameSystem::Grid)
                 .after(GameSystem::Fov)
                 .run_if(in_state(GameState::Ramifying)),
             combat::init_combatants,
-            grid::update_grid.after(grid::update_spatial_index),
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
@@ -215,7 +236,7 @@ fn main() {
             )
                 .chain()
                 .run_if(in_state(GameState::Ramifying)),
-            mobs::handle_dead.after(GameSystem::Mobs),
+            mobs::handle_dead.after(GameSystem::Grid),
         ),
     )
     .add_observer(click_observer);
@@ -230,12 +251,29 @@ fn main() {
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GameSystem {
     SetupTiles,
+    SetupGrid,
     SpawnTestEntities,
     Ramifications,
     ActorSync,
     Fov,
     Light,
-    Mobs,
+    Grid,
+}
+
+fn finalize_starting(
+    mut next: ResMut<NextState<GameState>>,
+    atlas: Res<atlas::SpriteAtlas>,
+    sounds: Res<sounds::Sounds>,
+) {
+    info!("atlas {:?} sounds {:?}", atlas.loaded, sounds.loaded);
+    if atlas.loaded && sounds.loaded {
+        info!("✅\tdone starting\t✅");
+        next.set(GameState::Loading);
+    }
+}
+
+fn finalize_loading(mut next: ResMut<NextState<GameState>>) {
+    next.set(GameState::AwaitingInput);
 }
 
 fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {

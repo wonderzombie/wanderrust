@@ -9,7 +9,10 @@ use bevy::prelude::*;
 
 use crate::{actors::Player, cell::Cell, colors::ColorExt, gamestate::WorldClock};
 
-pub fn setup_fonts(mut contexts: EguiContexts) {
+#[derive(Resource, Debug, Default)]
+pub struct EguiFontsLoaded;
+
+pub fn setup_fonts(mut contexts: EguiContexts, mut commands: Commands) {
     let Ok(ctx) = contexts.ctx_mut() else {
         warn!("Egui context not ready yet");
         return;
@@ -32,6 +35,8 @@ pub fn setup_fonts(mut contexts: EguiContexts) {
 
     // Install the fonts
     ctx.set_fonts(fonts);
+
+    commands.init_resource::<EguiFontsLoaded>();
 }
 
 /// Draws the message log UI using Egui using [MessageLog] resource.

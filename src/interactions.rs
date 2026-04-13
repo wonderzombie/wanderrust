@@ -1,6 +1,11 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 
-use crate::{colors, combat, event_log::MessageLog, inventory::*, tiles::TileIdx};
+use crate::{
+    colors, combat,
+    event_log::MessageLog,
+    inventory::{self, *},
+    tiles::TileIdx,
+};
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 #[derive(Component, Debug, Default, Reflect)]
@@ -33,9 +38,6 @@ impl Interactable {
             }),
             _ => None,
         }
-        .inspect(|t| {
-            dbg!(t);
-        })
     }
 }
 
@@ -52,7 +54,9 @@ pub struct Listen {
     pub entity: Entity,
 }
 
-/// Processes [InteractionAttempt] messages, executing the interaction between the player and an [Interactable] entity.
+/// Processes [`Examine`] messages, executing the interaction between the player
+/// and an [`Interactable`] entity. Interaction fails if the target cell is
+/// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
@@ -103,7 +107,7 @@ pub fn process_interactions(
                     info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                    acquisitions.write(Acquisition {
+                    acquisitions.write(inventory::Acquisition {
                         items: contents.clone(),
                     });
                 }
@@ -165,14 +169,10 @@ pub fn process_dialogue(
 ///
 /// Mostly this means interactables that have such as an open/closed sprite.
 pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
-    let mut count = 0;
-    let mut uniq: HashSet<TileIdx> = HashSet::new();
     for (entity, &tile_idx) in tiles.iter() {
-        uniq.insert(tile_idx);
         if tile_idx.is_interactable() {
-            count += 1;
-
             if let Some(bundle) = Interactable::from(tile_idx) {
+                info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
                 commands.entity(entity).insert(bundle);
             } else {
                 warn!(
@@ -181,9 +181,6 @@ pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<Tile
                 );
             }
         }
-    }
-    if count > 0 {
-        info!("found {} interactable tiles", count);
     }
 }
 

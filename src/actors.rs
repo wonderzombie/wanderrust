@@ -10,7 +10,7 @@ use crate::{
     combat::{Belligerent, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
-    tilemap::{Stratum, TileStorage, TilemapLayer, TilemapSpec},
+    tilemap::{self, Stratum, TileStorage, TilemapSpec},
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
@@ -67,9 +67,6 @@ impl PlayerStats {
     }
 }
 
-const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
-const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
-
 #[derive(EntityEvent, Debug)]
 pub struct Moved(pub Entity);
 
@@ -78,37 +75,45 @@ pub fn setup_player(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
     atlas: Res<SpriteAtlas>,
+    player: Option<Single<Entity, With<Player>>>,
     strata: Query<Entity, With<Stratum>>,
 ) {
-    commands.spawn((
-        // TODO: figure out the real active stratum.
-        ChildOf(strata.iter().next().unwrap()),
-        Name::new("Player"),
-        Actor,
-        Player,
-        TileIdx::Player,
-        Blocking,
-        Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
-        Belligerent {
-            params: Parameters {
-                attack: 2,
-                defense: 1,
-                health: Health {
-                    hp: 10,
-                    max: 10,
-                    is_dead: false,
+    if let Some(entity) = player {
+        commands
+            .entity(*entity)
+            .insert(ChildOf(strata.iter().next().unwrap()));
+    } else {
+        info!("spawning player");
+        commands.spawn((
+            // TODO: figure out the real active stratum.
+            ChildOf(strata.iter().next().unwrap()),
+            Name::new("Player"),
+            Actor,
+            Player,
+            TileIdx::Player,
+            Blocking,
+            Emitter::new((LightLevel::Bright, 2), (LightLevel::Light, 1)),
+            Belligerent {
+                params: Parameters {
+                    attack: 2,
+                    defense: 1,
+                    health: Health {
+                        hp: 10,
+                        max: 10,
+                        is_dead: false,
+                    },
+                    vision: Vision(5),
                 },
-                vision: Vision(5),
+                ..default()
             },
-            ..default()
-        },
-        PieceBundle {
-            sprite: atlas.sprite(),
-            cell: spec.start,
-            transform: Transform::from_xyz(0., 0., *PLAYER_LAYER),
-            ..default()
-        },
-    ));
+            PieceBundle {
+                sprite: atlas.sprite(),
+                cell: spec.spawn_point,
+                transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
+                ..default()
+            },
+        ));
+    }
 }
 
 /// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
@@ -129,7 +134,7 @@ pub fn update_transforms(
     for (piece_cell, mut transform) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
-        transform.translation.z = *ACTOR_LAYER;
+        transform.translation.z = *tilemap::ACTOR_LAYER;
     }
 }
 
