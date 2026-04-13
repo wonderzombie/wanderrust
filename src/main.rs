@@ -83,14 +83,14 @@ fn main() {
             }),
     )
     .add_message::<actors::Action>()
-    .add_message::<inventory::Acquisition>()
     .add_message::<combat::Attack>()
+    .add_message::<inventory::Acquisition>()
     .init_resource::<actors::PlayerStats>()
+    .init_resource::<atlas::SpriteAtlas>()
     .init_resource::<gamestate::WorldClock>()
+    .init_resource::<grid::SpatialIndex>()
     .init_resource::<inventory::Inventory>()
     .init_resource::<sounds::Sounds>()
-    .init_resource::<atlas::SpriteAtlas>()
-    .init_resource::<grid::SpatialIndex>()
     .insert_resource(CLEAR_COLOR)
     .insert_resource(SpritePickingSettings {
         // clicking on a sprite ignores alpha transparency
