@@ -194,6 +194,9 @@ tiles! {
 
     // Placeholder
     GridSquare = atlas_idx(39, 14),
+
+    // Mouse cursor.
+    Cursor1 = atlas_idx(35, 10),
 }
 
 impl TileIdx {

@@ -329,17 +329,14 @@ fn set_mouse_cursor(
     window: Single<Entity, With<Window>>,
     atlas: Res<SpriteAtlas>,
 ) {
-    let handle: Handle<Image> =
-        asset_server.load("kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png");
-
-    let index = tiles::atlas_idx(35, 10);
+    let handle: Handle<Image> = asset_server.load(atlas::TRANSPARENT_SHEET);
     commands
         .entity(*window)
         .insert(CursorIcon::Custom(CustomCursor::Image(CustomCursorImage {
             handle,
             texture_atlas: Some(TextureAtlas {
                 layout: atlas.layout.clone(),
-                index,
+                index: TileIdx::Cursor1.into(),
             }),
             ..default()
         })));

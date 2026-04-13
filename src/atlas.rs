@@ -9,7 +9,8 @@ use bevy::{
 use crate::tiles;
 
 /// The path to the spritesheet image.
-const SHEET_PATH: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
+pub const DEFAULT_SHEET: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
+pub const TRANSPARENT_SHEET: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
 
 /// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
 #[derive(Resource, Debug, Default, Reflect)]
@@ -49,7 +50,7 @@ pub(crate) fn load_spritesheet(
     asset_server: Res<AssetServer>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let texture: Handle<Image> = asset_server.load(SHEET_PATH);
+    let texture: Handle<Image> = asset_server.load(DEFAULT_SHEET);
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
         UVec2::splat(tiles::TILE_SIZE_PX as u32),
         tiles::SHEET_SIZE_G.x,

@@ -1,4 +1,4 @@
-# PROBABLY NEXT
+# THINGS TO DO MAYBE
 
 ## REVISIT PARENTING ENTITIES. 
 
@@ -56,26 +56,9 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 
 
 
-## TILEIDX: FLIP
-
-A Component would work well: `pub struct TileTransform { flip_v: bool, flip_h: bool, flip_d: bool, }` then Query `Option<&TileTransform>` alongside `TileIdx`.
-
-# DESIGNS
-
-====
-If needed:
-
-somecave.map.ron <--- lots and lots of tiles
-somecave.data.ron <--- human editable; small-ish
-
-This would mean serializing tiles separately from the others. 
-
-
-
 # MAYBE NEXT
 
 - Inventory becomes a Component alongside Interactable::Chest 
-
 
 - [x] Dead mobs get a marker struct and a system handles them
 - [x] When you kill the mob, you get the loot; that's all — could even write Acquisition
@@ -97,6 +80,3 @@ The inventory list is along the right-hand side
 - A key is a separate box; leave empty for no key
 
 - start with something like hold tab to highlight and click on interesting tiles.
-
-
-
