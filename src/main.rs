@@ -95,8 +95,7 @@ fn main() {
     .insert_resource(SpritePickingSettings {
         // clicking on a sprite ignores alpha transparency
         picking_mode: SpritePickingMode::BoundingBox,
-        // we have no specifically sprite picking camera yet
-        require_markers: false,
+        ..Default::default()
     })
     .insert_resource(tilemap_spec)
     .insert_resource(event_log::MessageLog::new(10))
