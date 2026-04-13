@@ -14,10 +14,6 @@ use crate::{
     tiles::{self, MapTile, Occupied, TileIdx},
 };
 
-/// Represents an entity that is currently alerted to a nearby threat, typically the player.
-#[derive(Component, Debug)]
-pub struct Alerted;
-
 #[derive(Component, Debug)]
 pub struct Dead;
 
