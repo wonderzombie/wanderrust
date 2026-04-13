@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use mrpas::Mrpas;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::{Player, PlayerStats},
@@ -39,7 +40,7 @@ impl View {
     }
 }
 
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Vision(pub u32);
 
 impl Default for Vision {

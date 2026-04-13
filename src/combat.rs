@@ -1,19 +1,20 @@
 use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
     interactions::Interactable,
 };
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct Health {
     pub hp: i32,
     pub max: i32,
     pub is_dead: bool,
 }
 
-#[derive(Component, Debug, Default, Clone, Copy)]
+#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub struct Parameters {
     pub attack: i32,
     pub defense: i32,
