@@ -212,7 +212,7 @@ impl StratumLightMap {
 pub fn setup(
     mut commands: Commands,
     tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
-    storage: Query<(Entity, &TileStorage)>,
+    storage: Query<Entity, With<TileStorage>>,
     spec: Res<TilemapSpec>,
 ) {
     let mut count = 0;
@@ -228,7 +228,7 @@ pub fn setup(
     }
 
     count = 0;
-    for (entity, _) in storage.iter() {
+    for entity in storage.iter() {
         commands
             .entity(entity)
             .insert(StratumLightMap::with_ambient(spec.light_level));

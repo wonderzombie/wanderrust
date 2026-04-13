@@ -382,22 +382,22 @@ pub fn update_tile_visuals(
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
     spec: Res<TilemapSpec>,
 ) {
-    for (mut sprite, mut vis, p) in tiles.iter_mut() {
-        *vis = if p.revealed() && !p.occupied() {
+    for (mut sprite, mut vis, it) in tiles.iter_mut() {
+        *vis = if it.revealed() && !it.occupied() {
             Visibility::Inherited
         } else {
             Visibility::Hidden
         };
 
-        sprite.color = if p.highlighted() {
+        sprite.color = if it.highlighted() {
             colors::KENNEY_GOLD
-        } else if p.revealed() && !p.occupied() {
-            Color::WHITE.with_alpha(p.light_or(&spec.light_level).into())
+        } else if it.revealed() && !it.occupied() {
+            Color::WHITE.with_alpha(it.light_or(&spec.light_level).into())
         } else {
             Color::NONE
         };
 
-        if p.preview_active() {
+        if it.preview_active() {
             sprite.color.set_alpha(0.5);
         }
     }
