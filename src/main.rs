@@ -144,10 +144,7 @@ fn main() {
             finalize_loading.after(GameSystem::SetupGrid),
         ),
     )
-    .add_systems(
-        OnExit(GameState::Loading),
-        actors::setup_player,
-    )
+    .add_systems(OnExit(GameState::Loading), actors::setup_player)
     .add_systems(
         OnEnter(GameState::AwaitingInput),
         (
