@@ -11,7 +11,7 @@ macro_rules! tiles {
     (
         $( $name:ident = $idx:expr ),* $(,)?
     ) => {
-        #[derive(Component, Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+        #[derive(Component, Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Reflect, Ord, PartialOrd)]
         #[repr(usize)]
         pub enum TileIdx {
             #[default]
@@ -21,6 +21,10 @@ macro_rules! tiles {
         impl TileIdx {
             pub fn all() -> &'static [TileIdx] {
                 &[ $( TileIdx::$name, )* ]
+            }
+
+            pub fn pairs() -> &'static [(usize, TileIdx)] {
+                &[ $( ( TileIdx::$name as usize, TileIdx::$name ), )* ]
             }
         }
     };

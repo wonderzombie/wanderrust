@@ -116,6 +116,15 @@ impl Dimensions {
             y: (idx / self.width) as i32,
         }
     }
+
+    #[inline]
+    pub fn pos_to_cell(&self, pos: &[i64]) -> Cell {
+        let ts: i32 = self.tile_size as i32 / 2;
+        Cell {
+            x: (pos[0] as i32 % self.width as i32) + ts,
+            y: (pos[1] as i32 / self.width as i32) + ts,
+        }
+    }
 }
 
 impl PartialOrd for Dimensions {
