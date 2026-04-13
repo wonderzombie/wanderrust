@@ -261,14 +261,15 @@ fn finalize_starting(
     atlas: Res<atlas::SpriteAtlas>,
     sounds: Res<sounds::Sounds>,
 ) {
-    info!("atlas {:?} sounds {:?}", atlas.loaded, sounds.loaded);
+    trace!("atlas {:?} sounds {:?}", atlas.loaded, sounds.loaded);
     if atlas.loaded && sounds.loaded {
-        info!("✅\tdone starting\t✅");
+        info!("✅\tdone [Starting]\t✅");
         next.set(GameState::Loading);
     }
 }
 
 fn finalize_loading(mut next: ResMut<NextState<GameState>>) {
+    info!("✅\tdone [Loading]\t✅");
     next.set(GameState::AwaitingInput);
 }
 
