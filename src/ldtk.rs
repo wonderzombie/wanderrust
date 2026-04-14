@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
     utils::default,
 };
-use ldtk_json_rs::ldtk_json::{EntityInstance, FieldInstance, LDtk, LayerInstance, TileInstance};
+use ldtk_json_rs::ldtk_json::{EntityInstance, LDtk, LayerInstance, TileInstance};
 use serde_json::Value;
 
 use crate::{
@@ -15,22 +15,22 @@ use crate::{
 
 #[derive(Default, Debug)]
 pub struct Imported {
-    pub all_tiles: HashMap<StratumId, Vec<(TileIdx, Cell)>>,
-    pub all_entities: HashMap<StratumId, Vec<((String, Cell), Vec<FieldInstance>)>>,
-    pub sizes: HashMap<StratumId, Dimensions>,
+    pub levels: HashMap<StratumId, LevelItems>,
+}
+
+#[derive(Default, Debug)]
+pub struct LevelItems {
+    // pub id: StratumId,
+    pub tiles: Vec<(TileIdx, Cell)>,
+    pub entities: HashMap<Iid, LdtkEntity>,
+    pub size: Dimensions,
 }
 
 pub fn ldtk_to_wanderrust(ldtk: LDtk) -> TilemapSpec {
     let mut spec = TilemapSpec::default();
     let raw = import_raw(ldtk);
 
-    spec.all_tiles = raw.all_tiles;
-
-    for (stratum_id, all_instances) in raw.all_entities.iter() {
-        for entity_inst in all_instances {
-            info!("{}: {} {}", stratum_id.0, entity_inst.0.0, entity_inst.0.1);
-        }
-    }
+    for (stratum_id, items) in raw.levels.iter() {}
 
     spec
 }
@@ -56,27 +56,28 @@ pub fn import_raw(ldtk: LDtk) -> Imported {
             continue;
         };
 
-        let stratum_id = StratumId(level.world_depth as i32);
+        info!("{}: level at {}", level.identifier, level.world_depth);
 
+        let stratum_id = StratumId(level.world_depth as i32);
+        let mut level_items = LevelItems::default();
         // Different levels' layers can have different sizes. To avoid dealing with it,
-        // collect the maximum width/height for this level and use that.
+        // collect the maximum width/height for this level's layers.
         let mut max_dim = Dimensions::default();
+
         for layer_inst in level_layers {
             let dim = Dimensions::from_layer_inst(&layer_inst);
+            info!(
+                "{}: {}: layer size: {}",
+                level.identifier, layer_inst.identifier, dim
+            );
 
             match layer_inst.layer_instance_type.to_ascii_lowercase().as_str() {
                 "entities" => {
-                    imported
-                        .all_entities
-                        .insert(stratum_id, get_entities(&layer_inst.entity_instances));
+                    level_items.entities = get_entities_with_fields(&layer_inst.entity_instances);
                     info!("{}: loaded entities", level.identifier);
-                    get_entities_with_fields(&layer_inst.entity_instances);
                 }
                 "tiles" => {
-                    imported.all_tiles.insert(
-                        stratum_id,
-                        get_level_tiles(&dim, &tile_idx_lookup, &layer_inst.grid_tiles),
-                    );
+                    level_items.tiles = get_tiles(&dim, &tile_idx_lookup, &layer_inst.grid_tiles);
                     info!("{}: loaded tiles", level.identifier);
                 }
                 other => {
@@ -86,11 +87,14 @@ pub fn import_raw(ldtk: LDtk) -> Imported {
                     );
                 }
             }
-
             max_dim.max_xy(dim.width, dim.height);
         }
-        imported.sizes.insert(stratum_id, max_dim);
+
+        level_items.size = max_dim;
+        imported.levels.insert(stratum_id, level_items);
     }
+
+    info!("=== {} ===\n{:#?}", ldtk.iid, imported);
 
     imported
 }
@@ -107,7 +111,7 @@ impl Dimensions {
 
 /// Infers [`TileIdx`] and [`Cell`] from each [`TileInstance`].
 /// [`TileInstance::t`] is the tile ID, aka atlas index.
-fn get_level_tiles(
+fn get_tiles(
     dim: &Dimensions,
     tile_idx_lookup: &HashMap<usize, TileIdx>,
     grid_tiles: &Vec<TileInstance>,
@@ -131,29 +135,6 @@ fn get_level_tiles(
     level_tiles
 }
 
-fn get_entities(entities: &Vec<EntityInstance>) -> Vec<((String, Cell), Vec<FieldInstance>)> {
-    let mut out = Vec::new();
-    for entity_inst in entities.iter() {
-        let cell = Cell {
-            x: entity_inst.grid[0] as i32,
-            y: entity_inst.grid[1] as i32,
-        };
-
-        info!(
-            "{} @ {} = {:#?}",
-            entity_inst.identifier, cell, entity_inst.field_instances
-        );
-
-        info!("{:#?}", entity_inst);
-
-        out.push((
-            (entity_inst.identifier.clone(), cell),
-            entity_inst.field_instances.clone(),
-        ))
-    }
-    out
-}
-
 type Iid = String;
 type EntityFields = HashMap<String, Option<Value>>;
 
@@ -164,6 +145,16 @@ pub struct LdtkEntity {
     pub tile_idx_opt: Option<TileIdx>,
     pub cell: Cell,
     pub fields: EntityFields,
+    pub tags: Vec<String>,
+}
+
+impl LdtkEntity {
+    const INTERACTABLE: &'static str = "interactable";
+
+    pub fn into_bundle(&self) -> Option<impl Bundle> {
+        let tile_idx = self.tile_idx_opt.unwrap_or_default();
+        Some((Name::new(self.identifier.clone()), tile_idx, self.cell))
+    }
 }
 
 impl Cell {
@@ -175,8 +166,8 @@ impl Cell {
     }
 }
 
-/// Maps each entity's [`Iid`] (instance ID) to [`LdtkEntity`].
-/// Note that [`EntityInstance::tile`] is [`TilesetRect`], which is `px`.
+/// Maps each entity's [`Iid`] (instance ID) to [`LdtkEntity`]. Note that
+/// [`EntityInstance::tile`] is [`ldtk_json_rs::ldtk_json::TilesetRectangle`], aka pixels.
 fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, LdtkEntity> {
     let mut out = HashMap::new();
     for ref e_inst in entities.iter() {
@@ -193,6 +184,7 @@ fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, Ldtk
             .and_then(|it| TileIdx::from_px(it.x, it.y));
         let identifier = e_inst.identifier.clone();
         let iid = e_inst.iid.clone();
+        let tags = e_inst.tags.clone();
 
         out.insert(
             iid.clone(),
@@ -202,14 +194,9 @@ fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, Ldtk
                 tile_idx_opt,
                 cell,
                 fields,
+                tags,
             },
         );
     }
-
-    info!(
-        "=== loaded entities start ===\n{:#?}\n=== loaded entities end ===",
-        out
-    );
-
     out
 }
