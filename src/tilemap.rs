@@ -58,6 +58,7 @@ pub type PortalCell = (Portal, Cell);
 )]
 pub struct ActiveStratum(Stratum);
 
+#[allow(dead_code)]
 impl ActiveStratum {
     pub fn entity(&self) -> Entity {
         self.0.0
