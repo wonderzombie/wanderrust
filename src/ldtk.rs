@@ -6,13 +6,17 @@ use bevy::{
 };
 use ldtk_json_rs::ldtk_json::{EntityInstance, FieldInstance, LDtk, LayerInstance, TileInstance};
 
-use crate::{cell::Cell, tilemap::Dimensions, tiles::TileIdx};
+use crate::{
+    cell::Cell,
+    tilemap::{Dimensions, StratumId, TilemapSpec},
+    tiles::TileIdx,
+};
 
 #[derive(Default, Debug)]
 pub struct Imported {
-    pub all_tiles: HashMap<Depth, Vec<(TileIdx, Cell)>>,
-    pub all_entities: HashMap<Depth, Vec<((String, Cell), Vec<FieldInstance>)>>,
-    pub sizes: HashMap<Depth, Dimensions>,
+    pub all_tiles: HashMap<StratumId, Vec<(TileIdx, Cell)>>,
+    pub all_entities: HashMap<StratumId, Vec<((String, Cell), Vec<FieldInstance>)>>,
+    pub sizes: HashMap<StratumId, Dimensions>,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
@@ -31,7 +35,7 @@ pub fn import_raw(ldtk: LDtk) -> Imported {
             continue;
         };
 
-        let depth = Depth(level.world_depth);
+        let depth = StratumId(level.world_depth as i32);
 
         // Different levels' layers can have different sizes. To avoid dealing with it,
         // collect the maximum width/height for this level and use that.
