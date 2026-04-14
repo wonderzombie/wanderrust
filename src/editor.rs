@@ -309,6 +309,7 @@ pub fn on_load_map_message(
 #[derive(Message, Debug)]
 pub struct MapLoadLdtkMessage;
 
+/// When marker MapLoadLdtkMessage arrives, load canned proto-level.
 pub fn on_load_ldtk_map_message(mut load_message: MessageReader<MapLoadLdtkMessage>) {
     for _ in load_message.read() {
         let path: PathBuf = "data/ldtk/wndrs-proto.ldtk".into();
@@ -316,7 +317,7 @@ pub fn on_load_ldtk_map_message(mut load_message: MessageReader<MapLoadLdtkMessa
         let serialized = std::fs::read_to_string(path).unwrap();
         let deserialized: LDtk = serde_json::from_str(&serialized).unwrap();
 
-        let _ = ldtk::import(deserialized);
+        let _ = ldtk::import_raw(deserialized);
     }
 }
 

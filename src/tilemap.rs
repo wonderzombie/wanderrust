@@ -1,7 +1,7 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use std::{fmt::Display, ops::Neg};
+use std::{cmp::max, fmt::Display, ops::Neg};
 
 use crate::{
     actors::Player,
@@ -90,13 +90,21 @@ pub struct TilemapSpec {
 )]
 pub struct TilemapLayer(pub f32);
 
-#[derive(
-    Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
-)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
     pub tile_size: u32,
+}
+
+impl Default for Dimensions {
+    fn default() -> Self {
+        Dimensions {
+            tile_size: 16,
+            width: 0,
+            height: 0,
+        }
+    }
 }
 
 impl Dimensions {
@@ -119,11 +127,17 @@ impl Dimensions {
 
     #[inline]
     pub fn pos_to_cell(&self, pos: &[i64]) -> Cell {
-        let ts: i32 = self.tile_size as i32 / 2;
+        let ts = self.tile_size as i32;
         Cell {
-            x: (pos[0] as i32 % self.width as i32) + ts,
-            y: (pos[1] as i32 / self.width as i32) + ts,
+            x: pos[0] as i32 / ts,
+            y: pos[1] as i32 / ts,
         }
+    }
+
+    pub fn max_xy(&mut self, width: u32, height: u32) -> &mut Self {
+        self.width = max(self.width, width);
+        self.height = max(self.height, height);
+        self
     }
 }
 
@@ -349,6 +363,7 @@ pub fn initialize_tile_storage(
     }
 }
 
+/// Populates the world with portals using `[TilemapSpec::all_portals]`.
 pub fn setup_portals(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
