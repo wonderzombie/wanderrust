@@ -281,7 +281,7 @@ pub fn poll_load_dialog(
     }
 }
 
-/// Loads a map from a spec at the behest of `load_messages` [`SystemParam`].
+/// Loads a map from a spec at the behest of `load_messages` [`bevy::ecs::system::SystemParam`].
 /// Uses a lot of unwrap.
 pub fn on_load_map_message(
     mut load_messages: MessageReader<MapLoadMessage>,
