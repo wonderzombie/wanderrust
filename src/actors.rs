@@ -18,7 +18,8 @@ use crate::{
 pub struct Dead;
 
 /// A marker component for entities that perform actions in the world, such as the player or NPCs.
-#[derive(Component, Debug, Default)]
+/// Except for tiles, anything that has or elicits behavior is an Actor.
+#[derive(Component, Debug, Default, Copy, Clone)]
 pub struct Actor;
 
 #[derive(Component, Debug, Reflect)]
@@ -27,7 +28,8 @@ pub struct Player;
 /// A bundle for map pieces that includes a sprite, cell position, transform, and pickable.
 /// Pickable is specific to Bevy's sprite picking system.
 #[derive(Bundle, Default, Clone, Debug)]
-pub struct PieceBundle {
+pub struct ActorBundle {
+    pub actor: Actor,
     pub sprite: Sprite,
     pub cell: Cell,
     pub prev_cell: PreviousCell,
@@ -84,7 +86,6 @@ pub fn setup_player(
             // TODO: figure out the real active stratum.
             ChildOf(strata.iter().next().unwrap()),
             Name::new("Player"),
-            Actor,
             Player,
             TileIdx::Player,
             Blocking,
@@ -102,7 +103,7 @@ pub fn setup_player(
                 },
                 ..default()
             },
-            PieceBundle {
+            ActorBundle {
                 sprite: atlas.sprite(),
                 cell: spec.spawn_point,
                 transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),

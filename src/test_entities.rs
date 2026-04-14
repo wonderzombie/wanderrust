@@ -5,7 +5,7 @@ use bevy_northstar::{
 };
 
 use crate::{
-    actors::{Actor, PieceBundle, Player},
+    actors::{Actor, ActorBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
     combat::{Belligerent, Health, Parameters},
@@ -28,10 +28,9 @@ pub(crate) fn add_test_mobs(
     let grid_entity = grid_entity.single().unwrap();
 
     commands.spawn((
-        Actor,
         TileIdx::Skeleton,
         Blocking,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 53, y: 53 },
             ..default()
@@ -43,10 +42,9 @@ pub(crate) fn add_test_mobs(
     ));
 
     commands.spawn((
-        Actor,
         TileIdx::Skeleton,
         Blocking,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 49, y: 49 },
             ..default()
@@ -76,7 +74,7 @@ pub(crate) fn add_test_mobs(
             vision: Vision::default(),
         }),
         TileIdx::Bat,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell,
             ..default()
@@ -96,10 +94,9 @@ pub(crate) fn add_test_emitters(
     // Test/Demo only code.
     let active_stratum = player_stratum.single().unwrap().parent();
     commands.spawn((
-        Actor,
         TileIdx::Torch,
         Blocking,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 48 },
             ..default()
@@ -118,9 +115,8 @@ pub(crate) fn add_test_portals(
     let active_stratum = player_stratum.single().unwrap().parent();
 
     commands.spawn((
-        Actor,
         TileIdx::DoorwayBrownThick,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 50, y: 45 },
             ..default()
@@ -133,9 +129,8 @@ pub(crate) fn add_test_portals(
     ));
 
     commands.spawn((
-        Actor,
         TileIdx::DoorwayBrownThick,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 48, y: 48 },
             ..default()
@@ -157,9 +152,8 @@ pub(crate) fn add_test_chests(
     let active_stratum = player_stratum.single().unwrap().parent();
 
     commands.spawn((
-        Actor,
         TileIdx::ChestBrownClosed,
-        PieceBundle {
+        ActorBundle {
             sprite: atlas.sprite(),
             cell: Cell { x: 51, y: 48 },
             ..default()

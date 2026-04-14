@@ -75,3 +75,19 @@ At the moment, what I am looking for most is the ability to draw strata and add 
 - `cargo add ../ldtk-json-rs` or equiv
 
 Then we'll see what we can do.
+
+## FIELD REPORT
+
+This is going extremely well for how complex it is. I spent ... too much time before I realized that the link to QuickType from the tool's website went to JSON as inferred from an example, and I didn't double check that it was the whole schema.
+
+Once that was settled, though, it's been smooth sailing. I'm teking my time with the API here because I want to keep it *really* simple.
+
+In short, this tool is highly usable. It has rough edges in terms of usability, and at the same time it's got that sweet sweet `cmd-k` menu.
+
+Well, in short, I had used it before and it didn't gel with me, and this time it's great. My case is blessedly simple and it's still got a few really useful things.
+
+- EntityRef - define an entity that points to another entity; highly usable
+- World Depth - the world is made of levels and levels are made of layers
+- Entities are simple - every torch has the identifier `"torch"`; every entity has a cell. 
+
+It seems reasonable enough to map from ldtk enums to real types anyway.
