@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use bevy::{
     log::{info, warn},
+    platform::collections::HashMap,
+    prelude::*,
     utils::default,
 };
 use ldtk_json_rs::ldtk_json::{EntityInstance, FieldInstance, LDtk, LayerInstance, TileInstance};
