@@ -324,4 +324,15 @@ impl TileIdx {
             _ => None,
         }
     }
+
+    pub fn from_px(x: i64, y: i64) -> Option<TileIdx> {
+        let c_x = x / TILE_SIZE_PX as i64;
+        let c_y = y / TILE_SIZE_PX as i64;
+        let want_idx = atlas_idx(c_x as u32, c_y as u32);
+
+        TileIdx::pairs()
+            .iter()
+            .find(|(idx, _)| idx == &want_idx)
+            .map(|(_, tile_idx)| *tile_idx)
+    }
 }
