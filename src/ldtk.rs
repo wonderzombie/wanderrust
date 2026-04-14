@@ -8,6 +8,8 @@ use ldtk_json_rs::ldtk_json::{EntityInstance, FieldInstance, LDtk, LayerInstance
 
 use crate::{
     cell::Cell,
+    interactions::Interactable,
+    inventory::Inventory,
     tilemap::{Dimensions, StratumId, TilemapSpec},
     tiles::TileIdx,
 };
@@ -19,8 +21,45 @@ pub struct Imported {
     pub sizes: HashMap<StratumId, Dimensions>,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Depth(i64);
+pub fn ldtk_to_wanderrust(ldtk: LDtk) -> TilemapSpec {
+    let mut spec = TilemapSpec::default();
+    let raw = import_raw(ldtk);
+
+    spec.all_tiles = raw.all_tiles;
+
+    for (stratum_id, all_instances) in raw.all_entities.iter() {
+        for entity_inst in all_instances {
+            info!("{}: {} {}", stratum_id.0, entity_inst.0.0, entity_inst.0.1)
+        }
+    }
+
+    spec
+}
+
+pub fn get_emitter(identifier: String, filelds: Vec<FieldInstance>) -> Option<TileIdx> {
+    match identifier.as_str() {
+        "torch" => Some(TileIdx::Torch),
+        "candle" => Some(TileIdx::Candle),
+        "brazier" => Some(TileIdx::Brazier),
+        _ => None,
+    }
+}
+
+pub fn get_interactable(identifier: String, fields: Vec<FieldInstance>) -> Option<Interactable> {
+    match identifier.as_str() {
+        "chest" => Some(Interactable::Chest {
+            is_open: false,
+            contents: Inventory::default(),
+        }),
+        "door" => Some(Interactable::Door {
+            is_open: false,
+            requires: None,
+        }),
+        "combatant" => Some(Interactable::Combatant),
+        "speaker" => Some(Interactable::Speaker),
+        _ => None,
+    }
+}
 
 pub fn import_raw(ldtk: LDtk) -> Imported {
     let mut imported = Imported::default();
@@ -100,10 +139,13 @@ fn get_entities(entities: &Vec<EntityInstance>) -> Vec<((String, Cell), Vec<Fiel
             x: entity_inst.grid[0] as i32,
             y: entity_inst.grid[1] as i32,
         };
+
         info!(
             "{} @ {} = {:#?}",
             entity_inst.identifier, cell, entity_inst.field_instances
         );
+
+        info!("{:#?}", entity_inst);
 
         out.push((
             (entity_inst.identifier.clone(), cell),
