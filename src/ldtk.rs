@@ -8,8 +8,6 @@ use ldtk_json_rs::ldtk_json::{EntityInstance, FieldInstance, LDtk, LayerInstance
 
 use crate::{
     cell::Cell,
-    interactions::Interactable,
-    inventory::Inventory,
     tilemap::{Dimensions, StratumId, TilemapSpec},
     tiles::TileIdx,
 };
@@ -29,36 +27,11 @@ pub fn ldtk_to_wanderrust(ldtk: LDtk) -> TilemapSpec {
 
     for (stratum_id, all_instances) in raw.all_entities.iter() {
         for entity_inst in all_instances {
-            info!("{}: {} {}", stratum_id.0, entity_inst.0.0, entity_inst.0.1)
+            info!("{}: {} {}", stratum_id.0, entity_inst.0.0, entity_inst.0.1);
         }
     }
 
     spec
-}
-
-pub fn get_emitter(identifier: String, filelds: Vec<FieldInstance>) -> Option<TileIdx> {
-    match identifier.as_str() {
-        "torch" => Some(TileIdx::Torch),
-        "candle" => Some(TileIdx::Candle),
-        "brazier" => Some(TileIdx::Brazier),
-        _ => None,
-    }
-}
-
-pub fn get_interactable(identifier: String, fields: Vec<FieldInstance>) -> Option<Interactable> {
-    match identifier.as_str() {
-        "chest" => Some(Interactable::Chest {
-            is_open: false,
-            contents: Inventory::default(),
-        }),
-        "door" => Some(Interactable::Door {
-            is_open: false,
-            requires: None,
-        }),
-        "combatant" => Some(Interactable::Combatant),
-        "speaker" => Some(Interactable::Speaker),
-        _ => None,
-    }
 }
 
 pub fn import_raw(ldtk: LDtk) -> Imported {
