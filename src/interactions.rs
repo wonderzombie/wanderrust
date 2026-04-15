@@ -11,6 +11,8 @@ use crate::{
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
 #[derive(Component, Debug, Default, Reflect, Serialize, Deserialize)]
 pub enum Interactable {
+    #[default]
+    Unset,
     Door {
         is_open: bool,
         requires: Option<Item>,
@@ -19,7 +21,6 @@ pub enum Interactable {
         is_open: bool,
         contents: Inventory,
     },
-    #[default]
     Speaker,
     Combatant,
 }
@@ -79,6 +80,10 @@ pub fn process_interactions(
         };
 
         match interactable.as_mut() {
+            Interactable::Unset => {
+                warn!("interactable found with Unset");
+                continue;
+            }
             Interactable::Door { is_open, requires } => {
                 if !*is_open {
                     if let Some(required_item) = requires {
