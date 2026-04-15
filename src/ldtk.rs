@@ -9,6 +9,8 @@ use serde_json::Value;
 
 use crate::{
     cell::Cell,
+    interactions::Interactable,
+    inventory::{self, Inventory},
     tilemap::{Dimensions, StratumId, TilemapSpec},
     tiles::TileIdx,
 };
@@ -136,12 +138,13 @@ fn get_tiles(
 }
 
 type Iid = String;
-type EntityFields = HashMap<String, Option<Value>>;
+type EntityFields = HashMap<String, Value>;
 
 #[derive(Debug, Default)]
 pub struct LdtkEntity {
     pub iid: Iid,
     pub identifier: String,
+    pub inter: Option<Interactable>,
     pub tile_idx_opt: Option<TileIdx>,
     pub cell: Cell,
     pub fields: EntityFields,
@@ -170,12 +173,13 @@ impl Cell {
 /// [`EntityInstance::tile`] is [`ldtk_json_rs::ldtk_json::TilesetRectangle`], aka pixels.
 fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, LdtkEntity> {
     let mut out = HashMap::new();
-    for ref e_inst in entities.iter() {
+    for e_inst in entities {
         let mut fields = EntityFields::new();
         let cell = Cell::from_i64(e_inst.grid[0], e_inst.grid[1]);
 
         for e_inst_field in e_inst.field_instances.iter() {
-            fields.insert(e_inst_field.identifier.clone(), e_inst_field.value.clone());
+            let val = e_inst_field.value.clone().unwrap_or_default();
+            fields.insert(e_inst_field.identifier.clone(), val);
         }
 
         let tile_idx_opt = e_inst
@@ -186,11 +190,24 @@ fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, Ldtk
         let iid = e_inst.iid.clone();
         let tags = e_inst.tags.clone();
 
+        let inter = if identifier.starts_with("chest") {
+            chest_from_json(&fields)
+        } else if identifier.starts_with("door") {
+            door_from_json(&fields)
+        } else if identifier.starts_with("speaker") {
+            Some(Interactable::Speaker)
+        } else if identifier.starts_with("combatant") {
+            Some(Interactable::Combatant)
+        } else {
+            None
+        };
+
         out.insert(
             iid.clone(),
             LdtkEntity {
                 iid,
                 identifier,
+                inter,
                 tile_idx_opt,
                 cell,
                 fields,
@@ -199,4 +216,38 @@ fn get_entities_with_fields(entities: &Vec<EntityInstance>) -> HashMap<Iid, Ldtk
         );
     }
     out
+}
+
+fn chest_from_json(fields: &HashMap<String, Value>) -> Option<Interactable> {
+    let contents = fields
+        .get("contents")?
+        .as_array()?
+        .iter()
+        .filter_map(|it| it.as_str());
+
+    let mut inventory = Inventory::default();
+    for item in contents {
+        if let Some(split) = item.split_once(':') {
+            let (item, qty) = split;
+            let item = inventory::Item(item.into());
+            let qty: usize = qty.parse::<usize>().ok().unwrap_or(1);
+
+            inventory.add_item(item, qty);
+        }
+    }
+
+    Some(Interactable::Chest {
+        is_open: fields.get("is_open")?.as_bool()?,
+        contents: inventory,
+    })
+}
+
+fn door_from_json(fields: &HashMap<String, Value>) -> Option<Interactable> {
+    let requires = fields
+        .get("requires")?
+        .as_str()
+        .map(|it| inventory::Item(it.into()));
+    let is_open = fields.get("is_open")?.as_bool()?;
+
+    Some(Interactable::Door { requires, is_open })
 }
