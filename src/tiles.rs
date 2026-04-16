@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::{math::UVec2, prelude::Component};
 
@@ -282,6 +283,10 @@ impl TileIdx {
         ),
         (&[StairsUp, StairsDown], "stairs"),
     ];
+
+    pub fn reverse_lookup() -> HashMap<usize, TileIdx> {
+        TileIdx::pairs().iter().copied().collect()
+    }
 
     pub fn is_walkable(&self) -> bool {
         Self::WALKABLE.contains(self)
