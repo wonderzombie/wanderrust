@@ -14,6 +14,7 @@ use crate::{
     event_log,
     gamestate::GameState,
     interactions::Interactable,
+    ldtk_loader,
     tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
@@ -120,7 +121,11 @@ pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerS
 }
 
 /// Dispatches map-related operations based on keyboard input.
-pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<KeyCode>>) {
+pub fn handle_map_operations(
+    commands: Commands,
+    mut input: ResMut<ButtonInput<KeyCode>>,
+    mut msg: MessageWriter<LdtkMapLoadMessage>,
+) {
     if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
         warn!("requested to save");
         input.clear();
@@ -129,6 +134,10 @@ pub fn handle_map_operations(commands: Commands, mut input: ResMut<ButtonInput<K
         warn!("requested to load");
         input.clear();
         open_load_dialog(commands);
+    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
+        && input.just_released(KeyCode::KeyL)
+    {
+        msg.write(LdtkMapLoadMessage);
     }
 }
 
@@ -289,6 +298,19 @@ pub fn on_load_map_message(
     }
 }
 
+#[derive(Debug, Message)]
+pub struct LdtkMapLoadMessage;
+
+pub fn on_load_ldtk_map_message(mut messages: MessageReader<LdtkMapLoadMessage>) {
+    for _ in messages.read() {
+        let fname = "data/wandrs_proto.ldtk";
+
+        let res = ldtk_loader::load_and_import(fname.into());
+
+        res.expect("expected to load ldtk level");
+    }
+}
+
 #[derive(Message)]
 pub struct MapSaveMessage(PathBuf);
 
@@ -424,11 +446,13 @@ impl Plugin for EditorPlugin {
                     poll_save_dialog,
                     on_load_map_message,
                     on_save_map_message,
+                    on_load_ldtk_map_message,
                 )
                     .run_if(in_state(EditorState::Enabled)),
             )
             .insert_resource(EditorContext::default())
             .insert_state(EditorState::Disabled)
+            .add_message::<LdtkMapLoadMessage>()
             .add_message::<MapLoadMessage>()
             .add_message::<MapSaveMessage>();
     }
