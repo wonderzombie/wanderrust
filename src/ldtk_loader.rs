@@ -39,6 +39,10 @@ impl FieldMapExt for HashMap<String, Value> {
     }
 }
 
+pub trait LdtkEntityExt<T> {
+    fn from_ldtk(value: &LdtkEntity) -> Option<T>;
+}
+
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
     pub levels: Vec<LdtkLevel>,
@@ -100,6 +104,8 @@ pub struct LdtkEntity {
     pub tags: Vec<String>,
 }
 
+const LDTK_ENTITES_ENUM: &str = "Actor";
+
 impl LdtkEntity {
     pub fn field_map(&self) -> impl FieldMapExt {
         self.field_instances
@@ -107,6 +113,14 @@ impl LdtkEntity {
             .into_iter()
             .map(|it| (it.identifier, it.val))
             .collect::<HashMap<String, Value>>()
+    }
+
+    pub fn ty(&self) -> Option<LdtkActor> {
+        self.field_instances
+            .iter()
+            .find(|f| f.identifier == LDTK_ENTITES_ENUM)
+            .and_then(|v| v.val.as_str())
+            .and_then(LdtkActor::from_str)
     }
 }
 
