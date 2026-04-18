@@ -34,7 +34,7 @@ pub struct LdtkLayer {
     pub entities: Vec<LdtkEntity>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct LdtkField {
     #[serde(rename = "__identifier")]
     pub identifier: String,
@@ -55,9 +55,19 @@ pub struct LdtkEntity {
     pub tile: LdtkPxTile,
     #[serde(rename = "fieldInstances", default)]
     pub field_instances: Vec<LdtkField>,
+    #[serde(rename = "__tags")]
+    pub tags: Vec<String>,
 }
 
-// { "px": [32,32], "src": [0,208], "f": 0, "t": 637, "d": [34], "a": 1 },
+impl LdtkEntity {
+    pub fn field_map(&self) -> impl FieldMapExt {
+        self.field_instances
+            .clone()
+            .into_iter()
+            .map(|it| (it.identifier, it.val))
+            .collect::<HashMap<String, Value>>()
+    }
+}
 
 #[derive(Debug, Deserialize, Default)]
 pub struct LdtkGridTile {
@@ -85,16 +95,9 @@ impl From<LdtkPxTile> for Cell {
     }
 }
 
-pub fn load_and_import(fname: PathBuf) -> Result<(), BevyError> {
+pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
     let serialized = std::fs::read_to_string(fname)?;
-
     let project = serde_json::from_str::<LdtkProject>(&serialized)?;
-
-    println!("project levels count: {}", project.levels.len());
-
-    println!("=== BEGIN DUMP ===");
-    println!("{:#?}", project);
-    println!("=== END DUMP ===");
-
-    Ok(())
+    info!("project levels count: {}", project.levels.len());
+    Ok(project)
 }
