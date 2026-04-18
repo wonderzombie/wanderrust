@@ -55,7 +55,9 @@ impl Display for StratumId {
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub struct Stratum(pub Entity, pub StratumId);
 
+/// TileCell is a pair of (TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
+/// PortalCell is a pair of (Portal, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, Cell);
 
 #[derive(
@@ -203,8 +205,8 @@ pub struct Portal {
     pub arrive_at: EntryId,
 }
 
-pub type StratPortals = HashMap<StratumId, Vec<(Portal, Cell)>>;
-pub type StratTiles = HashMap<StratumId, Vec<(TileIdx, Cell)>>;
+pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
+pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 
 #[derive(Bundle, Clone)]
 pub struct TileBundle {
@@ -295,7 +297,7 @@ pub fn despawn_tilemap(
 fn generate_tile_bundles(
     parent: Entity,
     dim: &Dimensions,
-    tiles: &[(TileIdx, Cell)],
+    tiles: &[TileCell],
     layer: f32,
     sheet: &SpriteAtlas,
 ) -> Vec<TileBundle> {
@@ -373,7 +375,7 @@ pub fn get_live_tiles(
     size: &Dimensions,
     strat_storage: &Query<(&Stratum, &TileStorage)>,
     live_tiles: &Query<&TileIdx>,
-) -> HashMap<StratumId, Vec<(TileIdx, Cell)>> {
+) -> HashMap<StratumId, Vec<TileCell>> {
     get_live_storage_items(size, strat_storage, live_tiles)
 }
 
