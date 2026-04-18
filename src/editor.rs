@@ -301,13 +301,16 @@ pub fn on_load_map_message(
 #[derive(Debug, Message)]
 pub struct LdtkMapLoadMessage;
 
-pub fn on_load_ldtk_map_message(mut messages: MessageReader<LdtkMapLoadMessage>) {
+pub fn on_load_ldtk_map_message(
+    mut commands: Commands,
+    mut messages: MessageReader<LdtkMapLoadMessage>,
+) {
     for _ in messages.read() {
         let fname = "data/wandrs_proto.ldtk";
 
-        let res = ldtk_loader::load_and_import(fname.into());
+        let res = ldtk_loader::load_and_import(fname.into()).expect("expected to load ldtk level");
 
-        res.expect("expected to load ldtk level");
+        commands.insert_resource(res);
     }
 }
 
