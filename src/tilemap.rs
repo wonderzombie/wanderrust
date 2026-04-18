@@ -10,10 +10,8 @@ use crate::{
     actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
-    gamestate::GameState,
-    ldtk_loader::{LdtkCell, LdtkProject},
     light::LightLevel,
-    tiles::{self, MapTile, Revealed, TileIdx},
+    tiles::{MapTile, Revealed, TileIdx},
 };
 
 #[derive(
@@ -59,6 +57,12 @@ pub struct Stratum(pub Entity, pub StratumId);
 pub type TileCell = (TileIdx, Cell);
 /// PortalCell is a pair of (Portal, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, Cell);
+/// ActorCell is a pair of (Entity-with-Actor, Cell).
+pub type ActorCell = (Entity, Cell);
+
+pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
+pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
+pub type StratActors = HashMap<StratumId, Vec<ActorCell>>;
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
@@ -75,6 +79,8 @@ pub struct TilemapSpec {
     pub spawn_point: Cell,
     /// The minimum light level for the area.
     pub light_level: LightLevel,
+    /// The actors needed to create this map afresh.
+    pub all_actors: StratActors,
 }
 
 #[derive(
@@ -189,9 +195,6 @@ pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
 }
-
-pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
-pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 
 #[derive(Bundle, Clone)]
 pub struct TileBundle {
