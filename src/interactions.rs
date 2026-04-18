@@ -5,6 +5,7 @@ use crate::{
     colors, combat,
     event_log::MessageLog,
     inventory::{self, *},
+    ldtk_loader::{FieldMapExt, LdtkEntity},
     tiles::TileIdx,
 };
 
@@ -39,6 +40,30 @@ impl Interactable {
             }),
             _ => None,
         }
+    }
+
+    pub fn from_json(ldtk_entity: LdtkEntity) -> Option<Interactable> {
+        let fields = ldtk_entity.field_map();
+        let inter = fields.get_string("interactable")?;
+
+        let out = match inter.as_str() {
+            "door" => Interactable::Door {
+                is_open: fields.get_bool("is_open"),
+                requires: fields.get_string("requires").map(Item),
+            },
+            "chest" => Interactable::Chest {
+                is_open: fields.get_bool("is_open"),
+                contents: Inventory::default(),
+            },
+            "speaker" => todo!(),
+            "combatant" => todo!(),
+            _ => {
+                error!("unknown interactable type: {:?}", ldtk_entity);
+                return None;
+            }
+        };
+
+        Some(out)
     }
 }
 

@@ -1,12 +1,36 @@
 use std::path::PathBuf;
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::Deserialize;
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use crate::cell::Cell;
 
-#[derive(Debug, Deserialize)]
+pub trait FieldMapExt {
+    fn get_bool(&self, key: &str) -> bool;
+    fn get_string(&self, key: &str) -> Option<String>;
+    fn get_str_array(&self, key: &str) -> Option<Vec<String>>;
+}
+
+impl FieldMapExt for HashMap<String, Value> {
+    fn get_bool(&self, key: &str) -> bool {
+        self.get(key).and_then(|v| v.as_bool()).unwrap_or_default()
+    }
+
+    fn get_string(&self, key: &str) -> Option<String> {
+        self.get(key).and_then(|v| v.as_str()).map(String::from)
+    }
+
+    fn get_str_array(&self, key: &str) -> Option<Vec<String>> {
+        self.get(key).and_then(|v| v.as_array()).map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+    }
+}
+
+#[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
     levels: Vec<LdtkLevel>,
 }
