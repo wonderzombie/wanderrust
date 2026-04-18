@@ -11,7 +11,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     gamestate::GameState,
-    ldtk_loader::LdtkProject,
+    ldtk_loader::{LdtkCell, LdtkProject},
     light::LightLevel,
     tiles::{self, MapTile, Revealed, TileIdx},
 };
@@ -422,7 +422,7 @@ fn px_to_cell(x: f32, y: f32, level_height_px: f32) -> Cell {
     Cell::new(cx, cy)
 }
 
-fn ldtk_cell_to_wanderrust(cell: Cell, level_height_cells: i32) -> Cell {
+fn ldtk_cell_to_wanderrust(cell: LdtkCell, level_height_cells: i32) -> Cell {
     Cell::new(cell.x, level_height_cells - 1 - cell.y)
 }
 

@@ -82,7 +82,7 @@ pub struct LdtkEntity {
     pub identifier: String,
     pub iid: String,
     #[serde(rename = "__grid")]
-    pub cell: Cell,
+    pub cell: LdtkCell,
     #[serde(rename = "__tile", default)]
     pub tile: LdtkPxTile,
     #[serde(rename = "fieldInstances", default)]
@@ -126,6 +126,9 @@ impl From<LdtkPxTile> for Cell {
         Cell::new(value.atlas_x_px, value.atlas_y_px)
     }
 }
+
+#[derive(Deref, Debug, Deserialize, Default, Clone, Copy)]
+pub struct LdtkCell(Cell);
 
 pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
     let serialized = std::fs::read_to_string(fname)?;
