@@ -179,7 +179,7 @@ fn main() {
             interactions::setup,
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
-            tilemap::generate_ldtk_tilemap.run_if(resource_added::<LdtkProject>),
+            ldtk_loader::generate_ldtk_tilemap.run_if(resource_added::<LdtkProject>),
         ),
     )
     .add_systems(
