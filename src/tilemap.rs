@@ -10,6 +10,7 @@ use crate::{
     actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
+    ldtk_loader::{FieldMapExt, Iid, LdtkActor, LdtkEntity, LdtkEntityExt},
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
@@ -194,6 +195,24 @@ impl From<&str> for EntryId {
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
+}
+
+impl LdtkEntityExt<Portal> for Portal {
+    fn from_ldtk(value: &LdtkEntity) -> Option<Portal> {
+        if value.ty().is_none_or(|it| it != LdtkActor::Portal) {
+            return None;
+        }
+
+        let fm = value.field_map();
+        let id = fm.get_string("id")?;
+        // TODO: use EntityRef.
+        let arrive_at = fm.get_string("arrive_at")?;
+
+        Some(Portal {
+            id: EntryId(id),
+            arrive_at: EntryId(arrive_at),
+        })
+    }
 }
 
 #[derive(Bundle, Clone)]

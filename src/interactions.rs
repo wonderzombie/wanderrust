@@ -5,7 +5,7 @@ use crate::{
     colors, combat,
     event_log::MessageLog,
     inventory::{self, *},
-    ldtk_loader::{FieldMapExt, LdtkEntity},
+    ldtk_loader::{FieldMapExt, LdtkActor, LdtkEntity, LdtkEntityExt},
     tiles::TileIdx,
 };
 
@@ -41,29 +41,39 @@ impl Interactable {
             _ => None,
         }
     }
+}
 
-    pub fn from_json(ldtk_entity: LdtkEntity) -> Option<Interactable> {
-        let fields = ldtk_entity.field_map();
-        let inter = fields.get_string("interactable")?;
-
-        let out = match inter.as_str() {
-            "door" => Interactable::Door {
-                is_open: fields.get_bool("is_open"),
-                requires: fields.get_string("requires").map(Item),
-            },
-            "chest" => Interactable::Chest {
-                is_open: fields.get_bool("is_open"),
-                contents: Inventory::default(),
-            },
-            "speaker" => todo!(),
-            "combatant" => todo!(),
-            _ => {
-                error!("unknown interactable type: {:?}", ldtk_entity);
-                return None;
-            }
+impl LdtkEntityExt<Interactable> for Interactable {
+    fn from_ldtk(ldtk_entity: &LdtkEntity) -> Option<Interactable> {
+        let Some(ty) = ldtk_entity.ty() else {
+            warn!(
+                "unknown interactable type: {:?} on LdtkEntity {:?}",
+                ldtk_entity.ty(),
+                ldtk_entity
+            );
+            return None;
         };
 
-        Some(out)
+        use Interactable::*;
+        let fm = ldtk_entity.field_map();
+
+        let it = match ty {
+            LdtkActor::Combatant => Combatant,
+            LdtkActor::Speaker => Speaker,
+            // TODO: load requires
+            LdtkActor::Door => Door {
+                is_open: fm.get_bool("is_open"),
+                requires: None,
+            },
+            // TODO: load inventory items
+            LdtkActor::Chest => Chest {
+                is_open: fm.get_bool("is_open"),
+                contents: Inventory::default(),
+            },
+            _ => return None,
+        };
+
+        Some(it)
     }
 }
 
