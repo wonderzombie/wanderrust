@@ -37,6 +37,7 @@ use crate::{
     cell::{Cell, PreviousCell},
     gamestate::{GameState, Screen},
     interactions::Interactable,
+    ldtk_loader::LdtkProject,
     light::Emitter,
     tilemap::{EntryId, Portal, Stratum, TilemapSpec},
     tiles::TileIdx,
@@ -178,6 +179,7 @@ fn main() {
             interactions::setup,
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
+            tilemap::spawn_ldtk_tilemap.run_if(resource_added::<LdtkProject>),
         ),
     )
     .add_systems(

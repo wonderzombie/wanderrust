@@ -32,7 +32,7 @@ impl FieldMapExt for HashMap<String, Value> {
 
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
-    levels: Vec<LdtkLevel>,
+    pub levels: Vec<LdtkLevel>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -102,7 +102,7 @@ pub struct LdtkGridTile {
     #[serde(rename = "f")]
     pub flip_bits: i32,
     #[serde(rename = "px")]
-    pub px: Cell,
+    pub px: Vec2,
 }
 
 #[derive(Debug, Deserialize, Default)]

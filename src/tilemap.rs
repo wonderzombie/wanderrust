@@ -1,4 +1,7 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{
+    platform::collections::{HashMap, HashSet},
+    prelude::*,
+};
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
@@ -7,6 +10,7 @@ use crate::{
     actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
+    ldtk_loader::LdtkProject,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
@@ -428,4 +432,51 @@ where
         }
     }
     out
+}
+
+fn px_to_cell(x: f32, y: f32) -> Cell {
+    let c_x = x / 16. + 8.;
+    let c_y = y / 16. + 8.;
+    Cell::new(c_x as i32, c_y as i32)
+}
+
+pub fn spawn_ldtk_tilemap(
+    mut commands: Commands,
+    res: Option<Res<LdtkProject>>,
+    atlas: Res<SpriteAtlas>,
+) {
+    let Some(project) = res else {
+        return;
+    };
+    let project = project.as_ref();
+    let lookup = TileIdx::reverse_lookup();
+
+    let mut distinct_tiles = HashSet::<TileIdx>::new();
+    let mut new_tiles: Vec<TileCell> = Vec::new();
+    let mut distinct_entities = HashSet::<(String, Cell)>::new();
+
+    for level in &project.levels {
+        info!("loading level {}", level.identifier);
+
+        for layer in &level.layer_instances {
+            if layer.layer_type.to_ascii_lowercase().eq("tiles") {
+                for tile in &layer.grid_tiles {
+                    let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
+                    distinct_tiles.insert(tile_idx);
+                    let cell = px_to_cell(tile.px.x, tile.px.y);
+                    new_tiles.push((tile_idx, cell));
+                }
+            }
+
+            if layer.layer_type.to_ascii_lowercase().eq("entities") {
+                for actor in &layer.entities {
+                    distinct_entities.insert((actor.identifier.clone(), actor.cell));
+                }
+            }
+        }
+    }
+
+    info!("distinct tiles: {:?}", distinct_tiles);
+    info!("distinct entities: {:?}", distinct_entities);
+    println!("creating new tiles: {:?}", &new_tiles);
 }
