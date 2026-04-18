@@ -377,7 +377,6 @@ pub fn sync_tiles(
 }
 
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
-/// TODO: consider whether or how function signature might be simplified.
 pub fn update_tile_visuals(
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
     spec: Res<TilemapSpec>,
