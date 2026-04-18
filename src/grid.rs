@@ -71,7 +71,10 @@ pub fn spawn_grid(
 ) {
     info!("spawning grid for {} strata", strata.count());
     for stratum in strata {
-        info!("spawning grid for {:?}", stratum);
+        info!(
+            "grid {:?} is {} x {}",
+            stratum, spec.size.width, spec.size.height
+        );
         let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
             .chunk_size(16)
             .default_impassable()
@@ -94,6 +97,17 @@ pub fn update_grid(
         let (entity, mut grid) = grid
             .get_mut(child_of.0)
             .expect("failed to get grid for cell; was grid initialized?");
+
+        if !grid.in_bounds(cell.as_vec3()) {
+            error!(
+                "Skipping attempt to update grid at out-of-bounds position {}; grid is {} x {}",
+                cell,
+                grid.width(),
+                grid.height(),
+            );
+            error_once!("grid dumped: {:?}", grid.view());
+            continue;
+        }
 
         let prev_nav = grid.nav(cell.into());
         let next_nav = if walkable_opt.is_some() {

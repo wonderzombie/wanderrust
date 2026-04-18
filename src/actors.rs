@@ -75,9 +75,11 @@ pub fn setup_player(
     strata: Query<Entity, With<Stratum>>,
 ) {
     if let Some(entity) = player {
+        info!("respawning player");
         commands
             .entity(*entity)
-            .insert(ChildOf(strata.iter().next().unwrap()));
+            .insert(ChildOf(strata.iter().next().unwrap()))
+            .insert(spec.spawn_point);
     } else {
         info!("spawning player");
         commands.spawn((

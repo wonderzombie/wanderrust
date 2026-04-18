@@ -7,7 +7,7 @@ use bevy::{
 use rfd::AsyncFileDialog;
 
 use crate::{
-    actors::{Actor, PlayerStats},
+    actors::{Actor, Player, PlayerStats},
     cell::Cell,
     colors::KENNEY_RED,
     combat::Parameters,
@@ -70,6 +70,8 @@ pub fn on_zoom_button_input(
 
 /// Handles button input, updating the active tile and logging events.
 pub fn on_button_input(
+    mut commands: Commands,
+    player: Single<Entity, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorContext>,
     mut log: ResMut<event_log::MessageLog>,
@@ -92,6 +94,12 @@ pub fn on_button_input(
     } else if input.just_pressed(KeyCode::Digit4) {
         // Last viable tile index
         editor_state.active_tile_idx = lookup.len() - 1;
+    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
+        && input.just_released(KeyCode::KeyP)
+    {
+        info!("relocating player");
+        commands.entity(*player).insert(Cell::new(5, 5));
+        return;
     } else {
         return;
     }

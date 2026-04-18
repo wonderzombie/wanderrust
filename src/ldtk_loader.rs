@@ -43,6 +43,10 @@ pub struct LdtkLevel {
     pub field_instances: Vec<LdtkField>,
     #[serde(rename = "layerInstances", default)]
     pub layer_instances: Vec<LdtkLayer>,
+    #[serde(rename = "pxWid")]
+    pub px_width: f32,
+    #[serde(rename = "pxHei")]
+    pub px_height: f32,
 }
 
 #[derive(Debug, Deserialize)]

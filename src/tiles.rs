@@ -114,6 +114,10 @@ tiles! {
     GrassLong = atlas_idx(7, 0),
     GrassTall = atlas_idx(0, 2),
 
+    // Floors
+    FloorPatternSquare = atlas_idx(16, 0),
+    FloorPatternAngles = atlas_idx(17, 0),
+
     // Rocky
     Gravel = atlas_idx(2, 0),
     RockMedium = atlas_idx(3, 0),
@@ -226,6 +230,8 @@ impl TileIdx {
         StairsDown,
         MineEntrance,
         BarsDoorOpen,
+        FloorPatternAngles,
+        FloorPatternSquare,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[

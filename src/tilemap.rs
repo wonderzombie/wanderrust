@@ -2,6 +2,7 @@ use bevy::{
     platform::collections::{HashMap, HashSet},
     prelude::*,
 };
+use bevy_northstar::CardinalGrid;
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
@@ -10,6 +11,7 @@ use crate::{
     actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
+    gamestate::GameState,
     ldtk_loader::LdtkProject,
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
@@ -294,6 +296,9 @@ pub fn despawn_tilemap(
     for stratum in strata.iter() {
         commands.entity(stratum).despawn();
     }
+
+    // TODO: need to look more into how to reset state.
+    // For now we'll maintain a list of services that blow up. :P
 }
 
 /// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children of a parent Entity.
@@ -434,16 +439,20 @@ where
     out
 }
 
-fn px_to_cell(x: f32, y: f32) -> Cell {
-    let c_x = x / 16. + 8.;
-    let c_y = y / 16. + 8.;
-    Cell::new(c_x as i32, c_y as i32)
+fn px_to_cell(x: f32, y: f32, level_height_px: f32) -> Cell {
+    let cx = (x / 16.0) as i32;
+    let cy = ((level_height_px - y) / 16.0) as i32 - 1;
+    Cell::new(cx, cy)
 }
 
-pub fn spawn_ldtk_tilemap(
+#[derive(Component, Deref, Debug, Default, Clone, Copy)]
+pub struct SpawnPoint(Cell);
+
+pub fn generate_ldtk_tilemap(
     mut commands: Commands,
     res: Option<Res<LdtkProject>>,
-    atlas: Res<SpriteAtlas>,
+    // HACKHACK for testing
+    mut ns: ResMut<NextState<GameState>>,
 ) {
     let Some(project) = res else {
         return;
@@ -455,28 +464,63 @@ pub fn spawn_ldtk_tilemap(
     let mut new_tiles: Vec<TileCell> = Vec::new();
     let mut distinct_entities = HashSet::<(String, Cell)>::new();
 
-    for level in &project.levels {
-        info!("loading level {}", level.identifier);
+    let level = project.levels.get(0).unwrap();
+    let mut spawn: Option<Cell> = None;
 
-        for layer in &level.layer_instances {
-            if layer.layer_type.to_ascii_lowercase().eq("tiles") {
-                for tile in &layer.grid_tiles {
-                    let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
-                    distinct_tiles.insert(tile_idx);
-                    let cell = px_to_cell(tile.px.x, tile.px.y);
-                    new_tiles.push((tile_idx, cell));
-                }
+    // HACKHACK for testing
+    // for level in &project.levels {
+    //     info!("loading level {}", level.identifier);
+
+    for layer in &level.layer_instances {
+        if layer.layer_type.to_ascii_lowercase().eq("tiles") {
+            for tile in &layer.grid_tiles {
+                let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
+                distinct_tiles.insert(tile_idx);
+                let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
+                println!(
+                    "px {} {} grid {} {} tile {}",
+                    tile.px.x, tile.px.y, cell.x, cell.y, tile_idx,
+                );
+                new_tiles.push((tile_idx, cell));
             }
+        }
 
-            if layer.layer_type.to_ascii_lowercase().eq("entities") {
-                for actor in &layer.entities {
-                    distinct_entities.insert((actor.identifier.clone(), actor.cell));
+        if layer.layer_type.to_ascii_lowercase().eq("entities") {
+            for actor in &layer.entities {
+                distinct_entities.insert((actor.identifier.clone(), actor.cell));
+
+                if actor.identifier.eq_ignore_ascii_case("Worldspawn") {
+                    spawn = Some(actor.cell);
                 }
             }
         }
     }
+    println!("new tiles: {:?}", &new_tiles);
+    // info!("distinct tiles: {:?}", distinct_tiles);
+    // info!("distinct entities: {:?}", distinct_entities);
 
-    info!("distinct tiles: {:?}", distinct_tiles);
-    info!("distinct entities: {:?}", distinct_entities);
-    println!("creating new tiles: {:?}", &new_tiles);
+    // HACKHACK for testing
+    let mut spec = TilemapSpec::default();
+    spec.all_tiles.insert(StratumId(0), new_tiles);
+    spec.light_level = LightLevel::Bright;
+    spec.size = Dimensions {
+        width: 20,
+        height: 20,
+        tile_size: 16,
+    };
+
+    spec.spawn_point = if let Some(spawn) = spawn {
+        spawn
+    } else {
+        warn!("did not find spawn point");
+        Cell::default()
+    };
+
+    // spec.spawn_point = Cell::new(7, 10);
+
+    info!("spawning at {}", spec.spawn_point);
+
+    commands.insert_resource(spec);
+
+    ns.set(GameState::Loading);
 }
