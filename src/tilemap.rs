@@ -445,6 +445,10 @@ fn px_to_cell(x: f32, y: f32, level_height_px: f32) -> Cell {
     Cell::new(cx, cy)
 }
 
+fn ldtk_cell_to_wanderrust(cell: Cell, level_height_cells: i32) -> Cell {
+    Cell::new(cell.x, level_height_cells - 1 - cell.y)
+}
+
 #[derive(Component, Deref, Debug, Default, Clone, Copy)]
 pub struct SpawnPoint(Cell);
 
@@ -487,17 +491,16 @@ pub fn generate_ldtk_tilemap(
 
         if layer.layer_type.to_ascii_lowercase().eq("entities") {
             for actor in &layer.entities {
-                distinct_entities.insert((actor.identifier.clone(), actor.cell));
+                let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
+                distinct_entities.insert((actor.identifier.clone(), cell));
 
                 if actor.identifier.eq_ignore_ascii_case("Worldspawn") {
-                    spawn = Some(actor.cell);
+                    spawn = Some(cell);
                 }
             }
         }
     }
     println!("new tiles: {:?}", &new_tiles);
-    // info!("distinct tiles: {:?}", distinct_tiles);
-    // info!("distinct entities: {:?}", distinct_entities);
 
     // HACKHACK for testing
     let mut spec = TilemapSpec::default();
@@ -515,8 +518,6 @@ pub fn generate_ldtk_tilemap(
         warn!("did not find spawn point");
         Cell::default()
     };
-
-    // spec.spawn_point = Cell::new(7, 10);
 
     info!("spawning at {}", spec.spawn_point);
 

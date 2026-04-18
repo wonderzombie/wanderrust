@@ -60,6 +60,10 @@ pub struct LdtkLayer {
     pub grid_tiles: Vec<LdtkGridTile>,
     #[serde(rename = "entityInstances", default)]
     pub entities: Vec<LdtkEntity>,
+    #[serde(rename = "__cWid")]
+    pub c_width: i32,
+    #[serde(rename = "__cHei")]
+    pub c_height: i32,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
