@@ -2,7 +2,6 @@ use bevy::{
     platform::collections::{HashMap, HashSet},
     prelude::*,
 };
-use bevy_northstar::CardinalGrid;
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
@@ -14,7 +13,7 @@ use crate::{
     gamestate::GameState,
     ldtk_loader::LdtkProject,
     light::LightLevel,
-    tiles::{MapTile, Revealed, TileIdx},
+    tiles::{self, MapTile, Revealed, TileIdx},
 };
 
 #[derive(
@@ -120,15 +119,6 @@ impl Dimensions {
         Cell {
             x: (idx % self.width) as i32,
             y: (idx / self.width) as i32,
-        }
-    }
-
-    #[inline]
-    pub fn pos_to_cell(&self, pos: &[i64]) -> Cell {
-        let ts: i32 = self.tile_size as i32 / 2;
-        Cell {
-            x: (pos[0] as i32 % self.width as i32) + ts,
-            y: (pos[1] as i32 / self.width as i32) + ts,
         }
     }
 }
@@ -449,9 +439,6 @@ fn ldtk_cell_to_wanderrust(cell: Cell, level_height_cells: i32) -> Cell {
     Cell::new(cell.x, level_height_cells - 1 - cell.y)
 }
 
-#[derive(Component, Deref, Debug, Default, Clone, Copy)]
-pub struct SpawnPoint(Cell);
-
 pub fn generate_ldtk_tilemap(
     mut commands: Commands,
     res: Option<Res<LdtkProject>>,
@@ -475,7 +462,13 @@ pub fn generate_ldtk_tilemap(
     // for level in &project.levels {
     //     info!("loading level {}", level.identifier);
 
+    let mut c_wid = 1;
+    let mut c_hei = 1;
+
     for layer in &level.layer_instances {
+        c_wid = c_wid.max(layer.c_width);
+        c_hei = c_hei.max(layer.c_height);
+
         if layer.layer_type.to_ascii_lowercase().eq("tiles") {
             for tile in &layer.grid_tiles {
                 let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
@@ -507,9 +500,9 @@ pub fn generate_ldtk_tilemap(
     spec.all_tiles.insert(StratumId(0), new_tiles);
     spec.light_level = LightLevel::Bright;
     spec.size = Dimensions {
-        width: 20,
-        height: 20,
-        tile_size: 16,
+        width: c_wid as u32,
+        height: c_hei as u32,
+        tile_size: tiles::TILE_SIZE_PX as u32,
     };
 
     spec.spawn_point = if let Some(spawn) = spawn {
