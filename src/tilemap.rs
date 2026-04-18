@@ -60,21 +60,6 @@ pub type TileCell = (TileIdx, Cell);
 /// PortalCell is a pair of (Portal, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, Cell);
 
-#[derive(
-    Resource, Deref, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
-)]
-pub struct ActiveStratum(Stratum);
-
-impl ActiveStratum {
-    pub fn entity(&self) -> Entity {
-        self.0.0
-    }
-
-    pub fn id(&self) -> StratumId {
-        self.0.1
-    }
-}
-
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 pub struct TilemapSpec {
