@@ -114,6 +114,17 @@ impl Dimensions {
             y: (idx / self.width) as i32,
         }
     }
+
+    #[inline]
+    pub fn ntiles(&self) -> usize {
+        (self.width * self.height) as usize
+    }
+
+    pub fn iter_cells(&self) -> impl Iterator<Item = Cell> {
+        (0..self.ntiles())
+            .into_iter()
+            .map(|n| self.idx_to_cell(n as u32))
+    }
 }
 
 impl PartialOrd for Dimensions {
