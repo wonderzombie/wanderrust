@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ldtk_loader::{LdtkActor, LdtkEntity};
+use crate::ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt};
 use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed, TileIdx};
 use crate::{cell::Cell, tilemap::TileStorage};
@@ -92,23 +92,6 @@ impl Emitter {
         None
     }
 
-    pub fn from_ldtk(value: &LdtkEntity) -> Option<Emitter> {
-        if value.ty().is_none_or(|it| it != LdtkActor::Emitter) {
-            return None;
-        }
-
-        // TODO: match on other properties, potentially.
-        let tile = match value.identifier.to_ascii_lowercase().as_str() {
-            "torch" => TileIdx::Torch,
-            "candle" => TileIdx::Candle,
-            "brazier" => TileIdx::Brazier,
-            _ => TileIdx::Candle,
-            // _ => value
-        };
-
-        Emitter::from_tile(&tile)
-    }
-
     // Used in test.
     #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
@@ -143,6 +126,27 @@ impl Emitter {
             }
         }
         LightMap(cell_map)
+    }
+}
+
+impl LdtkEntityExt<Emitter> for Emitter {
+    fn from_ldtk(entity: &LdtkEntity) -> Option<Emitter> {
+        if entity.ty().is_none_or(|it| it != LdtkActor::Emitter) {
+            return None;
+        }
+
+        // TODO: match on other properties, potentially.
+        let tile = match entity.identifier.to_ascii_lowercase().as_str() {
+            "torch" => TileIdx::Torch,
+            "candle" => TileIdx::Candle,
+            "brazier" => TileIdx::Brazier,
+            _ => {
+                warn!("unknown emitter type: {:?}", entity);
+                TileIdx::Candle
+            } // _ => value
+        };
+
+        Emitter::from_tile(&tile)
     }
 }
 

@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, from_value};
 
 use crate::{
     cell::Cell,
@@ -16,32 +16,8 @@ use crate::{
     tiles::{self, SHEET_SIZE_G, TileIdx},
 };
 
-pub trait FieldMapExt {
-    fn get_bool(&self, key: &str) -> bool;
-    fn get_string(&self, key: &str) -> Option<String>;
-    fn get_str_array(&self, key: &str) -> Option<Vec<String>>;
-}
-
-impl FieldMapExt for HashMap<String, Value> {
-    fn get_bool(&self, key: &str) -> bool {
-        self.get(key).and_then(|v| v.as_bool()).unwrap_or_default()
-    }
-
-    fn get_string(&self, key: &str) -> Option<String> {
-        self.get(key).and_then(|v| v.as_str()).map(String::from)
-    }
-
-    fn get_str_array(&self, key: &str) -> Option<Vec<String>> {
-        self.get(key).and_then(|v| v.as_array()).map(|arr| {
-            arr.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-    }
-}
-
 pub trait LdtkEntityExt<T> {
-    fn from_ldtk(value: &LdtkEntity) -> Option<T>;
+    fn from_ldtk(entity: &LdtkEntity) -> Option<T>;
 }
 
 #[derive(Debug, Deserialize, Resource)]
@@ -108,20 +84,40 @@ pub struct LdtkEntity {
 const LDTK_ENTITES_ENUM: &str = "Actor";
 
 impl LdtkEntity {
-    pub fn field_map(&self) -> impl FieldMapExt {
-        self.field_instances
-            .clone()
-            .into_iter()
-            .map(|it| (it.identifier, it.val))
-            .collect::<HashMap<String, Value>>()
-    }
-
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
             .iter()
             .find(|f| f.identifier == LDTK_ENTITES_ENUM)
             .and_then(|v| v.val.as_str())
             .and_then(LdtkActor::from_str)
+    }
+
+    pub fn field_val(&self, key: &str) -> Option<ParsedValue> {
+        self.field_instances
+            .iter()
+            .find(|it| it.identifier == key)
+            .map(ParsedValue::from)
+    }
+
+    pub fn get_bool(&self, key: &str) -> bool {
+        match self.field_val(key) {
+            Some(ParsedValue::Bool(v)) => v,
+            _ => false,
+        }
+    }
+
+    pub fn get_string(&self, key: &str) -> Option<String> {
+        match self.field_val(key) {
+            Some(ParsedValue::Ztring(s)) => Some(s.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn get_str_array(&self, key: &str) -> Option<Vec<String>> {
+        match self.field_val(key) {
+            Some(ParsedValue::ArrayString(vec)) => Some(vec.clone()),
+            _ => None,
+        }
     }
 }
 
@@ -299,6 +295,64 @@ macro_rules! enum_with_str {
             }
         }
     };
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum ParsedValue {
+    #[default]
+    Unset,
+    Actor(String),
+    Ztring(String),
+    PxTile(i32, i32),
+    Bool(bool),
+    EntityRef(HashMap<String, String>),
+    ArrayString(Vec<String>),
+    LiteLevel(String),
+}
+
+impl From<LdtkField> for ParsedValue {
+    #[inline]
+    fn from(field: LdtkField) -> ParsedValue {
+        Self::from(&field)
+    }
+}
+
+impl From<&LdtkField> for ParsedValue {
+    fn from(field: &LdtkField) -> ParsedValue {
+        use ParsedValue::*;
+        let val = field.val.clone();
+        match field.field_type.as_str() {
+            "LocalEnum.Actor" => match val.as_str() {
+                Some(s) => Actor(s.to_string()),
+                None => Unset,
+            },
+            "LocalEnum.LightLevel" => match val.as_str() {
+                Some(s) => LiteLevel(s.to_string()),
+                None => Unset,
+            },
+            "String" => match val.as_str() {
+                Some(s) => Ztring(s.to_string()),
+                None => Unset,
+            },
+            "Tile" => match from_value::<LdtkPxTile>(val) {
+                Ok(tile) => PxTile(tile.atlas_x_px, tile.atlas_y_px),
+                Err(_) => Unset,
+            },
+            "Bool" => match field.val.as_bool() {
+                Some(v) => Bool(v),
+                None => Unset,
+            },
+            "Array<String>" => match from_value::<Vec<String>>(val) {
+                Ok(vec) => ArrayString(vec.clone()),
+                Err(_) => Unset,
+            },
+            "EntityRef" => match from_value::<HashMap<String, String>>(val) {
+                Ok(map) => EntityRef(map),
+                Err(_) => Unset,
+            },
+            _ => Unset,
+        }
+    }
 }
 
 enum_with_str!(

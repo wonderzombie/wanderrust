@@ -5,7 +5,7 @@ use crate::{
     colors, combat,
     event_log::MessageLog,
     inventory::{self, *},
-    ldtk_loader::{FieldMapExt, LdtkActor, LdtkEntity, LdtkEntityExt},
+    ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     tiles::TileIdx,
 };
 
@@ -44,36 +44,32 @@ impl Interactable {
 }
 
 impl LdtkEntityExt<Interactable> for Interactable {
-    fn from_ldtk(value: &LdtkEntity) -> Option<Interactable> {
-        let Some(ty) = value.ty() else {
+    fn from_ldtk(entity: &LdtkEntity) -> Option<Interactable> {
+        let Some(ty) = entity.ty() else {
             warn!(
                 "unknown interactable type: {:?} on LdtkEntity {:?}",
-                value.ty(),
-                value
+                entity.ty(),
+                entity
             );
             return None;
         };
 
         use Interactable::*;
-        let fm = value.field_map();
-
-        let it = match ty {
-            LdtkActor::Combatant => Combatant,
-            LdtkActor::Speaker => Speaker,
+        match ty {
+            LdtkActor::Combatant => Some(Combatant),
+            LdtkActor::Speaker => Some(Speaker),
             // TODO: load requires
-            LdtkActor::Door => Door {
-                is_open: fm.get_bool("is_open"),
+            LdtkActor::Door => Some(Door {
+                is_open: entity.get_bool("is_open"),
                 requires: None,
-            },
+            }),
             // TODO: load inventory items
-            LdtkActor::Chest => Chest {
-                is_open: fm.get_bool("is_open"),
+            LdtkActor::Chest => Some(Chest {
+                is_open: entity.get_bool("is_open"),
                 contents: Inventory::default(),
-            },
-            _ => return None,
-        };
-
-        Some(it)
+            }),
+            _ => None,
+        }
     }
 }
 

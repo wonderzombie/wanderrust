@@ -1,7 +1,4 @@
-use bevy::{
-    platform::collections::{HashMap, HashSet},
-    prelude::*,
-};
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
@@ -11,7 +8,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     interactions::Interactable,
-    ldtk_loader::{FieldMapExt, LdtkActor, LdtkEntity, LdtkEntityExt},
+    ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     light::{Emitter, LightLevel},
     tiles::{MapTile, Revealed, TileIdx},
 };
@@ -199,20 +196,16 @@ pub struct Portal {
 }
 
 impl LdtkEntityExt<Portal> for Portal {
-    fn from_ldtk(value: &LdtkEntity) -> Option<Portal> {
-        if value.ty().is_none_or(|it| it != LdtkActor::Portal) {
+    fn from_ldtk(entity: &LdtkEntity) -> Option<Portal> {
+        if entity.ty().is_none_or(|it| it != LdtkActor::Portal) {
             return None;
         }
 
-        let fm = value.field_map();
-        let id = fm.get_string("id")?;
-        // TODO: use EntityRef.
-        let arrive_at = fm.get_string("arrive_at")?;
+        // TODO: use EntityRef field.
+        let id = EntryId(entity.get_string("id")?);
+        let arrive_at = EntryId(entity.get_string("arrive_at")?);
 
-        Some(Portal {
-            id: EntryId(id),
-            arrive_at: EntryId(arrive_at),
-        })
+        Some(Portal { id, arrive_at })
     }
 }
 
