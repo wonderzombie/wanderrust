@@ -55,9 +55,10 @@ pub struct Stratum(pub Entity, pub StratumId);
 /// TileCell is a pair of (TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
 /// PortalCell is a pair of (Portal, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
-pub type PortalCell = (Portal, Cell);
-pub type InterxCell = (Interactable, Cell);
-pub type EmitterCell = (Emitter, Cell);
+pub type PortalCell = (Portal, TileIdx, Cell);
+
+pub type InterxCell = (Interactable, TileIdx, Cell);
+pub type EmitterCell = (Emitter, TileIdx, Cell);
 
 pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
@@ -361,11 +362,12 @@ pub fn setup_portals(
 ) {
     for (Stratum(strat_entity, id), storage) in strat_storage.iter() {
         if let Some(portal_cells) = spec.all_portals.get(id) {
-            for (portal, cell) in portal_cells {
+            for (portal, tile_idx, cell) in portal_cells {
                 if let Some(tile_entity) = storage.get(cell) {
                     commands
                         .entity(tile_entity)
                         .insert(portal.clone())
+                        .insert(*tile_idx)
                         .insert(ChildOf(*strat_entity))
                         .insert(Name::new(format!("Portal: {:#?}", portal)));
                     info!("inserted portal {:?} at {:?}", portal, cell);
@@ -385,26 +387,26 @@ pub fn get_live_tiles(
 
 pub fn get_live_portals(
     strat_storage: &Query<&Stratum>,
-    live_portals: &Query<(&Portal, &Cell, &ChildOf)>,
+    live_portals: &Query<(&Portal, &TileIdx, &Cell, &ChildOf)>,
 ) -> StratPortals {
     get_item_cells(strat_storage, live_portals)
 }
 
 pub fn get_item_cells<T>(
     strata: &Query<&Stratum>,
-    live_items: &Query<(&T, &Cell, &ChildOf)>,
-) -> HashMap<StratumId, Vec<(T, Cell)>>
+    live_items: &Query<(&T, &TileIdx, &Cell, &ChildOf)>,
+) -> HashMap<StratumId, Vec<(T, TileIdx, Cell)>>
 where
     T: Component + Clone + Default + PartialEq,
 {
     let mut out = HashMap::new();
-    for (item, cell, child_of) in live_items.iter() {
+    for (item, tile_idx, cell, child_of) in live_items.iter() {
         let Ok(stratum) = strata.get(child_of.parent()) else {
             continue;
         };
         out.entry(stratum.1)
             .or_insert(Vec::new())
-            .push((item.clone(), *cell));
+            .push((item.clone(), *tile_idx, *cell));
     }
 
     out

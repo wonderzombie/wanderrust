@@ -363,7 +363,7 @@ pub fn on_save_map_message(
     spec: Res<TilemapSpec>,
     mut strat_storage: Query<(&Stratum, &TileStorage)>,
     all_tiles: Query<&tiles::TileIdx>,
-    all_portals: Query<(&Portal, &Cell, &ChildOf)>,
+    all_portals: Query<(&Portal, &TileIdx, &Cell, &ChildOf)>,
     all_actors: Query<(&Cell, &TileIdx, &Interactable, &Parameters), With<Actor>>,
     mut save_messages: MessageReader<MapSaveMessage>,
 ) {

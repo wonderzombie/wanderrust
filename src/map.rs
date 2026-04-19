@@ -130,6 +130,7 @@ impl TilemapSpec {
                         id: EntryId(format!("{:?}", TileIdx::StairsDown)),
                         arrive_at: EntryId(format!("{:?}", TileIdx::StairsUp)),
                     },
+                    *idx,
                     *cell,
                 )),
                 TileIdx::StairsUp => Some((
@@ -137,6 +138,7 @@ impl TilemapSpec {
                         id: EntryId(format!("{:?}", TileIdx::StairsUp)),
                         arrive_at: EntryId(format!("{:?}", TileIdx::StairsDown)),
                     },
+                    *idx,
                     *cell,
                 )),
                 _ => None,

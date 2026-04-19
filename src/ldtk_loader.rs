@@ -12,7 +12,10 @@ use crate::{
     gamestate::GameState,
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
-    tilemap::{self, Dimensions, Portal, PortalCell, StratumId, TileCell, TilemapSpec},
+    tilemap::{
+        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, TileCell,
+        TilemapSpec,
+    },
     tiles::{self, SHEET_SIZE_G, TileIdx},
 };
 
@@ -221,8 +224,8 @@ pub fn generate_ldtk_tilemap(
 
     let mut new_tiles: Vec<TileCell> = Vec::new();
     let mut new_portals: Vec<PortalCell> = Vec::new();
-    let mut new_interx: Vec<(Interactable, Cell)> = Vec::new();
-    let mut new_emitters: Vec<(Emitter, Cell)> = Vec::new();
+    let mut new_interx: Vec<InterxCell> = Vec::new();
+    let mut new_emitters: Vec<EmitterCell> = Vec::new();
 
     let level = project.levels.get(0).unwrap();
     let mut spawn: Option<Cell> = None;
@@ -256,10 +259,12 @@ pub fn generate_ldtk_tilemap(
                 let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
+                let t = actor.get_tile("tile").unwrap_or_default();
+
                 match ParsedActor::from_ldtk(actor) {
-                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, cell)),
-                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, cell)),
-                    Some(ParsedActor::Portal(p)) => new_portals.push((p, cell)),
+                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, cell)),
+                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, cell)),
+                    Some(ParsedActor::Portal(p)) => new_portals.push((p, t, cell)),
                     Some(ParsedActor::Spawn) => spawn = Some(cell),
                     None => warn!("ignoring unparsable actor"),
                 }
