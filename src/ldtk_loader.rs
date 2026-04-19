@@ -87,7 +87,7 @@ impl LdtkEntity {
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
             .iter()
-            .find(|f| f.identifier == LDTK_ENTITES_ENUM)
+            .find(|f| f.identifier.eq_ignore_ascii_case(LDTK_ENTITES_ENUM))
             .and_then(|v| v.val.as_str())
             .and_then(LdtkActor::from_str)
     }
@@ -95,7 +95,7 @@ impl LdtkEntity {
     pub fn field_val(&self, key: &str) -> Option<ParsedValue> {
         self.field_instances
             .iter()
-            .find(|it| it.identifier == key)
+            .find(|it| it.identifier.eq_ignore_ascii_case(key))
             .map(ParsedValue::from)
     }
 
