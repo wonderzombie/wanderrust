@@ -11,10 +11,10 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 91,
+	"nextUid": 94,
 	"identifierStyle": "Free",
 	"toc": [ {
-		"identifier": "TwoWayPortal",
+		"identifier": "PortalTwoWay",
 		"instances": [],
 		"instancesData": [
 			{ "iids": {
@@ -31,7 +31,7 @@
 			}, "worldX": 112, "worldY": 80, "widPx": 16, "heiPx": 16, "fields" : {} }
 		]
 	}, {
-		"identifier": "Worldspawn",
+		"identifier": "WorldSpawn",
 		"instances": [],
 		"instancesData": [{ "iids": {
 			"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
@@ -141,7 +141,7 @@
 		{
 			"identifier": "ChestBrown",
 			"uid": 4,
-			"tags": [ "chest", "interactable" ],
+			"tags": ["chest"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -175,7 +175,7 @@
 				{
 					"identifier": "interactable",
 					"doc": "interactable type",
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 41,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -371,7 +371,7 @@
 		{
 			"identifier": "Pot",
 			"uid": 69,
-			"tags": [ "chest", "interactable" ],
+			"tags": ["chest"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -405,7 +405,7 @@
 				{
 					"identifier": "interactable",
 					"doc": "interactable type",
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 72,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -564,7 +564,7 @@
 		{
 			"identifier": "ChestWhite",
 			"uid": 29,
-			"tags": [ "chest", "interactable" ],
+			"tags": ["chest"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -598,7 +598,7 @@
 				{
 					"identifier": "interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 42,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -792,7 +792,7 @@
 			]
 		},
 		{
-			"identifier": "TwoWayPortal",
+			"identifier": "PortalTwoWay",
 			"uid": 11,
 			"tags": ["portal"],
 			"exportToToc": true,
@@ -825,6 +825,46 @@
 			"pivotX": 0,
 			"pivotY": 0,
 			"fieldDefs": [
+				{
+					"identifier": "Interactable",
+					"doc": null,
+					"__type": "LocalEnum.Actor",
+					"uid": 91,
+					"type": "F_Enum(40)",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Portal"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				},
 				{
 					"identifier": "id",
 					"doc": "The ID of this Portal used by another Portal's `arrive_at`",
@@ -939,7 +979,7 @@
 			]
 		},
 		{
-			"identifier": "OneWayPortal",
+			"identifier": "PortalOneWay",
 			"uid": 25,
 			"tags": ["portal"],
 			"exportToToc": false,
@@ -972,6 +1012,46 @@
 			"pivotX": 0,
 			"pivotY": 0,
 			"fieldDefs": [
+				{
+					"identifier": "Interactable",
+					"doc": null,
+					"__type": "LocalEnum.Actor",
+					"uid": 92,
+					"type": "F_Enum(40)",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Portal"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				},
 				{
 					"identifier": "id",
 					"doc": "The ID of this Portal used by another Portal's `arrive_at`",
@@ -1122,7 +1202,7 @@
 				{
 					"identifier": "Interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 86,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -1238,7 +1318,7 @@
 				{
 					"identifier": "Interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 87,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -1320,7 +1400,7 @@
 		{
 			"identifier": "DoorBrown1",
 			"uid": 19,
-			"tags": [ "interactable", "door" ],
+			"tags": ["door"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -1354,7 +1434,7 @@
 				{
 					"identifier": "interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 43,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -1550,7 +1630,7 @@
 		{
 			"identifier": "DoorBrown4",
 			"uid": 32,
-			"tags": [ "interactable", "door" ],
+			"tags": ["door"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -1584,7 +1664,7 @@
 				{
 					"identifier": "interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 44,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -1781,7 +1861,7 @@
 			]
 		},
 		{
-			"identifier": "Worldspawn",
+			"identifier": "WorldSpawn",
 			"uid": 35,
 			"tags": ["spawn"],
 			"exportToToc": true,
@@ -1813,7 +1893,48 @@
 			"limitBehavior": "PreventAdding",
 			"pivotX": 0,
 			"pivotY": 0,
-			"fieldDefs": []
+			"fieldDefs": [
+				{
+					"identifier": "Interactable",
+					"doc": null,
+					"__type": "LocalEnum.Actor",
+					"uid": 93,
+					"type": "F_Enum(40)",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Spawn"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				}
+			]
 		},
 		{
 			"identifier": "Brazier",
@@ -1852,7 +1973,7 @@
 				{
 					"identifier": "Interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 88,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -1934,7 +2055,7 @@
 		{
 			"identifier": "Speaker",
 			"uid": 75,
-			"tags": [ "npc", "interactable" ],
+			"tags": ["npc"],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -1968,7 +2089,7 @@
 				{
 					"identifier": "Interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 90,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -2121,7 +2242,7 @@
 		{
 			"identifier": "Combatant",
 			"uid": 78,
-			"tags": [ "interactable", "combatant", "mob" ],
+			"tags": [ "combatant", "mob" ],
 			"exportToToc": false,
 			"allowOutOfBounds": false,
 			"doc": null,
@@ -2266,7 +2387,7 @@
 				{
 					"identifier": "Interactable",
 					"doc": null,
-					"__type": "LocalEnum.Interactable",
+					"__type": "LocalEnum.Actor",
 					"uid": 89,
 					"type": "F_Enum(40)",
 					"isArray": false,
@@ -2395,7 +2516,7 @@
 			}
 		}
 	], "enums": [
-		{ "identifier": "Interactable", "uid": 40, "values": [
+		{ "identifier": "Actor", "uid": 40, "values": [
 			{ "id": "Combatant", "tileRect": { "tilesetUid": 37, "x": 544, "y": 96, "w": 16, "h": 16 }, "color": 12470831 },
 			{ "id": "Speaker", "tileRect": { "tilesetUid": 37, "x": 608, "y": 208, "w": 16, "h": 16 }, "color": 14120515 },
 			{ "id": "Door", "tileRect": { "tilesetUid": 37, "x": 48, "y": 144, "w": 16, "h": 16 }, "color": 15389866 },
@@ -2543,7 +2664,7 @@
 					"gridTiles": [],
 					"entityInstances": [
 						{
-							"__identifier": "Worldspawn",
+							"__identifier": "WorldSpawn",
 							"__grid": [7,10],
 							"__pivot": [0,0],
 							"__tags": ["spawn"],
@@ -2554,12 +2675,12 @@
 							"height": 16,
 							"defUid": 35,
 							"px": [112,160],
-							"fieldInstances": [],
+							"fieldInstances": [{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
 							"__worldX": 112,
 							"__worldY": 160
 						},
 						{
-							"__identifier": "TwoWayPortal",
+							"__identifier": "PortalTwoWay",
 							"__grid": [7,5],
 							"__pivot": [0,0],
 							"__tags": ["portal"],
@@ -2571,6 +2692,7 @@
 							"defUid": 11,
 							"px": [112,80],
 							"fieldInstances": [
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
 								{ "__identifier": "id", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["upstairs"]
@@ -2605,11 +2727,8 @@
 							"defUid": 16,
 							"px": [64,48],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
-								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["64,240,16,16"]
-								}] }
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [null] }
 							],
 							"__worldX": 64,
 							"__worldY": 48
@@ -2627,7 +2746,7 @@
 							"defUid": 16,
 							"px": [176,48],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 176,
@@ -2646,7 +2765,7 @@
 							"defUid": 16,
 							"px": [176,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 176,
@@ -2665,7 +2784,7 @@
 							"defUid": 16,
 							"px": [64,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 64,
@@ -2675,7 +2794,7 @@
 							"__identifier": "ChestBrown",
 							"__grid": [10,8],
 							"__pivot": [0,0],
-							"__tags": [ "chest", "interactable" ],
+							"__tags": ["chest"],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 },
 							"__smartColor": "#FEAE34",
 							"iid": "9e7acf30-21a0-11f1-870d-9fbfadaf1f87",
@@ -2684,7 +2803,7 @@
 							"defUid": 4,
 							"px": [160,128],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2703,7 +2822,7 @@
 							"__identifier": "ChestBrown",
 							"__grid": [3,11],
 							"__pivot": [0,0],
-							"__tags": [ "chest", "interactable" ],
+							"__tags": ["chest"],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 },
 							"__smartColor": "#FEAE34",
 							"iid": "a4f26350-21a0-11f1-870d-6b9278ab57d2",
@@ -2712,7 +2831,7 @@
 							"defUid": 4,
 							"px": [48,176],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2731,7 +2850,7 @@
 							"__identifier": "DoorBrown4",
 							"__grid": [9,5],
 							"__pivot": [0,0],
-							"__tags": [ "interactable", "door" ],
+							"__tags": ["door"],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 },
 							"__smartColor": "#FEE761",
 							"iid": "90e4a6a0-21a0-11f1-870d-8777bdd91bf0",
@@ -2740,7 +2859,7 @@
 							"defUid": 32,
 							"px": [144,80],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -2756,7 +2875,7 @@
 							"__identifier": "Pot",
 							"__grid": [12,3],
 							"__pivot": [0,0],
-							"__tags": [ "chest", "interactable" ],
+							"__tags": ["chest"],
 							"__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 },
 							"__smartColor": "#FEAE34",
 							"iid": "f3b7b920-21a0-11f1-870d-b33f34c033b9",
@@ -2765,7 +2884,7 @@
 							"defUid": 69,
 							"px": [192,48],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2780,7 +2899,7 @@
 							"__identifier": "Pot",
 							"__grid": [7,3],
 							"__pivot": [0,0],
-							"__tags": [ "chest", "interactable" ],
+							"__tags": ["chest"],
 							"__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 },
 							"__smartColor": "#FEAE34",
 							"iid": "f4dadc60-21a0-11f1-870d-c5ac8fc61a71",
@@ -2789,7 +2908,7 @@
 							"defUid": 69,
 							"px": [112,48],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2807,7 +2926,7 @@
 							"__identifier": "DoorBrown4",
 							"__grid": [3,9],
 							"__pivot": [0,0],
-							"__tags": [ "interactable", "door" ],
+							"__tags": ["door"],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 },
 							"__smartColor": "#FEE761",
 							"iid": "001082e0-21a0-11f1-a749-9fd2574bef79",
@@ -2816,7 +2935,7 @@
 							"defUid": 32,
 							"px": [48,144],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -2841,7 +2960,7 @@
 							"defUid": 48,
 							"px": [192,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 88, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 88, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "defUid": 49, "realEditorValues": [] }
 							],
 							"__worldX": 192,
@@ -3024,7 +3143,7 @@
 							"__identifier": "ChestWhite",
 							"__grid": [8,10],
 							"__pivot": [0,0],
-							"__tags": [ "chest", "interactable" ],
+							"__tags": ["chest"],
 							"__tile": { "tilesetUid": 2, "x": 160, "y": 96, "w": 16, "h": 16 },
 							"__smartColor": "#FEAE34",
 							"iid": "b952abe0-21a0-11f1-94b8-0d15c2010b9a",
@@ -3033,7 +3152,7 @@
 							"defUid": 29,
 							"px": [128,160],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Chest", "__tile": null, "defUid": 42, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 42, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -3049,7 +3168,7 @@
 							"__identifier": "DoorBrown1",
 							"__grid": [7,8],
 							"__pivot": [0,0],
-							"__tags": [ "interactable", "door" ],
+							"__tags": ["door"],
 							"__tile": { "tilesetUid": 2, "x": 80, "y": 144, "w": 16, "h": 16 },
 							"__smartColor": "#FEE761",
 							"iid": "bbe4ef80-21a0-11f1-94b8-97894c596305",
@@ -3058,7 +3177,7 @@
 							"defUid": 19,
 							"px": [112,128],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Interactable", "__value": "Door", "__tile": null, "defUid": 43, "realEditorValues": [{
+								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 43, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -3086,7 +3205,7 @@
 							"defUid": 16,
 							"px": [80,64],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 80,
@@ -3105,7 +3224,7 @@
 							"defUid": 16,
 							"px": [160,64],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 160,
@@ -3124,7 +3243,7 @@
 							"defUid": 16,
 							"px": [160,160],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 160,
@@ -3143,14 +3262,14 @@
 							"defUid": 16,
 							"px": [80,160],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Interactable", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 80,
 							"__worldY": 160
 						},
 						{
-							"__identifier": "TwoWayPortal",
+							"__identifier": "PortalTwoWay",
 							"__grid": [7,5],
 							"__pivot": [0,0],
 							"__tags": ["portal"],
@@ -3162,6 +3281,7 @@
 							"defUid": 11,
 							"px": [112,80],
 							"fieldInstances": [
+								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
 								{ "__identifier": "id", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["upstairs"]
