@@ -26,7 +26,7 @@ pub enum Interactable {
 }
 
 impl Interactable {
-    pub fn from(tile_idx: TileIdx) -> Option<Interactable> {
+    pub fn from_tile(tile_idx: TileIdx) -> Option<Interactable> {
         match tile_idx {
             TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
                 is_open: false,
@@ -207,7 +207,7 @@ pub fn process_dialogue(
 pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
     for (entity, &tile_idx) in tiles.iter() {
         if tile_idx.is_interactable() {
-            if let Some(bundle) = Interactable::from(tile_idx) {
+            if let Some(bundle) = Interactable::from_tile(tile_idx) {
                 info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
                 commands.entity(entity).insert(bundle);
             } else {
