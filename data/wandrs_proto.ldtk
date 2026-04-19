@@ -173,8 +173,8 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "interactable",
-					"doc": "interactable type",
+					"identifier": "actor",
+					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 41,
 					"type": "F_Enum(40)",
@@ -403,8 +403,8 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "interactable",
-					"doc": "interactable type",
+					"identifier": "actor",
+					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 72,
 					"type": "F_Enum(40)",
@@ -596,7 +596,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 42,
@@ -826,7 +826,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 91,
@@ -1200,7 +1200,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 86,
@@ -1316,7 +1316,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 87,
@@ -1432,7 +1432,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 43,
@@ -1662,7 +1662,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "interactable",
+					"identifier": "Actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 44,
@@ -1895,7 +1895,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 93,
@@ -1971,7 +1971,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 88,
@@ -2087,7 +2087,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Interactable",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 90,
@@ -2274,6 +2274,46 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
+					"identifier": "actor",
+					"doc": null,
+					"__type": "LocalEnum.Actor",
+					"uid": 89,
+					"type": "F_Enum(40)",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Combatant"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				},
+				{
 					"identifier": "tile",
 					"doc": null,
 					"__type": "Tile",
@@ -2375,46 +2415,6 @@
 					"regex": null,
 					"acceptFileTypes": null,
 					"defaultOverride": null,
-					"textLanguageMode": null,
-					"symmetricalRef": false,
-					"autoChainRef": true,
-					"allowOutOfLevelRef": true,
-					"allowedRefs": "OnlySame",
-					"allowedRefsEntityUid": null,
-					"allowedRefTags": [],
-					"tilesetUid": null
-				},
-				{
-					"identifier": "Interactable",
-					"doc": null,
-					"__type": "LocalEnum.Actor",
-					"uid": 89,
-					"type": "F_Enum(40)",
-					"isArray": false,
-					"canBeNull": false,
-					"arrayMinLength": null,
-					"arrayMaxLength": null,
-					"editorDisplayMode": "Hidden",
-					"editorDisplayScale": 1,
-					"editorDisplayPos": "Above",
-					"editorLinkStyle": "StraightArrow",
-					"editorDisplayColor": null,
-					"editorAlwaysShow": false,
-					"editorShowInWorld": true,
-					"editorCutLongValues": true,
-					"editorTextSuffix": null,
-					"editorTextPrefix": null,
-					"useForSmartColor": false,
-					"exportToToc": false,
-					"searchable": false,
-					"min": null,
-					"max": null,
-					"regex": null,
-					"acceptFileTypes": null,
-					"defaultOverride": {
-						"id": "V_String",
-						"params": ["Combatant"]
-					},
 					"textLanguageMode": null,
 					"symmetricalRef": false,
 					"autoChainRef": true,
@@ -2675,7 +2675,7 @@
 							"height": 16,
 							"defUid": 35,
 							"px": [112,160],
-							"fieldInstances": [{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
+							"fieldInstances": [{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
 							"__worldX": 112,
 							"__worldY": 160
 						},
@@ -2692,7 +2692,7 @@
 							"defUid": 11,
 							"px": [112,80],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
 								{ "__identifier": "id", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["upstairs"]
@@ -2727,7 +2727,7 @@
 							"defUid": 16,
 							"px": [64,48],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [null] }
 							],
 							"__worldX": 64,
@@ -2746,7 +2746,7 @@
 							"defUid": 16,
 							"px": [176,48],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 176,
@@ -2765,7 +2765,7 @@
 							"defUid": 16,
 							"px": [176,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 176,
@@ -2784,7 +2784,7 @@
 							"defUid": 16,
 							"px": [64,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 64,
@@ -2803,7 +2803,7 @@
 							"defUid": 4,
 							"px": [160,128],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2831,7 +2831,7 @@
 							"defUid": 4,
 							"px": [48,176],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2859,7 +2859,7 @@
 							"defUid": 32,
 							"px": [144,80],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "Actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -2884,7 +2884,7 @@
 							"defUid": 69,
 							"px": [192,48],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2908,7 +2908,7 @@
 							"defUid": 69,
 							"px": [112,48],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -2935,7 +2935,7 @@
 							"defUid": 32,
 							"px": [48,144],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "Actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -2960,7 +2960,7 @@
 							"defUid": 48,
 							"px": [192,176],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 88, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 88, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "defUid": 49, "realEditorValues": [] }
 							],
 							"__worldX": 192,
@@ -3152,7 +3152,7 @@
 							"defUid": 29,
 							"px": [128,160],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 42, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 42, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
@@ -3177,7 +3177,7 @@
 							"defUid": 19,
 							"px": [112,128],
 							"fieldInstances": [
-								{ "__identifier": "interactable", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 43, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 43, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -3205,7 +3205,7 @@
 							"defUid": 16,
 							"px": [80,64],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 80,
@@ -3224,7 +3224,7 @@
 							"defUid": 16,
 							"px": [160,64],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 160,
@@ -3243,7 +3243,7 @@
 							"defUid": 16,
 							"px": [160,160],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 160,
@@ -3262,7 +3262,7 @@
 							"defUid": 16,
 							"px": [80,160],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 86, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 64, "y": 240, "w": 16, "h": 16 }, "defUid": 46, "realEditorValues": [] }
 							],
 							"__worldX": 80,
@@ -3281,7 +3281,7 @@
 							"defUid": 11,
 							"px": [112,80],
 							"fieldInstances": [
-								{ "__identifier": "Interactable", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
 								{ "__identifier": "id", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["upstairs"]
