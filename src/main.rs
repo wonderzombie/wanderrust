@@ -288,14 +288,14 @@ fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
 
 fn click_observer(
     on: On<Pointer<Click>>,
-    tile_cells: Query<(&TileIdx, &Cell)>,
+    tile_cells: Query<(&TileIdx, &Cell, &ChildOf)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut log: ResMut<event_log::MessageLog>,
     mut actions: MessageWriter<Action>,
 ) {
     let (entity, &origin_cell) = *player;
     match tile_cells.get(on.event_target()) {
-        Ok((tile_idx, &cell)) => {
+        Ok((tile_idx, &cell, child_of)) => {
             let orig = origin_cell;
             let delta = orig - cell;
 
@@ -320,7 +320,10 @@ fn click_observer(
                 info!("action: {:?}", action);
                 actions.write(action);
             } else if on.button == PointerButton::Primary {
-                log.add(format!("{} = {}", cell, tile_idx), Color::WHITE);
+                log.add(
+                    format!("{} = {} (strat {:?})", cell, tile_idx, child_of),
+                    Color::WHITE,
+                );
             }
         }
         Err(err) => {
