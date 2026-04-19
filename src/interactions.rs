@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
-#[derive(Component, Debug, Default, Reflect, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 pub enum Interactable {
     Door {
         is_open: bool,

@@ -10,9 +10,10 @@ use serde_json::Value;
 use crate::{
     cell::Cell,
     gamestate::GameState,
-    light::LightLevel,
-    tilemap::{ActorCell, Dimensions, PortalCell, StratumId, TileCell, TilemapSpec},
-    tiles::{self, TileIdx},
+    interactions::{self, Interactable},
+    light::{self, Emitter, LightLevel},
+    tilemap::{self, Dimensions, Portal, PortalCell, StratumId, TileCell, TilemapSpec},
+    tiles::{self, SHEET_SIZE_G, TileIdx},
 };
 
 pub trait FieldMapExt {
@@ -144,6 +145,18 @@ pub struct LdtkPxTile {
     atlas_y_px: i32,
 }
 
+impl From<LdtkPxTile> for TileIdx {
+    fn from(value: LdtkPxTile) -> TileIdx {
+        let cell = Cell::new(value.atlas_x_px / 16, value.atlas_y_px / 16);
+        let emitter_tile_idx = cell.to_idx(SHEET_SIZE_G.x);
+        TileIdx::pairs()
+            .iter()
+            .find(|(idx, tile)| *idx == emitter_tile_idx)
+            .map(|(_, tile)| *tile)
+            .unwrap_or_default()
+    }
+}
+
 impl From<LdtkPxTile> for Cell {
     fn from(value: LdtkPxTile) -> Self {
         Cell::new(value.atlas_x_px, value.atlas_y_px)
@@ -183,8 +196,12 @@ pub fn generate_ldtk_tilemap(
     let lookup = TileIdx::reverse_lookup();
 
     let mut distinct_tiles = HashSet::<TileIdx>::new();
-    let mut new_tiles: Vec<TileCell> = Vec::new();
     let mut distinct_entities = HashSet::<(String, Cell)>::new();
+
+    let mut new_tiles: Vec<TileCell> = Vec::new();
+    let mut new_portals: Vec<PortalCell> = Vec::new();
+    let mut new_interx: Vec<(Interactable, Cell)> = Vec::new();
+    let mut new_emitters: Vec<(Emitter, Cell)> = Vec::new();
 
     let level = project.levels.get(0).unwrap();
     let mut spawn: Option<Cell> = None;
@@ -218,17 +235,26 @@ pub fn generate_ldtk_tilemap(
                 let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
-                if actor.identifier.eq_ignore_ascii_case("WorldSpawn") {
-                    spawn = Some(cell);
+                match ParsedActor::from_ldtk(actor) {
+                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, cell)),
+                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, cell)),
+                    Some(ParsedActor::Portal(p)) => new_portals.push((p, cell)),
+                    Some(ParsedActor::Spawn) => spawn = Some(cell),
+                    None => warn!("ignoring unparsable actor"),
                 }
             }
         }
     }
-    println!("new tiles: {:?}", &new_tiles);
+    info!("new tiles: {}", new_tiles.len());
+    info!("new emitters: {}", new_emitters.len());
+    info!("new interactables: {}", new_interx.len());
+    info!("new portals: {}", new_portals.len());
 
     // HACKHACK for testing
     let mut spec = TilemapSpec::default();
     spec.all_tiles.insert(StratumId(0), new_tiles);
+    spec.all_portals.insert(StratumId(0), new_portals);
+    spec.all_interx.insert(StratumId(0), new_interx);
     spec.light_level = LightLevel::Bright;
     spec.size = Dimensions {
         width: c_wid as u32,
@@ -268,10 +294,6 @@ macro_rules! enum_with_str {
                 &[ $( (stringify!($variant), $enum_name::$variant), )* ]
             }
 
-            pub fn reverse_lookup() -> HashMap<&'static str, $enum_name> {
-                $enum_name::pairs().iter().copied().collect()
-            }
-
             pub fn from_str(value: &str) -> Option<$enum_name> {
                 Self::pairs().iter().find(|(s, _)| &value == s).copied().map(|(_, v)| v)
             }
@@ -283,3 +305,24 @@ enum_with_str!(
     LdtkActor,
     [Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn]
 );
+
+pub enum ParsedActor {
+    Interactable(interactions::Interactable),
+    Portal(tilemap::Portal),
+    Emitter(light::Emitter),
+    Spawn,
+}
+
+impl LdtkEntityExt<ParsedActor> for ParsedActor {
+    fn from_ldtk(entity: &LdtkEntity) -> Option<ParsedActor> {
+        match entity.ty()? {
+            LdtkActor::Chest | LdtkActor::Door | LdtkActor::Combatant | LdtkActor::Speaker => {
+                Interactable::from_ldtk(entity).map(Self::Interactable)
+            }
+            LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
+            LdtkActor::Spawn => Some(Self::Spawn),
+            LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
+            LdtkActor::Unset => None,
+        }
+    }
+}

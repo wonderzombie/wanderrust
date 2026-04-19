@@ -106,6 +106,13 @@ impl Cell {
             y: agent_pos.0.y as i32,
         }
     }
+
+    pub fn from_px(px: f32, py: f32, tile_size: f32) -> Self {
+        Cell {
+            x: px.div(tile_size) as i32,
+            y: py.div(tile_size) as i32,
+        }
+    }
 }
 
 impl Display for Cell {

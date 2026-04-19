@@ -89,6 +89,23 @@ impl Emitter {
         None
     }
 
+    pub fn from_ldtk(value: &LdtkEntity) -> Option<Emitter> {
+        if value.ty().is_none_or(|it| it != LdtkActor::Emitter) {
+            return None;
+        }
+
+        // TODO: match on other properties, potentially.
+        let tile = match value.identifier.to_ascii_lowercase().as_str() {
+            "torch" => TileIdx::Torch,
+            "candle" => TileIdx::Candle,
+            "brazier" => TileIdx::Brazier,
+            _ => TileIdx::Candle,
+            // _ => value
+        };
+
+        Emitter::from_tile(&tile)
+    }
+
     // Used in test.
     #[allow(dead_code)]
     fn total_radius(&self) -> i32 {
