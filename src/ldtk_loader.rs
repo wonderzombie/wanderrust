@@ -275,7 +275,7 @@ pub fn generate_ldtk_tilemap(
     let mut spec = TilemapSpec::default();
     spec.all_tiles.insert(StratumId(0), new_tiles);
     spec.all_portals.insert(StratumId(0), new_portals);
-    spec.all_interx.insert(StratumId(0), new_interx);
+    spec.all_interxs.insert(StratumId(0), new_interx);
     spec.light_level = LightLevel::Bright;
     spec.size = Dimensions {
         width: c_wid as u32,

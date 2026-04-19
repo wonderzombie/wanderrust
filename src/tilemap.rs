@@ -61,7 +61,7 @@ pub type EmitterCell = (Emitter, Cell);
 
 pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
-pub type StratInterx = HashMap<StratumId, Vec<InterxCell>>;
+pub type StratInterxs = HashMap<StratumId, Vec<InterxCell>>;
 pub type StratEmitters = HashMap<StratumId, Vec<EmitterCell>>;
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
@@ -74,7 +74,7 @@ pub struct TilemapSpec {
     /// Tiles and portals keyed by StratumId drive tilemap creation.
     pub all_tiles: StratTiles,
     pub all_portals: StratPortals,
-    pub all_interx: StratInterx,
+    pub all_interxs: StratInterxs,
     pub all_emitters: StratEmitters,
     /// Starting point for the player.
     pub spawn_point: Cell,
