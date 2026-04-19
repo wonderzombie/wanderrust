@@ -137,11 +137,15 @@ impl LdtkEntity {
         }
     }
 
-    pub fn get_tile(&self, key: &str) -> Option<TileIdx> {
+    pub fn get_tile_field(&self, key: &str) -> Option<TileIdx> {
         match self.field_val(key) {
             Some(ParsedValue::PxTile(t)) => Some(t),
             _ => None,
         }
+    }
+
+    pub fn get_default_tile(&self) -> TileIdx {
+        self.tile.into()
     }
 }
 
@@ -177,10 +181,10 @@ pub struct LdtkPxTile {
 impl From<LdtkPxTile> for TileIdx {
     fn from(value: LdtkPxTile) -> TileIdx {
         let cell = Cell::new(value.atlas_x_px / 16, value.atlas_y_px / 16);
-        let emitter_tile_idx = cell.to_idx(SHEET_SIZE_G.x);
+        let tile_idx = cell.to_idx(SHEET_SIZE_G.x);
         TileIdx::pairs()
             .iter()
-            .find(|(idx, _)| *idx == emitter_tile_idx)
+            .find(|(idx, _)| *idx == tile_idx)
             .map(|(_, tile)| *tile)
             .unwrap_or_default()
     }
@@ -255,14 +259,17 @@ pub fn generate_ldtk_tilemap(
                 let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
-                let t = actor.get_tile("tile").unwrap_or_default();
+                let t: TileIdx = actor.get_default_tile();
+                if t == TileIdx::Blank {
+                    warn!("actor has blank tile: {:?}", actor);
+                }
 
                 match ParsedActor::from_ldtk(actor) {
                     Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, cell)),
                     Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, cell)),
                     Some(ParsedActor::Portal(p)) => new_portals.push((p, t, cell)),
                     Some(ParsedActor::Spawn) => spawn = Some(cell),
-                    None => warn!("ignoring unparsable actor"),
+                    None => warn!("ignoring unparsable actor: {:?}", actor),
                 }
             }
         }
