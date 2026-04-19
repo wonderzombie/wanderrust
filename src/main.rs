@@ -145,7 +145,10 @@ fn main() {
             finalize_loading.after(GameSystem::SetupGrid),
         ),
     )
-    .add_systems(OnExit(GameState::Loading), actors::setup_player)
+    .add_systems(
+        OnExit(GameState::Loading),
+        (actors::setup_player, interactions::spawn),
+    )
     .add_systems(
         OnEnter(GameState::AwaitingInput),
         (
@@ -176,7 +179,6 @@ fn main() {
             )
                 .chain()
                 .in_set(GameSystem::Ramifications),
-            interactions::setup,
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
             ldtk_loader::generate_ldtk_tilemap.run_if(resource_added::<LdtkProject>),

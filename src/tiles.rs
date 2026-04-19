@@ -142,6 +142,7 @@ tiles! {
     ChestBrownOpen = atlas_idx(9, 6),
     ChestWhiteClosed = atlas_idx(10, 6),
     ChestWhiteOpen = atlas_idx(11, 6),
+    Pot = atlas_idx(5, 14),
 
     // Doors
     DoorBrownThickClosed1 = atlas_idx(3, 9),
@@ -244,6 +245,9 @@ impl TileIdx {
         DoorBrownThickClosed1,
         DoorBrownThickClosed2,
         DoorBrownThickClosed3,
+        DoorBrownThinClosed1,
+        DoorBrownThinClosed2,
+        DoorBrownThinClosed3,
         RockLarge,
         RockMedium,
     ];
@@ -254,6 +258,9 @@ impl TileIdx {
         DoorBrownThickClosed1,
         DoorBrownThickClosed2,
         DoorBrownThickClosed3,
+        DoorBrownThinClosed1,
+        DoorBrownThinClosed2,
+        DoorBrownThinClosed3,
     ];
 
     const FLIPPABLE: &'static [TileIdx] = &[
@@ -277,6 +284,9 @@ impl TileIdx {
                 DoorBrownThickClosed1,
                 DoorBrownThickClosed2,
                 DoorBrownThickClosed3,
+                DoorBrownThinClosed1,
+                DoorBrownThinClosed2,
+                DoorBrownThinClosed3,
                 DoorwayBrownThick,
             ],
             "door",
