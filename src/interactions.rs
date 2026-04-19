@@ -232,7 +232,7 @@ pub fn spawn(
                         tile_idx: *t,
                         piece: PieceBundle {
                             cell: *cell,
-                            sprite: atlas.sprite(),
+                            sprite: atlas.sprite_from_idx(*t),
                             ..default()
                         },
                         ..default()
