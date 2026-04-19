@@ -177,8 +177,14 @@ impl TileStorage {
 }
 
 /// EntryId uniquely identifies a [`Portal`].
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Hash, Eq, PartialEq, Reflect)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Hash, Eq, Reflect)]
 pub struct EntryId(pub String);
+
+impl PartialEq for EntryId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq_ignore_ascii_case(other.0.as_str())
+    }
+}
 
 impl From<&str> for EntryId {
     fn from(value: &str) -> Self {
