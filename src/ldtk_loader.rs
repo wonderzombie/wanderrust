@@ -92,7 +92,7 @@ impl LdtkEntity {
             .and_then(LdtkActor::from_str)
     }
 
-    pub fn field_val(&self, key: &str) -> Option<ParsedValue> {
+    fn field_val(&self, key: &str) -> Option<ParsedValue> {
         self.field_instances
             .iter()
             .find(|it| it.identifier.eq_ignore_ascii_case(key))
@@ -180,12 +180,6 @@ impl From<LdtkPxTile> for TileIdx {
             .find(|(idx, _)| *idx == emitter_tile_idx)
             .map(|(_, tile)| *tile)
             .unwrap_or_default()
-    }
-}
-
-impl From<LdtkPxTile> for Cell {
-    fn from(value: LdtkPxTile) -> Self {
-        Cell::new(value.atlas_x_px, value.atlas_y_px)
     }
 }
 
