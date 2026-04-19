@@ -121,7 +121,7 @@ impl LdtkEntity {
     }
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone, Copy)]
 pub struct LdtkGridTile {
     #[serde(rename = "t")]
     pub atlas_idx: usize,
@@ -131,6 +131,15 @@ pub struct LdtkGridTile {
     pub flip_bits: i32,
     #[serde(rename = "px")]
     pub px: Vec2,
+}
+
+impl From<TileIdx> for LdtkGridTile {
+    fn from(value: TileIdx) -> Self {
+        Self {
+            atlas_idx: value.into(),
+            ..default()
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Default)]
