@@ -163,7 +163,7 @@ impl From<TileIdx> for LdtkGridTile {
     }
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Copy, Clone)]
 pub struct LdtkPxTile {
     #[serde(rename = "x")]
     atlas_x_px: i32,
