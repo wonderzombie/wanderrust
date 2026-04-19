@@ -200,7 +200,7 @@ pub fn generate_ldtk_tilemap(
         c_wid = c_wid.max(layer.c_width);
         c_hei = c_hei.max(layer.c_height);
 
-        if layer.layer_type.to_ascii_lowercase().eq("tiles") {
+        if layer.layer_type.eq_ignore_ascii_case("tiles") {
             for tile in &layer.grid_tiles {
                 let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
                 distinct_tiles.insert(tile_idx);
@@ -213,12 +213,12 @@ pub fn generate_ldtk_tilemap(
             }
         }
 
-        if layer.layer_type.to_ascii_lowercase().eq("entities") {
+        if layer.layer_type.eq_ignore_ascii_case("entities") {
             for actor in &layer.entities {
                 let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
-                if actor.identifier.eq_ignore_ascii_case("Worldspawn") {
+                if actor.identifier.eq_ignore_ascii_case("WorldSpawn") {
                     spawn = Some(cell);
                 }
             }
