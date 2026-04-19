@@ -156,7 +156,7 @@ impl From<LdtkPxTile> for TileIdx {
         let emitter_tile_idx = cell.to_idx(SHEET_SIZE_G.x);
         TileIdx::pairs()
             .iter()
-            .find(|(idx, tile)| *idx == emitter_tile_idx)
+            .find(|(idx, _)| *idx == emitter_tile_idx)
             .map(|(_, tile)| *tile)
             .unwrap_or_default()
     }
