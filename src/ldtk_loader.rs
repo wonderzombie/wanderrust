@@ -11,7 +11,7 @@ use crate::{
     cell::Cell,
     gamestate::GameState,
     light::LightLevel,
-    tilemap::{Dimensions, StratumId, TileCell, TilemapSpec},
+    tilemap::{ActorCell, Dimensions, PortalCell, StratumId, TileCell, TilemapSpec},
     tiles::{self, TileIdx},
 };
 
@@ -239,11 +239,11 @@ pub fn generate_ldtk_tilemap(
     spec.spawn_point = if let Some(spawn) = spawn {
         spawn
     } else {
-        warn!("did not find spawn point");
+        error!("did not find spawn point");
         Cell::default()
     };
 
-    info!("spawning at {}", spec.spawn_point);
+    info!("setting spawn to {}", spec.spawn_point);
 
     commands.insert_resource(spec);
 

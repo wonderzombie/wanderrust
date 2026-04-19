@@ -10,7 +10,7 @@ use crate::{
     actors::Player,
     atlas::SpriteAtlas,
     cell::Cell,
-    ldtk_loader::{FieldMapExt, Iid, LdtkActor, LdtkEntity, LdtkEntityExt},
+    ldtk_loader::{FieldMapExt, LdtkActor, LdtkEntity, LdtkEntityExt},
     light::LightLevel,
     tiles::{MapTile, Revealed, TileIdx},
 };
