@@ -1441,7 +1441,7 @@
 					"canBeNull": false,
 					"arrayMinLength": null,
 					"arrayMaxLength": null,
-					"editorDisplayMode": "ValueOnly",
+					"editorDisplayMode": "Hidden",
 					"editorDisplayScale": 1,
 					"editorDisplayPos": "Above",
 					"editorLinkStyle": "StraightArrow",
@@ -1662,7 +1662,7 @@
 			"pivotY": 0,
 			"fieldDefs": [
 				{
-					"identifier": "Actor",
+					"identifier": "actor",
 					"doc": null,
 					"__type": "LocalEnum.Actor",
 					"uid": 44,
@@ -2859,7 +2859,7 @@
 							"defUid": 32,
 							"px": [144,80],
 							"fieldInstances": [
-								{ "__identifier": "Actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
@@ -2935,7 +2935,7 @@
 							"defUid": 32,
 							"px": [48,144],
 							"fieldInstances": [
-								{ "__identifier": "Actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
