@@ -119,6 +119,27 @@ impl LdtkEntity {
             _ => None,
         }
     }
+
+    pub fn get_actor_enum(&self, key: &str) -> Option<String> {
+        match self.field_val(key) {
+            Some(ParsedValue::ActorEnum(s)) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn get_light_enum(&self, key: &str) -> Option<String> {
+        match self.field_val(key) {
+            Some(ParsedValue::LightLevelEnum(l)) => Some(l),
+            _ => None,
+        }
+    }
+
+    pub fn get_tile(&self, key: &str) -> Option<TileIdx> {
+        match self.field_val(key) {
+            Some(ParsedValue::PxTile(t)) => Some(t),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Default, Clone, Copy)]
@@ -311,13 +332,13 @@ macro_rules! enum_with_str {
 pub enum ParsedValue {
     #[default]
     Unset,
-    Actor(String),
+    ActorEnum(String),
     Ztring(String),
-    PxTile(i32, i32),
+    PxTile(TileIdx),
     Bool(bool),
     EntityRef(HashMap<String, String>),
     ArrayString(Vec<String>),
-    LiteLevel(String),
+    LightLevelEnum(String),
 }
 
 impl From<LdtkField> for ParsedValue {
@@ -333,11 +354,11 @@ impl From<&LdtkField> for ParsedValue {
         let val = field.val.clone();
         match field.field_type.as_str() {
             "LocalEnum.Actor" => match val.as_str() {
-                Some(s) => Actor(s.to_string()),
+                Some(s) => ActorEnum(s.to_string()),
                 None => Unset,
             },
             "LocalEnum.LightLevel" => match val.as_str() {
-                Some(s) => LiteLevel(s.to_string()),
+                Some(l) => LightLevelEnum(l.to_string()),
                 None => Unset,
             },
             "String" => match val.as_str() {
@@ -345,7 +366,7 @@ impl From<&LdtkField> for ParsedValue {
                 None => Unset,
             },
             "Tile" => match from_value::<LdtkPxTile>(val) {
-                Ok(tile) => PxTile(tile.atlas_x_px, tile.atlas_y_px),
+                Ok(px_tile) => PxTile(px_tile.into()),
                 Err(_) => Unset,
             },
             "Bool" => match field.val.as_bool() {
