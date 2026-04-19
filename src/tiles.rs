@@ -144,10 +144,13 @@ tiles! {
     ChestWhiteOpen = atlas_idx(11, 6),
 
     // Doors
-    DoorwayBrownThick = atlas_idx(6, 9),
     DoorBrownThickClosed1 = atlas_idx(3, 9),
     DoorBrownThickClosed2 = atlas_idx(4, 9),
     DoorBrownThickClosed3 = atlas_idx(5, 9),
+    DoorwayBrownThick = atlas_idx(6, 9),
+    DoorBrownThinClosed1 = atlas_idx(7, 9),
+    DoorBrownThinClosed2 = atlas_idx(8, 9),
+    DoorBrownThinClosed3 = atlas_idx(9, 9),
 
     Bars = atlas_idx(5, 3),
     BarsBroken = atlas_idx(6, 3),

@@ -246,10 +246,6 @@ pub fn generate_ldtk_tilemap(
                 let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
                 distinct_tiles.insert(tile_idx);
                 let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
-                println!(
-                    "px {} {} grid {} {} tile {}",
-                    tile.px.x, tile.px.y, cell.x, cell.y, tile_idx,
-                );
                 new_tiles.push((tile_idx, cell));
             }
         }
