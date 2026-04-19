@@ -44,18 +44,18 @@ impl Interactable {
 }
 
 impl LdtkEntityExt<Interactable> for Interactable {
-    fn from_ldtk(ldtk_entity: &LdtkEntity) -> Option<Interactable> {
-        let Some(ty) = ldtk_entity.ty() else {
+    fn from_ldtk(value: &LdtkEntity) -> Option<Interactable> {
+        let Some(ty) = value.ty() else {
             warn!(
                 "unknown interactable type: {:?} on LdtkEntity {:?}",
-                ldtk_entity.ty(),
-                ldtk_entity
+                value.ty(),
+                value
             );
             return None;
         };
 
         use Interactable::*;
-        let fm = ldtk_entity.field_map();
+        let fm = value.field_map();
 
         let it = match ty {
             LdtkActor::Combatant => Combatant,

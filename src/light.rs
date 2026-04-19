@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::ldtk_loader::{LdtkActor, LdtkEntity};
 use crate::tilemap::TilemapSpec;
 use crate::tiles::{MapTile, Revealed, TileIdx};
 use crate::{cell::Cell, tilemap::TileStorage};
@@ -43,7 +44,7 @@ impl From<LightLevel> for f32 {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Reflect)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 struct LightRing {
     level: LightLevel,
     thickness: i32,
@@ -55,7 +56,9 @@ impl From<(LightLevel, i32)> for LightRing {
     }
 }
 
-#[derive(Component, Default, Debug, Copy, Clone, PartialEq, Eq, Reflect)]
+#[derive(
+    Component, Default, Debug, Copy, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize,
+)]
 pub struct Emitter {
     inner: LightRing,
     outer: LightRing,
