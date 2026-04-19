@@ -2,10 +2,13 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    actors::{Actor, PieceBundle},
+    atlas::SpriteAtlas,
     colors, combat,
     event_log::MessageLog,
     inventory::{self, *},
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
+    tilemap::{Stratum, TilemapSpec},
     tiles::TileIdx,
 };
 
@@ -194,6 +197,52 @@ pub fn process_dialogue(
         };
 
         log.add(dialogue.advance(), colors::KENNEY_BLUE);
+    }
+}
+
+#[derive(Bundle, Default)]
+struct InterxBundle {
+    act: Actor,
+    tile_idx: TileIdx,
+    interx: Interactable,
+    piece: PieceBundle,
+}
+
+pub fn spawn(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    atlas: Res<SpriteAtlas>,
+    strata: Query<&Stratum>,
+) {
+    for strat in strata.iter() {
+        let Some(interxs) = spec.all_interxs.get(&strat.1) else {
+            error!(
+                "spec strata and live strata differ; spec is missing {:?}",
+                strat
+            );
+            continue;
+        };
+
+        interxs
+            .iter()
+            .map(|(interx, t, cell)| {
+                (
+                    InterxBundle {
+                        interx: interx.clone(),
+                        tile_idx: *t,
+                        piece: PieceBundle {
+                            cell: *cell,
+                            sprite: atlas.sprite(),
+                            ..default()
+                        },
+                        ..default()
+                    },
+                    ChildOf(strat.0),
+                )
+            })
+            .for_each(|b| {
+                commands.spawn(b);
+            });
     }
 }
 

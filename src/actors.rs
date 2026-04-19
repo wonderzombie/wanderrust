@@ -11,7 +11,7 @@ use crate::{
     fov::Vision,
     light::{Emitter, LightLevel},
     tilemap::{self, Stratum, TileStorage, TilemapSpec},
-    tiles::{self, MapTile, Occupied, TileIdx},
+    tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
 #[derive(Component, Debug)]
@@ -34,6 +34,7 @@ pub struct PieceBundle {
     pub transform: Transform,
     pub visibility: Visibility,
     pub pickable: Pickable,
+    pub revealed: Revealed,
 }
 
 #[derive(Resource, Debug)]
