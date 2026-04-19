@@ -178,6 +178,7 @@ pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
     Ok(project)
 }
 
+/// Converts from LDtk (+y is down) to bevy (+y is up).
 fn px_to_cell(x: f32, y: f32, level_height_px: f32) -> Cell {
     let cx = (x / 16.0) as i32;
     let cy = ((level_height_px - y) / 16.0) as i32 - 1;
