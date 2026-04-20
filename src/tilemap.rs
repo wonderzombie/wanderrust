@@ -152,7 +152,9 @@ impl Display for Dimensions {
 /// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [TilemapId].
 /// Tiles are stored as a flat vector of `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way,
 /// a cell may be empty of any tile entity.
-#[derive(Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(
+    Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
+)]
 pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
     pub size: Dimensions,

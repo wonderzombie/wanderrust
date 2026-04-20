@@ -39,7 +39,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     light::Emitter,
-    tilemap::{EntryId, Portal, Stratum, TilemapSpec},
+    tilemap::{EntryId, Portal, Stratum, TileStorage, TilemapSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -51,9 +51,10 @@ const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.
 fn insert_qf_plugins(app: &mut App) {
     app.add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Interactable>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Emitter>>::default())
+        // .add_plugins(FilterQueryInspectorPlugin::<With<Emitter>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Stratum>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Portal>>::default());
+        // .add_plugins(FilterQueryInspectorPlugin::<With<Portal>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<TileStorage>>::default());
 }
 
 fn main() {

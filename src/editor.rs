@@ -1,3 +1,4 @@
+use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 use std::path::PathBuf;
 
 use bevy::{
@@ -463,6 +464,8 @@ impl Plugin for EditorPlugin {
             )
             .insert_resource(EditorContext::default())
             .insert_state(EditorState::Disabled)
+            .add_plugins(DebugPickingPlugin)
+            .insert_resource(DebugPickingMode::Normal)
             .add_message::<LdtkMapLoadMessage>()
             .add_message::<MapLoadMessage>()
             .add_message::<MapSaveMessage>();
