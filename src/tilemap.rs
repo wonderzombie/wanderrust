@@ -107,23 +107,24 @@ impl Dimensions {
     }
 
     #[inline]
-    pub fn idx_to_cell(&self, idx: u32) -> Cell {
-        // TODO: use Cell's impl
-        Cell {
-            x: (idx % self.width) as i32,
-            y: (idx / self.width) as i32,
-        }
+    pub fn idx_to_cell(&self, idx: usize) -> Cell {
+        Cell::from_idx(self.width, idx)
     }
 
     #[inline]
-    pub fn ntiles(&self) -> usize {
+    fn ntiles(&self) -> usize {
         (self.width * self.height) as usize
     }
 
-    pub fn iter_cells(&self) -> impl Iterator<Item = Cell> {
-        (0..self.ntiles())
-            .into_iter()
-            .map(|n| self.idx_to_cell(n as u32))
+    #[inline]
+    fn cell_to_idx(&self, cell: &Cell) -> usize {
+        (cell.y * self.width as i32 + cell.x) as usize
+    }
+
+    #[inline]
+    fn idx_to_pos(&self, idx: usize) -> Vec2 {
+        let cell = self.idx_to_cell(idx);
+        self.cell_to_pos(&cell)
     }
 }
 
@@ -276,12 +277,28 @@ pub fn spawn_tilemap(
         let strat_entity = commands
             .spawn((Visibility::Visible, Transform::default()))
             .id();
+
+        let mut cells = vec![TileIdx::Blank; spec.size.ntiles()];
+
+        let mut count = 0;
+        tile_cells.iter().for_each(|(tile, cell)| {
+            let i = spec.size.cell_to_idx(cell);
+            cells[i] = *tile;
+            count += 1;
+        });
+
         let bundles = generate_tile_bundles(
             strat_entity,
             &spec.size,
-            tile_cells,
+            cells.as_ref(),
             strat_id as f32 + *MAP_LAYER,
             &sheet,
+        );
+        info!(
+            "ℹ️\t{} tiles; {} bundles; {} mapped tiles",
+            count,
+            cells.len(),
+            bundles.len(),
         );
         commands.spawn_batch(bundles);
         commands
@@ -313,19 +330,21 @@ pub fn despawn_tilemap(
 fn generate_tile_bundles(
     parent: Entity,
     dim: &Dimensions,
-    tiles: &[TileCell],
+    tiles: &[TileIdx],
     layer: f32,
     sheet: &SpriteAtlas,
 ) -> Vec<TileBundle> {
     tiles
         .iter()
-        .map(|(tile_idx, cell)| {
-            let pos = dim.cell_to_pos(cell);
+        .enumerate()
+        .map(|(i, tile_idx)| {
+            let cell = dim.idx_to_cell(i);
+            let pos = dim.cell_to_pos(&cell);
 
             TileBundle {
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
-                cell: *cell,
+                cell: cell,
                 // This puts the tile at the correct z-order based on the layer.
                 transform: Transform::from_xyz(pos.x, pos.y, layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
@@ -434,7 +453,7 @@ where
     let mut out = HashMap::new();
     for (stratum, storage) in strat_storage.iter() {
         for (i, entity_opt) in storage.tiles.iter().enumerate() {
-            let cell = size.idx_to_cell(i as u32);
+            let cell = size.idx_to_cell(i);
             if let Some(entity) = entity_opt
                 && let Ok(item) = live_items.get(*entity)
                 && *item != T::default()

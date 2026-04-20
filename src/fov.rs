@@ -83,7 +83,7 @@ pub fn setup_fov(
         commands.entity(strat.0).insert(fov);
 
         info!(
-            "✅ Initialized FOV model with {} tiles, {} opaque.",
+            "initialized FOV model with {} tiles, {} opaque.",
             tiles_count, opaque_count
         )
     }
