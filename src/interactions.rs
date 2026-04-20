@@ -200,7 +200,7 @@ pub fn process_dialogue(
     }
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle, Default, Debug)]
 struct InterxBundle {
     act: Actor,
     tile_idx: TileIdx,
@@ -217,11 +217,14 @@ pub fn spawn(
     for strat in strata.iter() {
         let Some(interxs) = spec.all_interxs.get(&strat.1) else {
             error!(
-                "spec strata and live strata differ; spec is missing {:?}",
-                strat
+                "spec strata and live strata differ; spec is missing {:?}; spec has {:?}",
+                strat,
+                spec.all_interxs.keys(),
             );
             continue;
         };
+
+        info!("{:?}: spawning interactables", strat);
 
         interxs
             .iter()
@@ -246,24 +249,24 @@ pub fn spawn(
     }
 }
 
-/// Sets up interactable objects in the world, such as doors and chests, based on the tile indices.
-///
-/// Mostly this means interactables that have such as an open/closed sprite.
-pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
-    for (entity, &tile_idx) in tiles.iter() {
-        if tile_idx.is_interactable() {
-            if let Some(bundle) = Interactable::from_tile(tile_idx) {
-                info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
-                commands.entity(entity).insert(bundle);
-            } else {
-                warn!(
-                    "found interactable tile without Interactable: {:?}",
-                    tile_idx
-                );
-            }
-        }
-    }
-}
+// /// Sets up interactable objects in the world, such as doors and chests, based on the tile indices.
+// ///
+// /// Mostly this means interactables that have such as an open/closed sprite.
+// pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
+//     for (entity, &tile_idx) in tiles.iter() {
+//         if tile_idx.is_interactable() {
+//             if let Some(bundle) = Interactable::from_tile(tile_idx) {
+//                 info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
+//                 commands.entity(entity).insert(bundle);
+//             } else {
+//                 warn!(
+//                     "found interactable tile without Interactable: {:?}",
+//                     tile_idx
+//                 );
+//             }
+//         }
+//     }
+// }
 
 pub fn plugin(app: &mut App) {
     app.add_message::<Listen>().add_message::<Examine>();
