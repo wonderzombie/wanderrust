@@ -64,7 +64,7 @@ pub fn on_loaded(
 
     sounds.loaded = true;
     commands.add_observer(on_moved_sounds);
-    info!("✅ finished initializing sounds");
+    info!("finished initializing sounds");
 }
 
 const GRASS_FOOTSTEPS: [&str; 5] = [

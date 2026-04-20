@@ -314,7 +314,7 @@ pub fn spawn_tilemap(
         .insert(Visibility::Visible)
         .insert(Name::new("Tilemap"));
 
-    info!("✅\tdone spawning tilemap\t✅")
+    info!("done spawning tilemap");
 }
 
 pub fn despawn_tilemap(
@@ -366,7 +366,6 @@ pub fn initialize_tile_storage(
     tiles: Query<&Cell, With<MapTile>>,
 ) {
     info!("storing maps by cell by stratum");
-    info!("there are {} strata", strata.iter().len());
 
     let mut num_cells = 0;
     for (stratum, children) in strata {
