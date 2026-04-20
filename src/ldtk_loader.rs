@@ -35,7 +35,6 @@ pub struct LdtkProject {
 #[derive(Debug, Deserialize)]
 pub struct LdtkLevel {
     pub identifier: String,
-    pub iid: String,
     #[serde(rename = "fieldInstances", default)]
     pub field_instances: Vec<LdtkField>,
     #[serde(rename = "layerInstances", default)]
@@ -50,7 +49,6 @@ pub struct LdtkLevel {
 pub struct LdtkLayer {
     #[serde(rename = "__identifier")]
     pub identifier: String,
-    pub iid: String,
     #[serde(rename = "__type")]
     pub layer_type: String,
     #[serde(rename = "gridTiles", default)]
@@ -77,15 +75,12 @@ pub struct LdtkField {
 pub struct LdtkEntity {
     #[serde(rename = "__identifier")]
     pub identifier: String,
-    pub iid: String,
     #[serde(rename = "__grid")]
     pub cell: LdtkCell,
     #[serde(rename = "__tile", default)]
     pub tile: LdtkPxTile,
     #[serde(rename = "fieldInstances", default)]
     pub field_instances: Vec<LdtkField>,
-    #[serde(rename = "__tags")]
-    pub tags: Vec<String>,
 }
 
 const LDTK_ENTITES_ENUM: &str = "Actor";
