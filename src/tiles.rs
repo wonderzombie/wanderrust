@@ -49,6 +49,16 @@ impl From<&TileIdx> for usize {
     }
 }
 
+impl From<usize> for TileIdx {
+    fn from(value: usize) -> Self {
+        TileIdx::pairs()
+            .iter()
+            .find(|it| it.0 == value)
+            .map(|(_, t)| *t)
+            .unwrap_or_default()
+    }
+}
+
 /// The tile size in pixels.
 pub const TILE_SIZE_PX: f32 = 16.0;
 /// The size of the tile sheet in grid units.

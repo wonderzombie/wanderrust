@@ -26,6 +26,10 @@ pub trait LdtkEntityExt<T> {
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
     pub levels: Vec<LdtkLevel>,
+    #[serde(rename = "worldGridWidth")]
+    pub grid_width: u32,
+    #[serde(rename = "worldGridHeight")]
+    pub grid_height: u32,
 }
 
 #[derive(Debug, Deserialize)]
