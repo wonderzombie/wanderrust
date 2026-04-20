@@ -90,6 +90,7 @@ pub struct LdtkEntity {
 
 const LDTK_ENTITES_ENUM: &str = "Actor";
 
+#[allow(dead_code)]
 impl LdtkEntity {
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
@@ -318,6 +319,7 @@ macro_rules! enum_with_str {
             $( $variant, )*
         }
 
+        #[allow(dead_code)]
         impl $enum_name {
             pub fn all() -> &'static [$enum_name] {
                 &[ $( $enum_name::$variant, )* ]
