@@ -181,12 +181,8 @@ pub struct LdtkPxTile {
 impl From<LdtkPxTile> for TileIdx {
     fn from(value: LdtkPxTile) -> TileIdx {
         let cell = Cell::new(value.atlas_x_px / 16, value.atlas_y_px / 16);
-        let tile_idx = cell.to_idx(SHEET_SIZE_G.x);
-        TileIdx::pairs()
-            .iter()
-            .find(|(idx, _)| *idx == tile_idx)
-            .map(|(_, tile)| *tile)
-            .unwrap_or_default()
+        let idx = cell.to_idx(SHEET_SIZE_G.x);
+        TileIdx::from_idx(idx).unwrap_or(TileIdx::GridSquare)
     }
 }
 
@@ -221,7 +217,6 @@ pub fn generate_ldtk_tilemap(
         return;
     };
     let project = project.as_ref();
-    let lookup = TileIdx::reverse_lookup();
 
     let mut distinct_tiles = HashSet::<TileIdx>::new();
     let mut distinct_entities = HashSet::<(String, Cell)>::new();
@@ -247,7 +242,7 @@ pub fn generate_ldtk_tilemap(
 
         if layer.layer_type.eq_ignore_ascii_case("tiles") {
             for tile in &layer.grid_tiles {
-                let tile_idx = lookup.get(&tile.atlas_idx).copied().unwrap_or_default();
+                let tile_idx = TileIdx::from_idx(tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
                 distinct_tiles.insert(tile_idx);
                 let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
                 new_tiles.push((tile_idx, cell));

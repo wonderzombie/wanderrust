@@ -27,6 +27,11 @@ macro_rules! tiles {
             pub fn pairs() -> &'static [(usize, TileIdx)] {
                 &[ $( ( TileIdx::$name as usize, TileIdx::$name ), )* ]
             }
+
+            /// Searches all tile indices for this specific index.
+            pub fn from_idx(idx: usize) -> Option<TileIdx> {
+                Self::pairs().iter().find(|(i, _)| i == &idx).map(|(_, t)| *t)
+            }
         }
     };
 }
@@ -46,16 +51,6 @@ impl From<TileIdx> for usize {
 impl From<&TileIdx> for usize {
     fn from(value: &TileIdx) -> Self {
         *value as usize
-    }
-}
-
-impl From<usize> for TileIdx {
-    fn from(value: usize) -> Self {
-        TileIdx::pairs()
-            .iter()
-            .find(|it| it.0 == value)
-            .map(|(_, t)| *t)
-            .unwrap_or_default()
     }
 }
 
