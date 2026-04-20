@@ -120,12 +120,6 @@ impl Dimensions {
     fn cell_to_idx(&self, cell: &Cell) -> usize {
         (cell.y * self.width as i32 + cell.x) as usize
     }
-
-    #[inline]
-    fn idx_to_pos(&self, idx: usize) -> Vec2 {
-        let cell = self.idx_to_cell(idx);
-        self.cell_to_pos(&cell)
-    }
 }
 
 impl PartialOrd for Dimensions {
