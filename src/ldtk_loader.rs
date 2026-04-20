@@ -281,8 +281,8 @@ pub fn generate_ldtk_tilemap(
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
                 let t: TileIdx = actor.get_default_tile();
-                if t == TileIdx::Blank {
-                    warn!("actor has blank tile: {:?}", actor);
+                if t == TileIdx::default() {
+                    warn!("actor has default tile: {:?}", actor);
                 }
 
                 match ParsedActor::from_ldtk(actor) {
