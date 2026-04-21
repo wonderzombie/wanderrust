@@ -22,7 +22,7 @@ pub enum Interactable {
     },
     Chest {
         is_open: bool,
-        contents: Inventory,
+        contents: Option<Inventory>,
     },
     #[default]
     Speaker,
@@ -34,7 +34,7 @@ impl Interactable {
         match tile_idx {
             TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
                 is_open: false,
-                contents: Inventory::with_item(Item("gold".to_string()), 10),
+                contents: Some(Inventory::with_item(Item("gold".to_string()), 10)),
             }),
             TileIdx::DoorBrownThickClosed1
             | TileIdx::DoorBrownThickClosed2
@@ -66,15 +66,18 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Combatant => Some(Combatant),
             LdtkActor::Speaker => Some(Speaker),
             // TODO: load requires
-            LdtkActor::Door => Some(Door {
-                is_open: entity.get_bool("is_open"),
-                requires: None,
-                tile_idx_default: tile_idx,
-            }),
+            LdtkActor::Door => {
+                let requires = entity.get_string("requires").map(Item);
+                Some(Door {
+                    is_open: entity.get_bool("is_open"),
+                    requires: requires,
+                    tile_idx_default: tile_idx,
+                })
+            }
             // TODO: load inventory items
             LdtkActor::Chest => Some(Chest {
                 is_open: entity.get_bool("is_open"),
-                contents: Inventory::default(),
+                contents: None,
             }),
             _ => None,
         }
@@ -150,10 +153,12 @@ pub fn process_interactions(
                     tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
                     info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
-                    log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                    acquisitions.write(inventory::Acquisition {
-                        items: contents.clone(),
-                    });
+                    if let Some(contents) = contents {
+                        log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
+                        acquisitions.write(inventory::Acquisition {
+                            items: contents.clone(),
+                        });
+                    }
                 }
             }
             Interactable::Speaker => {

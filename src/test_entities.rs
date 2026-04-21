@@ -168,7 +168,7 @@ pub(crate) fn add_test_chests(
         },
         Interactable::Chest {
             is_open: false,
-            contents: Inventory::with_item(Item::from("gold"), 15),
+            contents: Some(Inventory::with_item(Item::from("gold"), 15)),
         },
         ChildOf(active_stratum),
     ));
