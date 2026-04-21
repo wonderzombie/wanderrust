@@ -400,14 +400,18 @@ pub fn setup_portals(
 ) {
     for (Stratum(strat_entity, id), storage) in strat_storage.iter() {
         if let Some(portal_cells) = spec.all_portals.get(id) {
-            for (portal, tile_idx, cell) in portal_cells {
+            for (portal, _, cell) in portal_cells {
                 if let Some(tile_entity) = storage.get(cell) {
                     commands
                         .entity(tile_entity)
                         .insert(portal.clone())
-                        .insert(*tile_idx)
+                        // Use the tile explicitly set in the Portal.
+                        .insert(portal.tile_idx)
                         .insert(ChildOf(*strat_entity))
-                        .insert(Name::new(format!("Portal: {:#?}", portal)));
+                        .insert(Name::new(format!(
+                            "Portal: {:?} <--> {:?}",
+                            portal.id, portal.arrive_at
+                        )));
                     info!("inserted portal {:?} at {:?}", portal, cell);
                 }
             }
