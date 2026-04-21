@@ -171,7 +171,7 @@ impl LdtkEntity {
         }
     }
 
-    pub fn get_default_tile(&self) -> TileIdx {
+    pub fn get_tile(&self) -> TileIdx {
         self.tile.into()
     }
 }
@@ -281,7 +281,7 @@ pub fn generate_ldtk_tilemap(
                 let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), cell));
 
-                let t: TileIdx = actor.get_default_tile();
+                let t: TileIdx = actor.get_tile();
                 if t == TileIdx::default() {
                     warn!("actor has default tile: {:?}", actor);
                 }

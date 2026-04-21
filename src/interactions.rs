@@ -18,6 +18,7 @@ pub enum Interactable {
     Door {
         is_open: bool,
         requires: Option<Item>,
+        tile_idx_default: TileIdx,
     },
     Chest {
         is_open: bool,
@@ -40,6 +41,7 @@ impl Interactable {
             | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
                 is_open: false,
                 requires: None,
+                tile_idx_default: tile_idx,
             }),
             _ => None,
         }
@@ -57,6 +59,8 @@ impl LdtkEntityExt<Interactable> for Interactable {
             return None;
         };
 
+        let tile_idx = entity.get_tile();
+
         use Interactable::*;
         match ty {
             LdtkActor::Combatant => Some(Combatant),
@@ -65,6 +69,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Door => Some(Door {
                 is_open: entity.get_bool("is_open"),
                 requires: None,
+                tile_idx_default: tile_idx,
             }),
             // TODO: load inventory items
             LdtkActor::Chest => Some(Chest {
@@ -113,7 +118,11 @@ pub fn process_interactions(
         };
 
         match interactable.as_mut() {
-            Interactable::Door { is_open, requires } => {
+            Interactable::Door {
+                is_open,
+                requires,
+                tile_idx_default: _,
+            } => {
                 if !*is_open {
                     if let Some(required_item) = requires {
                         if !player_inventory.has_item(required_item) {

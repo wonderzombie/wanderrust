@@ -83,6 +83,13 @@ pub struct TilemapSpec {
     pub light_level: LightLevel,
 }
 
+pub struct EntitiesSpec {
+    pub tiles: Vec<TileCell>,
+    pub portals: Vec<PortalCell>,
+    pub interxs: Vec<InterxCell>,
+    pub emitters: Vec<EmitterCell>,
+}
+
 #[derive(
     Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,
 )]
@@ -208,6 +215,7 @@ impl From<&str> for EntryId {
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
+    pub tile_idx: TileIdx,
 }
 
 impl LdtkEntityExt<Portal> for Portal {
@@ -219,8 +227,13 @@ impl LdtkEntityExt<Portal> for Portal {
         // TODO: use EntityRef field.
         let id = EntryId(entity.get_string("id")?);
         let arrive_at = EntryId(entity.get_string("arrive_at")?);
+        let tile_idx = TileIdx::from(entity.tile);
 
-        Some(Portal { id, arrive_at })
+        Some(Portal {
+            id,
+            arrive_at,
+            tile_idx,
+        })
     }
 }
 

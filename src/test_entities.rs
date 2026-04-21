@@ -128,6 +128,7 @@ pub(crate) fn add_test_portals(
         Portal {
             id: "door_exit".into(),
             arrive_at: "door_entry".into(),
+            tile_idx: TileIdx::DoorwayBrownThick,
         },
         ChildOf(active_stratum),
     ));
@@ -143,6 +144,7 @@ pub(crate) fn add_test_portals(
         Portal {
             id: "door_entry".into(),
             arrive_at: "door_exit".into(),
+            tile_idx: TileIdx::DoorwayBrownThick,
         },
         ChildOf(active_stratum),
     ));

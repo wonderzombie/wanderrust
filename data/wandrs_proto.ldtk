@@ -11,35 +11,39 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 94,
+	"nextUid": 120,
 	"identifierStyle": "Free",
-	"toc": [ {
-		"identifier": "PortalTwoWay",
-		"instances": [],
-		"instancesData": [
-			{ "iids": {
+	"toc": [
+		{
+			"identifier": "PortalTwoWay",
+			"instances": [],
+			"instancesData": [
+				{ "iids": {
+					"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
+					"levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c",
+					"layerIid": "11d0a950-21a0-11f1-94b8-83ad4e8b87c5",
+					"entityIid": "ccb7d870-21a0-11f1-94b8-c5c3bcb560be"
+				}, "worldX": 112, "worldY": 80, "widPx": 16, "heiPx": 16, "fields" : {} },
+				{ "iids": {
+					"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
+					"levelIid": "e36e0960-21a0-11f1-94b8-8f25cfddaee3",
+					"layerIid": "11d0d060-21a0-11f1-94b8-5ba7ca5edbec",
+					"entityIid": "c85a23a0-21a0-11f1-94b8-6dd8a519b934"
+				}, "worldX": 112, "worldY": 80, "widPx": 16, "heiPx": 16, "fields" : {} }
+			]
+		},
+		{
+			"identifier": "WorldSpawn",
+			"instances": [],
+			"instancesData": [{ "iids": {
 				"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
 				"levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c",
 				"layerIid": "11d0a950-21a0-11f1-94b8-83ad4e8b87c5",
-				"entityIid": "ccb7d870-21a0-11f1-94b8-c5c3bcb560be"
-			}, "worldX": 112, "worldY": 80, "widPx": 16, "heiPx": 16, "fields" : {} },
-			{ "iids": {
-				"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
-				"levelIid": "e36e0960-21a0-11f1-94b8-8f25cfddaee3",
-				"layerIid": "11d0d060-21a0-11f1-94b8-5ba7ca5edbec",
-				"entityIid": "c85a23a0-21a0-11f1-94b8-6dd8a519b934"
-			}, "worldX": 112, "worldY": 80, "widPx": 16, "heiPx": 16, "fields" : {} }
-		]
-	}, {
-		"identifier": "WorldSpawn",
-		"instances": [],
-		"instancesData": [{ "iids": {
-			"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
-			"levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c",
-			"layerIid": "11d0a950-21a0-11f1-94b8-83ad4e8b87c5",
-			"entityIid": "17022180-21a0-11f1-94b8-3f255c78f0a6"
-		}, "worldX": 112, "worldY": 160, "widPx": 16, "heiPx": 16, "fields" : {} }]
-	} ],
+				"entityIid": "17022180-21a0-11f1-94b8-3f255c78f0a6"
+			}, "worldX": 112, "worldY": 160, "widPx": 16, "heiPx": 16, "fields" : {} }]
+		},
+		{ "identifier": "Respawn", "instances": [], "instancesData": [] }
+	],
 	"worldLayout": "Free",
 	"worldGridWidth": 256,
 	"worldGridHeight": 256,
@@ -51,7 +55,7 @@
 	"defaultEntityWidth": 16,
 	"defaultEntityHeight": 16,
 	"bgColor": "#40465B",
-	"defaultLevelBgColor": "#696A79",
+	"defaultLevelBgColor": "#472D3C",
 	"minifyJson": false,
 	"externalLevels": false,
 	"exportTiled": false,
@@ -110,8 +114,8 @@
 			"doc": null,
 			"uiColor": null,
 			"gridSize": 16,
-			"guideGridWid": 0,
-			"guideGridHei": 0,
+			"guideGridWid": 128,
+			"guideGridHei": 128,
 			"displayOpacity": 1,
 			"inactiveOpacity": 1,
 			"hideInList": false,
@@ -816,7 +820,7 @@
 			"showName": true,
 			"tilesetId": 37,
 			"tileRenderMode": "FitInside",
-			"tileRect": { "tilesetUid": 37, "x": 624, "y": 224, "w": 16, "h": 16 },
+			"tileRect": { "tilesetUid": 37, "x": 352, "y": 336, "w": 16, "h": 16 },
 			"uiTileRect": null,
 			"nineSliceBorders": [],
 			"maxCount": 0,
@@ -1003,7 +1007,7 @@
 			"showName": true,
 			"tilesetId": 37,
 			"tileRenderMode": "FitInside",
-			"tileRect": { "tilesetUid": 37, "x": 624, "y": 224, "w": 16, "h": 16 },
+			"tileRect": { "tilesetUid": 37, "x": 320, "y": 320, "w": 16, "h": 16 },
 			"uiTileRect": null,
 			"nineSliceBorders": [],
 			"maxCount": 0,
@@ -1937,6 +1941,82 @@
 			]
 		},
 		{
+			"identifier": "Respawn",
+			"uid": 117,
+			"tags": ["spawn"],
+			"exportToToc": true,
+			"allowOutOfBounds": false,
+			"doc": null,
+			"width": 16,
+			"height": 16,
+			"resizableX": false,
+			"resizableY": false,
+			"minWidth": null,
+			"maxWidth": null,
+			"minHeight": null,
+			"maxHeight": null,
+			"keepAspectRatio": false,
+			"tileOpacity": 1,
+			"fillOpacity": 0.08,
+			"lineOpacity": 0,
+			"hollow": false,
+			"color": "#FF799D",
+			"renderMode": "Tile",
+			"showName": true,
+			"tilesetId": 37,
+			"tileRenderMode": "FitInside",
+			"tileRect": { "tilesetUid": 37, "x": 608, "y": 320, "w": 16, "h": 16 },
+			"uiTileRect": null,
+			"nineSliceBorders": [],
+			"maxCount": 0,
+			"limitScope": "PerWorld",
+			"limitBehavior": "PreventAdding",
+			"pivotX": 0,
+			"pivotY": 0,
+			"fieldDefs": [
+				{
+					"identifier": "actor",
+					"doc": null,
+					"__type": "LocalEnum.Actor",
+					"uid": 118,
+					"type": "F_Enum(40)",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Spawn"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				}
+			]
+		},
+		{
 			"identifier": "Brazier",
 			"uid": 48,
 			"tags": ["emitter"],
@@ -2425,6 +2505,41 @@
 					"tilesetUid": null
 				}
 			]
+		},
+		{
+			"identifier": "Entity",
+			"uid": 119,
+			"tags": [],
+			"exportToToc": false,
+			"allowOutOfBounds": false,
+			"doc": null,
+			"width": 16,
+			"height": 16,
+			"resizableX": false,
+			"resizableY": false,
+			"minWidth": null,
+			"maxWidth": null,
+			"minHeight": null,
+			"maxHeight": null,
+			"keepAspectRatio": false,
+			"tileOpacity": 1,
+			"fillOpacity": 0.08,
+			"lineOpacity": 0,
+			"hollow": false,
+			"color": "#D77643",
+			"renderMode": "Tile",
+			"showName": true,
+			"tilesetId": 2,
+			"tileRenderMode": "FitInside",
+			"tileRect": { "tilesetUid": 2, "x": 592, "y": 208, "w": 16, "h": 16 },
+			"uiTileRect": null,
+			"nineSliceBorders": [],
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 0,
+			"fieldDefs": []
 		}
 	], "tilesets": [
 		{
@@ -2443,7 +2558,7 @@
 			"tagsSourceEnumUid": null,
 			"enumTags": [],
 			"customData": [],
-			"savedSelections": [],
+			"savedSelections": [{ "ids": [0,5,6,7], "mode": "Random" }],
 			"cachedPixelData": {
 				"opaqueTiles": "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
 				"averageColors": "f434f534f534f534f534f454f454f464f644f644f644f744f634f434f534f534f634f634f877f776f877f744f766f988f877f877f877f877f877f877f776f877f877f877f877f877f777f877f877f776f766f877f877f877f877f877f877f877f655f475f475f475f485f485f495f475f464f644f634f644f744f634f434f434f534f534f534f776f655f766f854f534fba9f877f877f776f766f766f766f877f877f877f877f877f777f877f744f744f754f744f754f744f877f877f777f877f887f655f454f475f464f485f495f877f744f464f744f744f744f744f634f655f666f666f776f766f877f766f877f534f634fa99f877f877f877f877f877f877f877f877f656f655f766f655f655f854f877f854f776f766f766f963f963f744f754f744f766f644f854f954f965f644f766f766f534f534f434f534f534f534f655f766f766f877f766f544f545f766f766f988f998f877f777f877f877f766f877f766f766f545f545f544f545f545f854f887f887f854f863f644f644f644f744f766f766f766f766f776f766f988f655f877f877f887f48af48af49bf49bf479f545f655f655f655f655f544f545f766f766f643f445f877f777f776f777f776f777f766f766f545f655f655f545f655f887f887f776f887f863f877f877f766f744f754f744f854f877f877f877f766f877f877f854f754f4adf49cf49bf4acf467f457f48af754f854f754f766f485f495f733f833f833f877f877f766f877f887f877f877f655f645f655f645f655f655f644f644f644f534f534f766f655f545f854f754f854f754f754f754f754f754f854f854f744f744f854f854f988f988f634f454f454f475f474f464f854f744f644f766f877f766f766f877f877f877f877f777f988f877f645f655f655f655f655f644f644f644f644f644f644f644f655f653f456f854f754f754f744f854f854f854f854f754f964f854f754f744f988f877f877f744f744f754f833f467f467f467f467f467f457f777f776f776f777f877f877f766f877f656f656f666f655f655f766f666f655f656f766f655f534f655f643f446f854f754f754f644f744f744f644f854f754f754f877f887f744f988f877f776f754f754f644f833f863f863f863f863f963f863f766f877f766f877f988f988f988f877f766f766f766f766f766f666f766f655f655f645f766f644f655f753f446f954fa99f48af479f467f954f965f854f744f854f854f644f854f666f766f776f766f766f534f733f475f475f475f475f475f464f877f877f766f877f877f877f776f877f655f655f655f655f655f766f766f655f766f766f766f666f766f766f733f464fbaaf478f478f468f467f467f988fa98f998f777f988f998f766f766f877f733f733f744f644f485f485f933f833f655fa73f877f887f877f766f877f877f988f988f863f456f733f766f655f766f655f733f733f833f933f467f468f468f468f468faa9f479f777f776f877f468fa43f933f933f887f988f877f998f766f877f766f766f744f744f495f4a6f495f833f833fa73f655f655f766f877f766f766f766f766f753f457f733f655f656f877f766f457f456f468f478f833f933f933f933f933fbaaf877f877f877f766f887f933fa33f933f933f833f933f933f544f733f655f877f766f777f744f854f854f854f744f988f887fa99fa98f766f766f655f655f655f655f877f877f766f545f666f655f766f766f766f777f963f963f963f963f963faa9f887f877f877f877f766f933f933f933f776f887f833f877f655f733f733f877f877f766f877f988f988f988f988f887f877f877f766f766f877f988f877f988f457f766f644f545f887f655f887f766f877f655f877f777f963f833f475f468fbaaf877f766f877f887f877f877f933f833f887f877f887f655f988f998f854f744f766f887f766f766f655f766f766f666f655f545f666f766f545f655f655f655f456f655f644f988f988f988f988f766f877f777f766f766f766f766f776f777fa99f766f777f877f534f643f753f833f933f777f877f854f964f854f854f998f877f877f766f877f766f766f766f766f666f655f998f877fa99f766f766f766f877f854f854f854f877f877f877f777fa99f988f988fa99fa98f998f998f998f988f887f655f655f877f988f887f877f988f776f766f877f754f754f754f854f854f854f877f766f877f766f833f833f833f833f833f833f833f833f833f833f833f833f833f744f963f766f666f666f766f776f887f877f877f777f988f877f887f887f998f655f877f887f877f766f777f988f877f988f766f988f887f887f766f933f933f655f988f655f877f833f833f833f833f833f833f833f833f833f833f833f833f833f766f877f766f545f766f766f655f766f766f655f766f766f534f434f766f988f988faa9fa99f988f988f766f877fa99f988f766f988f887fa33f933f467f456f877f766f877f988f766f766f766f766f766f766f766f776f766f776f766f776f766f833f485f766f766f655f766f766f655f766f655f655f655f666f655f766f887f933f933f877f887f887f877f887f887f877f744f744f744f777f877f777f468f766f766f766f877f776f766f766f766f766f776f766f776f766f776f766f776f766f464f933f666f766f655f766f766f766f655f656f655f766f666f655f766f887f933f933f777f877f877f887f877f754f854f877f877f887f887f887f776f776f655f887f655f655f655f655f655f666f666f666f666f643f643f643f643f643f475f464f733f766f655f545f766f655f655f766f655f766f655f655f655f766f988f877f877f877f877f887f887f887f887f744f744f744f754f877f877f877f777f766f766f766f777f766f666f666f766f766f766f766f464f485f485f485f485f655f877f766f963fa33f933f963fa43fa73f766f877f988f877f877f877f988f887"
@@ -2684,7 +2799,7 @@
 							"__grid": [7,5],
 							"__pivot": [0,0],
 							"__tags": ["portal"],
-							"__tile": { "tilesetUid": 37, "x": 624, "y": 224, "w": 16, "h": 16 },
+							"__tile": { "tilesetUid": 37, "x": 352, "y": 336, "w": 16, "h": 16 },
 							"__smartColor": "#0099DB",
 							"iid": "ccb7d870-21a0-11f1-94b8-c5c3bcb560be",
 							"width": 16,
@@ -2693,13 +2808,13 @@
 							"px": [112,80],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Portal", "__tile": null, "defUid": 91, "realEditorValues": [] },
-								{ "__identifier": "id", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["upstairs"]
-								}] },
-								{ "__identifier": "arrive_at", "__type": "String", "__value": "downstairs", "__tile": null, "defUid": 13, "realEditorValues": [{
+								{ "__identifier": "id", "__type": "String", "__value": "downstairs", "__tile": null, "defUid": 12, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["downstairs"]
+								}] },
+								{ "__identifier": "arrive_at", "__type": "String", "__value": "upstairs", "__tile": null, "defUid": 13, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["upstairs"]
 								}] },
 								{ "__identifier": "entity_ref", "__type": "EntityRef", "__value": {
 									"entityIid": "c85a23a0-21a0-11f1-94b8-6dd8a519b934",
@@ -3273,7 +3388,7 @@
 							"__grid": [7,5],
 							"__pivot": [0,0],
 							"__tags": ["portal"],
-							"__tile": { "tilesetUid": 37, "x": 624, "y": 224, "w": 16, "h": 16 },
+							"__tile": { "tilesetUid": 37, "x": 352, "y": 336, "w": 16, "h": 16 },
 							"__smartColor": "#0099DB",
 							"iid": "c85a23a0-21a0-11f1-94b8-6dd8a519b934",
 							"width": 16,
@@ -3348,17 +3463,17 @@
 						{ "px": [48,112], "src": [160,288], "f": 0, "t": 892, "d": [115], "a": 1 },
 						{ "px": [192,112], "src": [160,288], "f": 0, "t": 892, "d": [124], "a": 1 },
 						{ "px": [48,128], "src": [160,288], "f": 0, "t": 892, "d": [131], "a": 1 },
-						{ "px": [96,128], "src": [0,208], "f": 0, "t": 637, "d": [134], "a": 1 },
-						{ "px": [128,128], "src": [0,208], "f": 0, "t": 637, "d": [136], "a": 1 },
-						{ "px": [144,128], "src": [0,208], "f": 0, "t": 637, "d": [137], "a": 1 },
+						{ "px": [96,128], "src": [160,288], "f": 0, "t": 892, "d": [134], "a": 1 },
+						{ "px": [128,128], "src": [160,288], "f": 0, "t": 892, "d": [136], "a": 1 },
+						{ "px": [144,128], "src": [160,288], "f": 0, "t": 892, "d": [137], "a": 1 },
 						{ "px": [192,128], "src": [160,288], "f": 0, "t": 892, "d": [140], "a": 1 },
 						{ "px": [48,144], "src": [160,288], "f": 0, "t": 892, "d": [147], "a": 1 },
-						{ "px": [96,144], "src": [0,208], "f": 0, "t": 637, "d": [150], "a": 1 },
-						{ "px": [144,144], "src": [0,208], "f": 0, "t": 637, "d": [153], "a": 1 },
+						{ "px": [96,144], "src": [160,288], "f": 0, "t": 892, "d": [150], "a": 1 },
+						{ "px": [144,144], "src": [160,288], "f": 0, "t": 892, "d": [153], "a": 1 },
 						{ "px": [192,144], "src": [160,288], "f": 0, "t": 892, "d": [156], "a": 1 },
 						{ "px": [48,160], "src": [160,288], "f": 0, "t": 892, "d": [163], "a": 1 },
-						{ "px": [96,160], "src": [0,208], "f": 0, "t": 637, "d": [166], "a": 1 },
-						{ "px": [144,160], "src": [0,208], "f": 0, "t": 637, "d": [169], "a": 1 },
+						{ "px": [96,160], "src": [160,288], "f": 0, "t": 892, "d": [166], "a": 1 },
+						{ "px": [144,160], "src": [160,288], "f": 0, "t": 892, "d": [169], "a": 1 },
 						{ "px": [192,160], "src": [160,288], "f": 0, "t": 892, "d": [172], "a": 1 },
 						{ "px": [48,176], "src": [160,288], "f": 0, "t": 892, "d": [179], "a": 1 },
 						{ "px": [64,176], "src": [160,288], "f": 0, "t": 892, "d": [180], "a": 1 },

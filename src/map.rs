@@ -129,6 +129,7 @@ impl TilemapSpec {
                     Portal {
                         id: EntryId(format!("{:?}", TileIdx::StairsDown)),
                         arrive_at: EntryId(format!("{:?}", TileIdx::StairsUp)),
+                        tile_idx: *idx,
                     },
                     *idx,
                     *cell,
@@ -137,6 +138,7 @@ impl TilemapSpec {
                     Portal {
                         id: EntryId(format!("{:?}", TileIdx::StairsUp)),
                         arrive_at: EntryId(format!("{:?}", TileIdx::StairsDown)),
+                        tile_idx: *idx,
                     },
                     *idx,
                     *cell,
