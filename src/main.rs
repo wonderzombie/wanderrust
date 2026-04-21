@@ -38,7 +38,6 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
-    light::Emitter,
     tilemap::{EntryId, Portal, Stratum, TileStorage, TilemapSpec},
     tiles::TileIdx,
 };
@@ -48,12 +47,9 @@ use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
-fn insert_qf_plugins(app: &mut App) {
+fn insert_fq_plugins(app: &mut App) {
     app.add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Interactable>>::default())
-        // .add_plugins(FilterQueryInspectorPlugin::<With<Emitter>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Stratum>>::default())
-        // .add_plugins(FilterQueryInspectorPlugin::<With<Portal>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<TileStorage>>::default());
 }
 
@@ -242,13 +238,13 @@ fn main() {
             )
                 .chain()
                 .run_if(in_state(GameState::Ramifying)),
-            mobs::handle_dead.after(GameSystem::Grid),
+            mobs::handle_dead,
         ),
     )
     .add_observer(click_observer);
 
     if query_filter_panes {
-        insert_qf_plugins(&mut app);
+        insert_fq_plugins(&mut app);
     }
 
     app.run();
