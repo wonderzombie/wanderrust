@@ -117,6 +117,15 @@ impl Inventory {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    pub fn from_str(item_spec: impl Into<String>) -> Option<Inventory> {
+        if let Some((it, n)) = item_spec.into().split_once(':') {
+            let item = Item::from(it);
+            let qty = n.parse().unwrap_or(1);
+            return Some(Inventory::with_item(item, qty));
+        }
+        None
+    }
 }
 
 /// A message representing the acquisition of [Inventory] items by an actor, such as the player picking up items from a chest or loot.

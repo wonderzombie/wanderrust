@@ -38,7 +38,7 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
-    tilemap::{EntryId, Portal, Stratum, TileStorage, TilemapSpec},
+    tilemap::{EntryId, Portal, TileStorage, TilemapSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};

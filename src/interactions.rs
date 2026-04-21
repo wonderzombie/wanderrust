@@ -23,6 +23,7 @@ pub enum Interactable {
     Chest {
         is_open: bool,
         contents: Option<Inventory>,
+        tile_idx_default: TileIdx,
     },
     #[default]
     Speaker,
@@ -34,7 +35,8 @@ impl Interactable {
         match tile_idx {
             TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
                 is_open: false,
-                contents: Some(Inventory::with_item(Item("gold".to_string()), 10)),
+                contents: Some(Inventory::with_item(Item::from("gold"), 10)),
+                tile_idx_default: tile_idx,
             }),
             TileIdx::DoorBrownThickClosed1
             | TileIdx::DoorBrownThickClosed2
@@ -75,10 +77,14 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 })
             }
             // TODO: load inventory items
-            LdtkActor::Chest => Some(Chest {
-                is_open: entity.get_bool("is_open"),
-                contents: None,
-            }),
+            LdtkActor::Chest => {
+                let inv = entity.get_string("contents").and_then(Inventory::from_str);
+                Some(Chest {
+                    is_open: entity.get_bool("is_open"),
+                    contents: inv,
+                    tile_idx_default: tile_idx,
+                })
+            }
             _ => None,
         }
     }
@@ -147,7 +153,11 @@ pub fn process_interactions(
                     tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
                 }
             }
-            Interactable::Chest { is_open, contents } => {
+            Interactable::Chest {
+                is_open,
+                contents,
+                tile_idx_default: _,
+            } => {
                 if !*is_open {
                     *is_open = true;
                     tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));

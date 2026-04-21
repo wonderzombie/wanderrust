@@ -169,6 +169,7 @@ pub(crate) fn add_test_chests(
         Interactable::Chest {
             is_open: false,
             contents: Some(Inventory::with_item(Item::from("gold"), 15)),
+            tile_idx_default: TileIdx::ChestBrownClosed,
         },
         ChildOf(active_stratum),
     ));
