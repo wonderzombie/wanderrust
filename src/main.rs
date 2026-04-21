@@ -61,18 +61,20 @@ fn main() {
     let args = std::env::args().collect::<Vec<_>>();
     let str_map = args.iter().any(|it| it == "-s");
     let query_filter_panes = args.iter().any(|it| it == "-i");
+    let proc_map = args.iter().any(|it| it == "-p");
 
-    let tilemap_spec = if str_map {
-        TilemapSpec::from_str(map::MAP_ZERO)
-    } else {
-        TilemapSpec::with_ptable(
+    let mut app = App::new();
+
+    if str_map {
+        app.insert_resource(TilemapSpec::from_str(map::MAP_ZERO));
+    } else if proc_map {
+        app.insert_resource(TilemapSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
             (100, 100),
-        )
-    };
+        ));
+    }
 
-    let mut app = App::new();
     app.add_plugins(
         DefaultPlugins
             .set(ImagePlugin::default_nearest())
@@ -100,7 +102,6 @@ fn main() {
         picking_mode: SpritePickingMode::BoundingBox,
         ..Default::default()
     })
-    .insert_resource(tilemap_spec)
     .insert_resource(event_log::MessageLog::new(10))
     .insert_state(GameState::Starting)
     .add_plugins(EguiPlugin::default())
@@ -108,7 +109,10 @@ fn main() {
     .add_plugins(editor::EditorPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(interactions::plugin)
-    .add_systems(Startup, (atlas::load_spritesheet, sounds::load_sounds))
+    .add_systems(
+        Startup,
+        (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
+    )
     .add_systems(
         Update,
         (finalize_starting, atlas::on_loaded, sounds::on_loaded)
@@ -150,18 +154,18 @@ fn main() {
         OnExit(GameState::Loading),
         (actors::setup_player, interactions::spawn),
     )
-    .add_systems(
-        OnEnter(GameState::AwaitingInput),
-        (
-            test_entities::add_test_mobs,
-            test_entities::add_test_emitters,
-            test_entities::add_test_portals,
-            test_entities::add_test_chests,
-        )
-            .chain()
-            .in_set(GameSystem::SpawnTestEntities)
-            .run_if(run_once),
-    )
+    // .add_systems(
+    //     OnEnter(GameState::AwaitingInput),
+    //     (
+    //         test_entities::add_test_mobs,
+    //         test_entities::add_test_emitters,
+    //         test_entities::add_test_portals,
+    //         test_entities::add_test_chests,
+    //     )
+    //         .chain()
+    //         .in_set(GameSystem::SpawnTestEntities)
+    //         .run_if(run_once),
+    // )
     .add_systems(
         EguiPrimaryContextPass,
         event_log::draw_ui.run_if(in_state(Screen::Playing)),
@@ -260,6 +264,12 @@ pub enum GameSystem {
     Fov,
     Light,
     Grid,
+}
+
+fn load_ldtk(mut commands: Commands) {
+    let fname = "data/wandrs_proto.ldtk";
+    let res = ldtk_loader::load_and_import(fname.into()).expect("expected to load ldtk level");
+    commands.insert_resource(res);
 }
 
 fn finalize_starting(
