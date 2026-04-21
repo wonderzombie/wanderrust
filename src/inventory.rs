@@ -7,7 +7,7 @@ use bevy::{
         system::ResMut,
     },
     log::info,
-    platform::collections::HashMap,
+    platform::collections::{HashMap, hash_map},
     reflect::Reflect,
 };
 use serde::{Deserialize, Serialize};
@@ -42,36 +42,50 @@ impl From<HashMap<Item, usize>> for Inventory {
 impl From<&[Item]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
     fn from(items: &[Item]) -> Self {
-        let mut inventory = HashMap::new();
-        for item in items.iter() {
-            *inventory.entry(item.clone()).or_insert(0usize) += 1usize;
-        }
-        Inventory(inventory)
+        items.iter().cloned().map(|it| (it, 1)).collect()
     }
 }
 
 impl From<&[(Item, usize)]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s and their quantities.
     fn from(items: &[(Item, usize)]) -> Self {
-        let mut inventory = HashMap::new();
-        for (item, count) in items.iter() {
-            *inventory.entry(item.clone()).or_insert(0usize) += *count;
-        }
-        Inventory(inventory)
+        items.iter().cloned().collect()
     }
 }
 
-impl AddAssign<Inventory> for Inventory {
-    fn add_assign(&mut self, rhs: Inventory) {
-        for (item, count) in rhs.0 {
-            self.add_item(item, count);
-        }
+impl FromIterator<(Item, usize)> for Inventory {
+    fn from_iter<I: IntoIterator<Item = (Item, usize)>>(iter: I) -> Self {
+        let mut inv = Inventory::default();
+        inv.extend(iter);
+        inv
     }
 }
 
-impl AddAssign<(Item, usize)> for Inventory {
-    fn add_assign(&mut self, rhs: (Item, usize)) {
-        self.add_item(rhs.0, rhs.1);
+impl IntoIterator for Inventory {
+    type Item = (Item, usize);
+
+    type IntoIter = hash_map::IntoIter<Item, usize>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Inventory {
+    type Item = (&'a Item, &'a usize);
+
+    type IntoIter = hash_map::Iter<'a, Item, usize>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl Extend<(Item, usize)> for Inventory {
+    fn extend<I: IntoIterator<Item = (Item, usize)>>(&mut self, iter: I) {
+        for (it, n) in iter {
+            self.add_item(it, n);
+        }
     }
 }
 
@@ -85,13 +99,6 @@ impl Inventory {
     pub fn add_item(&mut self, item: Item, count: usize) -> &mut Self {
         *self.0.entry(item).or_insert(0) += count;
         self
-    }
-
-    /// Merges another [Inventory] into this one, adding each [Item]'s count.
-    pub fn merge(&mut self, rhs: Inventory) {
-        for (item, count) in rhs.0 {
-            self.add_item(item, count);
-        }
     }
 
     /// Creates a new [Inventory] with a single [Item] and count.
@@ -141,6 +148,6 @@ pub fn process_acquisitions(
 ) {
     for acquisition in acquisitions.read() {
         info!("Player acquires items: {:?}", acquisition.items);
-        player_inventory.merge(acquisition.items.clone());
+        player_inventory.extend(acquisition.items.clone());
     }
 }

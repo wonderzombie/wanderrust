@@ -51,11 +51,11 @@ pub fn handle_dead(
         let mut acquired = inventory::Inventory::default();
 
         if let Some(loot) = loot_opt {
-            acquired += loot.roll();
+            acquired.extend(loot.roll());
         }
 
-        if let Some(fixed) = fixed_loot_opt {
-            acquired += fixed.0.clone();
+        if let Some(FixedLoot(fixed)) = fixed_loot_opt {
+            acquired.extend(fixed.clone());
         }
 
         if !acquired.is_empty() {
