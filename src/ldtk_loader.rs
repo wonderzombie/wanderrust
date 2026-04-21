@@ -103,6 +103,7 @@ pub struct LdtkEntity {
     pub identifier: String,
     #[serde(rename = "__grid")]
     pub cell: LdtkCell,
+    /// This is the primary tile field for most entities.
     #[serde(rename = "__tile", default)]
     pub tile: LdtkPxTile,
     #[serde(rename = "fieldInstances", default)]

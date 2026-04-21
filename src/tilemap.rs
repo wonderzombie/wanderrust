@@ -54,7 +54,7 @@ pub struct Stratum(pub Entity, pub StratumId);
 
 /// TileCell is a pair of (TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
-/// PortalCell is a pair of (Portal, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
+/// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, TileIdx, Cell);
 
 pub type InterxCell = (Interactable, TileIdx, Cell);
