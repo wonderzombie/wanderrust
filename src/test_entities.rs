@@ -104,7 +104,7 @@ pub(crate) fn add_test_emitters(
             cell: Cell { x: 50, y: 48 },
             ..default()
         },
-        Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)),
+        Emitter::new(TileIdx::Torch, (LightLevel::Light, 1), (LightLevel::Dim, 1)),
         ChildOf(active_stratum),
     ));
 }

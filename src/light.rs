@@ -62,31 +62,50 @@ impl From<(LightLevel, i32)> for LightRing {
 pub struct Emitter {
     inner: LightRing,
     outer: LightRing,
+    default_tile_idx: TileIdx,
 }
 
 impl Emitter {
-    pub fn new(inner: (LightLevel, i32), outer: (LightLevel, i32)) -> Self {
-        Emitter::from_rings(LightRing::from(inner), LightRing::from(outer))
+    pub fn new(tile_idx: TileIdx, inner: (LightLevel, i32), outer: (LightLevel, i32)) -> Self {
+        Emitter::from_rings(tile_idx, LightRing::from(inner), LightRing::from(outer))
     }
 
-    fn from_rings(inner: LightRing, outer: LightRing) -> Self {
-        debug_assert!(
-            inner.level >= outer.level,
-            "inner ring level must be >= outer ring level"
-        );
-        Self { inner, outer }
+    fn from_rings(tile_idx: TileIdx, inner: LightRing, outer: LightRing) -> Self {
+        Self {
+            inner,
+            outer,
+            default_tile_idx: tile_idx,
+        }
     }
 
     fn from_tile(tile_idx: &TileIdx) -> Option<Self> {
         if tile_idx.is_emitter() {
             match tile_idx {
                 TileIdx::Torch => {
-                    return Some(Emitter::new((LightLevel::Bright, 1), (LightLevel::Dim, 1)));
+                    return Some(Emitter::new(
+                        *tile_idx,
+                        (LightLevel::Light, 1),
+                        (LightLevel::Dim, 1),
+                    ));
                 }
                 TileIdx::Candle => {
-                    return Some(Emitter::new((LightLevel::Light, 1), (LightLevel::Dim, 1)));
+                    return Some(Emitter::new(
+                        *tile_idx,
+                        (LightLevel::Dim, 2),
+                        (LightLevel::Dim, 0),
+                    ));
                 }
-                _ => return None,
+                TileIdx::Brazier => {
+                    return Some(Emitter::new(
+                        *tile_idx,
+                        (LightLevel::Light, 3),
+                        (LightLevel::Dim, 2),
+                    ));
+                }
+                _ => {
+                    error!("tile is emitter but unrecognized: {:?}", tile_idx);
+                    return None;
+                }
             }
         }
         None
@@ -132,21 +151,10 @@ impl Emitter {
 impl LdtkEntityExt<Emitter> for Emitter {
     fn from_ldtk(entity: &LdtkEntity) -> Option<Emitter> {
         if entity.ty().is_none_or(|it| it != LdtkActor::Emitter) {
+            warn!("entity unknown or not an emitter: {:?}", entity);
             return None;
         }
-
-        // TODO: match on other properties, potentially.
-        let tile = match entity.identifier.to_ascii_lowercase().as_str() {
-            "torch" => TileIdx::Torch,
-            "candle" => TileIdx::Candle,
-            "brazier" => TileIdx::Brazier,
-            _ => {
-                warn!("unknown emitter type: {:?}", entity);
-                TileIdx::Candle
-            } // _ => value
-        };
-
-        Emitter::from_tile(&tile)
+        Emitter::from_tile(&entity.get_tile())
     }
 }
 
@@ -235,12 +243,13 @@ impl StratumLightMap {
 
 pub fn setup(
     mut commands: Commands,
-    tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
+    emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
+    emitter_actors: Query<(Entity, &Emitter)>,
     storage: Query<Entity, With<TileStorage>>,
     spec: Res<TilemapSpec>,
 ) {
     let mut count = 0;
-    for (entity, tile_idx) in tiles {
+    for (entity, tile_idx) in emitter_tiles {
         let Some(emitter) = Emitter::from_tile(tile_idx) else {
             continue;
         };
@@ -248,7 +257,16 @@ pub fn setup(
         count += 1;
     }
     if count > 0 {
-        info!("set up {} emitters", count);
+        info!("🔥 set up {} emitter tiles", count);
+    }
+
+    count = 0;
+    for (entity, emitter) in emitter_actors {
+        count += 1;
+        commands.entity(entity).insert(emitter.default_tile_idx);
+    }
+    if count > 0 {
+        info!("🔥 set up {} emitter entities", count);
     }
 
     count = 0;
@@ -259,7 +277,7 @@ pub fn setup(
         count += 1;
     }
     if count > 0 {
-        info!("set up {} strata light maps", count);
+        info!("🔥 set up {} strata light maps", count);
     }
 }
 
@@ -274,7 +292,7 @@ pub fn update_emitter_maps(
     }
 
     if count > 0 {
-        trace!("updated {} emitter maps", count);
+        trace!("🔥 updated {} emitter maps", count);
     }
 }
 
@@ -363,7 +381,7 @@ mod tests {
     use LightLevel::*;
 
     fn emitter(inner_r: i32, outer_r: i32) -> Emitter {
-        Emitter::new((Bright, inner_r), (Dim, outer_r))
+        Emitter::new(TileIdx::Candle, (Bright, inner_r), (Dim, outer_r))
     }
 
     fn cells_with_level(emitter: &Emitter, origin: Cell, level: LightLevel) -> Vec<Cell> {
