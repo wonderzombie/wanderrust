@@ -69,10 +69,10 @@ pub fn spawn_grid(
     spec: Res<TilemapSpec>,
     strata: Populated<Entity, (With<Stratum>, Without<CardinalGrid>)>,
 ) {
-    info!("spawning grid for {} strata", strata.count());
+    info!("🧭 spawning grid for {} strata", strata.count());
     for stratum in strata {
         info!(
-            "grid {:?} is {} x {}",
+            "🧭 grid {:?} is {} x {}",
             stratum, spec.size.width, spec.size.height
         );
         let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
@@ -133,7 +133,7 @@ pub fn update_grid(
     });
 
     if count > 0 {
-        info!("ℹ️\tupdated grid, set {} tiles", count);
+        info!("🧭️ updated grid, set {} tiles", count);
     }
 }
 
@@ -169,7 +169,7 @@ pub fn move_agents(
         }
 
         trace!(
-            "ℹ️ entity {} moving from {:?} to {:?}",
+            "🧭 entity {} moving from {:?} to {:?}",
             entity, agent_pos, next_pos
         );
 

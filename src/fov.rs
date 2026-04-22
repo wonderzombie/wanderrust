@@ -67,7 +67,7 @@ pub fn setup_fov(
     let mut opaque_count = 0;
 
     for (strat, children) in stratum_children {
-        info!("checking {} children", children.iter().len());
+        info!("👀 checking {} children", children.iter().len());
         let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
         for &child in children {
             if let Ok((cell, tile_idx)) = tiles.get(child) {
@@ -83,7 +83,7 @@ pub fn setup_fov(
         commands.entity(strat.0).insert(fov);
 
         info!(
-            "initialized FOV model with {} tiles, {} opaque.",
+            "👀 initialized FOV model with {} tiles, {} opaque.",
             tiles_count, opaque_count
         )
     }

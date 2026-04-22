@@ -54,7 +54,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
     fn from_ldtk(entity: &LdtkEntity) -> Option<Interactable> {
         let Some(ty) = entity.ty() else {
             warn!(
-                "unknown interactable type: {:?} on LdtkEntity {:?}",
+                "📦 unknown interactable type: {:?} on LdtkEntity {:?}",
                 entity.ty(),
                 entity
             );
@@ -122,7 +122,7 @@ pub fn process_interactions(
             interactables.get_mut(attempt.target)
         else {
             info!(
-                "Interaction attempted with entity {:?}, but it's not interactable.",
+                "📦 Interaction attempted with entity {:?}, but it's not interactable.",
                 attempt.target
             );
             continue;
@@ -265,7 +265,7 @@ pub fn spawn(
             continue;
         };
 
-        info!("{:?}: spawning interactables", strat);
+        info!("📦 {:?}: spawning interactables", strat);
 
         let mut count = 0;
         interxs
@@ -291,28 +291,9 @@ pub fn spawn(
                 commands.spawn(b);
             });
 
-        info!("{:?} spawned {} interactables", strat, count);
+        info!("📦 {:?} spawned {} interactables", strat, count);
     }
 }
-
-// /// Sets up interactable objects in the world, such as doors and chests, based on the tile indices.
-// ///
-// /// Mostly this means interactables that have such as an open/closed sprite.
-// pub fn setup(mut commands: Commands, tiles: Query<(Entity, &TileIdx), Added<TileIdx>>) {
-//     for (entity, &tile_idx) in tiles.iter() {
-//         if tile_idx.is_interactable() {
-//             if let Some(bundle) = Interactable::from_tile(tile_idx) {
-//                 info!("{:?} {:?} gets {:?}", entity, tile_idx, bundle);
-//                 commands.entity(entity).insert(bundle);
-//             } else {
-//                 warn!(
-//                     "found interactable tile without Interactable: {:?}",
-//                     tile_idx
-//                 );
-//             }
-//         }
-//     }
-// }
 
 pub fn plugin(app: &mut App) {
     app.add_message::<Listen>().add_message::<Examine>();
