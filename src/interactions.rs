@@ -126,14 +126,22 @@ pub fn process_interactions(
             continue;
         };
 
+        trace!(
+            "process_interactions: matched interactable: {:#?}",
+            interactable
+        );
+
         match interactable.as_mut() {
             Interactable::Door {
                 is_open,
                 requires,
                 tile_idx_default: _,
             } => {
+                trace!("process_interactions: door");
                 if !*is_open {
-                    if let Some(required_item) = requires {
+                    if let Some(required_item) = requires
+                        && !required_item.0.is_empty()
+                    {
                         if !player_inventory.has_item(required_item) {
                             info!("Player lacks required item: {}", required_item.0);
                             log.add("Locked.", colors::KENNEY_BLUE);
@@ -150,7 +158,14 @@ pub fn process_interactions(
                         log.add("Opened door.", colors::KENNEY_BLUE);
                     }
                     *is_open = true;
+                    trace!(
+                        "changing tile_idx from {:?} to {:?}",
+                        tile_idx,
+                        tile_idx.opened_version()
+                    );
                     tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
+                } else {
+                    info!("Player can't open an open door.");
                 }
             }
             Interactable::Chest {
@@ -250,6 +265,7 @@ pub fn spawn(
 
         info!("{:?}: spawning interactables", strat);
 
+        let mut count = 0;
         interxs
             .iter()
             .map(|(interx, t, cell)| {
@@ -268,8 +284,12 @@ pub fn spawn(
                 )
             })
             .for_each(|b| {
+                trace!("spawning {:?}", &b);
+                count += 1;
                 commands.spawn(b);
             });
+
+        info!("{:?} spawned {} interactables", strat, count);
     }
 }
 

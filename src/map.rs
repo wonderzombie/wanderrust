@@ -323,7 +323,6 @@ mod tests {
 #[derive(QueryData)]
 #[query_data(derive(Debug))]
 pub struct SyncProps {
-    _mt: &'static MapTile,
     tile_preview: Option<&'static TilePreview>,
     walkable: Option<&'static Walkable>,
     opaque: Option<&'static Opaque>,

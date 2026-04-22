@@ -156,7 +156,7 @@ tiles! {
     DoorwayBrownThick = atlas_idx(6, 9),
     DoorBrownThinClosed1 = atlas_idx(7, 9),
     DoorBrownThinClosed2 = atlas_idx(8, 9),
-    DoorBrownThinClosed3 = atlas_idx(9, 9),
+    DoorwayBrownThin = atlas_idx(9, 9),
 
     Bars = atlas_idx(5, 3),
     BarsBroken = atlas_idx(6, 3),
@@ -227,6 +227,7 @@ impl TileIdx {
         GrassLong,
         GrassTall,
         DoorwayBrownThick,
+        DoorwayBrownThin,
         GreenTree1,
         GreenTree2,
         GreenTree3,
@@ -252,7 +253,6 @@ impl TileIdx {
         DoorBrownThickClosed3,
         DoorBrownThinClosed1,
         DoorBrownThinClosed2,
-        DoorBrownThinClosed3,
         RockLarge,
         RockMedium,
     ];
@@ -265,7 +265,6 @@ impl TileIdx {
         DoorBrownThickClosed3,
         DoorBrownThinClosed1,
         DoorBrownThinClosed2,
-        DoorBrownThinClosed3,
     ];
 
     const FLIPPABLE: &'static [TileIdx] = &[
@@ -291,7 +290,7 @@ impl TileIdx {
                 DoorBrownThickClosed3,
                 DoorBrownThinClosed1,
                 DoorBrownThinClosed2,
-                DoorBrownThinClosed3,
+                DoorwayBrownThin,
                 DoorwayBrownThick,
             ],
             "door",
@@ -349,6 +348,7 @@ impl TileIdx {
             DoorBrownThickClosed1 | DoorBrownThickClosed2 | DoorBrownThickClosed3 => {
                 Some(DoorwayBrownThick)
             }
+            DoorBrownThinClosed1 | DoorBrownThinClosed2 => Some(DoorwayBrownThin),
             BarsDoorClosed => Some(BarsDoorOpen),
             _ => None,
         }

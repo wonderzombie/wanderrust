@@ -115,17 +115,6 @@ pub fn setup_player(
     }
 }
 
-/// Syncs changed actor [TileIdx] for [Sprite]s `Without<MapTile>`.
-pub fn sync_sprites(
-    mut pieces: Query<(&mut Sprite, &TileIdx), (Without<MapTile>, Changed<TileIdx>)>,
-) {
-    for (mut sprite, tile_idx) in pieces.iter_mut() {
-        if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = tile_idx.into();
-        }
-    }
-}
-
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
 pub fn update_transforms(
     mut pieces: Query<(&Cell, &mut Transform), (Without<MapTile>, Changed<Cell>)>,

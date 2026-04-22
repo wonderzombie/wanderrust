@@ -190,11 +190,7 @@ fn main() {
         (
             // Runs when there's been a change to any tile and updates sprite & gameplay properties..
             map::sync_tiles,
-            (
-                actors::sync_sprites,
-                actors::update_transforms,
-                actors::sync_occupied_tiles,
-            )
+            (actors::update_transforms, actors::sync_occupied_tiles)
                 .in_set(GameSystem::ActorSync)
                 .after(map::sync_tiles),
             camera::update.after(GameSystem::ActorSync),
@@ -384,6 +380,7 @@ fn process_actions(
         let Some(target_entity) = spatial_index.get(adjusted_cell) else {
             // No entity at the target [`Cell`], so we can assume it's an empty walkable tile.
             // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
+            trace!("process_actions: move");
             commands
                 .entity(action.entity)
                 .insert(adjusted_cell)
@@ -393,12 +390,14 @@ fn process_actions(
         };
 
         if let Ok(portal) = portals.get(target_entity) {
+            trace!("process_actions: portal");
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
             continue;
         }
 
+        trace!("process_actions: interaction");
         interaction_attempts.write(interactions::Examine {
             interactor: action.entity,
             target: target_entity,
@@ -406,6 +405,7 @@ fn process_actions(
     }
 
     if acted {
+        trace!("ramifying actions");
         commands.set_state(GameState::Ramifying);
     }
 }
