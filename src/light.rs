@@ -369,9 +369,12 @@ pub fn update_strata_maps(
         );
 
         // If the this new merged map isn't different than current, skip.
-        let stratum_map = all_strata.get(stratum_entity).unwrap();
-        if stratum_map.curr == merged {
-            continue;
+        if let Ok(stratum_map) = all_strata.get(stratum_entity) {
+            if stratum_map.curr == merged {
+                continue;
+            }
+        } else {
+            panic!("unable to find stratum for {:?}", stratum_entity);
         }
 
         let mut stratum_map = all_strata.get_mut(stratum_entity).unwrap_or_else(|_| {

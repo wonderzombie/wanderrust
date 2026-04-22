@@ -13,9 +13,33 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
+#[derive(Component, Copy, Clone, Debug, PartialEq)]
+pub struct WorldId(pub Entity);
+
 #[derive(Resource, Default, Debug, PartialEq)]
 pub struct WorldSpec {
-    pub maps: HashMap<StratumId, StratumTileSpec>,
+    pub id: Option<WorldId>,
+    pub maps: HashMap<StratumId, StratumSpec>,
+    pub spawn_point: SpawnCell,
+}
+
+type TileSpec = (TileIdx, Cell);
+type PortalSpec = (Portal, Cell);
+type InterxSpec = (Interactable, Cell);
+type EmitterSpec = (Emitter, Cell);
+
+#[derive(Debug, Default, Resource, PartialEq, Reflect, Clone)]
+pub struct StratumSpec {
+    pub id: Option<Stratum>,
+    pub size: Dimensions,
+
+    pub tiles: Vec<TileSpec>,
+    pub emitters: Vec<EmitterSpec>,
+    pub interxs: Vec<InterxSpec>,
+    pub portals: Vec<PortalSpec>,
+
+    pub spawn_point: Option<SpawnCell>,
+    pub light_level: LightLevel,
 }
 
 #[derive(
@@ -90,7 +114,7 @@ pub struct StratumTileSpec {
     pub light_level: LightLevel,
 }
 
-#[derive(Resource, Debug, Clone, Reflect)]
+#[derive(Resource, Debug, Clone, Reflect, PartialEq)]
 pub struct ActiveStratum(pub Stratum);
 
 #[derive(
@@ -264,6 +288,67 @@ pub(crate) const MAP_LAYER: TilemapLayer = TilemapLayer(-6.0);
 pub(crate) const ACTOR_LAYER: TilemapLayer = TilemapLayer(-2.0);
 pub(crate) const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 
+pub fn spawn_worldmap(
+    mut commands: Commands,
+    mut world_spec: ResMut<WorldSpec>,
+    atlas: Res<SpriteAtlas>,
+) {
+    info!("🕹️  initializing worldmap");
+
+    let world_entity = commands
+        .spawn((Visibility::Visible, Transform::default()))
+        .id();
+    let world_id = WorldId(world_entity);
+    world_spec.id.replace(world_id);
+
+    let (start_strat_id, _) = world_spec.spawn_point;
+
+    for (stratum_id, strat_spec) in world_spec.maps.iter_mut() {
+        let layer = stratum_id.0.neg() as f32 + *MAP_LAYER;
+
+        let strat_entity = commands
+            .spawn((Visibility::Inherited, Transform::default()))
+            .id();
+        let stratum = Stratum(strat_entity, *stratum_id);
+        strat_spec.id.replace(stratum);
+
+        let mut cells = vec![TileIdx::Blank; strat_spec.size.ntiles()];
+
+        let mut count = 0;
+        strat_spec.tiles.iter().for_each(|(tile, cell)| {
+            let idx = strat_spec.size.cell_to_idx(cell);
+            cells[idx] = *tile;
+            count += 1;
+        });
+
+        let bundles = generate_tile_bundles(strat_entity, &strat_spec.size, &cells, layer, &atlas);
+
+        info!(
+            "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
+            stratum_id,
+            count,
+            cells.len(),
+            bundles.len(),
+        );
+        commands.spawn_batch(bundles);
+
+        if start_strat_id == *stratum_id {
+            commands.insert_resource(ActiveStratum(stratum));
+        }
+
+        commands
+            .entity(strat_entity)
+            .insert(Name::new(format!("Stratum {:?}", stratum)))
+            .insert(strat_spec.size)
+            .insert(stratum);
+    }
+
+    commands
+        .entity(world_entity)
+        .insert(world_id)
+        .insert(Name::new("World"));
+}
+
 /// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
 /// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].
 pub fn spawn_tilemap(
@@ -315,6 +400,7 @@ pub fn spawn_tilemap(
         commands.spawn_batch(bundles);
         commands
             .entity(strat_entity)
+            .insert(spec.size.clone())
             .insert(Stratum(strat_entity, strat_id.into()))
             .insert(Name::new(format!("Stratum: {}", strat_entity)));
     }
@@ -371,15 +457,17 @@ fn generate_tile_bundles(
 /// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
 pub fn initialize_tile_storage(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
-    strata: Query<(&Stratum, &Children)>,
+    strata: Query<(&Stratum, &Dimensions, &Children)>,
     tiles: Query<&Cell, With<MapTile>>,
 ) {
     info!("📍 storing maps by cell by stratum");
+    if strata.count() < 1 {
+        panic!("zero strata found when initializing storage");
+    }
 
     let mut num_cells = 0;
-    for (stratum, children) in strata {
-        let mut storage = TileStorage::new(spec.size);
+    for (Stratum(stratum_entity, stratum_id), size, children) in strata {
+        let mut storage = TileStorage::new(size.clone());
         for entity in children.iter() {
             if let Ok(cell) = tiles.get(entity) {
                 storage.set(cell, entity);
@@ -388,11 +476,11 @@ pub fn initialize_tile_storage(
         }
         info!(
             "📍 stratum {}: set {}/{} tile entities",
-            stratum.1,
+            stratum_id,
             num_cells,
             storage.len(),
         );
-        commands.entity(stratum.0).insert(storage);
+        commands.entity(*stratum_entity).insert(storage);
     }
 }
 
