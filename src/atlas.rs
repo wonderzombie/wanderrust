@@ -73,7 +73,7 @@ pub(crate) fn on_loaded(mut atlas: ResMut<SpriteAtlas>, asset_server: Res<AssetS
 
     let state = asset_server.recursive_dependency_load_state(atlas.texture.id());
     if !state.is_loaded() {
-        info!("LoadState: sprite texture not ready");
+        trace!("LoadState: sprite texture not ready");
         return;
     }
 

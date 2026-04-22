@@ -41,7 +41,7 @@ pub fn on_loaded(
     let state = asset_server.recursive_dependency_load_state(sounds.folder_handle.id());
 
     if !state.is_loaded() {
-        info!("LoadState: sounds not ready");
+        trace!("LoadState: sounds not ready");
         return;
     }
 

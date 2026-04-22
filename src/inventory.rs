@@ -137,7 +137,6 @@ impl Inventory {
 
     pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
         let spec: String = item_spec.as_ref().into();
-        dbg!(&spec);
         if spec.is_empty() {
             return None;
         }

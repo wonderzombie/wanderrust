@@ -14,7 +14,7 @@ pub struct EguiFontsLoaded;
 
 pub fn setup_fonts(mut contexts: EguiContexts, mut commands: Commands) {
     let Ok(ctx) = contexts.ctx_mut() else {
-        warn!("Egui context not ready yet");
+        trace!("Egui context not ready yet");
         return;
     };
 
