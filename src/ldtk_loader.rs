@@ -60,13 +60,10 @@ pub struct LdtkProject {
 
 #[derive(Debug, Deserialize)]
 pub struct LdtkLevel {
-    pub identifier: String,
     #[serde(rename = "fieldInstances", default)]
     pub field_instances: Vec<LdtkField>,
     #[serde(rename = "layerInstances", default)]
     pub layer_instances: Vec<LdtkLayer>,
-    #[serde(rename = "pxWid")]
-    pub px_width: f32,
     #[serde(rename = "pxHei")]
     pub px_height: f32,
 }
@@ -115,7 +112,7 @@ pub struct LdtkEntity {
     #[serde(rename = "__identifier")]
     pub identifier: String,
     #[serde(rename = "__grid")]
-    pub cell: LdtkCell,
+    pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.
     #[serde(rename = "__tile", default)]
     pub tile: LdtkPxTile,
@@ -186,12 +183,18 @@ impl LdtkEntity {
 pub struct LdtkGridTile {
     #[serde(rename = "t")]
     pub atlas_idx: usize,
-    #[serde(rename = "a")]
-    pub alpha: f64,
-    #[serde(rename = "f")]
-    pub flip_bits: i32,
     #[serde(rename = "px")]
-    pub px: Vec2,
+    px: Vec2,
+}
+
+impl LdtkGridTile {
+    fn into_cell(self, level_height_px: f32) -> Cell {
+        let x = self.px.x;
+        let y = self.px.y;
+        let cx = (x / 16.0) as i32;
+        let cy = ((level_height_px - y) / 16.0) as i32 - 1;
+        Cell::new(cx, cy)
+    }
 }
 
 impl From<TileIdx> for LdtkGridTile {
@@ -222,6 +225,12 @@ impl From<LdtkPxTile> for TileIdx {
 #[derive(Deref, Debug, Deserialize, Default, Clone, Copy)]
 pub struct LdtkCell(Cell);
 
+impl LdtkCell {
+    fn into_cell(self, level_height_cells: i32) -> Cell {
+        Cell::new(self.x, level_height_cells - 1 - self.y)
+    }
+}
+
 pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
     let serialized = std::fs::read_to_string(&fname)?;
     let project = serde_json::from_str::<LdtkProject>(&serialized)?;
@@ -231,17 +240,6 @@ pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
         project.levels.len()
     );
     Ok(project)
-}
-
-/// Converts from LDtk (+y is down) to bevy (+y is up).
-fn px_to_cell(x: f32, y: f32, level_height_px: f32) -> Cell {
-    let cx = (x / 16.0) as i32;
-    let cy = ((level_height_px - y) / 16.0) as i32 - 1;
-    Cell::new(cx, cy)
-}
-
-fn ldtk_cell_to_wanderrust(cell: LdtkCell, level_height_cells: i32) -> Cell {
-    Cell::new(cell.x, level_height_cells - 1 - cell.y)
 }
 
 pub fn generate_ldtk_tilemap(
@@ -255,7 +253,6 @@ pub fn generate_ldtk_tilemap(
     };
     let project = project.as_ref();
 
-    let mut distinct_tiles = HashSet::<TileIdx>::new();
     let mut distinct_entities = HashSet::<(String, Cell)>::new();
 
     let mut new_tiles: Vec<TileCell> = Vec::new();
@@ -279,14 +276,14 @@ pub fn generate_ldtk_tilemap(
         c_hei = c_hei.max(layer.c_height);
 
         if layer.layer_type.eq_ignore_ascii_case("tiles") {
-            let grid_tiles = get_grid_tiles(&mut distinct_tiles, level, &layer.grid_tiles);
+            let grid_tiles = get_grid_tiles(&layer.grid_tiles, level.px_height);
             new_tiles.extend(grid_tiles);
         }
 
         if layer.layer_type.eq_ignore_ascii_case("entities") {
             for actor in &layer.entities {
-                let cell = ldtk_cell_to_wanderrust(actor.cell, layer.c_height);
-                distinct_entities.insert((actor.identifier.clone(), cell));
+                let wandrs_cell = actor.ldtk_cell.into_cell(layer.c_height);
+                distinct_entities.insert((actor.identifier.clone(), wandrs_cell));
 
                 let t: TileIdx = actor.get_tile();
                 if t == TileIdx::default() {
@@ -294,10 +291,14 @@ pub fn generate_ldtk_tilemap(
                 }
 
                 match ParsedActor::from_ldtk(actor) {
-                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, cell)),
-                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, cell)),
-                    Some(ParsedActor::Portal(p)) => new_portals.push((p, t, cell)),
-                    Some(ParsedActor::Spawn) => spawn = Some(cell),
+                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, wandrs_cell)),
+                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, wandrs_cell)),
+                    Some(ParsedActor::Portal(p)) => new_portals.push((p, t, wandrs_cell)),
+                    Some(ParsedActor::WorldSpawn) => spawn = Some(wandrs_cell),
+                    Some(ParsedActor::Respawn) => {
+                        warn!("respawn not supported yet; skipping");
+                        continue;
+                    }
                     None => warn!("ignoring unparsable actor: {:?}", actor),
                 }
             }
@@ -335,16 +336,11 @@ pub fn generate_ldtk_tilemap(
     ns.set(GameState::Loading);
 }
 
-fn get_grid_tiles(
-    distinct_tiles: &mut HashSet<TileIdx>,
-    level: &LdtkLevel,
-    grid_tiles: &Vec<LdtkGridTile>,
-) -> Vec<TileCell> {
+fn get_grid_tiles(grid_tiles: &Vec<LdtkGridTile>, level_px_height: f32) -> Vec<TileCell> {
     let mut new_tiles: Vec<TileCell> = vec![];
-    for tile in grid_tiles {
-        let tile_idx = TileIdx::from_idx(tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
-        distinct_tiles.insert(tile_idx);
-        let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
+    for grid_tile in grid_tiles {
+        let tile_idx = TileIdx::from_idx(grid_tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
+        let cell = grid_tile.into_cell(level_px_height);
         new_tiles.push((tile_idx, cell));
     }
     new_tiles
@@ -410,14 +406,17 @@ impl From<&LdtkField> for ParsedValue {
 
 enum_with_str!(
     LdtkActor,
-    [Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn]
+    [
+        Combatant, Speaker, Door, Chest, Emitter, Portal, Respawn, WorldSpawn
+    ]
 );
 
 pub enum ParsedActor {
     Interactable(interactions::Interactable),
     Portal(tilemap::Portal),
     Emitter(light::Emitter),
-    Spawn,
+    Respawn,
+    WorldSpawn,
 }
 
 impl LdtkEntityExt<ParsedActor> for ParsedActor {
@@ -427,9 +426,13 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
                 Interactable::from_ldtk(entity).map(Self::Interactable)
             }
             LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
-            LdtkActor::Spawn => Some(Self::Spawn),
+            LdtkActor::Respawn => Some(Self::Respawn),
+            LdtkActor::WorldSpawn => Some(Self::WorldSpawn),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
-            LdtkActor::Unset => None,
+            LdtkActor::Unset => {
+                warn!("unknown LdtkEntity type: {:#?}", entity);
+                None
+            }
         }
     }
 }
