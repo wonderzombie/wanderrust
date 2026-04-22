@@ -83,7 +83,7 @@ pub fn setup_player(
             .insert(ChildOf(strata.iter().next().unwrap()))
             .insert(spawn_cell);
     } else {
-        info!("🕹️ spawning player");
+        info!("🕹️ spawning player at {:?}", spec.spawn_point);
         commands.spawn((
             // TODO: figure out the real active stratum.
             ChildOf(strata.iter().next().unwrap()),
@@ -94,7 +94,7 @@ pub fn setup_player(
             Blocking,
             Emitter::new(
                 TileIdx::Blank,
-                (LightLevel::Bright, 1),
+                (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
             Belligerent {
