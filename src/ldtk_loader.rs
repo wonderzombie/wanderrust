@@ -63,6 +63,8 @@ pub struct LdtkLevel {
     pub layer_instances: Vec<LdtkLayer>,
     #[serde(rename = "pxHei")]
     pub px_height: f32,
+    #[serde(rename = "worldDepth")]
+    pub world_depth: i32,
 }
 
 impl LdtkLevel {
@@ -223,7 +225,7 @@ impl From<LdtkPxTile> for TileIdx {
 pub struct LdtkCell(Cell);
 
 impl LdtkCell {
-    fn into_cell(self, level_height_cells: i32) -> Cell {
+    fn to_wandrs(self, level_height_cells: i32) -> Cell {
         Cell::new(self.x, level_height_cells - 1 - self.y)
     }
 }
@@ -237,6 +239,57 @@ pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
         project.levels.len()
     );
     Ok(project)
+}
+
+pub fn generate_ldtk_world(
+    mut commands: Commands,
+    project: Option<Res<LdtkProject>>,
+    mut ns: ResMut<NextState<GameState>>,
+) {
+    let Some(project) = project else {
+        return;
+    };
+    let project = project.as_ref();
+    let mut world = WorldSpec::default();
+
+    for level in &project.levels {
+        let stratum_id = StratumId(level.world_depth);
+        let spec = world.maps.entry(stratum_id).or_default();
+        for layer in &level.layer_instances {
+            spec.size = Dimensions {
+                width: layer.c_width as u32,
+                height: layer.c_height as u32,
+                ..default()
+            };
+
+            spec.tiles
+                .extend(get_grid_tiles(&layer.grid_tiles, level.px_height));
+
+            for actor in &layer.entities {
+                let cell = actor.ldtk_cell.to_wandrs(layer.c_height);
+
+                let t: TileIdx = actor.get_tile();
+                if t == TileIdx::default() {
+                    warn!("actor has default tile: {:?}", actor);
+                }
+
+                match ParsedActor::from_ldtk(actor) {
+                    Some(ParsedActor::Interactable(i)) => spec.interxs.push((i, cell)),
+                    Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
+                    Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
+                    Some(ParsedActor::WorldSpawn) => spec.spawn_point = Some((stratum_id, cell)),
+                    Some(ParsedActor::Respawn) => {
+                        warn!("respawn not supported yet; skipping");
+                        continue;
+                    }
+                    None => warn!("ignoring unparsable actor: {:?}", actor),
+                }
+            }
+        }
+    }
+
+    commands.insert_resource(world);
+    ns.set(GameState::Loading);
 }
 
 pub fn generate_ldtk_tilemap(
@@ -261,10 +314,6 @@ pub fn generate_ldtk_tilemap(
     let mut spawn: Option<Cell> = None;
     let light_level = level.light_level_or(LightLevel::Dark);
 
-    // HACKHACK for testing
-    // for level in &project.levels {
-    //     info!("loading level {}", level.identifier);
-
     let mut c_wid = 1;
     let mut c_hei = 1;
 
@@ -279,7 +328,7 @@ pub fn generate_ldtk_tilemap(
 
         if layer.layer_type.eq_ignore_ascii_case("entities") {
             for actor in &layer.entities {
-                let wandrs_cell = actor.ldtk_cell.into_cell(layer.c_height);
+                let wandrs_cell = actor.ldtk_cell.to_wandrs(layer.c_height);
                 distinct_entities.insert((actor.identifier.clone(), wandrs_cell));
 
                 let t: TileIdx = actor.get_tile();
