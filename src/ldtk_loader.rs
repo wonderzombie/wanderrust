@@ -279,12 +279,8 @@ pub fn generate_ldtk_tilemap(
         c_hei = c_hei.max(layer.c_height);
 
         if layer.layer_type.eq_ignore_ascii_case("tiles") {
-            for tile in &layer.grid_tiles {
-                let tile_idx = TileIdx::from_idx(tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
-                distinct_tiles.insert(tile_idx);
-                let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
-                new_tiles.push((tile_idx, cell));
-            }
+            let grid_tiles = get_grid_tiles(&mut distinct_tiles, level, &layer.grid_tiles);
+            new_tiles.extend(grid_tiles);
         }
 
         if layer.layer_type.eq_ignore_ascii_case("entities") {
@@ -337,6 +333,21 @@ pub fn generate_ldtk_tilemap(
     commands.insert_resource(spec);
 
     ns.set(GameState::Loading);
+}
+
+fn get_grid_tiles(
+    distinct_tiles: &mut HashSet<TileIdx>,
+    level: &LdtkLevel,
+    grid_tiles: &Vec<LdtkGridTile>,
+) -> Vec<TileCell> {
+    let mut new_tiles: Vec<TileCell> = vec![];
+    for tile in grid_tiles {
+        let tile_idx = TileIdx::from_idx(tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
+        distinct_tiles.insert(tile_idx);
+        let cell = px_to_cell(tile.px.x, tile.px.y, level.px_height);
+        new_tiles.push((tile_idx, cell));
+    }
+    new_tiles
 }
 
 #[derive(Debug, Clone, Default)]
