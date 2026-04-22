@@ -253,7 +253,7 @@ pub fn generate_ldtk_tilemap(
     let mut new_interx: Vec<InterxCell> = Vec::new();
     let mut new_emitters: Vec<EmitterCell> = Vec::new();
 
-    let level = project.levels.get(0).unwrap();
+    let level = project.levels.first().unwrap();
     let mut spawn: Option<Cell> = None;
 
     // HACKHACK for testing

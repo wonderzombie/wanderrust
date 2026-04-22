@@ -72,7 +72,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 let requires = entity.get_string("requires").map(Item);
                 Some(Door {
                     is_open: entity.get_bool("is_open"),
-                    requires: requires,
+                    requires,
                     tile_idx_default: tile_idx,
                 })
             }

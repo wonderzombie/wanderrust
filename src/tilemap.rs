@@ -353,7 +353,7 @@ fn generate_tile_bundles(
             TileBundle {
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
-                cell: cell,
+                cell,
                 // This puts the tile at the correct z-order based on the layer.
                 transform: Transform::from_xyz(pos.x, pos.y, layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
