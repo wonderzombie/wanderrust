@@ -269,7 +269,7 @@ pub fn spawn_tilemap(
     sheet: Res<SpriteAtlas>,
 ) {
     info!(
-        "initializing tilemap: {:?} ({}) {:?}",
+        "📍 initializing tilemap: {:?} ({}) {:?}",
         spec.id, spec.size, spec.light_level
     );
 
@@ -304,7 +304,7 @@ pub fn spawn_tilemap(
             &sheet,
         );
         info!(
-            "ℹ️\t{} tiles; {} bundles; {} mapped tiles",
+            "📍 {} tiles; {} bundles; {} mapped tiles",
             count,
             cells.len(),
             bundles.len(),
@@ -321,7 +321,7 @@ pub fn spawn_tilemap(
         .insert(Visibility::Visible)
         .insert(Name::new("Tilemap"));
 
-    info!("done spawning tilemap");
+    info!("📍 done spawning tilemap");
 }
 
 pub fn despawn_tilemap(
@@ -372,7 +372,7 @@ pub fn initialize_tile_storage(
     strata: Query<(&Stratum, &Children)>,
     tiles: Query<&Cell, With<MapTile>>,
 ) {
-    info!("storing maps by cell by stratum");
+    info!("📍 storing maps by cell by stratum");
 
     let mut num_cells = 0;
     for (stratum, children) in strata {
@@ -384,7 +384,7 @@ pub fn initialize_tile_storage(
             }
         }
         info!(
-            "✅\tstratum {}: set {}/{} tile entities\t✅",
+            "📍 stratum {}: set {}/{} tile entities",
             stratum.1,
             num_cells,
             storage.len(),
@@ -412,7 +412,7 @@ pub fn setup_portals(
                             "Portal: {:?} <--> {:?}",
                             portal.id, portal.arrive_at
                         )));
-                    info!("inserted portal {:?} at {:?}", portal, cell);
+                    info!("📍 inserted portal {:?} at {:?}", portal, cell);
                 }
             }
         }

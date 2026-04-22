@@ -217,9 +217,13 @@ impl From<LdtkPxTile> for TileIdx {
 pub struct LdtkCell(Cell);
 
 pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
-    let serialized = std::fs::read_to_string(fname)?;
+    let serialized = std::fs::read_to_string(&fname)?;
     let project = serde_json::from_str::<LdtkProject>(&serialized)?;
-    info!("project levels count: {}", project.levels.len());
+    info!(
+        "🧰 {:?}: project levels count: {}",
+        fname.file_name(),
+        project.levels.len()
+    );
     Ok(project)
 }
 
@@ -296,10 +300,10 @@ pub fn generate_ldtk_tilemap(
             }
         }
     }
-    info!("new tiles: {}", new_tiles.len());
-    info!("new emitters: {}", new_emitters.len());
-    info!("new interactables: {}", new_interx.len());
-    info!("new portals: {}", new_portals.len());
+    info!("🧰 new tiles: {}", new_tiles.len());
+    info!("🧰 new emitters: {}", new_emitters.len());
+    info!("🧰 new interactables: {}", new_interx.len());
+    info!("🧰 new portals: {}", new_portals.len());
 
     // HACKHACK for testing
     let mut spec = TilemapSpec::default();
@@ -321,7 +325,7 @@ pub fn generate_ldtk_tilemap(
         Cell::default()
     };
 
-    info!("setting spawn to {}", spec.spawn_point);
+    info!("🧰 setting spawn to {}", spec.spawn_point);
 
     commands.insert_resource(spec);
 

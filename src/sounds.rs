@@ -17,7 +17,7 @@ pub struct Sounds {
 }
 
 pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
-    info!("preparing to load sounds");
+    info!("🔈 preparing to load sounds");
     let handle = asset_server.load_folder("audio");
 
     *sounds = Sounds {
@@ -41,16 +41,16 @@ pub fn on_loaded(
     let state = asset_server.recursive_dependency_load_state(sounds.folder_handle.id());
 
     if !state.is_loaded() {
-        trace!("LoadState: sounds not ready");
+        trace!("🔈 LoadState: sounds not ready");
         return;
     }
 
     let Some(folder) = loaded_folders.get(&sounds.folder_handle) else {
-        info!("Assets: sounds not ready");
+        info!("🔈 Assets: sounds not ready");
         return;
     };
 
-    info!("sounds loaded & accessible; initializing");
+    info!("🔈 sounds loaded & accessible; initializing");
     sounds.lookup = folder
         .handles
         .iter()
@@ -64,7 +64,7 @@ pub fn on_loaded(
 
     sounds.loaded = true;
     commands.add_observer(on_moved_sounds);
-    info!("finished initializing sounds");
+    info!("🔈 finished initializing sounds");
 }
 
 const GRASS_FOOTSTEPS: [&str; 5] = [

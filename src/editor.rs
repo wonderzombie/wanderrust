@@ -115,7 +115,7 @@ pub fn on_button_input(
         format!("active tile is now {:?}", editor_state.active_tile),
         KENNEY_RED,
     );
-    info!("active tile is now {:?}", editor_state.active_tile);
+    info!("📝 active tile is now {:?}", editor_state.active_tile);
 }
 
 /// Toggles the player's field of view range.
@@ -421,6 +421,7 @@ pub fn on_editor_toggle(
             EditorState::Disabled => EditorState::Enabled,
         };
         log.add(format!("! editor: {:?} !", next), Color::WHITE);
+        info!("📝 ! editor: {:?} !", next);
         next_state.set(next);
     }
 }

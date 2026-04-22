@@ -138,7 +138,8 @@ fn main() {
             (
                 grid::setup_spatial_indices,
                 grid::spawn_grid,
-                light::setup,
+                light::spawn,
+                light::setup.after(light::spawn),
                 fov::setup_fov,
             )
                 .in_set(GameSystem::SetupGrid)
@@ -271,13 +272,13 @@ fn finalize_starting(
 ) {
     trace!("atlas {:?} sounds {:?}", atlas.loaded, sounds.loaded);
     if atlas.loaded && sounds.loaded {
-        info!("✅\tdone [Starting]\t✅");
+        info!("✅ done [STARTING]");
         next.set(GameState::Loading);
     }
 }
 
 fn finalize_loading(mut next: ResMut<NextState<GameState>>) {
-    info!("✅\tdone [Loading]\t✅");
+    info!("✅ done [LOADING]");
     next.set(GameState::AwaitingInput);
 }
 
