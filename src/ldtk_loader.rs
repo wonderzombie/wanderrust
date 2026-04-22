@@ -347,7 +347,7 @@ pub enum ParsedValue {
     Ztring(String),
     PxTile(TileIdx),
     Bool(bool),
-    EntityRef(HashMap<String, String>),
+    // EntityRef(HashMap<String, String>),
     ArrayString(Vec<String>),
     LightLevelEnum(String),
 }
@@ -388,10 +388,10 @@ impl From<&LdtkField> for ParsedValue {
                 Ok(vec) => ArrayString(vec.clone()),
                 Err(_) => Unset,
             },
-            "EntityRef" => match from_value::<HashMap<String, String>>(val) {
-                Ok(map) => EntityRef(map),
-                Err(_) => Unset,
-            },
+            // "EntityRef" => match from_value::<HashMap<String, String>>(val) {
+            //     Ok(map) => EntityRef(map),
+            //     Err(_) => Unset,
+            // },
             _ => Unset,
         }
     }
