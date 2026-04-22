@@ -1477,12 +1477,12 @@
 				},
 				{
 					"identifier": "requires",
-					"doc": "Unless empty, this item must be in player inventory",
+					"doc": "Unless empty, this item must be in player inventory to open the door.",
 					"__type": "String",
 					"uid": 20,
 					"type": "F_String",
 					"isArray": false,
-					"canBeNull": false,
+					"canBeNull": true,
 					"arrayMinLength": null,
 					"arrayMaxLength": null,
 					"editorDisplayMode": "Hidden",
@@ -1712,7 +1712,7 @@
 					"uid": 33,
 					"type": "F_String",
 					"isArray": false,
-					"canBeNull": false,
+					"canBeNull": true,
 					"arrayMinLength": null,
 					"arrayMaxLength": null,
 					"editorDisplayMode": "Hidden",
@@ -1771,7 +1771,7 @@
 					"acceptFileTypes": null,
 					"defaultOverride": {
 						"id": "V_Bool",
-						"params": [ true ]
+						"params": [ false ]
 					},
 					"textLanguageMode": null,
 					"symmetricalRef": false,
@@ -2978,8 +2978,8 @@
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
-								{ "__identifier": "requires", "__type": "String", "__value": "", "__tile": null, "defUid": 33, "realEditorValues": [] },
-								{ "__identifier": "is_open", "__type": "Bool", "__value": true, "__tile": null, "defUid": 34, "realEditorValues": [] },
+								{ "__identifier": "requires", "__type": "String", "__value": null, "__tile": null, "defUid": 33, "realEditorValues": [] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 34, "realEditorValues": [null] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "defUid": 66, "realEditorValues": [] },
 								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "defUid": 51, "realEditorValues": [] }
 							],
@@ -3054,8 +3054,8 @@
 									"id": "V_String",
 									"params": ["Door"]
 								}] },
-								{ "__identifier": "requires", "__type": "String", "__value": "", "__tile": null, "defUid": 33, "realEditorValues": [] },
-								{ "__identifier": "is_open", "__type": "Bool", "__value": true, "__tile": null, "defUid": 34, "realEditorValues": [] },
+								{ "__identifier": "requires", "__type": "String", "__value": null, "__tile": null, "defUid": 33, "realEditorValues": [] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 34, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "defUid": 66, "realEditorValues": [] },
 								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "defUid": 51, "realEditorValues": [] }
 							],
@@ -3079,6 +3079,28 @@
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 224, "y": 208, "w": 16, "h": 16 }, "defUid": 49, "realEditorValues": [] }
 							],
 							"__worldX": 192,
+							"__worldY": 176
+						},
+						{
+							"__identifier": "DoorBrown1",
+							"__grid": [6,11],
+							"__pivot": [0,0],
+							"__tags": ["door"],
+							"__tile": { "tilesetUid": 2, "x": 80, "y": 144, "w": 16, "h": 16 },
+							"__smartColor": "#FEE761",
+							"iid": "5dd34cd0-21a0-11f1-8f9f-5febf0f7180a",
+							"width": 16,
+							"height": 16,
+							"defUid": 19,
+							"px": [96,176],
+							"fieldInstances": [
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 43, "realEditorValues": [] },
+								{ "__identifier": "requires", "__type": "String", "__value": null, "__tile": null, "defUid": 20, "realEditorValues": [] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 22, "realEditorValues": [] },
+								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 144, "w": 16, "h": 16 }, "defUid": 50, "realEditorValues": [] },
+								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 96, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 96, "y": 144, "w": 16, "h": 16 }, "defUid": 65, "realEditorValues": [] }
+							],
+							"__worldX": 96,
 							"__worldY": 176
 						}
 					]
@@ -3175,7 +3197,7 @@
 						{ "px": [144,160], "src": [272,0], "f": 0, "t": 17, "d": [169], "a": 1 },
 						{ "px": [208,160], "src": [0,208], "f": 0, "t": 637, "d": [173], "a": 1 },
 						{ "px": [32,176], "src": [0,208], "f": 0, "t": 637, "d": [178], "a": 1 },
-						{ "px": [80,176], "src": [0,208], "f": 0, "t": 637, "d": [181], "a": 1 },
+						{ "px": [80,176], "src": [16,208], "f": 0, "t": 638, "d": [181], "a": 1 },
 						{ "px": [96,176], "src": [272,0], "f": 0, "t": 17, "d": [182], "a": 1 },
 						{ "px": [112,176], "src": [272,0], "f": 0, "t": 17, "d": [183], "a": 1 },
 						{ "px": [128,176], "src": [272,0], "f": 0, "t": 17, "d": [184], "a": 1 },
