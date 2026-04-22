@@ -66,7 +66,7 @@ pub struct LdtkLevel {
 }
 
 impl LdtkLevel {
-    pub fn light_level(&self, default: LightLevel) -> LightLevel {
+    pub fn light_level_or(&self, default: LightLevel) -> LightLevel {
         self.field_instances
             .iter()
             .find(|fi| fi.identifier.eq_ignore_ascii_case("light_level"))
@@ -259,7 +259,7 @@ pub fn generate_ldtk_tilemap(
 
     let level = project.levels.first().unwrap();
     let mut spawn: Option<Cell> = None;
-    let light_level = level.light_level(LightLevel::Dark);
+    let light_level = level.light_level_or(LightLevel::Dark);
 
     // HACKHACK for testing
     // for level in &project.levels {
