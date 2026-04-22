@@ -255,17 +255,17 @@ pub fn spawn(
     atlas: Res<SpriteAtlas>,
     strata: Query<&Stratum>,
 ) {
-    for strat in strata.iter() {
-        let Some(interxs) = spec.all_interxs.get(&strat.1) else {
+    for Stratum(strat_entity, strat_id) in strata.iter() {
+        let Some(interxs) = spec.all_interxs.get(strat_id) else {
             error!(
                 "spec strata and live strata differ; spec is missing {:?}; spec has {:?}",
-                strat,
+                strat_id,
                 spec.all_interxs.keys(),
             );
             continue;
         };
 
-        info!("📦 {:?}: spawning interactables", strat);
+        info!("📦 {:?}: spawning interactables", strat_id);
 
         let mut count = 0;
         interxs
@@ -282,7 +282,7 @@ pub fn spawn(
                         },
                         ..default()
                     },
-                    ChildOf(strat.0),
+                    ChildOf(*strat_entity),
                 )
             })
             .for_each(|b| {
@@ -291,7 +291,7 @@ pub fn spawn(
                 commands.spawn(b);
             });
 
-        info!("📦 {:?} spawned {} interactables", strat, count);
+        info!("📦 {:?} spawned {} interactables", strat_id, count);
     }
 }
 

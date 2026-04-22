@@ -53,14 +53,14 @@ pub(crate) fn setup_spatial_indices(
     stratum_children: Populated<(&Stratum, &Children)>,
     tiles: Populated<&Cell, Without<Walkable>>,
 ) {
-    for (strat, children) in stratum_children.iter() {
+    for (Stratum(strat_entity, _), children) in stratum_children.iter() {
         let mut index = SpatialIndex::default();
         for child in children.iter() {
             if let Ok(cell) = tiles.get(child) {
                 index.insert(*cell, child);
             }
         }
-        commands.entity(strat.0).insert(index);
+        commands.entity(*strat_entity).insert(index);
     }
 }
 

@@ -268,10 +268,15 @@ pub fn spawn(
         "🔥 spawning emitters for {} strata",
         spec.all_emitters.len()
     );
-    for (stratum, emitters) in spec.all_emitters.iter() {
-        info!("🔥 strat {:?} has {:?} emitters", stratum, emitters.len());
-        let Some(parent) = strata.iter().find(|strat| strat.1 == *stratum) else {
-            warn!("🔥 unable to find stratum with id {:?}", stratum);
+    for (stratum_id, emitters) in spec.all_emitters.iter() {
+        info!(
+            "🔥 strat {:?} has {:?} emitters",
+            stratum_id,
+            emitters.len()
+        );
+        let Some(Stratum(strat_entity, _)) = strata.iter().find(|Stratum(_, id)| id == stratum_id)
+        else {
+            warn!("🔥 unable to find stratum with id {:?}", stratum_id);
             continue;
         };
 
@@ -282,7 +287,7 @@ pub fn spawn(
             commands.spawn((
                 *emitter,
                 emitter.default_tile_idx,
-                ChildOf(parent.0),
+                ChildOf(*strat_entity),
                 PieceBundle {
                     sprite: atlas.sprite_from_idx(emitter.default_tile_idx),
                     cell: *cell,

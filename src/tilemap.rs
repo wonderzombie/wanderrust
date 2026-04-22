@@ -463,14 +463,14 @@ where
     T: Component + Clone + Default + PartialEq,
 {
     let mut out = HashMap::new();
-    for (stratum, storage) in strat_storage.iter() {
+    for (Stratum(_, strat_id), storage) in strat_storage.iter() {
         for (i, entity_opt) in storage.tiles.iter().enumerate() {
             let cell = size.idx_to_cell(i);
             if let Some(entity) = entity_opt
                 && let Ok(item) = live_items.get(*entity)
                 && *item != T::default()
             {
-                out.entry(stratum.1)
+                out.entry(*strat_id)
                     .or_insert(Vec::new())
                     .push((item.clone(), cell))
             }
