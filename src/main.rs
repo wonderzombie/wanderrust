@@ -38,7 +38,7 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
-    tilemap::{EntryId, Portal, TileStorage, TilemapSpec},
+    tilemap::{EntryId, Portal, StratumTileSpec, TileStorage},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -62,9 +62,9 @@ fn main() {
     let mut app = App::new();
 
     if str_map {
-        app.insert_resource(TilemapSpec::from_str(map::MAP_ZERO));
+        app.insert_resource(StratumTileSpec::from_str(map::MAP_ZERO));
     } else if proc_map {
-        app.insert_resource(TilemapSpec::with_ptable(
+        app.insert_resource(StratumTileSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
             (100, 100),

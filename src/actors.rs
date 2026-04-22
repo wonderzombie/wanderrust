@@ -10,7 +10,7 @@ use crate::{
     combat::{Belligerent, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
-    tilemap::{self, Stratum, TileStorage, TilemapSpec},
+    tilemap::{self, Stratum, StratumTileSpec, TileStorage},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
@@ -70,7 +70,7 @@ pub struct Moved(pub Entity);
 /// Spawns the player entity at the start position of the tilemap on the player's layer.
 pub fn setup_player(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     atlas: Res<SpriteAtlas>,
     player: Option<Single<Entity, With<Player>>>,
     strata: Query<Entity, With<Stratum>>,

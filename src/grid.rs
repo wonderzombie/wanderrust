@@ -9,7 +9,7 @@ use crate::{
     cell::Cell,
     combat::{self, Awareness},
     gamestate::Turn,
-    tilemap::{Stratum, TilemapSpec},
+    tilemap::{Stratum, StratumTileSpec},
     tiles::{TileIdx, Walkable},
 };
 
@@ -66,7 +66,7 @@ pub(crate) fn setup_spatial_indices(
 
 pub fn spawn_grid(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     strata: Populated<Entity, (With<Stratum>, Without<CardinalGrid>)>,
 ) {
     info!("🧭 spawning grid for {} strata", strata.count());

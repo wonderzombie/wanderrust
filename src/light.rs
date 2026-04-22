@@ -5,7 +5,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, TileStorage, TilemapSpec},
+    tilemap::{Stratum, StratumTileSpec, TileStorage},
     tiles::{MapTile, Revealed, TileIdx},
 };
 use bevy::{platform::collections::HashSet, prelude::*};
@@ -260,7 +260,7 @@ impl StratumLightMap {
 
 pub fn spawn(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     atlas: Res<SpriteAtlas>,
     strata: Query<&Stratum>,
 ) {
@@ -305,7 +305,7 @@ pub fn setup(
     mut commands: Commands,
     emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
     storage: Query<Entity, With<TileStorage>>,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
 ) {
     let mut count = 0;
     for (entity, tile_idx) in emitter_tiles {
@@ -392,7 +392,7 @@ pub fn update_strata_light_levels(
 }
 
 pub fn sync_actor_light_levels(
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     storages: Query<&TileStorage>,
     lit_tiles: Query<&LightLevel, With<MapTile>>,
     revealed_tiles: Query<&Revealed, With<MapTile>>,

@@ -3,7 +3,7 @@ use crate::{
     colors,
     light::LightLevel,
     ptable::ProbabilityTable,
-    tilemap::{Dimensions, EntryId, Portal, PortalCell, StratumId, TileCell, TilemapSpec},
+    tilemap::{Dimensions, EntryId, Portal, PortalCell, StratumId, StratumTileSpec, TileCell},
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
@@ -60,7 +60,7 @@ pub const MAP_ONE: &str = r#"
 
 pub const DEFAULT_TILE_SIZE: u32 = 16;
 
-impl TilemapSpec {
+impl StratumTileSpec {
     const KEY: &[(char, TileIdx)] = &[
         ('#', TileIdx::StoneWall),
         ('.', TileIdx::Blank),
@@ -81,7 +81,7 @@ impl TilemapSpec {
     ];
 
     fn tile_for(c: char) -> Option<TileIdx> {
-        TilemapSpec::KEY
+        StratumTileSpec::KEY
             .iter()
             .find(|(k, _)| *k == c)
             .map(|(_, v)| *v)
@@ -99,15 +99,15 @@ impl TilemapSpec {
 
         let id = StratumId(0);
         let all_tiles: HashMap<StratumId, Vec<TileCell>> =
-            vec![(id, TilemapSpec::parse_map_str(map_str))]
+            vec![(id, StratumTileSpec::parse_map_str(map_str))]
                 .into_iter()
                 .collect();
 
-        let all_portals = vec![(id, TilemapSpec::parse_portals(&all_tiles[&id]))]
+        let all_portals = vec![(id, StratumTileSpec::parse_portals(&all_tiles[&id]))]
             .into_iter()
             .collect();
 
-        TilemapSpec {
+        StratumTileSpec {
             size: Dimensions {
                 width,
                 height,
@@ -155,7 +155,7 @@ impl TilemapSpec {
             .enumerate()
             .flat_map(|(y, line)| {
                 line.char_indices().filter_map(move |(x, c)| {
-                    TilemapSpec::tile_for(c).map(|idx| {
+                    StratumTileSpec::tile_for(c).map(|idx| {
                         (
                             idx,
                             Cell {
@@ -173,12 +173,12 @@ impl TilemapSpec {
     pub fn from_strs(one: &str, two: &str, spawn_cell: Cell, light_level: LightLevel) -> Self {
         let id1 = StratumId(0);
         let id2 = StratumId(1);
-        let tiles1 = TilemapSpec::parse_map_str(one);
-        let portals1 = TilemapSpec::parse_portals(&tiles1);
-        let tiles2 = TilemapSpec::parse_map_str(two);
-        let portals2 = TilemapSpec::parse_portals(&tiles2);
+        let tiles1 = StratumTileSpec::parse_map_str(one);
+        let portals1 = StratumTileSpec::parse_portals(&tiles1);
+        let tiles2 = StratumTileSpec::parse_map_str(two);
+        let portals2 = StratumTileSpec::parse_portals(&tiles2);
         let spawn_point = (StratumId::default(), spawn_cell);
-        TilemapSpec {
+        StratumTileSpec {
             all_tiles: vec![(id1, tiles1), (id2, tiles2)]
                 .into_iter()
                 .collect::<HashMap<StratumId, Vec<TileCell>>>(),
@@ -225,7 +225,7 @@ impl TilemapSpec {
 
         info!("tile breakdown: {:#?}", tally);
 
-        TilemapSpec {
+        StratumTileSpec {
             size: Dimensions {
                 width: size.0,
                 height: size.1,
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn dimensions_match_string() {
-        let spec = TilemapSpec::from_str("###\n...\n");
+        let spec = StratumTileSpec::from_str("###\n...\n");
         assert_eq!(spec.size.width, 3);
         assert_eq!(spec.size.height, 2);
         assert_eq!(spec.size.tile_size, DEFAULT_TILE_SIZE);
@@ -253,14 +253,14 @@ mod tests {
 
     #[test]
     fn jagged_map_uses_widest_line() {
-        let spec = TilemapSpec::from_str("#\n###\n##\n");
+        let spec = StratumTileSpec::from_str("#\n###\n##\n");
         assert_eq!(spec.size.width, 3);
         assert_eq!(spec.size.height, 3);
     }
 
     #[test]
     fn empty_string_produces_empty_spec() {
-        let spec = TilemapSpec::from_str("");
+        let spec = StratumTileSpec::from_str("");
         assert_eq!(spec.size.width, 0);
         assert_eq!(spec.size.height, 0);
         assert!(spec.all_tiles[&StratumId(0)].is_empty());
@@ -269,14 +269,14 @@ mod tests {
     #[test]
     fn spaces_and_unknown_chars_excluded() {
         // '?' (unknown) should produce no tiles
-        let spec = TilemapSpec::from_str("?");
+        let spec = StratumTileSpec::from_str("?");
         assert!(spec.all_tiles[&StratumId(0)].is_empty());
     }
 
     #[test]
     fn character_mappings() {
         // One of each known character on a single row; check tile indices in order
-        let spec = TilemapSpec::from_str("#.XDObwTtUu");
+        let spec = StratumTileSpec::from_str("#.XDObwTtUu");
         let tile_types: Vec<TileIdx> = spec
             .all_tiles
             .values()
@@ -305,7 +305,7 @@ mod tests {
     fn cell_coordinates_match_col_row() {
         // "#." on row 0 → wall at (0,0), blank at (1,0)
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
-        let spec = TilemapSpec::from_str("#.\n.#");
+        let spec = StratumTileSpec::from_str("#.\n.#");
         let tiles = &spec.all_tiles;
         let id = StratumId(0);
         assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
@@ -318,7 +318,7 @@ mod tests {
     fn start_is_hardcoded_regardless_of_x_position() {
         // 'X' marks the intended start in ASCII but from_str ignores its position;
         // start is always hardcoded to (5, 5).
-        let spec = TilemapSpec::from_str("X..\n...\n...");
+        let spec = StratumTileSpec::from_str("X..\n...\n...");
         let (_, spawn_cell) = spec.spawn_point;
         assert_eq!(spawn_cell, Cell { x: 5, y: 5 });
     }
@@ -386,7 +386,7 @@ pub fn sync_tiles(
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
 ) {
     for (mut sprite, mut vis, it) in tiles.iter_mut() {
         *vis = if it.revealed() && !it.occupied() {

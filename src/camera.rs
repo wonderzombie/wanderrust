@@ -4,13 +4,13 @@ use crate::{
     actors::Player,
     cell::Cell,
     editor::DesiredZoom,
-    tilemap::{TilemapLayer, TilemapSpec},
+    tilemap::{StratumTileSpec, TilemapLayer},
     tiles,
 };
 
 const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
-pub fn setup_camera(mut commands: Commands, spec: Res<TilemapSpec>) {
+pub fn setup_camera(mut commands: Commands, spec: Res<StratumTileSpec>) {
     let size = spec.size;
     commands.spawn((
         Camera2d,

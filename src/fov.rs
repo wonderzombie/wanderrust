@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
-    tilemap::{Stratum, TilemapSpec},
+    tilemap::{Stratum, StratumTileSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -59,7 +59,7 @@ impl Vision {
 /// The field of view is marked as opaque beforehand.
 pub fn setup_fov(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     stratum_children: Query<(&Stratum, &Children)>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {

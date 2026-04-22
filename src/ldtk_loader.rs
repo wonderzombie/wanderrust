@@ -10,8 +10,8 @@ use crate::{
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
     tilemap::{
-        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, TileCell,
-        TilemapSpec,
+        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, StratumTileSpec,
+        TileCell, WorldSpec,
     },
     tiles::{self, SHEET_SIZE_G, TileIdx},
 };
@@ -307,7 +307,7 @@ pub fn generate_ldtk_tilemap(
     info!("🧰 new portals: {}", new_portals.len());
 
     // HACKHACK for testing
-    let mut spec = TilemapSpec::default();
+    let mut spec = StratumTileSpec::default();
     spec.all_tiles.insert(StratumId(0), new_tiles);
     spec.all_portals.insert(StratumId(0), new_portals);
     spec.all_interxs.insert(StratumId(0), new_interx);

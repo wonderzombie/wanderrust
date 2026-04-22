@@ -16,7 +16,7 @@ use crate::{
     gamestate::GameState,
     interactions::Interactable,
     ldtk_loader,
-    tilemap::{self, Portal, StratPortals, Stratum, TileStorage, TilemapSpec},
+    tilemap::{self, Portal, StratPortals, Stratum, StratumTileSpec, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 const DATA_DIR: &str = "data";
@@ -286,12 +286,12 @@ pub fn poll_load_dialog(
 /// Uses a lot of unwrap.
 pub fn on_load_map_message(
     mut load_messages: MessageReader<MapLoadMessage>,
-    mut spec: ResMut<TilemapSpec>,
+    mut spec: ResMut<StratumTileSpec>,
     mut next: ResMut<NextState<GameState>>,
 ) {
     for message in load_messages.read() {
         let serialized = std::fs::read_to_string(&message.0).unwrap();
-        let mut new_spec = ron::from_str::<TilemapSpec>(&serialized).unwrap();
+        let mut new_spec = ron::from_str::<StratumTileSpec>(&serialized).unwrap();
 
         let serialized = std::fs::read_to_string(message.0.with_file_name("portals.ron")).unwrap();
         let portals = ron::from_str::<StratPortals>(&serialized).unwrap();
@@ -361,7 +361,7 @@ pub fn poll_save_dialog(
 
 /// Saves the map to disk using the provided queries.
 pub fn on_save_map_message(
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     mut strat_storage: Query<(&Stratum, &TileStorage)>,
     all_tiles: Query<&tiles::TileIdx>,
     all_portals: Query<(&Portal, &TileIdx, &Cell, &ChildOf)>,

@@ -13,6 +13,11 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
+#[derive(Resource, Default, Debug, PartialEq)]
+pub struct WorldSpec {
+    pub maps: HashMap<StratumId, StratumTileSpec>,
+}
+
 #[derive(
     Component,
     Copy,
@@ -69,7 +74,7 @@ pub type StratEmitters = HashMap<StratumId, Vec<EmitterCell>>;
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
-pub struct TilemapSpec {
+pub struct StratumTileSpec {
     /// Stratum entities will be created as children of this entity.
     #[serde(skip)]
     pub id: TilemapId,
@@ -83,13 +88,6 @@ pub struct TilemapSpec {
     pub spawn_point: SpawnCell,
     /// The minimum light level for the area.
     pub light_level: LightLevel,
-}
-
-pub struct EntitiesSpec {
-    pub tiles: Vec<TileCell>,
-    pub portals: Vec<PortalCell>,
-    pub interxs: Vec<InterxCell>,
-    pub emitters: Vec<EmitterCell>,
 }
 
 #[derive(Resource, Debug, Clone, Reflect)]
@@ -270,7 +268,7 @@ pub(crate) const PLAYER_LAYER: TilemapLayer = TilemapLayer(-1.0);
 /// It creates one entity with [`TilemapBundle`] and many with [`TileBundle`].
 pub fn spawn_tilemap(
     mut commands: Commands,
-    mut spec: ResMut<TilemapSpec>,
+    mut spec: ResMut<StratumTileSpec>,
     sheet: Res<SpriteAtlas>,
 ) {
     info!(
@@ -373,7 +371,7 @@ fn generate_tile_bundles(
 /// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
 pub fn initialize_tile_storage(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     strata: Query<(&Stratum, &Children)>,
     tiles: Query<&Cell, With<MapTile>>,
 ) {
@@ -400,7 +398,7 @@ pub fn initialize_tile_storage(
 
 pub fn setup_portals(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     strata: Query<&Stratum>,
     atlas: Res<SpriteAtlas>,
 ) {

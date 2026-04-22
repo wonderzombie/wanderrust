@@ -8,7 +8,7 @@ use crate::{
     event_log::MessageLog,
     inventory::{self, *},
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, TilemapSpec},
+    tilemap::{Stratum, StratumTileSpec},
     tiles::TileIdx,
 };
 
@@ -251,7 +251,7 @@ struct InterxBundle {
 
 pub fn spawn(
     mut commands: Commands,
-    spec: Res<TilemapSpec>,
+    spec: Res<StratumTileSpec>,
     atlas: Res<SpriteAtlas>,
     strata: Query<&Stratum>,
 ) {
