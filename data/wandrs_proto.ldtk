@@ -982,7 +982,7 @@
 				},
 				{
 					"identifier": "tile",
-					"doc": null,
+					"doc": "Use this field to provide a tile for a portal.",
 					"__type": "Tile",
 					"uid": 120,
 					"type": "F_Tile",
