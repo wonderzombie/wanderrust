@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
-use crate::ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt};
-use crate::tilemap::TilemapSpec;
-use crate::tiles::{MapTile, Revealed, TileIdx};
-use crate::{cell::Cell, tilemap::TileStorage};
-use bevy::platform::collections::HashSet;
-use bevy::prelude::*;
+use crate::{
+    actors::PieceBundle,
+    atlas::SpriteAtlas,
+    cell::Cell,
+    ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
+    tilemap::{Stratum, TileStorage, TilemapSpec},
+    tiles::{MapTile, Revealed, TileIdx},
+};
+use bevy::{platform::collections::HashSet, prelude::*};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -241,6 +244,44 @@ impl StratumLightMap {
     }
 }
 
+pub fn spawn(
+    mut commands: Commands,
+    spec: Res<TilemapSpec>,
+    atlas: Res<SpriteAtlas>,
+    strata: Query<&Stratum>,
+) {
+    info!(
+        "🔥 spawning emitters for {} strata",
+        spec.all_emitters.len()
+    );
+    for (stratum, emitters) in spec.all_emitters.iter() {
+        info!("🔥 strat {:?} has {:?} emitters", stratum, emitters.len());
+        let Some(parent) = strata.iter().find(|strat| strat.1 == *stratum) else {
+            warn!("🔥 unable to find stratum with id {:?}", stratum);
+            continue;
+        };
+
+        let mut count = 0;
+        for (emitter, _, cell) in emitters.iter() {
+            count += 1;
+            trace!("🔥 spawning {:?} at {:?}", emitter, cell);
+            commands.spawn((
+                *emitter,
+                emitter.default_tile_idx,
+                ChildOf(parent.0),
+                PieceBundle {
+                    sprite: atlas.sprite_from_idx(emitter.default_tile_idx),
+                    cell: *cell,
+                    ..default()
+                },
+            ));
+        }
+        if count > 0 {
+            info!("🔥 spawned {} emitters", count);
+        }
+    }
+}
+
 pub fn setup(
     mut commands: Commands,
     emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
@@ -258,15 +299,6 @@ pub fn setup(
     }
     if count > 0 {
         info!("🔥 set up {} emitter tiles", count);
-    }
-
-    count = 0;
-    for (entity, emitter) in emitter_actors {
-        count += 1;
-        commands.entity(entity).insert(emitter.default_tile_idx);
-    }
-    if count > 0 {
-        info!("🔥 set up {} emitter entities", count);
     }
 
     count = 0;
