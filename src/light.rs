@@ -108,15 +108,15 @@ impl Emitter {
                 TileIdx::Candle => {
                     return Some(Emitter::new(
                         *tile_idx,
-                        (LightLevel::Dim, 2),
-                        (LightLevel::Dim, 0),
+                        (LightLevel::Dim, 1),
+                        (LightLevel::Night, 1),
                     ));
                 }
                 TileIdx::Brazier => {
                     return Some(Emitter::new(
                         *tile_idx,
-                        (LightLevel::Light, 3),
-                        (LightLevel::Dim, 2),
+                        (LightLevel::Light, 2),
+                        (LightLevel::Dim, 1),
                     ));
                 }
                 _ => {
