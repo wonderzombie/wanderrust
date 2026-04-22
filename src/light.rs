@@ -393,16 +393,22 @@ pub fn update_strata_light_levels(
 
 pub fn sync_actor_light_levels(
     spec: Res<TilemapSpec>,
-    storage: Single<&TileStorage>,
+    storages: Query<&TileStorage>,
     lit_tiles: Query<&LightLevel, With<MapTile>>,
     revealed_tiles: Query<&Revealed, With<MapTile>>,
-    actors: Query<(&mut Sprite, &Cell, &mut Visibility), Without<MapTile>>,
+    actors: Query<(&mut Sprite, &Cell, &mut Visibility, &ChildOf), Without<MapTile>>,
 ) {
     // Actor entities should have the same LightLevel as the tile they are standing on.
-    for (mut actor_sprite, actor_cell, mut actor_vis) in actors {
-        let Some(actor_tile) = storage.get(actor_cell) else {
+    for (mut actor_sprite, actor_cell, mut actor_vis, child_of) in actors {
+        let Some(actor_tile) = storages
+            .get(child_of.0)
+            .ok()
+            .and_then(|v| v.get(actor_cell))
+        else {
+            warn!("no stratum or cell found for actor: {:?}", actor_cell);
             continue;
         };
+
         let revealed = revealed_tiles
             .get(actor_tile)
             .ok()
