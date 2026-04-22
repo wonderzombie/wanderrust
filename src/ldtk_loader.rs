@@ -277,11 +277,7 @@ pub fn generate_ldtk_world(
                     Some(ParsedActor::Interactable(i)) => spec.interxs.push((i, cell)),
                     Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
                     Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
-                    Some(ParsedActor::WorldSpawn) => spec.spawn_point = Some((stratum_id, cell)),
-                    Some(ParsedActor::Respawn) => {
-                        warn!("respawn not supported yet; skipping");
-                        continue;
-                    }
+                    Some(ParsedActor::Spawn) => spec.spawn_point = Some((stratum_id, cell)),
                     None => warn!("ignoring unparsable actor: {:?}", actor),
                 }
             }
@@ -336,16 +332,18 @@ pub fn generate_ldtk_tilemap(
                     warn!("actor has default tile: {:?}", actor);
                 }
 
+                info!("entity: {:?}", actor.identifier);
+
                 match ParsedActor::from_ldtk(actor) {
                     Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, wandrs_cell)),
                     Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, wandrs_cell)),
                     Some(ParsedActor::Portal(p)) => new_portals.push((p, t, wandrs_cell)),
-                    Some(ParsedActor::WorldSpawn) => spawn = Some(wandrs_cell),
-                    Some(ParsedActor::Respawn) => {
-                        warn!("respawn not supported yet; skipping");
-                        continue;
-                    }
-                    None => warn!("ignoring unparsable actor: {:?}", actor),
+                    Some(ParsedActor::Spawn) => spawn = Some(wandrs_cell),
+                    None => error!(
+                        "skipping unknown actor type: {:?} (ty {:?}",
+                        actor,
+                        actor.ty()
+                    ),
                 }
             }
         }
@@ -452,28 +450,31 @@ impl From<&LdtkField> for ParsedValue {
 
 enum_with_str!(
     LdtkActor,
-    [
-        Combatant, Speaker, Door, Chest, Emitter, Portal, Respawn, WorldSpawn
-    ]
+    [Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn]
 );
 
+/// ParsedActor is the intermediate representation between LDtk types and wanderrust types.
+/// NB that these must match the **Actor enum in LDtk**.
 pub enum ParsedActor {
     Interactable(interactions::Interactable),
     Portal(tilemap::Portal),
     Emitter(light::Emitter),
-    Respawn,
-    WorldSpawn,
+    Spawn,
 }
 
 impl LdtkEntityExt<ParsedActor> for ParsedActor {
     fn from_ldtk(entity: &LdtkEntity) -> Option<ParsedActor> {
-        match entity.ty()? {
+        let Some(e) = entity.ty() else {
+            warn!("unknown LdtkEntity type: {:#?}", entity);
+            return None;
+        };
+
+        match e {
             LdtkActor::Chest | LdtkActor::Door | LdtkActor::Combatant | LdtkActor::Speaker => {
                 Interactable::from_ldtk(entity).map(Self::Interactable)
             }
             LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
-            LdtkActor::Respawn => Some(Self::Respawn),
-            LdtkActor::WorldSpawn => Some(Self::WorldSpawn),
+            LdtkActor::Spawn => Some(Self::Spawn),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
             LdtkActor::Unset => {
                 warn!("unknown LdtkEntity type: {:#?}", entity);
