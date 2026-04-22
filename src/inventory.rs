@@ -6,7 +6,7 @@ use bevy::{
         resource::Resource,
         system::ResMut,
     },
-    log::info,
+    log::{info, warn},
     platform::collections::{HashMap, hash_map},
     reflect::Reflect,
 };
@@ -19,6 +19,16 @@ pub struct Item(pub String);
 impl Item {
     pub fn from(name: impl AsRef<str>) -> Self {
         Item(name.as_ref().to_string())
+    }
+
+    pub fn from_spec(item_spec: impl AsRef<str>) -> (Self, usize) {
+        if let Some((it, n)) = item_spec.as_ref().split_once(':') {
+            let item = Item::from(it);
+            let qty = n.parse().unwrap_or(1);
+            (item, qty)
+        } else {
+            (Item::from(item_spec.as_ref()), 1)
+        }
     }
 }
 
@@ -125,13 +135,32 @@ impl Inventory {
         self.0.is_empty()
     }
 
-    pub fn from_str(item_spec: impl Into<String>) -> Option<Inventory> {
-        if let Some((it, n)) = item_spec.into().split_once(':') {
-            let item = Item::from(it);
-            let qty = n.parse().unwrap_or(1);
-            return Some(Inventory::with_item(item, qty));
+    pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
+        let spec: String = item_spec.as_ref().into();
+        dbg!(&spec);
+        if spec.is_empty() {
+            return None;
         }
-        None
+
+        let (item, qty) = Item::from_spec(item_spec);
+        Some(Inventory::with_item(item, qty))
+    }
+
+    pub fn from_str_array<T, I>(item_specs: I) -> Option<Inventory>
+    where
+        I: IntoIterator<Item = T> + std::fmt::Debug,
+        T: AsRef<str> + Clone + std::fmt::Debug,
+    {
+        let mut inv = Inventory::default();
+        for s in item_specs.into_iter() {
+            if s.as_ref().is_empty() {
+                warn!("skipping empty item spec: {:?}", &s);
+                continue;
+            }
+            let (item, qty) = Item::from_spec(s.as_ref());
+            inv.add_item(item, qty);
+        }
+        Some(inv)
     }
 }
 

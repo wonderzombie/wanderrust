@@ -78,7 +78,9 @@ impl LdtkEntityExt<Interactable> for Interactable {
             }
             // TODO: load inventory items
             LdtkActor::Chest => {
-                let inv = entity.get_string("contents").and_then(Inventory::from_str);
+                let inv = entity
+                    .get_str_array("contents")
+                    .and_then(Inventory::from_str_array);
                 Some(Chest {
                     is_open: entity.get_bool("is_open"),
                     contents: inv,
