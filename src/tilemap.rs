@@ -60,6 +60,8 @@ pub type PortalCell = (Portal, TileIdx, Cell);
 pub type InterxCell = (Interactable, TileIdx, Cell);
 pub type EmitterCell = (Emitter, TileIdx, Cell);
 
+pub type SpawnCell = (StratumId, Cell);
+
 pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
 pub type StratInterxs = HashMap<StratumId, Vec<InterxCell>>;
@@ -78,7 +80,7 @@ pub struct TilemapSpec {
     pub all_interxs: StratInterxs,
     pub all_emitters: StratEmitters,
     /// Starting point for the player.
-    pub spawn_point: Cell,
+    pub spawn_point: SpawnCell,
     /// The minimum light level for the area.
     pub light_level: LightLevel,
 }
@@ -89,6 +91,9 @@ pub struct EntitiesSpec {
     pub interxs: Vec<InterxCell>,
     pub emitters: Vec<EmitterCell>,
 }
+
+#[derive(Resource, Debug, Clone, Reflect)]
+pub struct ActiveStratum(pub Stratum);
 
 #[derive(
     Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,

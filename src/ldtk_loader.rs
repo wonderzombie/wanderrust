@@ -326,13 +326,13 @@ pub fn generate_ldtk_tilemap(
     };
 
     spec.spawn_point = if let Some(spawn) = spawn {
-        spawn
+        (StratumId(0), spawn)
     } else {
         error!("did not find spawn point");
-        Cell::default()
+        (StratumId(0), Cell::default())
     };
 
-    info!("🧰 setting spawn to {}", spec.spawn_point);
+    info!("🧰 setting spawn to {:?}", spec.spawn_point);
 
     commands.insert_resource(spec);
 

@@ -75,12 +75,13 @@ pub fn setup_player(
     player: Option<Single<Entity, With<Player>>>,
     strata: Query<Entity, With<Stratum>>,
 ) {
+    let (_, spawn_cell) = spec.spawn_point;
     if let Some(entity) = player {
         info!("🕹️ respawning player");
         commands
             .entity(*entity)
             .insert(ChildOf(strata.iter().next().unwrap()))
-            .insert(spec.spawn_point);
+            .insert(spawn_cell);
     } else {
         info!("🕹️ spawning player");
         commands.spawn((
@@ -111,7 +112,7 @@ pub fn setup_player(
             },
             PieceBundle {
                 sprite: atlas.sprite(),
-                cell: spec.spawn_point,
+                cell: spawn_cell,
                 transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
                 ..default()
             },

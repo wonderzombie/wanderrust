@@ -114,7 +114,7 @@ impl TilemapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            spawn_point: Cell { x: 5, y: 5 },
+            spawn_point: (StratumId::default(), Cell { x: 5, y: 5 }),
             light_level: LightLevel::Bright,
             all_portals,
             ..default()
@@ -170,13 +170,14 @@ impl TilemapSpec {
     }
 
     #[allow(dead_code)]
-    pub fn from_strs(one: &str, two: &str, spawn_point: Cell, light_level: LightLevel) -> Self {
+    pub fn from_strs(one: &str, two: &str, spawn_cell: Cell, light_level: LightLevel) -> Self {
         let id1 = StratumId(0);
         let id2 = StratumId(1);
         let tiles1 = TilemapSpec::parse_map_str(one);
         let portals1 = TilemapSpec::parse_portals(&tiles1);
         let tiles2 = TilemapSpec::parse_map_str(two);
         let portals2 = TilemapSpec::parse_portals(&tiles2);
+        let spawn_point = (StratumId::default(), spawn_cell);
         TilemapSpec {
             all_tiles: vec![(id1, tiles1), (id2, tiles2)]
                 .into_iter()
@@ -195,14 +196,16 @@ impl TilemapSpec {
         fx: impl Fn(&Cell, &ProbabilityTable) -> TileIdx,
         size: (u32, u32),
     ) -> Self {
-        let spawn_point = Cell {
+        let spawn_cell = Cell {
             x: size.0 as i32 / 2,
             y: size.1 as i32 / 2,
         };
         info!("=== map from procedure ===");
         let tiles = size.0 * size.1;
-        info!("spawn_point: {:?}", spawn_point);
+        info!("spawn_point: {:?}", spawn_cell);
         info!("size: {:?}", size);
+
+        let spawn_point = (StratumId::default(), spawn_cell);
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
@@ -316,7 +319,8 @@ mod tests {
         // 'X' marks the intended start in ASCII but from_str ignores its position;
         // start is always hardcoded to (5, 5).
         let spec = TilemapSpec::from_str("X..\n...\n...");
-        assert_eq!(spec.spawn_point, Cell { x: 5, y: 5 });
+        let (_, spawn_cell) = spec.spawn_point;
+        assert_eq!(spawn_cell, Cell { x: 5, y: 5 });
     }
 }
 
