@@ -35,6 +35,20 @@ pub enum LightLevel {
     Bright, // noon sun, magical light source
 }
 
+impl LightLevel {
+    pub fn from_str(s: impl AsRef<str>) -> Option<LightLevel> {
+        use LightLevel::*;
+        match s.as_ref() {
+            "dark" => Some(Dark),
+            "night" => Some(Night),
+            "dim" => Some(Dim),
+            "light" => Some(Light),
+            "bright" => Some(Bright),
+            _ => None,
+        }
+    }
+}
+
 impl From<LightLevel> for f32 {
     fn from(value: LightLevel) -> Self {
         match value {
@@ -285,7 +299,6 @@ pub fn spawn(
 pub fn setup(
     mut commands: Commands,
     emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
-    emitter_actors: Query<(Entity, &Emitter)>,
     storage: Query<Entity, With<TileStorage>>,
     spec: Res<TilemapSpec>,
 ) {

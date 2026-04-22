@@ -93,7 +93,7 @@ pub fn setup_player(
             Blocking,
             Emitter::new(
                 TileIdx::Blank,
-                (LightLevel::Bright, 2),
+                (LightLevel::Bright, 1),
                 (LightLevel::Light, 1),
             ),
             Belligerent {

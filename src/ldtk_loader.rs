@@ -71,6 +71,19 @@ pub struct LdtkLevel {
     pub px_height: f32,
 }
 
+impl LdtkLevel {
+    pub fn light_level(&self, default: LightLevel) -> LightLevel {
+        self.field_instances
+            .iter()
+            .find(|fi| fi.identifier.eq_ignore_ascii_case("light_level"))
+            .and_then(|fi| match ParsedValue::from(fi) {
+                ParsedValue::LightLevelEnum(l) => LightLevel::from_str(l),
+                _ => None,
+            })
+            .unwrap_or(default)
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct LdtkLayer {
     #[serde(rename = "__identifier")]
@@ -153,13 +166,6 @@ impl LdtkEntity {
     pub fn get_actor_enum(&self, key: &str) -> Option<String> {
         match self.field_val(key) {
             Some(ParsedValue::ActorEnum(s)) => Some(s),
-            _ => None,
-        }
-    }
-
-    pub fn get_light_enum(&self, key: &str) -> Option<String> {
-        match self.field_val(key) {
-            Some(ParsedValue::LightLevelEnum(l)) => Some(l),
             _ => None,
         }
     }
@@ -259,6 +265,7 @@ pub fn generate_ldtk_tilemap(
 
     let level = project.levels.first().unwrap();
     let mut spawn: Option<Cell> = None;
+    let light_level = level.light_level(LightLevel::Dark);
 
     // HACKHACK for testing
     // for level in &project.levels {
@@ -311,7 +318,7 @@ pub fn generate_ldtk_tilemap(
     spec.all_portals.insert(StratumId(0), new_portals);
     spec.all_interxs.insert(StratumId(0), new_interx);
     spec.all_emitters.insert(StratumId(0), new_emitters);
-    spec.light_level = LightLevel::Bright;
+    spec.light_level = light_level;
     spec.size = Dimensions {
         width: c_wid as u32,
         height: c_hei as u32,
