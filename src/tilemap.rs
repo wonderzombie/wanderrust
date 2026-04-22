@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Display, ops::Neg};
 
 use crate::{
-    actors::Player,
+    actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
     interactions::Interactable,
@@ -227,7 +227,7 @@ impl LdtkEntityExt<Portal> for Portal {
         // TODO: use EntityRef field.
         let id = EntryId(entity.get_string("id")?);
         let arrive_at = EntryId(entity.get_string("arrive_at")?);
-        let tile_idx = TileIdx::from(entity.tile);
+        let tile_idx = entity.get_tile_field("tile").unwrap_or(TileIdx::Blank);
 
         Some(Portal {
             id,
@@ -396,24 +396,25 @@ pub fn initialize_tile_storage(
 pub fn setup_portals(
     mut commands: Commands,
     spec: Res<TilemapSpec>,
-    strat_storage: Query<(&Stratum, &TileStorage)>,
+    strata: Query<&Stratum>,
+    atlas: Res<SpriteAtlas>,
 ) {
-    for (Stratum(strat_entity, id), storage) in strat_storage.iter() {
+    for Stratum(strat_entity, id) in strata.iter() {
         if let Some(portal_cells) = spec.all_portals.get(id) {
             for (portal, _, cell) in portal_cells {
-                if let Some(tile_entity) = storage.get(cell) {
-                    commands
-                        .entity(tile_entity)
-                        .insert(portal.clone())
-                        // Use the tile explicitly set in the Portal.
-                        .insert(portal.tile_idx)
-                        .insert(ChildOf(*strat_entity))
-                        .insert(Name::new(format!(
-                            "Portal: {:?} <--> {:?}",
-                            portal.id, portal.arrive_at
-                        )));
-                    info!("📍 inserted portal {:?} at {:?}", portal, cell);
-                }
+                commands.spawn((
+                    Actor,
+                    portal.clone(),
+                    portal.tile_idx,
+                    ChildOf(*strat_entity),
+                    PieceBundle {
+                        sprite: atlas.sprite_from_idx(portal.tile_idx),
+                        cell: *cell,
+                        transform: Transform::from_xyz(0., 0., *ACTOR_LAYER),
+                        ..default()
+                    },
+                ));
+                info!("📍 inserted portal {:?} at {:?}", portal, cell);
             }
         }
     }

@@ -236,8 +236,6 @@ impl TileIdx {
         BigGreenTree1,
         BigGreenTree2,
         GridSquare,
-        StairsUp,
-        StairsDown,
         MineEntrance,
         BarsDoorOpen,
         FloorPatternAngles,
