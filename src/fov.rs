@@ -92,7 +92,7 @@ pub fn setup_fov(
 /// Updates the field of view model based on the type of tile's transparency-or-not.
 pub fn update_fov_model(
     mut all_fov: Query<&mut Fov>,
-    query: Query<(&Cell, &TileIdx, &ChildOf), (Changed<TileIdx>, With<MapTile>)>,
+    query: Query<(&Cell, &TileIdx, &ChildOf), Changed<TileIdx>>,
 ) {
     for (cell, tile_idx, child_of) in query.iter() {
         if let Ok(mut fov) = all_fov.get_mut(child_of.parent()) {
