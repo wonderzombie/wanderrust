@@ -38,7 +38,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_stratum_visuals,
-    tilemap::{ActiveStratum, EntryId, Portal, Stratum, StratumTileSpec, TileStorage, WorldSpec},
+    tilemap::{ActiveStratum, EntryId, Portal, StratumTileSpec, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
