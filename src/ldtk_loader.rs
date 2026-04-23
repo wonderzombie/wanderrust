@@ -277,7 +277,14 @@ pub fn generate_ldtk_world(
                     Some(ParsedActor::Interactable(i)) => spec.interxs.push((i, cell)),
                     Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
                     Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
-                    Some(ParsedActor::Spawn) => spec.spawn_point = Some((stratum_id, cell)),
+                    Some(ParsedActor::Spawn) => {
+                        world.spawn_point = (stratum_id, cell);
+                        if stratum_id == StratumId::default() && cell == Cell::default() {
+                            warn!(
+                                "world spawn: both stratum ID and cell are defaults; zero values?"
+                            );
+                        }
+                    }
                     None => warn!("ignoring unparsable actor: {:?}", actor),
                 }
             }
