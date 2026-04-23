@@ -5,7 +5,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, StratumTileSpec, TileStorage},
+    tilemap::{Stratum, StratumTileSpec, TileStorage, WorldSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 use bevy::{platform::collections::HashSet, prelude::*};
@@ -260,15 +260,13 @@ impl StratumLightMap {
 
 pub fn spawn(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
+    spec: Res<WorldSpec>,
     atlas: Res<SpriteAtlas>,
     strata: Query<&Stratum>,
 ) {
-    info!(
-        "🔥 spawning emitters for {} strata",
-        spec.all_emitters.len()
-    );
-    for (stratum_id, emitters) in spec.all_emitters.iter() {
+    info!("🔥 spawning emitters for {} strata", strata.count());
+    for (stratum_id, spec) in spec.maps.iter() {
+        let emitters = &spec.emitters;
         info!(
             "🔥 strat {:?} has {:?} emitters",
             stratum_id,
@@ -281,7 +279,7 @@ pub fn spawn(
         };
 
         let mut count = 0;
-        for (emitter, _, cell) in emitters.iter() {
+        for (emitter, cell) in emitters.iter() {
             count += 1;
             trace!("🔥 spawning {:?} at {:?}", emitter, cell);
             commands.spawn((
@@ -301,33 +299,40 @@ pub fn spawn(
     }
 }
 
+#[derive(Component, Default, Deref, Reflect)]
+pub struct AmbientLight(pub LightLevel);
+
+/// Set up lighting for each stratum with TileStorage.
 pub fn setup(
     mut commands: Commands,
     emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
     storage: Query<Entity, With<TileStorage>>,
-    spec: Res<StratumTileSpec>,
+    world_spec: Res<WorldSpec>,
 ) {
-    let mut count = 0;
-    for (entity, tile_idx) in emitter_tiles {
-        let Some(emitter) = Emitter::from_tile(tile_idx) else {
-            continue;
-        };
-        commands.entity(entity).insert(emitter);
-        count += 1;
-    }
-    if count > 0 {
-        info!("🔥 set up {} emitter tiles", count);
-    }
+    for (_, spec) in world_spec.maps.iter() {
+        let mut count = 0;
+        for (entity, tile_idx) in emitter_tiles {
+            let Some(emitter) = Emitter::from_tile(tile_idx) else {
+                continue;
+            };
+            commands.entity(entity).insert(emitter);
+            count += 1;
+        }
+        if count > 0 {
+            info!("🔥 set up {} emitter tiles", count);
+        }
 
-    count = 0;
-    for entity in storage.iter() {
-        commands
-            .entity(entity)
-            .insert(StratumLightMap::with_ambient(spec.light_level));
-        count += 1;
-    }
-    if count > 0 {
-        info!("🔥 set up {} strata light maps", count);
+        count = 0;
+        for entity in storage.iter() {
+            commands
+                .entity(entity)
+                .insert(AmbientLight(spec.light_level))
+                .insert(StratumLightMap::with_ambient(spec.light_level));
+            count += 1;
+        }
+        if count > 0 {
+            info!("🔥 set up {} strata light maps", count);
+        }
     }
 }
 
@@ -395,20 +400,25 @@ pub fn update_strata_light_levels(
 }
 
 pub fn sync_actor_light_levels(
-    spec: Res<StratumTileSpec>,
-    storages: Query<&TileStorage>,
+    storages: Query<(&TileStorage, &AmbientLight)>,
     lit_tiles: Query<&LightLevel, With<MapTile>>,
     revealed_tiles: Query<&Revealed, With<MapTile>>,
     actors: Query<(&mut Sprite, &Cell, &mut Visibility, &ChildOf), Without<MapTile>>,
 ) {
     // Actor entities should have the same LightLevel as the tile they are standing on.
     for (mut actor_sprite, actor_cell, mut actor_vis, child_of) in actors {
-        let Some(actor_tile) = storages
-            .get(child_of.0)
-            .ok()
-            .and_then(|v| v.get(actor_cell))
-        else {
-            warn!("no stratum or cell found for actor: {:?}", actor_cell);
+        let Ok((storage, ambient)) = storages.get(child_of.parent()) else {
+            warn!("no stratum found for actor: {:?}", actor_cell);
+            continue;
+        };
+
+        // actor_cell allows access to the logical tile.
+        let Some(actor_tile) = storage.get(actor_cell) else {
+            warn!(
+                "{:?}: no cell found for actor: {:?}",
+                child_of.parent(),
+                actor_cell
+            );
             continue;
         };
 
@@ -418,11 +428,7 @@ pub fn sync_actor_light_levels(
             .copied()
             .unwrap_or_default();
 
-        let level = lit_tiles
-            .get(actor_tile)
-            .ok()
-            .copied()
-            .unwrap_or(spec.light_level);
+        let level = lit_tiles.get(actor_tile).ok().copied().unwrap_or(ambient.0);
 
         actor_vis.set_if_neq(if revealed.0 {
             actor_sprite.color = Color::WHITE.with_alpha(level.into());
