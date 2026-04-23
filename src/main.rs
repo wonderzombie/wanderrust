@@ -129,7 +129,8 @@ fn main() {
         OnEnter(GameState::Loading),
         (
             (
-                tilemap::spawn_tilemap,
+                // tilemap::spawn_tilemap,
+                tilemap::spawn_worldmap,
                 tilemap::initialize_tile_storage,
                 tilemap::setup_portals,
             )
@@ -149,7 +150,7 @@ fn main() {
     )
     .add_systems(
         OnExit(GameState::Loading),
-        (actors::setup_player, interactions::spawn),
+        (actors::setup_player, interactions::spawn_interx),
     )
     // .add_systems(
     //     OnEnter(GameState::AwaitingInput),
@@ -183,7 +184,7 @@ fn main() {
                 .in_set(GameSystem::Ramifications),
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
-            ldtk_loader::generate_ldtk_tilemap.run_if(resource_added::<LdtkProject>),
+            ldtk_loader::generate_ldtk_world.run_if(resource_added::<LdtkProject>),
         ),
     )
     .add_systems(
