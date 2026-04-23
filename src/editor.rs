@@ -1,25 +1,15 @@
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
-use std::path::PathBuf;
 
-use bevy::{
-    prelude::*,
-    tasks::{AsyncComputeTaskPool, Task, futures},
-};
-use rfd::AsyncFileDialog;
+use bevy::prelude::*;
 
 use crate::{
-    actors::{Actor, Player, PlayerStats},
+    actors::{Player, PlayerStats},
     cell::Cell,
     colors::KENNEY_RED,
-    combat::Parameters,
     event_log,
-    gamestate::GameState,
-    interactions::Interactable,
-    ldtk_loader,
-    tilemap::{self, Portal, StratPortals, Stratum, StratumTileSpec, TileStorage},
+    tilemap::{ActiveStratum, Stratum, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
-const DATA_DIR: &str = "data";
 
 #[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
 pub enum EditorState {
@@ -185,27 +175,6 @@ pub fn on_toggle_visibilities(
     }
 }
 
-/// Dispatches map-related operations based on keyboard input.
-pub fn handle_map_operations(
-    commands: Commands,
-    mut input: ResMut<ButtonInput<KeyCode>>,
-    mut msg: MessageWriter<LdtkMapLoadMessage>,
-) {
-    if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyS) {
-        warn!("requested to save");
-        input.clear();
-        open_save_dialog(commands);
-    } else if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::KeyL) {
-        warn!("requested to load");
-        input.clear();
-        open_load_dialog(commands);
-    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
-        && input.just_released(KeyCode::KeyL)
-    {
-        msg.write(LdtkMapLoadMessage);
-    }
-}
-
 /// Convenience macro for getting an entity from a query, returning early if the entity is not found.
 macro_rules! get_entity {
     ($query:expr, $on:expr) => {
@@ -299,170 +268,6 @@ pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<E
     editor.observers.clear();
 }
 
-/// Represents a task (a dialog) which results in a [`PathBuf`] (a file path).
-type PathBufTask = Task<Option<std::path::PathBuf>>;
-
-#[derive(Component)]
-pub struct LoadDialogTask(PathBufTask);
-
-#[derive(Message)]
-pub struct MapLoadMessage(PathBuf);
-
-/// Opens a file dialog to select a map file and spawns a [LoadDialogTask] to load the selected file.
-pub fn open_load_dialog(mut commands: Commands) {
-    let task_pool = AsyncComputeTaskPool::get();
-    let task = task_pool.spawn(async move {
-        rfd::AsyncFileDialog::new()
-            .add_filter("RON files", &["ron"])
-            .set_directory(DATA_DIR)
-            .pick_file()
-            .await
-            .map(|handle| handle.path().to_owned())
-    });
-    commands.spawn(LoadDialogTask(task));
-}
-
-/// Polls the [LoadDialogTask] for a result and loads the map if one is available.
-pub fn poll_load_dialog(
-    mut commands: Commands,
-    mut tasks: Query<(Entity, &mut LoadDialogTask)>,
-    mut load_events: MessageWriter<MapLoadMessage>,
-) {
-    for (entity, mut task) in &mut tasks {
-        if let Some(opt_path) = futures::check_ready(&mut task.0) {
-            if let Some(path) = opt_path {
-                load_events.write(MapLoadMessage(path));
-            }
-            commands.entity(entity).remove::<LoadDialogTask>();
-        }
-    }
-}
-
-/// Loads a map from a spec at the behest of `load_messages` [`SystemParam`].
-/// Uses a lot of unwrap.
-pub fn on_load_map_message(
-    mut load_messages: MessageReader<MapLoadMessage>,
-    mut spec: ResMut<StratumTileSpec>,
-    mut next: ResMut<NextState<GameState>>,
-) {
-    for message in load_messages.read() {
-        let serialized = std::fs::read_to_string(&message.0).unwrap();
-        let mut new_spec = ron::from_str::<StratumTileSpec>(&serialized).unwrap();
-
-        let serialized = std::fs::read_to_string(message.0.with_file_name("portals.ron")).unwrap();
-        let portals = ron::from_str::<StratPortals>(&serialized).unwrap();
-
-        let serialized = std::fs::read_to_string(message.0.with_file_name("actors.ron")).unwrap();
-        let _: Vec<(Cell, TileIdx, Interactable, Parameters)> =
-            ron::from_str::<Vec<_>>(&serialized).unwrap();
-
-        new_spec.all_portals = portals;
-        *spec = new_spec;
-
-        next.set(GameState::Loading);
-    }
-}
-
-#[derive(Debug, Message)]
-pub struct LdtkMapLoadMessage;
-
-pub fn on_load_ldtk_map_message(
-    mut commands: Commands,
-    mut messages: MessageReader<LdtkMapLoadMessage>,
-) {
-    for _ in messages.read() {
-        let fname = "data/wandrs_proto.ldtk";
-
-        let res = ldtk_loader::load_and_import(fname.into()).expect("expected to load ldtk level");
-
-        commands.insert_resource(res);
-    }
-}
-
-#[derive(Message)]
-pub struct MapSaveMessage(PathBuf);
-
-#[derive(Component)]
-pub struct SaveDialogTask(PathBufTask);
-
-/// Opens a save dialog and spawns a [SaveDialogTask] to handle the result.
-pub fn open_save_dialog(mut commands: Commands) {
-    let task_pool = AsyncComputeTaskPool::get();
-    let task = task_pool.spawn(async move {
-        AsyncFileDialog::new()
-            .add_filter("ron", &["ron"])
-            .set_directory(DATA_DIR)
-            .save_file()
-            .await
-            .map(|handle| handle.path().to_path_buf())
-    });
-    commands.spawn(SaveDialogTask(task));
-}
-
-/// Polls the [SaveDialogTask] for a result and saves the map if a path is returned.
-pub fn poll_save_dialog(
-    mut commands: Commands,
-    mut save_dialog_tasks: Query<(Entity, &mut SaveDialogTask)>,
-    mut save_events: MessageWriter<MapSaveMessage>,
-) {
-    for (entity, mut task) in save_dialog_tasks.iter_mut() {
-        if let Some(opt_path) = futures::check_ready(&mut task.0) {
-            if let Some(path) = opt_path {
-                save_events.write(MapSaveMessage(path));
-            }
-            commands.entity(entity).remove::<SaveDialogTask>();
-        }
-    }
-}
-
-/// Saves the map to disk using the provided queries.
-pub fn on_save_map_message(
-    spec: Res<StratumTileSpec>,
-    mut strat_storage: Query<(&Stratum, &TileStorage)>,
-    all_tiles: Query<&tiles::TileIdx>,
-    all_portals: Query<(&Portal, &TileIdx, &Cell, &ChildOf)>,
-    all_actors: Query<(&Cell, &TileIdx, &Interactable, &Parameters), With<Actor>>,
-    mut save_messages: MessageReader<MapSaveMessage>,
-) {
-    let mut new_spec = spec.into_inner().clone();
-    for message in save_messages.read() {
-        let tiles = tilemap::get_live_tiles(&new_spec.size, &strat_storage, &all_tiles);
-        new_spec.all_tiles = tiles;
-
-        info!("saving {:?}", message.0);
-        if let Ok(serialized) = ron::to_string(&new_spec) {
-            let Ok(_) = std::fs::write(&message.0, serialized) else {
-                continue;
-            };
-        }
-
-        let mut strata = strat_storage.transmute_lens::<&Stratum>();
-        let portals: tilemap::StratPortals =
-            tilemap::get_live_portals(&strata.query(), &all_portals);
-        let path = message.0.with_file_name("portals.ron");
-
-        info!("saving {:?}", path);
-        if let Ok(serialized) = ron::to_string(&portals) {
-            let Ok(_) = std::fs::write(&path, serialized) else {
-                continue;
-            };
-        }
-
-        // TODO: de/serialize more than just this.
-        let actors = all_actors.iter().collect::<Vec<_>>();
-        let path = message.0.with_file_name("actors.ron");
-
-        info!("saving {:?}", path);
-        if let Ok(serialized) = ron::to_string(&actors) {
-            let Ok(_) = std::fs::write(&path, serialized) else {
-                continue;
-            };
-        }
-
-        info!("✅\tdone saving.\t✅")
-    }
-}
-
 pub fn on_editor_toggle(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<EditorState>>,
@@ -496,7 +301,6 @@ impl Plugin for EditorPlugin {
                         on_button_input,
                         on_zoom_button_input,
                         on_toggle_visibilities,
-                        handle_map_operations,
                     )
                         .chain()
                         .run_if(in_state(EditorState::Enabled)),
@@ -508,23 +312,9 @@ impl Plugin for EditorPlugin {
                 // These only need to run once per transition to Disabled.
                 (remove_editor_components, remove_global_tile_observers),
             )
-            .add_systems(
-                PostUpdate,
-                (
-                    poll_load_dialog,
-                    poll_save_dialog,
-                    on_load_map_message,
-                    on_save_map_message,
-                    on_load_ldtk_map_message,
-                )
-                    .run_if(in_state(EditorState::Enabled)),
-            )
             .insert_resource(EditorContext::default())
             .insert_state(EditorState::Disabled)
             .add_plugins(DebugPickingPlugin)
-            .insert_resource(DebugPickingMode::Normal)
-            .add_message::<LdtkMapLoadMessage>()
-            .add_message::<MapLoadMessage>()
-            .add_message::<MapSaveMessage>();
+            .insert_resource(DebugPickingMode::Normal);
     }
 }
