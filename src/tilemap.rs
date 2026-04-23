@@ -352,7 +352,7 @@ pub fn spawn_worldmap(
     mut world_spec: ResMut<WorldSpec>,
     atlas: Res<SpriteAtlas>,
 ) {
-    info!("🕹️initializing worldmap");
+    info!("📍 initializing worldmap");
 
     let world_entity = commands
         .spawn((Visibility::Hidden, Transform::default()))
@@ -365,16 +365,14 @@ pub fn spawn_worldmap(
     let mut grand_tally: HashMap<TileIdx, usize> = HashMap::new();
 
     for (stratum_id, strat_spec) in world_spec.maps.iter_mut() {
-        let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let layer = stratum_id.0.neg() as f32 + *MAP_LAYER;
-
         let strat_entity = commands.spawn(TilemapBundle::default()).id();
         let stratum = Stratum(strat_entity, *stratum_id);
         strat_spec.id.replace(stratum);
 
-        let mut cells = vec![TileIdx::Blank; strat_spec.size.ntiles()];
-
+        let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let mut count = 0;
+        let mut cells = vec![TileIdx::Blank; strat_spec.size.ntiles()];
         strat_spec.tiles.iter().for_each(|(tile_idx, cell)| {
             let idx = strat_spec.size.cell_to_idx(cell);
             cells[idx] = *tile_idx;
@@ -394,9 +392,9 @@ pub fn spawn_worldmap(
         info!(
             "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
             stratum,
-            count,
-            cells.len(),
+            strat_spec.tiles.len(),
             bundles.len(),
+            count,
         );
         commands.spawn_batch(bundles);
 
@@ -408,7 +406,7 @@ pub fn spawn_worldmap(
             commands.spawn(WorldSpawn::new(strat_entity, cell));
             commands
                 .entity(strat_entity)
-                .insert((ActiveStratum, Visibility::Visible));
+                .insert((ActiveStratum, Visibility::Inherited));
         }
 
         info!("- 📍 {start_strat_id} tally: {:?}", tally);
