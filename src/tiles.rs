@@ -141,6 +141,10 @@ tiles! {
     StoneWallHalf = atlas_idx(1, 11),
     StoneWallDebris = atlas_idx(16, 12),
     StoneDoorway = atlas_idx(4, 13),
+    StoneWallSmooth = 843,
+    StoneWallSmoothWindow = 844,
+    StoneWallSmoothWindowBars = 845,
+    StoneWallSmoothWindowHole = 846,
 
     // Chests
     ChestBrownClosed = atlas_idx(8, 6),
@@ -240,11 +244,13 @@ impl TileIdx {
         BarsDoorOpen,
         FloorPatternAngles,
         FloorPatternSquare,
+        StoneDoorway,
     ];
 
     const OPAQUE: &'static [TileIdx] = &[
         // Walls without windows are opaque and solid.
         StoneWall,
+        StoneWallSmooth,
         // Closed doors are opaque and solid.
         DoorBrownThickClosed1,
         DoorBrownThickClosed2,
