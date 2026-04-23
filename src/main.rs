@@ -37,7 +37,8 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
-    tilemap::{EntryId, Portal, StratumTileSpec, TileStorage, WorldSpec},
+    map::update_stratum_visuals,
+    tilemap::{ActiveStratum, EntryId, Portal, StratumTileSpec, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -216,7 +217,8 @@ fn main() {
     .add_systems(
         Last,
         (
-            map::update_tile_visuals,
+            map::update_stratum_visuals,
+            map::update_tile_visuals.after(update_stratum_visuals),
             (
                 gamestate::finalize_waiting_turns,
                 gamestate::check_turns_complete,

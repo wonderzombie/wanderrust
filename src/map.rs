@@ -386,22 +386,33 @@ pub fn sync_tiles(
     }
 }
 
+pub fn update_stratum_visuals(
+    active_strat: Single<Ref<ActiveStratum>>,
+    all_strata: Query<(&Stratum, &mut Visibility)>,
+) {
+    if !active_strat.is_changed() {
+        return;
+    }
+
+    let ActiveStratum(Stratum(active_strat_ent, _)) = **active_strat;
+
+    for (Stratum(strat_ent, _), mut vis) in all_strata {
+        if *strat_ent == active_strat_ent {
+            info!("Stratum active: {}", strat_ent);
+            *vis = Visibility::Inherited;
+        } else {
+            info!("Stratum inactive: {}", strat_ent);
+            *vis = Visibility::Hidden;
+        }
+    }
+}
+
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
-    mut commands: Commands,
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps, &ChildOf)>,
-    stratum: Single<&ActiveStratum>,
     strata_light: Query<&AmbientLight, With<Stratum>>,
 ) {
     for (mut sprite, mut vis, t, child_of) in tiles.iter_mut() {
-        if let ActiveStratum(Stratum(ent, _)) = *stratum
-            && child_of.parent() != *ent
-        {
-            commands.entity(*ent).insert(Visibility::Inherited);
-            sprite.color = Color::NONE;
-            continue;
-        }
-
         let ambient = strata_light
             .get(child_of.parent())
             .ok()

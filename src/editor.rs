@@ -66,7 +66,7 @@ pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorContext>,
     mut log: ResMut<event_log::MessageLog>,
-    storages: Query<&TileStorage>,
+    storages: Query<(&TileStorage, Option<&ActiveStratum>)>,
     tiles: Query<(
         &TileIdx,
         &Cell,
@@ -103,7 +103,7 @@ pub fn on_button_input(
     } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
         && input.just_released(KeyCode::KeyT)
     {
-        for storage in storages.iter() {
+        for (storage, active_opt) in storages.iter() {
             let mut out: Vec<(
                 TileIdx,
                 Cell,
@@ -120,7 +120,7 @@ pub fn on_button_input(
                     out.push((*a, *b, *c, *d, e.copied(), f.copied()));
                 }
             }
-            dbg!(out);
+            dbg!(active_opt, out);
         }
         return;
     } else {
@@ -145,6 +145,7 @@ pub fn on_toggle_visibilities(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     strata: Query<(&Stratum, Option<&ActiveStratum>)>,
+    player: Single<(Entity, &Cell), With<Player>>,
     mut stats: ResMut<PlayerStats>,
 ) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
@@ -160,16 +161,14 @@ pub fn on_toggle_visibilities(
         for (Stratum(ent, id), active_opt) in strata {
             if active_opt.is_some() {
                 info!("{ent} is active; hiding");
-                commands
-                    .entity(*ent)
-                    .insert(Visibility::Hidden)
-                    .remove::<ActiveStratum>();
+                commands.entity(*ent).remove::<ActiveStratum>();
             } else {
                 info!("{ent} is hidden; showing");
                 commands
                     .entity(*ent)
-                    .insert(Visibility::Visible)
                     .insert(ActiveStratum(Stratum(*ent, *id)));
+                let (p, c) = *player;
+                commands.entity(p).insert((*c, ChildOf(*ent)));
             }
         }
     }
@@ -291,7 +290,7 @@ pub struct EditorPlugin;
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_global_tile_observers)
+        app // .add_systems(Startup, setup_global_tile_observers)
             .add_systems(
                 Update,
                 (
@@ -313,7 +312,7 @@ impl Plugin for EditorPlugin {
                 (remove_editor_components, remove_global_tile_observers),
             )
             .insert_resource(EditorContext::default())
-            .insert_state(EditorState::Disabled)
+            .insert_state(EditorState::Enabled)
             .add_plugins(DebugPickingPlugin)
             .insert_resource(DebugPickingMode::Normal);
     }
