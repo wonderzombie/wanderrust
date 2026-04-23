@@ -4,7 +4,8 @@ use crate::{
     light::{AmbientLight, LightLevel},
     ptable::ProbabilityTable,
     tilemap::{
-        Dimensions, EntryId, Portal, PortalCell, Stratum, StratumId, StratumTileSpec, TileCell,
+        ActiveStratum, Dimensions, EntryId, Portal, PortalCell, Stratum, StratumId,
+        StratumTileSpec, TileCell,
     },
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
@@ -387,7 +388,9 @@ pub fn sync_tiles(
 
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
+    mut commands: Commands,
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps, &ChildOf)>,
+    stratum: Single<&ActiveStratum>,
     strata_light: Query<&AmbientLight, With<Stratum>>,
 ) {
     for (mut sprite, mut vis, t, child_of) in tiles.iter_mut() {

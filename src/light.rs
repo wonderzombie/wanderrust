@@ -5,7 +5,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, StratumTileSpec, TileStorage, WorldSpec},
+    tilemap::{Stratum, TileStorage, WorldSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 use bevy::{platform::collections::HashSet, prelude::*};
