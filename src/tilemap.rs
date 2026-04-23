@@ -301,14 +301,12 @@ pub fn spawn_worldmap(
     let world_id = WorldId(world_entity);
     world_spec.id.replace(world_id);
 
-    let (start_strat_id, _) = world_spec.spawn_point;
+    let (start_strat_id, cell) = world_spec.spawn_point;
 
     for (stratum_id, strat_spec) in world_spec.maps.iter_mut() {
         let layer = stratum_id.0.neg() as f32 + *MAP_LAYER;
 
-        let strat_entity = commands
-            .spawn((Visibility::Inherited, Transform::default()))
-            .id();
+        let strat_entity = commands.spawn(TilemapBundle::default()).id();
         let stratum = Stratum(strat_entity, *stratum_id);
         strat_spec.id.replace(stratum);
 
@@ -333,7 +331,9 @@ pub fn spawn_worldmap(
         commands.spawn_batch(bundles);
 
         if start_strat_id == *stratum_id {
+            info!("🕹️ found spawn stratum: {:?}", start_strat_id);
             commands.insert_resource(ActiveStratum(stratum));
+            commands.spawn(WorldSpawn::new(strat_entity, cell));
         }
 
         commands
@@ -347,6 +347,18 @@ pub fn spawn_worldmap(
         .entity(world_entity)
         .insert(world_id)
         .insert(Name::new("World"));
+}
+
+#[derive(Component)]
+pub struct WorldSpawn {
+    pub strat_entity: Entity,
+    pub cell: Cell,
+}
+
+impl WorldSpawn {
+    pub fn new(strat_entity: Entity, cell: Cell) -> Self {
+        Self { strat_entity, cell }
+    }
 }
 
 /// Spawns a tilemap, a constituency of [`MapTile`] entities, from a [`TilemapSpec`].
@@ -465,8 +477,8 @@ pub fn initialize_tile_storage(
         panic!("zero strata found when initializing storage");
     }
 
-    let mut num_cells = 0;
     for (Stratum(stratum_entity, stratum_id), size, children) in strata {
+        let mut num_cells = 0;
         let mut storage = TileStorage::new(size.clone());
         for entity in children.iter() {
             if let Ok(cell) = tiles.get(entity) {
@@ -486,13 +498,13 @@ pub fn initialize_tile_storage(
 
 pub fn setup_portals(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
+    world: Res<WorldSpec>,
     strata: Query<&Stratum>,
     atlas: Res<SpriteAtlas>,
 ) {
     for Stratum(strat_entity, id) in strata.iter() {
-        if let Some(portal_cells) = spec.all_portals.get(id) {
-            for (portal, _, cell) in portal_cells {
+        if let Some(spec) = world.maps.get(id) {
+            for (portal, cell) in spec.portals.iter() {
                 commands.spawn((
                     Actor,
                     portal.clone(),

@@ -1,28 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{
-    actors::Player,
-    cell::Cell,
-    editor::DesiredZoom,
-    tilemap::{StratumTileSpec, TilemapLayer},
-    tiles,
-};
+use crate::{actors::Player, cell::Cell, editor::DesiredZoom, tilemap::TilemapLayer, tiles};
 
 const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
-pub fn setup_camera(mut commands: Commands, spec: Res<StratumTileSpec>) {
-    let size = spec.size;
+pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
             scale: 0.5,
             ..OrthographicProjection::default_2d()
         }),
-        Transform::from_xyz(
-            (size.width as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
-            (size.height as f32 * tiles::TILE_SIZE_PX) / 2.0 - tiles::TILE_SIZE_PX / 2.0,
-            *CAMERA_LAYER,
-        ),
+        Transform::from_xyz(0., 0., *CAMERA_LAYER),
     ));
 }
 

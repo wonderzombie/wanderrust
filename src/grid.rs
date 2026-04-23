@@ -9,7 +9,7 @@ use crate::{
     cell::Cell,
     combat::{self, Awareness},
     gamestate::Turn,
-    tilemap::{Stratum, StratumTileSpec},
+    tilemap::{Dimensions, Stratum},
     tiles::{TileIdx, Walkable},
 };
 
@@ -51,12 +51,12 @@ pub(crate) fn update_spatial_index(
 pub(crate) fn setup_spatial_indices(
     mut commands: Commands,
     stratum_children: Populated<(&Stratum, &Children)>,
-    tiles: Populated<&Cell, Without<Walkable>>,
+    unwalkable_cells: Populated<&Cell, Without<Walkable>>,
 ) {
     for (Stratum(strat_entity, _), children) in stratum_children.iter() {
         let mut index = SpatialIndex::default();
         for child in children.iter() {
-            if let Ok(cell) = tiles.get(child) {
+            if let Ok(cell) = unwalkable_cells.get(child) {
                 index.insert(*cell, child);
             }
         }
@@ -66,16 +66,12 @@ pub(crate) fn setup_spatial_indices(
 
 pub fn spawn_grid(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
-    strata: Populated<Entity, (With<Stratum>, Without<CardinalGrid>)>,
+    strata: Populated<(Entity, &Dimensions), (With<Stratum>, Without<CardinalGrid>)>,
 ) {
     info!("🧭 spawning grid for {} strata", strata.count());
-    for stratum in strata {
-        info!(
-            "🧭 grid {:?} is {} x {}",
-            stratum, spec.size.width, spec.size.height
-        );
-        let grid_settings = GridSettingsBuilder::new_2d(spec.size.width, spec.size.height)
+    for (stratum, size) in strata {
+        info!("🧭 grid {:?} is {} x {}", stratum, size.width, size.height);
+        let grid_settings = GridSettingsBuilder::new_2d(size.width, size.height)
             .chunk_size(16)
             .default_impassable()
             .build();
@@ -90,7 +86,6 @@ pub fn update_grid(
     mut grid: Populated<(Entity, &mut CardinalGrid)>,
     changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
 ) {
-    let mut count = 0;
     let mut changed_grids: HashSet<Entity> = HashSet::new();
 
     for (cell, child_of, walkable_opt) in changed_tiles {
@@ -122,7 +117,6 @@ pub fn update_grid(
         if prev_nav != Some(next_nav) {
             grid.set_nav(cell.into(), next_nav);
             changed_grids.insert(entity);
-            count += 1;
         }
     }
 
@@ -131,10 +125,6 @@ pub fn update_grid(
             grid.build();
         }
     });
-
-    if count > 0 {
-        info!("🧭️ updated grid, set {} tiles", count);
-    }
 }
 
 pub fn pathfind(

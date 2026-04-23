@@ -1,9 +1,11 @@
 use crate::{
     cell::Cell,
     colors,
-    light::LightLevel,
+    light::{AmbientLight, LightLevel},
     ptable::ProbabilityTable,
-    tilemap::{Dimensions, EntryId, Portal, PortalCell, StratumId, StratumTileSpec, TileCell},
+    tilemap::{
+        Dimensions, EntryId, Portal, PortalCell, Stratum, StratumId, StratumTileSpec, TileCell,
+    },
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
@@ -385,25 +387,31 @@ pub fn sync_tiles(
 
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
-    mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps)>,
-    spec: Res<StratumTileSpec>,
+    mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps, &ChildOf)>,
+    strata_light: Query<&AmbientLight, With<Stratum>>,
 ) {
-    for (mut sprite, mut vis, it) in tiles.iter_mut() {
-        *vis = if it.revealed() && !it.occupied() {
+    for (mut sprite, mut vis, t, child_of) in tiles.iter_mut() {
+        let ambient = strata_light
+            .get(child_of.parent())
+            .ok()
+            .map(|al| al.0)
+            .unwrap_or_default();
+
+        *vis = if t.revealed() && !t.occupied() {
             Visibility::Inherited
         } else {
             Visibility::Hidden
         };
 
-        sprite.color = if it.highlighted() {
+        sprite.color = if t.highlighted() {
             colors::KENNEY_GOLD
-        } else if it.revealed() && !it.occupied() {
-            Color::WHITE.with_alpha(it.light_or(&spec.light_level).into())
+        } else if t.revealed() && !t.occupied() {
+            Color::WHITE.with_alpha(t.light_or(&ambient).into())
         } else {
             Color::NONE
         };
 
-        if it.preview_active() {
+        if t.preview_active() {
             sprite.color.set_alpha(0.5);
         }
     }

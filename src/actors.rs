@@ -10,7 +10,7 @@ use crate::{
     combat::{Belligerent, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
-    tilemap::{self, Stratum, StratumTileSpec, TileStorage},
+    tilemap::{self, Stratum, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
@@ -70,20 +70,20 @@ pub struct Moved(pub Entity);
 /// Spawns the player entity at the start position of the tilemap on the player's layer.
 pub fn setup_player(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
+    spawn: Single<&WorldSpawn>,
     atlas: Res<SpriteAtlas>,
     player: Option<Single<Entity, With<Player>>>,
     strata: Query<Entity, With<Stratum>>,
 ) {
-    let (_, spawn_cell) = spec.spawn_point;
+    let WorldSpawn { strat_entity, cell } = *spawn;
     if let Some(entity) = player {
         info!("🕹️ respawning player");
         commands
             .entity(*entity)
-            .insert(ChildOf(strata.iter().next().unwrap()))
-            .insert(spawn_cell);
+            .insert(ChildOf(*strat_entity))
+            .insert(*cell);
     } else {
-        info!("🕹️ spawning player at {:?}", spec.spawn_point);
+        info!("🕹️ spawning player at {:?} {:?}", cell, strat_entity);
         commands.spawn((
             // TODO: figure out the real active stratum.
             ChildOf(strata.iter().next().unwrap()),
@@ -112,7 +112,7 @@ pub fn setup_player(
             },
             PieceBundle {
                 sprite: atlas.sprite(),
-                cell: spawn_cell,
+                cell: *cell,
                 transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
                 ..default()
             },

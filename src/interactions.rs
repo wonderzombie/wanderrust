@@ -8,7 +8,7 @@ use crate::{
     event_log::MessageLog,
     inventory::{self, *},
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, StratumTileSpec},
+    tilemap::{Stratum, StratumTileSpec, WorldSpec},
     tiles::TileIdx,
 };
 
@@ -251,33 +251,28 @@ struct InterxBundle {
 
 pub fn spawn(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
+    world_spec: Res<WorldSpec>,
     atlas: Res<SpriteAtlas>,
     strata: Query<&Stratum>,
 ) {
     for Stratum(strat_entity, strat_id) in strata.iter() {
-        let Some(interxs) = spec.all_interxs.get(strat_id) else {
-            error!(
-                "spec strata and live strata differ; spec is missing {:?}; spec has {:?}",
-                strat_id,
-                spec.all_interxs.keys(),
-            );
+        let Some(spec) = world_spec.maps.get(strat_id) else {
             continue;
         };
 
         info!("📦 {:?}: spawning interactables", strat_id);
 
         let mut count = 0;
-        interxs
+        spec.interxs
             .iter()
-            .map(|(interx, t, cell)| {
+            .map(|(interx, cell)| {
                 (
                     InterxBundle {
                         interx: interx.clone(),
-                        tile_idx: *t,
+                        tile_idx: TileIdx::GridSquare,
                         piece: PieceBundle {
                             cell: *cell,
-                            sprite: atlas.sprite_from_idx(*t),
+                            sprite: atlas.sprite(),
                             ..default()
                         },
                         ..default()

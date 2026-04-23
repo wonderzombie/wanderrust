@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
-    tilemap::{Stratum, StratumTileSpec},
+    tilemap::{Dimensions, Stratum},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -59,16 +59,15 @@ impl Vision {
 /// The field of view is marked as opaque beforehand.
 pub fn setup_fov(
     mut commands: Commands,
-    spec: Res<StratumTileSpec>,
-    stratum_children: Query<(&Stratum, &Children)>,
+    stratum_children: Query<(&Stratum, &Dimensions, &Children)>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
     let mut tiles_count = 0;
     let mut opaque_count = 0;
 
-    for (Stratum(strat_entity, _), children) in stratum_children {
+    for (Stratum(strat_entity, _), dimensions, children) in stratum_children {
         info!("👀 checking {} children", children.iter().len());
-        let mut fov = Fov(Mrpas::new(spec.size.width as i32, spec.size.width as i32));
+        let mut fov = Fov(Mrpas::new(dimensions.width as i32, dimensions.width as i32));
         for &child in children {
             if let Ok((cell, tile_idx)) = tiles.get(child) {
                 // Sets individual points in the model to transparent-or-not.
