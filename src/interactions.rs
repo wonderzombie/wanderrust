@@ -31,6 +31,20 @@ pub enum Interactable {
 }
 
 impl Interactable {
+    pub fn default_tile(&self) -> Option<TileIdx> {
+        use Interactable::*;
+
+        match self {
+            Chest {
+                tile_idx_default, ..
+            }
+            | Door {
+                tile_idx_default, ..
+            } => Some(*tile_idx_default),
+            _ => None,
+        }
+    }
+
     pub fn from_tile(tile_idx: TileIdx) -> Option<Interactable> {
         match tile_idx {
             TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
@@ -249,7 +263,7 @@ struct InterxBundle {
     piece: PieceBundle,
 }
 
-pub fn spawn_interx(
+pub fn spawn_interxs(
     mut commands: Commands,
     world_spec: Res<WorldSpec>,
     atlas: Res<SpriteAtlas>,
@@ -269,7 +283,7 @@ pub fn spawn_interx(
                 (
                     InterxBundle {
                         interx: interx.clone(),
-                        tile_idx: TileIdx::GridSquare,
+                        tile_idx: interx.default_tile().unwrap_or(TileIdx::GridSquare),
                         piece: PieceBundle {
                             cell: *cell,
                             sprite: atlas.sprite(),

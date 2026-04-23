@@ -67,6 +67,8 @@ pub fn setup_fov(
 
     for (Stratum(strat_entity, _), dimensions, children) in stratum_children {
         info!("👀 checking {} children", children.iter().len());
+        let mut tiles_count = 0;
+        let mut opaque_count = 0;
         let mut fov = Fov(Mrpas::new(dimensions.width as i32, dimensions.width as i32));
         for &child in children {
             if let Ok((cell, tile_idx)) = tiles.get(child) {

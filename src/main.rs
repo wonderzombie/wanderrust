@@ -150,7 +150,7 @@ fn main() {
     )
     .add_systems(
         OnExit(GameState::Loading),
-        (actors::setup_player, interactions::spawn_interx),
+        (actors::setup_player, interactions::spawn_interxs),
     )
     // .add_systems(
     //     OnEnter(GameState::AwaitingInput),

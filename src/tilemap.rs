@@ -10,7 +10,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     light::{Emitter, LightLevel},
-    tiles::{MapTile, Revealed, TileIdx},
+    tiles::{self, MapTile, Revealed, TileIdx},
 };
 
 #[derive(Component, Copy, Clone, Debug, PartialEq)]
@@ -114,7 +114,7 @@ pub struct StratumTileSpec {
     pub light_level: LightLevel,
 }
 
-#[derive(Resource, Debug, Clone, Reflect, PartialEq)]
+#[derive(Component, Debug, Clone, Reflect, PartialEq)]
 pub struct ActiveStratum(pub Stratum);
 
 #[derive(
@@ -225,6 +225,12 @@ impl TileStorage {
             size,
         }
     }
+
+    pub fn into_iter(&self) -> impl Iterator<Item = Cell> {
+        (0..self.len())
+            .into_iter()
+            .map(|i| self.size.idx_to_cell(i))
+    }
 }
 
 /// EntryId uniquely identifies a [`Portal`].
@@ -301,17 +307,20 @@ pub fn spawn_worldmap(
     mut world_spec: ResMut<WorldSpec>,
     atlas: Res<SpriteAtlas>,
 ) {
-    info!("🕹️  initializing worldmap");
+    info!("🕹️initializing worldmap");
 
     let world_entity = commands
-        .spawn((Visibility::Visible, Transform::default()))
+        .spawn((Visibility::Hidden, Transform::default()))
         .id();
     let world_id = WorldId(world_entity);
     world_spec.id.replace(world_id);
 
     let (start_strat_id, cell) = world_spec.spawn_point;
 
+    let mut grand_tally: HashMap<TileIdx, usize> = HashMap::new();
+
     for (stratum_id, strat_spec) in world_spec.maps.iter_mut() {
+        let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let layer = stratum_id.0.neg() as f32 + *MAP_LAYER;
 
         let strat_entity = commands.spawn(TilemapBundle::default()).id();
@@ -321,17 +330,25 @@ pub fn spawn_worldmap(
         let mut cells = vec![TileIdx::Blank; strat_spec.size.ntiles()];
 
         let mut count = 0;
-        strat_spec.tiles.iter().for_each(|(tile, cell)| {
+        strat_spec.tiles.iter().for_each(|(tile_idx, cell)| {
             let idx = strat_spec.size.cell_to_idx(cell);
-            cells[idx] = *tile;
+            cells[idx] = *tile_idx;
+            tally.entry(*tile_idx).and_modify(|e| *e += 1).or_insert(1);
             count += 1;
         });
+
+        for (k, v) in tally.iter() {
+            grand_tally
+                .entry(*k)
+                .and_modify(|vv| *vv += v)
+                .or_insert(*v);
+        }
 
         let bundles = generate_tile_bundles(strat_entity, &strat_spec.size, &cells, layer, &atlas);
 
         info!(
             "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
-            stratum_id,
+            stratum,
             count,
             cells.len(),
             bundles.len(),
@@ -340,12 +357,16 @@ pub fn spawn_worldmap(
 
         if start_strat_id == *stratum_id {
             info!(
-                "🕹️ found spawn stratum: {:?} and cell {:?}",
+                "- 📍 found spawn stratum: {:?} and cell {:?}",
                 start_strat_id, cell
             );
-            commands.insert_resource(ActiveStratum(stratum));
             commands.spawn(WorldSpawn::new(strat_entity, cell));
+            commands
+                .entity(strat_entity)
+                .insert((ActiveStratum(stratum), Visibility::Visible));
         }
+
+        info!("- 📍 {start_strat_id} tally: {:?}", tally);
 
         commands
             .entity(strat_entity)
@@ -353,6 +374,11 @@ pub fn spawn_worldmap(
             .insert(strat_spec.size)
             .insert(stratum);
     }
+
+    info!(
+        "📍 world tiles: {}",
+        grand_tally.values().copied().sum::<usize>()
+    );
 
     commands
         .entity(world_entity)
@@ -461,6 +487,13 @@ fn generate_tile_bundles(
         .map(|(i, tile_idx)| {
             let cell = dim.idx_to_cell(i);
             let pos = dim.cell_to_pos(&cell);
+            if cell > Cell::ZERO {
+                assert_ne!(
+                    (cell.x as f32, cell.y as f32),
+                    (pos.x, pos.y),
+                    "expected non-zero cell to map to non-zero position"
+                );
+            }
 
             TileBundle {
                 map_tile: MapTile,
@@ -488,20 +521,26 @@ pub fn initialize_tile_storage(
         panic!("zero strata found when initializing storage");
     }
 
+    let mut zero_cells = 0;
+
     for (Stratum(stratum_entity, stratum_id), size, children) in strata {
         let mut num_cells = 0;
         let mut storage = TileStorage::new(size.clone());
         for entity in children.iter() {
             if let Ok(cell) = tiles.get(entity) {
+                if cell == &Cell::ZERO {
+                    zero_cells += 1;
+                }
                 storage.set(cell, entity);
                 num_cells += 1;
             }
         }
         info!(
-            "📍 stratum {}: set {}/{} tile entities",
+            "- 📍 stratum {}: set {}/{} tile entities ({} zero cells)",
             stratum_id,
             num_cells,
             storage.len(),
+            zero_cells,
         );
         commands.entity(*stratum_entity).insert(storage);
     }
@@ -528,68 +567,8 @@ pub fn setup_portals(
                         ..default()
                     },
                 ));
-                info!("📍 inserted portal {:?} at {:?}", portal, cell);
+                info!("- 📍 inserted portal {:?} at {:?}", portal, cell);
             }
         }
     }
-}
-
-pub fn get_live_tiles(
-    size: &Dimensions,
-    strat_storage: &Query<(&Stratum, &TileStorage)>,
-    live_tiles: &Query<&TileIdx>,
-) -> HashMap<StratumId, Vec<TileCell>> {
-    get_live_storage_items(size, strat_storage, live_tiles)
-}
-
-pub fn get_live_portals(
-    strat_storage: &Query<&Stratum>,
-    live_portals: &Query<(&Portal, &TileIdx, &Cell, &ChildOf)>,
-) -> StratPortals {
-    get_item_cells(strat_storage, live_portals)
-}
-
-pub fn get_item_cells<T>(
-    strata: &Query<&Stratum>,
-    live_items: &Query<(&T, &TileIdx, &Cell, &ChildOf)>,
-) -> HashMap<StratumId, Vec<(T, TileIdx, Cell)>>
-where
-    T: Component + Clone + Default + PartialEq,
-{
-    let mut out = HashMap::new();
-    for (item, tile_idx, cell, child_of) in live_items.iter() {
-        let Ok(stratum) = strata.get(child_of.parent()) else {
-            continue;
-        };
-        out.entry(stratum.1)
-            .or_insert(Vec::new())
-            .push((item.clone(), *tile_idx, *cell));
-    }
-
-    out
-}
-
-pub fn get_live_storage_items<T>(
-    size: &Dimensions,
-    strat_storage: &Query<(&Stratum, &TileStorage)>,
-    live_items: &Query<&T>,
-) -> HashMap<StratumId, Vec<(T, Cell)>>
-where
-    T: Component + Clone + Default + PartialEq,
-{
-    let mut out = HashMap::new();
-    for (Stratum(_, strat_id), storage) in strat_storage.iter() {
-        for (i, entity_opt) in storage.tiles.iter().enumerate() {
-            let cell = size.idx_to_cell(i);
-            if let Some(entity) = entity_opt
-                && let Ok(item) = live_items.get(*entity)
-                && *item != T::default()
-            {
-                out.entry(*strat_id)
-                    .or_insert(Vec::new())
-                    .push((item.clone(), cell))
-            }
-        }
-    }
-    out
 }

@@ -241,11 +241,7 @@ pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
     Ok(project)
 }
 
-pub fn generate_ldtk_world(
-    mut commands: Commands,
-    project: Option<Res<LdtkProject>>,
-    mut ns: ResMut<NextState<GameState>>,
-) {
+pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProject>>) {
     let Some(project) = project else {
         return;
     };
@@ -262,37 +258,42 @@ pub fn generate_ldtk_world(
                 ..default()
             };
 
-            spec.tiles
-                .extend(get_grid_tiles(&layer.grid_tiles, level.px_height));
+            if layer.layer_type.eq_ignore_ascii_case("tiles") {
+                info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
+                spec.tiles
+                    .extend(get_grid_tiles(&layer.grid_tiles, level.px_height));
+            }
 
-            for actor in &layer.entities {
-                let cell = actor.ldtk_cell.to_wandrs(layer.c_height);
+            if layer.layer_type.eq_ignore_ascii_case("entities") {
+                info!("🧰 loading {} entities", layer.entities.len());
+                for actor in &layer.entities {
+                    let cell = actor.ldtk_cell.to_wandrs(layer.c_height);
 
-                let t: TileIdx = actor.get_tile();
-                if t == TileIdx::default() {
-                    warn!("actor has default tile: {:?}", actor);
-                }
-
-                match ParsedActor::from_ldtk(actor) {
-                    Some(ParsedActor::Interactable(i)) => spec.interxs.push((i, cell)),
-                    Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
-                    Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
-                    Some(ParsedActor::Spawn) => {
-                        world.spawn_point = (stratum_id, cell);
-                        if stratum_id == StratumId::default() && cell == Cell::default() {
-                            warn!(
-                                "world spawn: both stratum ID and cell are defaults; zero values?"
-                            );
-                        }
+                    let t: TileIdx = actor.get_tile();
+                    if t == TileIdx::default() {
+                        warn!("actor has default tile: {:?}", actor);
                     }
-                    None => warn!("ignoring unparsable actor: {:?}", actor),
+
+                    match ParsedActor::from_ldtk(actor) {
+                        Some(ParsedActor::Interactable(i)) => spec.interxs.push((i, cell)),
+                        Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
+                        Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
+                        Some(ParsedActor::Spawn) => {
+                            world.spawn_point = (stratum_id, cell);
+                            if stratum_id == StratumId::default() && cell == Cell::default() {
+                                warn!(
+                                    "world spawn: both stratum ID and cell are defaults; zero values?"
+                                );
+                            }
+                        }
+                        None => warn!("ignoring unparsable actor: {:?}", actor),
+                    }
                 }
             }
         }
     }
 
     commands.insert_resource(world);
-    ns.set(GameState::Loading);
 }
 
 pub fn generate_ldtk_tilemap(
@@ -389,10 +390,29 @@ pub fn generate_ldtk_tilemap(
 
 fn get_grid_tiles(grid_tiles: &Vec<LdtkGridTile>, level_px_height: f32) -> Vec<TileCell> {
     let mut new_tiles: Vec<TileCell> = vec![];
+    let mut blank = 0;
+    let mut zero = 0;
     for grid_tile in grid_tiles {
         let tile_idx = TileIdx::from_idx(grid_tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
         let cell = grid_tile.into_cell(level_px_height);
+        if cell == Cell::ZERO {
+            zero += 1;
+        }
+        if tile_idx == TileIdx::Blank {
+            blank += 1;
+        }
         new_tiles.push((tile_idx, cell));
+    }
+    // info!("🧰 blank tiles: {}; zero tiles: {}", blank, zero);
+    if blank == grid_tiles.len() {
+        error!("🧰 {} out of {} tiles were blank", blank, grid_tiles.len());
+    }
+    if zero == grid_tiles.len() {
+        error!(
+            "🧰 {} out of {} tiles were at (0, 0)",
+            zero,
+            grid_tiles.len()
+        );
     }
     new_tiles
 }

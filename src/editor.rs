@@ -76,6 +76,15 @@ pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorContext>,
     mut log: ResMut<event_log::MessageLog>,
+    storages: Query<&TileStorage>,
+    tiles: Query<(
+        &TileIdx,
+        &Cell,
+        &Visibility,
+        &InheritedVisibility,
+        Option<&Transform>,
+        Option<&GlobalTransform>,
+    )>,
 ) {
     if !input.is_changed() {
         return;
@@ -101,6 +110,29 @@ pub fn on_button_input(
         info!("relocating player");
         commands.entity(*player).insert(Cell::new(5, 5));
         return;
+    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
+        && input.just_released(KeyCode::KeyT)
+    {
+        for storage in storages.iter() {
+            let mut out: Vec<(
+                TileIdx,
+                Cell,
+                Visibility,
+                InheritedVisibility,
+                Option<Transform>,
+                Option<GlobalTransform>,
+            )> = vec![];
+            for cell in storage.into_iter() {
+                if let Some(ent) = storage.get(&cell)
+                    && let Some(tile_info) = tiles.get(ent).ok()
+                {
+                    let (a, b, c, d, e, f) = tile_info.clone();
+                    out.push((*a, *b, *c, *d, e.copied(), f.copied()));
+                }
+            }
+            dbg!(out);
+        }
+        return;
     } else {
         return;
     }
@@ -119,12 +151,36 @@ pub fn on_button_input(
 }
 
 /// Toggles the player's field of view range.
-pub fn on_toggle_fov(input: Res<ButtonInput<KeyCode>>, mut stats: ResMut<PlayerStats>) {
+pub fn on_toggle_visibilities(
+    mut commands: Commands,
+    input: Res<ButtonInput<KeyCode>>,
+    strata: Query<(&Stratum, Option<&ActiveStratum>)>,
+    mut stats: ResMut<PlayerStats>,
+) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
         if stats.is_default() {
             stats.set_vision_range(25);
         } else {
             stats.reset_vision_range();
+        }
+    } else if input.just_pressed(KeyCode::KeyV)
+        && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+    {
+        info!("toggling visibility");
+        for (Stratum(ent, id), active_opt) in strata {
+            if active_opt.is_some() {
+                info!("{ent} is active; hiding");
+                commands
+                    .entity(*ent)
+                    .insert(Visibility::Hidden)
+                    .remove::<ActiveStratum>();
+            } else {
+                info!("{ent} is hidden; showing");
+                commands
+                    .entity(*ent)
+                    .insert(Visibility::Visible)
+                    .insert(ActiveStratum(Stratum(*ent, *id)));
+            }
         }
     }
 }
@@ -439,7 +495,7 @@ impl Plugin for EditorPlugin {
                         add_editor_components,
                         on_button_input,
                         on_zoom_button_input,
-                        on_toggle_fov,
+                        on_toggle_visibilities,
                         handle_map_operations,
                     )
                         .chain()

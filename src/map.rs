@@ -391,6 +391,14 @@ pub fn update_tile_visuals(
     strata_light: Query<&AmbientLight, With<Stratum>>,
 ) {
     for (mut sprite, mut vis, t, child_of) in tiles.iter_mut() {
+        if let ActiveStratum(Stratum(ent, _)) = *stratum
+            && child_of.parent() != *ent
+        {
+            commands.entity(*ent).insert(Visibility::Inherited);
+            sprite.color = Color::NONE;
+            continue;
+        }
+
         let ambient = strata_light
             .get(child_of.parent())
             .ok()

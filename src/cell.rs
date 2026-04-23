@@ -33,6 +33,8 @@ pub struct Cell {
 pub struct PreviousCell(pub Cell);
 
 impl Cell {
+    pub const ZERO: Cell = Cell { x: 0, y: 0 };
+
     pub fn new(x: i32, y: i32) -> Self {
         Cell { x, y }
     }
