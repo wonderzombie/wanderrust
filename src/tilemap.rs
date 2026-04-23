@@ -122,13 +122,21 @@ pub struct ActiveStratum(pub Stratum);
 )]
 pub struct TilemapLayer(pub f32);
 
-#[derive(
-    Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
-)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
     pub tile_size: u32,
+}
+
+impl Default for Dimensions {
+    fn default() -> Self {
+        Self {
+            width: Default::default(),
+            height: Default::default(),
+            tile_size: tiles::TILE_SIZE_PX as u32,
+        }
+    }
 }
 
 impl Dimensions {

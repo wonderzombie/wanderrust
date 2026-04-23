@@ -13,7 +13,7 @@ use crate::{
     interactions::{self, Interactable},
     inventory::{Inventory, Item},
     light::{Emitter, LightLevel},
-    tilemap::Portal,
+    tilemap::{ActiveStratum, Portal, Stratum},
     tiles::TileIdx,
 };
 
@@ -21,10 +21,10 @@ pub(crate) fn add_test_mobs(
     mut commands: Commands,
     atlas: Res<SpriteAtlas>,
     grid_entity: Query<Entity, With<Grid<CardinalNeighborhood>>>,
-    player_stratum: Query<&ChildOf, With<Player>>,
+    player_stratum: Query<&Stratum, With<ActiveStratum>>,
 ) {
     // Test/Demo only code.
-    let active_stratum = player_stratum.single().unwrap().parent();
+    let active_stratum = player_stratum.single().unwrap();
     let grid_entity = grid_entity.single().unwrap();
 
     commands.spawn((
@@ -39,7 +39,7 @@ pub(crate) fn add_test_mobs(
         Name::new("Mr. Boney"),
         interactions::Interactable::Speaker,
         interactions::Dialogue::phrases(vec!["hello".into(), "hi".into(), "how are you".into()]),
-        ChildOf(active_stratum),
+        ChildOf(active_stratum.0),
     ));
 
     commands.spawn((
@@ -61,7 +61,7 @@ pub(crate) fn add_test_mobs(
             defense: 0,
             vision: Vision(0),
         }),
-        ChildOf(active_stratum),
+        ChildOf(active_stratum.0),
     ));
 
     let cell = Cell { x: 40, y: 40 };
@@ -84,7 +84,7 @@ pub(crate) fn add_test_mobs(
         Name::new("Bat"),
         AgentPos(cell.into()),
         AgentOfGrid(grid_entity),
-        ChildOf(active_stratum),
+        ChildOf(active_stratum.0),
     ));
 }
 
