@@ -62,9 +62,6 @@ pub fn setup_fov(
     stratum_children: Query<(&Stratum, &Dimensions, &Children)>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
-    let mut tiles_count = 0;
-    let mut opaque_count = 0;
-
     for (Stratum(strat_entity, _), dimensions, children) in stratum_children {
         info!("👀 checking {} children", children.iter().len());
         let mut tiles_count = 0;
