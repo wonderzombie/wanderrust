@@ -72,24 +72,6 @@ impl Interactable {
             _ => self.clone(),
         }
     }
-
-    pub fn from_tile(tile_idx: TileIdx) -> Option<Interactable> {
-        match tile_idx {
-            TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
-                is_open: false,
-                contents: Some(Inventory::with_item(Item::from("gold"), 10)),
-                tile_idx,
-            }),
-            TileIdx::DoorBrownThickClosed1
-            | TileIdx::DoorBrownThickClosed2
-            | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
-                is_open: false,
-                requires: None,
-                tile_idx,
-            }),
-            _ => None,
-        }
-    }
 }
 
 impl LdtkEntityExt<Interactable> for Interactable {
@@ -109,7 +91,6 @@ impl LdtkEntityExt<Interactable> for Interactable {
         match ty {
             LdtkActor::Combatant => Some(Combatant),
             LdtkActor::Speaker => Some(Speaker),
-            // TODO: load requires
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").map(Item);
                 Some(Door {
@@ -118,7 +99,6 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     tile_idx,
                 })
             }
-            // TODO: load inventory items
             LdtkActor::Chest => {
                 let inv = entity
                     .get_str_array("contents")

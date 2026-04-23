@@ -269,8 +269,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                 for actor in &layer.entities {
                     let cell = actor.ldtk_cell.to_wandrs(layer.c_height);
 
-                    let t: TileIdx = actor.get_tile();
-                    if t == TileIdx::default() {
+                    if actor.get_tile() == TileIdx::default() {
                         warn!("actor has default tile: {:?}", actor);
                     }
 
