@@ -23,6 +23,51 @@ pub struct WorldSpec {
     pub spawn_point: SpawnCell,
 }
 
+impl From<StratumTileSpec> for WorldSpec {
+    fn from(value: StratumTileSpec) -> Self {
+        let mut out = WorldSpec::default();
+
+        let incoming_strata = value.all_tiles.keys();
+
+        for strat_id in incoming_strata {
+            let outgoing_map: &mut StratumSpec = out.maps.entry(*strat_id).or_default();
+            if let Some(tiles) = value.all_tiles.get(strat_id) {
+                outgoing_map.tiles.extend(tiles);
+            }
+
+            if let Some(portals) = value.all_portals.get(strat_id) {
+                outgoing_map.portals.extend(portals.iter().map(|(p, t, c)| {
+                    let mut p = p.clone();
+                    p.tile_idx = *t;
+                    (p, *c)
+                }));
+            }
+
+            if let Some(emitters) = value.all_emitters.get(strat_id) {
+                outgoing_map
+                    .emitters
+                    .extend(emitters.iter().map(|(e, t, c)| {
+                        let mut e = e.clone();
+                        e.tile_idx = *t;
+                        (e, *c)
+                    }));
+            }
+
+            if let Some(interxs) = value.all_interxs.get(strat_id) {
+                outgoing_map.interxs.extend(interxs.iter().map(|(i, t, c)| {
+                    let i = i.set_tile(*t);
+                    (i, *c)
+                }));
+            }
+
+            outgoing_map.light_level = value.light_level;
+            outgoing_map.size = value.size;
+        }
+
+        dbg!(out)
+    }
+}
+
 type TileSpec = (TileIdx, Cell);
 type PortalSpec = (Portal, Cell);
 type InterxSpec = (Interactable, Cell);

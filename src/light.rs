@@ -79,7 +79,7 @@ impl From<(LightLevel, i32)> for LightRing {
 pub struct Emitter {
     inner: LightRing,
     outer: LightRing,
-    default_tile_idx: TileIdx,
+    pub(crate) tile_idx: TileIdx,
 }
 
 impl Emitter {
@@ -91,7 +91,7 @@ impl Emitter {
         Self {
             inner,
             outer,
-            default_tile_idx: tile_idx,
+            tile_idx,
         }
     }
 
@@ -284,10 +284,10 @@ pub fn spawn(
             trace!("🔥 spawning {:?} at {:?}", emitter, cell);
             commands.spawn((
                 *emitter,
-                emitter.default_tile_idx,
+                emitter.tile_idx,
                 ChildOf(*strat_entity),
                 PieceBundle {
-                    sprite: atlas.sprite_from_idx(emitter.default_tile_idx),
+                    sprite: atlas.sprite_from_idx(emitter.tile_idx),
                     cell: *cell,
                     ..default()
                 },

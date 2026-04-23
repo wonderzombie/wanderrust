@@ -18,12 +18,12 @@ pub enum Interactable {
     Door {
         is_open: bool,
         requires: Option<Item>,
-        tile_idx_default: TileIdx,
+        tile_idx: TileIdx,
     },
     Chest {
         is_open: bool,
         contents: Option<Inventory>,
-        tile_idx_default: TileIdx,
+        tile_idx: TileIdx,
     },
     #[default]
     Speaker,
@@ -36,12 +36,40 @@ impl Interactable {
 
         match self {
             Chest {
-                tile_idx_default, ..
+                tile_idx: tile_idx_default,
+                ..
             }
             | Door {
-                tile_idx_default, ..
+                tile_idx: tile_idx_default,
+                ..
             } => Some(*tile_idx_default),
             _ => None,
+        }
+    }
+
+    pub fn set_tile(&self, tile_idx: TileIdx) -> Self {
+        use Interactable::*;
+
+        match self {
+            Chest {
+                is_open,
+                contents,
+                tile_idx: _,
+            } => Chest {
+                is_open: *is_open,
+                contents: contents.clone(),
+                tile_idx,
+            },
+            Door {
+                is_open,
+                requires,
+                tile_idx: _,
+            } => Door {
+                is_open: *is_open,
+                requires: requires.clone(),
+                tile_idx,
+            },
+            _ => self.clone(),
         }
     }
 
@@ -50,14 +78,14 @@ impl Interactable {
             TileIdx::ChestBrownClosed | TileIdx::ChestWhiteClosed => Some(Interactable::Chest {
                 is_open: false,
                 contents: Some(Inventory::with_item(Item::from("gold"), 10)),
-                tile_idx_default: tile_idx,
+                tile_idx,
             }),
             TileIdx::DoorBrownThickClosed1
             | TileIdx::DoorBrownThickClosed2
             | TileIdx::DoorBrownThickClosed3 => Some(Interactable::Door {
                 is_open: false,
                 requires: None,
-                tile_idx_default: tile_idx,
+                tile_idx,
             }),
             _ => None,
         }
@@ -87,7 +115,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 Some(Door {
                     is_open: entity.get_bool("is_open"),
                     requires,
-                    tile_idx_default: tile_idx,
+                    tile_idx,
                 })
             }
             // TODO: load inventory items
@@ -98,7 +126,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 Some(Chest {
                     is_open: entity.get_bool("is_open"),
                     contents: inv,
-                    tile_idx_default: tile_idx,
+                    tile_idx,
                 })
             }
             _ => None,
@@ -151,7 +179,7 @@ pub fn process_interactions(
             Interactable::Door {
                 is_open,
                 requires,
-                tile_idx_default: _,
+                tile_idx: _,
             } => {
                 trace!("process_interactions: door");
                 if !*is_open {
@@ -187,7 +215,7 @@ pub fn process_interactions(
             Interactable::Chest {
                 is_open,
                 contents,
-                tile_idx_default: _,
+                tile_idx: _,
             } => {
                 if !*is_open {
                     *is_open = true;
