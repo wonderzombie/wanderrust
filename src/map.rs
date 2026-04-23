@@ -387,17 +387,16 @@ pub fn sync_tiles(
 }
 
 pub fn update_stratum_visuals(
-    active_strat: Single<Ref<ActiveStratum>>,
+    active_strat: Single<(Entity, Ref<ActiveStratum>)>,
     all_strata: Query<(&Stratum, &mut Visibility)>,
 ) {
-    if !active_strat.is_changed() {
+    let (active_strat, ref active_ref) = *active_strat;
+    if !active_ref.is_changed() {
         return;
     }
 
-    let ActiveStratum(Stratum(active_strat_ent, _)) = **active_strat;
-
     for (Stratum(strat_ent, _), mut vis) in all_strata {
-        if *strat_ent == active_strat_ent {
+        if *strat_ent == active_strat {
             info!("Stratum active: {}", strat_ent);
             *vis = Visibility::Inherited;
         } else {

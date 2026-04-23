@@ -164,9 +164,7 @@ pub fn on_toggle_visibilities(
                 commands.entity(*ent).remove::<ActiveStratum>();
             } else {
                 info!("{ent} is hidden; showing");
-                commands
-                    .entity(*ent)
-                    .insert(ActiveStratum(Stratum(*ent, *id)));
+                commands.entity(*ent).insert(ActiveStratum);
                 let (p, c) = *player;
                 commands.entity(p).insert((*c, ChildOf(*ent)));
             }

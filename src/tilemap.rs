@@ -160,7 +160,7 @@ pub struct StratumTileSpec {
 }
 
 #[derive(Component, Debug, Clone, Reflect, PartialEq)]
-pub struct ActiveStratum(pub Stratum);
+pub struct ActiveStratum;
 
 #[derive(
     Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,
@@ -408,7 +408,7 @@ pub fn spawn_worldmap(
             commands.spawn(WorldSpawn::new(strat_entity, cell));
             commands
                 .entity(strat_entity)
-                .insert((ActiveStratum(stratum), Visibility::Visible));
+                .insert((ActiveStratum, Visibility::Visible));
         }
 
         info!("- 📍 {start_strat_id} tally: {:?}", tally);

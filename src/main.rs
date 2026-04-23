@@ -38,7 +38,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_stratum_visuals,
-    tilemap::{ActiveStratum, EntryId, Portal, StratumTileSpec, TileStorage, WorldSpec},
+    tilemap::{ActiveStratum, EntryId, Portal, Stratum, StratumTileSpec, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -412,7 +412,8 @@ struct PendingTransition {
 fn handle_pending_transition(
     mut commands: Commands,
     pending_transition: Option<ResMut<PendingTransition>>,
-    portals: Query<(&Portal, &Cell), With<Actor>>,
+    active_strat: Single<Entity, With<ActiveStratum>>,
+    portals: Query<(&Portal, &Cell, &ChildOf), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
     let Some(transition) = pending_transition.as_ref() else {
@@ -420,9 +421,20 @@ fn handle_pending_transition(
     };
 
     info!("looking for {:?} in {:?}", transition.arrive_at, portals);
-    for (portal, cell) in &portals {
+    for (portal, cell, portal_child_of) in &portals {
         if portal.id == transition.arrive_at {
             info!("ℹ️ portal to {:?} at cell {:?}", portal.arrive_at, cell);
+
+            if portal_child_of.parent() != *active_strat {
+                commands
+                    .entity(portal_child_of.parent())
+                    .insert(ActiveStratum);
+                commands.entity(*active_strat).remove::<ActiveStratum>();
+                commands
+                    .entity(*player)
+                    .insert(ChildOf(portal_child_of.parent()));
+            }
+
             commands.entity(*player).insert(*cell);
             commands.remove_resource::<PendingTransition>();
             return;
