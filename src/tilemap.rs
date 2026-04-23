@@ -331,7 +331,10 @@ pub fn spawn_worldmap(
         commands.spawn_batch(bundles);
 
         if start_strat_id == *stratum_id {
-            info!("🕹️ found spawn stratum: {:?}", start_strat_id);
+            info!(
+                "🕹️ found spawn stratum: {:?} and cell {:?}",
+                start_strat_id, cell
+            );
             commands.insert_resource(ActiveStratum(stratum));
             commands.spawn(WorldSpawn::new(strat_entity, cell));
         }

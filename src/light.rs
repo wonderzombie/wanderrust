@@ -336,6 +336,7 @@ pub fn setup(
     }
 }
 
+/// When any Emitters change, regenerate their LightMaps.
 pub fn update_emitter_maps(
     mut commands: Commands,
     emitters: Query<(Entity, &Emitter, &Cell), Or<(Changed<Emitter>, Changed<Cell>)>>,
@@ -351,6 +352,7 @@ pub fn update_emitter_maps(
     }
 }
 
+/// When there are emitter maps (and there are, when )
 pub fn update_strata_maps(
     mut all_strata: Query<&mut StratumLightMap>,
     all_emitter_maps: Query<(&ChildOf, &LightMap)>,
