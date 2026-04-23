@@ -19,7 +19,6 @@ mod mobs;
 mod procgen;
 mod ptable;
 mod sounds;
-mod test_entities;
 mod tilemap;
 mod tiles;
 mod title_screen;
@@ -152,18 +151,6 @@ fn main() {
         OnExit(GameState::Loading),
         (actors::setup_player, interactions::spawn_interxs),
     )
-    // .add_systems(
-    //     OnEnter(GameState::AwaitingInput),
-    //     (
-    //         test_entities::add_test_mobs,
-    //         test_entities::add_test_emitters,
-    //         test_entities::add_test_portals,
-    //         test_entities::add_test_chests,
-    //     )
-    //         .chain()
-    //         .in_set(GameSystem::SpawnTestEntities)
-    //         .run_if(run_once),
-    // )
     .add_systems(
         EguiPrimaryContextPass,
         event_log::draw_ui.run_if(in_state(Screen::Playing)),
