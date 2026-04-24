@@ -1,19 +1,15 @@
 use std::path::PathBuf;
 
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use serde::Deserialize;
 use serde_json::{Value, from_value};
 
 use crate::{
     cell::Cell,
-    gamestate::GameState,
     interactions::{self, Interactable},
-    light::{self, Emitter, LightLevel},
-    tilemap::{
-        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, StratumTileSpec,
-        TileCell, WorldSpec,
-    },
-    tiles::{self, SHEET_SIZE_G, TileIdx},
+    light::{self, Emitter},
+    tilemap::{self, Dimensions, Portal, StratumId, TileCell, WorldSpec},
+    tiles::{SHEET_SIZE_G, TileIdx},
 };
 
 macro_rules! enum_with_str {
@@ -49,16 +45,14 @@ pub trait LdtkEntityExt<T> {
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
     pub levels: Vec<LdtkLevel>,
-    #[serde(rename = "worldGridWidth")]
-    pub grid_width: u32,
-    #[serde(rename = "worldGridHeight")]
-    pub grid_height: u32,
+    // #[serde(rename = "worldGridWidth")]
+    // pub grid_width: u32,
+    // #[serde(rename = "worldGridHeight")]
+    // pub grid_height: u32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct LdtkLevel {
-    #[serde(rename = "fieldInstances", default)]
-    pub field_instances: Vec<LdtkField>,
     #[serde(rename = "layerInstances", default)]
     pub layer_instances: Vec<LdtkLayer>,
     #[serde(rename = "pxHei")]
@@ -67,23 +61,8 @@ pub struct LdtkLevel {
     pub world_depth: i32,
 }
 
-impl LdtkLevel {
-    pub fn light_level_or(&self, default: LightLevel) -> LightLevel {
-        self.field_instances
-            .iter()
-            .find(|fi| fi.identifier.eq_ignore_ascii_case("light_level"))
-            .and_then(|fi| match ParsedValue::from(fi) {
-                ParsedValue::LightLevelEnum(l) => LightLevel::from_str(l),
-                _ => None,
-            })
-            .unwrap_or(default)
-    }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct LdtkLayer {
-    #[serde(rename = "__identifier")]
-    pub identifier: String,
     #[serde(rename = "__type")]
     pub layer_type: String,
     #[serde(rename = "gridTiles", default)]
@@ -108,8 +87,6 @@ pub struct LdtkField {
 
 #[derive(Debug, Deserialize, Default)]
 pub struct LdtkEntity {
-    #[serde(rename = "__identifier")]
-    pub identifier: String,
     #[serde(rename = "__grid")]
     pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.
@@ -293,98 +270,6 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     }
 
     commands.insert_resource(world);
-}
-
-pub fn generate_ldtk_tilemap(
-    mut commands: Commands,
-    res: Option<Res<LdtkProject>>,
-    // HACKHACK for testing
-    mut ns: ResMut<NextState<GameState>>,
-) {
-    let Some(project) = res else {
-        return;
-    };
-    let project = project.as_ref();
-
-    let mut distinct_entities = HashSet::<(String, Cell)>::new();
-
-    let mut new_tiles: Vec<TileCell> = Vec::new();
-    let mut new_portals: Vec<PortalCell> = Vec::new();
-    let mut new_interx: Vec<InterxCell> = Vec::new();
-    let mut new_emitters: Vec<EmitterCell> = Vec::new();
-
-    let level = project.levels.first().unwrap();
-    let mut spawn: Option<Cell> = None;
-    let light_level = level.light_level_or(LightLevel::Dark);
-
-    let mut c_wid = 1;
-    let mut c_hei = 1;
-
-    for layer in &level.layer_instances {
-        c_wid = c_wid.max(layer.c_width);
-        c_hei = c_hei.max(layer.c_height);
-
-        if layer.layer_type.eq_ignore_ascii_case("tiles") {
-            let grid_tiles = get_grid_tiles(&layer.grid_tiles, level.px_height);
-            new_tiles.extend(grid_tiles);
-        }
-
-        if layer.layer_type.eq_ignore_ascii_case("entities") {
-            for actor in &layer.entities {
-                let wandrs_cell = actor.ldtk_cell.to_wandrs(layer.c_height);
-                distinct_entities.insert((actor.identifier.clone(), wandrs_cell));
-
-                let t: TileIdx = actor.get_tile();
-                if t == TileIdx::default() {
-                    warn!("actor has default tile: {:?}", actor);
-                }
-
-                info!("entity: {:?}", actor.identifier);
-
-                match ParsedActor::from_ldtk(actor) {
-                    Some(ParsedActor::Interactable(i)) => new_interx.push((i, t, wandrs_cell)),
-                    Some(ParsedActor::Emitter(e)) => new_emitters.push((e, t, wandrs_cell)),
-                    Some(ParsedActor::Portal(p)) => new_portals.push((p, t, wandrs_cell)),
-                    Some(ParsedActor::Spawn) => spawn = Some(wandrs_cell),
-                    None => error!(
-                        "skipping unknown actor type: {:?} (ty {:?}",
-                        actor,
-                        actor.ty()
-                    ),
-                }
-            }
-        }
-    }
-    info!("🧰 new tiles: {}", new_tiles.len());
-    info!("🧰 new emitters: {}", new_emitters.len());
-    info!("🧰 new interactables: {}", new_interx.len());
-    info!("🧰 new portals: {}", new_portals.len());
-
-    // HACKHACK for testing
-    let mut spec = StratumTileSpec::default();
-    spec.all_tiles.insert(StratumId(0), new_tiles);
-    spec.all_portals.insert(StratumId(0), new_portals);
-    spec.all_interxs.insert(StratumId(0), new_interx);
-    spec.all_emitters.insert(StratumId(0), new_emitters);
-    spec.light_level = light_level;
-    spec.size = Dimensions {
-        width: c_wid as u32,
-        height: c_hei as u32,
-        tile_size: tiles::TILE_SIZE_PX as u32,
-    };
-
-    spec.spawn_point = if let Some(spawn) = spawn {
-        (StratumId(0), spawn)
-    } else {
-        error!("did not find spawn point");
-        (StratumId(0), Cell::default())
-    };
-
-    info!("🧰 setting spawn to {:?}", spec.spawn_point);
-
-    commands.insert_resource(spec);
-
-    ns.set(GameState::Loading);
 }
 
 fn get_grid_tiles(grid_tiles: &Vec<LdtkGridTile>, level_px_height: f32) -> Vec<TileCell> {
