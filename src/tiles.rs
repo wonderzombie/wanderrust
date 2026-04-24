@@ -204,6 +204,7 @@ tiles! {
     BoatUp = atlas_idx(9, 19),
     BoatDown = atlas_idx(10, 19),
     BoatRight = atlas_idx(11, 19),
+    Shrine = 562,
 
     // Player
     Player = atlas_idx(27, 0),
@@ -221,9 +222,82 @@ tiles! {
     Torch = atlas_idx(4, 15),
     Campfire = atlas_idx(14, 10),
     Brazier = atlas_idx(14, 13),
+    Candelabra = 740,
 
     // Placeholder
     GridSquare = atlas_idx(39, 14),
+
+    CoinGoldBig = 188,
+    CoinGoldSmall = 218,
+    GemBlueSmall = 219,
+    GemGold = 522,
+    GemBlue = 523,
+    GemRed = 524,
+    CoinsGold = 237,
+
+    // Interactable doors/levers
+    DoorBlueLocked = 441,
+    DoorBlueWithLines = 442,
+    DoorwayBlue = 443,
+    PadlockBlue = 490,
+    FloorButtonBlueUp = 491,
+    FloorButtonBlueDown = 492,
+    LeverBlueLeft = 493,
+    LeverBlueRight = 494,
+    SquareBlueLocked = 539,
+    BarsBlueLocked = 543,
+
+    // Some placeholders for lack of overrides
+    ExclamationMark = 672,
+    BubbleExclamationMark = 673,
+    QuestionMark = 674,
+    BubbleQuestionMark = 675,
+    FaceSmiling = 721,
+    FaceFrowning = 722,
+    FaceJoy = 723,
+    FaceUpset = 724,
+
+    // UI indicators (for prototyping)
+    HeartBorderlessFull = 529,
+    HeartBorderEmpty = 530,
+    HeartBorderHalfFull = 531,
+    HeartBorderFull = 532,
+
+    FlaskBorderlessFull = 578,
+    FlaskBorderEmpty = 579,
+    FlaskBorderHalfFull = 580,
+    FlaskBorderFull = 581,
+
+    HourglassBorderlessFull = 627,
+    HourglassBorderEmpty = 628,
+    HourglassBorderHalfFull = 629,
+    HourglassBorderFull = 630,
+
+    // Indicators: action, attack, effect, etc
+    SlashDiagonal = 563,
+    SlashCurved = 564,
+    SlashTripleDiagonal = 565,
+    EffectOrbs = 566,
+    EffectPlasmaStanding = 567,
+    EffectPlasmaMissile = 568,
+    SlashCross = 569,
+    EffectPlasmaCircle = 570,
+    EffectBubbles = 574,
+    EffectStars = 575,
+    EffectImpactBig = 576,
+    EffectSkull = 577,
+    EffectGrowthCircle = 615,
+    EffectThickStar = 616,
+    EffectMedStar = 617,
+    EffectSparks = 618,
+    EffectImpact = 619,
+
+
+
+
+
+
+
 
     // Mouse cursor.
     Cursor1 = atlas_idx(35, 10),
@@ -353,7 +427,7 @@ impl TileIdx {
         })
     }
 
-    pub fn opened_version(&self) -> Option<TileIdx> {
+    pub fn engaged_version(&self) -> Option<TileIdx> {
         match self {
             ChestBrownClosed => Some(ChestBrownOpen),
             ChestWhiteClosed => Some(ChestWhiteOpen),
@@ -362,6 +436,9 @@ impl TileIdx {
             }
             DoorBrownThinClosed1 | DoorBrownThinClosed2 => Some(DoorwayBrownThin),
             BarsDoorClosed => Some(BarsDoorOpen),
+            LeverBlueLeft => Some(LeverBlueRight),
+            DoorBlueLocked => Some(DoorwayBlue),
+            FloorButtonBlueUp => Some(FloorButtonBlueDown),
             _ => None,
         }
     }
