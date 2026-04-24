@@ -23,6 +23,7 @@ pub struct WorldSpec {
     pub id: Option<WorldId>,
     pub maps: HashMap<StratumId, StratumSpec>,
     pub spawn_point: SpawnCell,
+    pub light_level: LightLevel,
 }
 
 impl From<StratumTileSpec> for WorldSpec {

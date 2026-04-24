@@ -7,9 +7,12 @@ use serde_json::{Value, from_value};
 use crate::{
     cell::Cell,
     interactions::{self, Interactable},
-    light::{self, Emitter},
-    tilemap::{self, Dimensions, Portal, StratumId, TileCell, WorldSpec},
-    tiles::{SHEET_SIZE_G, TileIdx},
+    light::{self, Emitter, LightLevel},
+    tilemap::{
+        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, StratumSpec,
+        StratumTileSpec, TileCell, WorldSpec,
+    },
+    tiles::{self, SHEET_SIZE_G, TileIdx},
 };
 
 macro_rules! enum_with_str {
@@ -223,11 +226,15 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
         return;
     };
     let project = project.as_ref();
-    let mut world = WorldSpec::default();
+    let mut world = WorldSpec {
+        light_level: LightLevel::Night,
+        ..Default::default()
+    };
 
     for level in &project.levels {
         let stratum_id = StratumId(level.world_depth);
-        let spec = world.maps.entry(stratum_id).or_default();
+        let spec: &mut StratumSpec = world.maps.entry(stratum_id).or_default();
+        spec.light_level = level.light_level_or(world.light_level);
         for layer in &level.layer_instances {
             spec.size = Dimensions {
                 width: layer.c_width as u32,
