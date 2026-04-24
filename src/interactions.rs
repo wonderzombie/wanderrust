@@ -94,19 +94,21 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Speaker => Some(Speaker),
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").map(Item);
+                let is_open = entity.get_bool("is_open");
                 Some(Door {
-                    is_open: entity.get_bool("is_open"),
+                    is_open,
                     requires,
                     tile_idx,
                 })
             }
             LdtkActor::Chest => {
-                let inv = entity
+                let contents = entity
                     .get_str_array("contents")
                     .and_then(Inventory::from_str_array);
+                let is_open = entity.get_bool("is_open");
                 Some(Chest {
-                    is_open: entity.get_bool("is_open"),
-                    contents: inv,
+                    is_open,
+                    contents,
                     tile_idx,
                 })
             }
