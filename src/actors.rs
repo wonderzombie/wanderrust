@@ -122,12 +122,16 @@ pub fn setup_player(
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
 pub fn update_transforms(
-    mut pieces: Query<(&Cell, &mut Transform), (Without<MapTile>, Changed<Cell>)>,
+    mut pieces: Query<(&Cell, &mut Transform, Option<&Player>), (Without<MapTile>, Changed<Cell>)>,
 ) {
-    for (piece_cell, mut transform) in pieces.iter_mut() {
+    for (piece_cell, mut transform, is_player) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
-        transform.translation.z = *tilemap::ACTOR_LAYER;
+        transform.translation.z = if is_player.is_none() {
+            *tilemap::ACTOR_LAYER
+        } else {
+            *tilemap::PLAYER_LAYER
+        };
     }
 }
 
