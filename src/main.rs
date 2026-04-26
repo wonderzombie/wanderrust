@@ -188,7 +188,7 @@ fn main() {
     .add_systems(
         PostUpdate,
         (
-            // Runs when there's been a change to any tile and updates sprite & gameplay properties..
+            // Runs when there's been a change to any tile and updates sprite & gameplay properties.
             map::sync_tiles,
             (actors::update_transforms, actors::sync_occupied_tiles)
                 .in_set(GameSystem::ActorSync)
