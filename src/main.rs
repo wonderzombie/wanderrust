@@ -25,6 +25,7 @@ mod title_screen;
 mod tooltip;
 
 use bevy::{
+    asset::io::web::WebAssetPlugin,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
@@ -80,6 +81,15 @@ fn main() {
                     title: "wanderrust".to_string(),
                     ..default()
                 }),
+                ..default()
+            })
+            .set(WebAssetPlugin {
+                silence_startup_warning: true,
+            })
+            .set(AssetPlugin::default())
+            .set(bevy::log::LogPlugin {
+                // level: Level::TRACE,
+                // filter: "bevy_asset=trace".to_string(),
                 ..default()
             }),
     )

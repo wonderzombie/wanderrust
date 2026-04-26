@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
     PartialOrd,
     Reflect,
 )]
+#[reflect(Component)]
 pub struct Cell {
     pub x: i32,
     pub y: i32,

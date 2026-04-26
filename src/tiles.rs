@@ -14,6 +14,7 @@ macro_rules! tiles {
     ) => {
         #[derive(Component, Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Reflect, Ord, PartialOrd)]
         #[repr(usize)]
+        #[reflect(Component)]
         pub enum TileIdx {
             #[default]
             $( $name = $idx, )*
@@ -64,31 +65,38 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
 }
 
 /// A marker component for entities that represent tiles on the map, which can have properties like walkability and opacity.
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Default, Debug, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct MapTile;
 
 /// A marker component for tiles that can be walked on by actors, such as the player or NPCs.
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct Walkable;
 
 /// A marker component for tiles that block line of sight, affecting field of view calculations.
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct Opaque;
 
 /// A marker component for tiles that are currently revealed to the player.
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
 pub struct Revealed(pub bool);
 
 /// A marker component for tiles that are currently highlighted, typically by cursor.
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Default, Debug, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct Highlighted;
 
 /// A marker component for tiles occupied by an actor.
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Default, Debug, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct Occupied;
 
 /// A marker component for tiles that are currently being previewed, such as a tile being hovered over.
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Reflect)]
+#[reflect(Component)]
 pub struct TilePreview(Option<TileIdx>);
 
 impl TilePreview {

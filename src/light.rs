@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     Reflect,
 )]
+#[reflect(Component)]
 pub enum LightLevel {
     Dark, // underground default — render nothing
     #[default]
@@ -76,6 +77,7 @@ impl From<(LightLevel, i32)> for LightRing {
 #[derive(
     Component, Default, Debug, Copy, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize,
 )]
+#[reflect(Component)]
 pub struct Emitter {
     inner: LightRing,
     outer: LightRing,
@@ -177,6 +179,7 @@ impl LdtkEntityExt<Emitter> for Emitter {
 
 /// A map of cells to [`LightLevel`] values, representing the light emitted by an [`Emitter`].
 #[derive(Component, Default, Deref, Debug, Clone, Reflect, PartialEq)]
+#[reflect(Component)]
 pub struct LightMap(pub HashMap<Cell, LightLevel>);
 
 impl LightMap {
@@ -194,6 +197,7 @@ impl LightMap {
 }
 
 #[derive(Component, Default, Debug, Reflect)]
+#[reflect(Component)]
 pub struct StratumLightMap {
     pub curr: LightMap,
     pub prev: LightMap,
@@ -300,6 +304,7 @@ pub fn spawn(
 }
 
 #[derive(Component, Default, Deref, Reflect)]
+#[reflect(Component)]
 pub struct AmbientLight(pub LightLevel);
 
 /// Set up lighting for each stratum with TileStorage.

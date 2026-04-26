@@ -14,6 +14,7 @@ pub const TRANSPARENT_SHEET: &str = "kenney_1-bit-pack/Tilesheet/colored-transpa
 
 /// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
 #[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
 pub struct SpriteAtlas {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,

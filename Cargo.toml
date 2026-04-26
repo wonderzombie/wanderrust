@@ -1,25 +1,37 @@
-[workspace]
-members = [".", "mrpas"]
-
 [package]
 name = "wanderrust"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = [".", "mrpas"]
+
 [dependencies]
-bevy = { version = "0.18.1", default-features = false, features = ["dynamic_linking", "2d", "debug", "mouse", "sprite_picking", "dev"] }
+bevy = { version = "0.18.1", features = [
+  "2d",
+  "bevy_remote",
+  "debug",
+  "dev",
+  "dynamic_linking",
+  "http",
+  "https",
+  "mouse",
+  "sprite_picking",
+  # "detailed_trace",
+] }
 bevy_egui = "0.39.1"
+bevy-inspector-egui = "0.36.0"
 bevy_northstar = "0.6.1"
 fxhash = "0.2.1"
 itertools = "0.14.0"
+log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 mrpas = { path = "mrpas" }
 rand = "0.10.0"
 rfd = "0.17.2"
 ron = "0.12.0"
 serde = { version = "1.0.228", features = ["derive"] }
-log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
-bevy-inspector-egui = "0.36.0"
 serde_json = "1.0.149"
+tracing = { version = "0.1.44", features = ["log"] }
 
 [profile.dev]
 opt-level = 1

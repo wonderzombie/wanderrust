@@ -13,10 +13,12 @@ use crate::{
     tiles::{self, MapTile, Revealed, TileIdx},
 };
 
-#[derive(Component, Copy, Clone, Debug, PartialEq)]
+#[derive(Component, Copy, Clone, Debug, PartialEq, Reflect)]
+#[reflect(Component)]
 pub struct WorldId(pub Entity);
 
-#[derive(Resource, Default, Debug, PartialEq)]
+#[derive(Resource, Default, Debug, PartialEq, Reflect)]
+#[reflect(Resource)]
 pub struct WorldSpec {
     pub id: Option<WorldId>,
     pub maps: HashMap<StratumId, StratumSpec>,
@@ -74,6 +76,7 @@ type InterxSpec = (Interactable, Cell);
 type EmitterSpec = (Emitter, Cell);
 
 #[derive(Debug, Default, Resource, PartialEq, Reflect, Clone)]
+#[reflect(Resource)]
 pub struct StratumSpec {
     pub id: Option<Stratum>,
     pub size: Dimensions,
@@ -124,6 +127,7 @@ impl Display for StratumId {
 }
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[reflect(Component)]
 pub struct Stratum(pub Entity, pub StratumId);
 
 /// TileCell is a pair of (TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
@@ -143,6 +147,7 @@ pub type StratEmitters = HashMap<StratumId, Vec<EmitterCell>>;
 
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
+#[reflect(Resource)]
 pub struct StratumTileSpec {
     /// Stratum entities will be created as children of this entity.
     #[serde(skip)]
@@ -165,9 +170,11 @@ pub struct ActiveStratum;
 #[derive(
     Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,
 )]
+#[reflect(Component)]
 pub struct TilemapLayer(pub f32);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
+#[reflect(Component)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
@@ -236,6 +243,7 @@ impl Display for Dimensions {
 #[derive(
     Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
 )]
+#[reflect(Component)]
 pub struct TileStorage {
     tiles: Vec<Option<Entity>>,
     pub size: Dimensions,
@@ -298,6 +306,7 @@ impl From<&str> for EntryId {
 #[derive(
     Component, Serialize, Deserialize, Default, Debug, Hash, Clone, Eq, PartialEq, Reflect,
 )]
+#[reflect(Component)]
 pub struct Portal {
     pub id: EntryId,
     pub arrive_at: EntryId,
@@ -429,7 +438,8 @@ pub fn spawn_worldmap(
         .insert(Name::new("World"));
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect, Debug, Clone, Copy)]
+#[reflect(Component)]
 pub struct WorldSpawn {
     pub strat_entity: Entity,
     pub cell: Cell,

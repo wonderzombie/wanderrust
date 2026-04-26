@@ -8,6 +8,7 @@ use bevy::{
     },
     log::{info, warn},
     platform::collections::{HashMap, hash_map},
+    prelude::*,
     reflect::Reflect,
 };
 use serde::{Deserialize, Serialize};
@@ -40,6 +41,7 @@ impl Display for Item {
 
 /// A resource representing the player's inventory, which is a mapping of items to their quantities.
 #[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
+#[reflect(Resource)]
 pub struct Inventory(HashMap<Item, usize>);
 
 impl From<HashMap<Item, usize>> for Inventory {
@@ -164,7 +166,7 @@ impl Inventory {
 }
 
 /// A message representing the acquisition of [Inventory] items by an actor, such as the player picking up items from a chest or loot.
-#[derive(Message, Debug)]
+#[derive(Message, Debug, Reflect)]
 pub struct Acquisition {
     pub items: Inventory,
 }

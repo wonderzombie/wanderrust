@@ -7,14 +7,16 @@ use crate::{
     interactions::Interactable,
 };
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect)]
+#[reflect(Component)]
 pub struct Health {
     pub hp: i32,
     pub max: i32,
     pub is_dead: bool,
 }
 
-#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize, Reflect)]
+#[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,
     pub defense: i32,
@@ -47,7 +49,8 @@ impl Belligerent {
 }
 
 /// Add Awareness if the Actor needs complex behavior related to the Player.
-#[derive(Component, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Component, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Reflect)]
+#[reflect(Component)]
 pub enum Awareness {
     // Oblivious,
     #[default]
@@ -57,7 +60,7 @@ pub enum Awareness {
     // Hunting,
 }
 
-#[derive(Message, Debug, Copy, Clone)]
+#[derive(Message, Debug, Copy, Clone, Reflect)]
 pub struct Attack {
     pub attacker: Entity,
     pub target: Entity,

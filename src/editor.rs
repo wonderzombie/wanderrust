@@ -1,6 +1,8 @@
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 
 use bevy::prelude::*;
+use bevy::remote::RemotePlugin;
+use bevy::remote::http::RemoteHttpPlugin;
 
 use crate::{
     actors::{Player, PlayerStats},
@@ -311,6 +313,8 @@ impl Plugin for EditorPlugin {
             )
             .insert_resource(EditorContext::default())
             .insert_state(EditorState::Enabled)
+            .add_plugins(RemotePlugin::default())
+            .add_plugins(RemoteHttpPlugin::default())
             .add_plugins(DebugPickingPlugin)
             .insert_resource(DebugPickingMode::Normal);
     }
