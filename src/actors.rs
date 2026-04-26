@@ -10,7 +10,7 @@ use crate::{
     combat::{Belligerent, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
-    tilemap::{self, Stratum, TileStorage, WorldSpawn},
+    tilemap::{self, ActiveStratum, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
@@ -73,7 +73,7 @@ pub fn setup_player(
     spawn: Single<&WorldSpawn>,
     atlas: Res<SpriteAtlas>,
     player: Option<Single<Entity, With<Player>>>,
-    strata: Query<Entity, With<Stratum>>,
+    active: Single<Entity, With<ActiveStratum>>,
 ) {
     let WorldSpawn { strat_entity, cell } = *spawn;
     if let Some(entity) = player {
@@ -84,9 +84,9 @@ pub fn setup_player(
             .insert(*cell);
     } else {
         info!("🕹️ spawning player at {:?} {:?}", cell, strat_entity);
+
         commands.spawn((
-            // TODO: figure out the real active stratum.
-            ChildOf(strata.iter().next().unwrap()),
+            ChildOf(*active),
             Name::new("Player"),
             Actor,
             Player,
