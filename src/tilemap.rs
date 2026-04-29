@@ -50,7 +50,7 @@ impl From<StratumTileSpec> for WorldSpec {
                 outgoing_map
                     .emitters
                     .extend(emitters.iter().map(|(e, t, c)| {
-                        let mut e = e.clone();
+                        let mut e = *e;
                         e.tile_idx = *t;
                         (e, *c)
                     }));
@@ -515,7 +515,7 @@ pub fn initialize_tile_storage(
 
     for (Stratum(stratum_entity, stratum_id), size, children) in strata {
         let mut num_cells = 0;
-        let mut storage = TileStorage::new(size.clone());
+        let mut storage = TileStorage::new(*size);
         for entity in children.iter() {
             if let Ok(cell) = tiles.get(entity) {
                 if cell == &Cell::ZERO {

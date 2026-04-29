@@ -118,7 +118,7 @@ pub fn on_button_input(
                 if let Some(ent) = storage.get(&cell)
                     && let Some(tile_info) = tiles.get(ent).ok()
                 {
-                    let (a, b, c, d, e, f) = tile_info.clone();
+                    let (a, b, c, d, e, f) = tile_info;
                     out.push((*a, *b, *c, *d, e.copied(), f.copied()));
                 }
             }
@@ -160,7 +160,7 @@ pub fn on_toggle_visibilities(
         && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
     {
         info!("toggling visibility");
-        for (Stratum(ent, id), active_opt) in strata {
+        for (Stratum(ent, _id), active_opt) in strata {
             if active_opt.is_some() {
                 info!("{ent} is active; hiding");
                 commands.entity(*ent).remove::<ActiveStratum>();

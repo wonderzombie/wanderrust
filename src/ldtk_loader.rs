@@ -9,10 +9,9 @@ use crate::{
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
     tilemap::{
-        self, Dimensions, EmitterCell, InterxCell, Portal, PortalCell, StratumId, StratumSpec,
-        StratumTileSpec, TileCell, WorldSpec,
+        self, Dimensions, Portal, StratumId, StratumSpec, TileCell, WorldSpec,
     },
-    tiles::{self, SHEET_SIZE_G, TileIdx},
+    tiles::{SHEET_SIZE_G, TileIdx},
 };
 
 macro_rules! enum_with_str {
