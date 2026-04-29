@@ -8,9 +8,7 @@ use crate::{
     cell::Cell,
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
-    tilemap::{
-        self, Dimensions, Portal, StratumId, StratumSpec, TileCell, WorldSpec,
-    },
+    tilemap::{self, Dimensions, Portal, StratumId, StratumSpec, TileCell, WorldSpec},
     tiles::{SHEET_SIZE_G, TileIdx},
 };
 

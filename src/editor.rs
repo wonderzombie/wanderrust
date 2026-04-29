@@ -185,7 +185,7 @@ macro_rules! get_entity {
 }
 
 /// Sets up global tile observers that highlight and preview tiles when the pointer is over them.
-pub fn setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
+pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
     for &obs in editor.observers.iter() {
         commands.entity(obs).despawn()
     }

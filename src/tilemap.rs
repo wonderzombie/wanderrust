@@ -107,7 +107,7 @@ pub struct StratumSpec {
 pub struct TilemapId(Option<Entity>);
 
 impl TilemapId {
-    pub fn set(&mut self, id: Entity) {
+    pub fn _set(&mut self, id: Entity) {
         self.0.replace(id);
     }
 }
