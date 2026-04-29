@@ -55,6 +55,7 @@ pub struct LdtkProject {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LdtkLevel {
     #[serde(rename = "layerInstances", default)]
     pub layer_instances: Vec<LdtkLayer>,
@@ -62,6 +63,20 @@ pub struct LdtkLevel {
     pub px_height: f32,
     #[serde(rename = "worldDepth")]
     pub world_depth: i32,
+    pub field_instances: Vec<LdtkField>,
+}
+
+impl LdtkLevel {
+    fn light_level(&self) -> Option<LightLevel> {
+        self.field_instances
+            .iter()
+            .find(|field| field.identifier == "light_level")
+            .map(ParsedValue::from)
+            .and_then(|it| match it {
+                ParsedValue::LightLevelEnum(level) => LightLevel::from_str(level),
+                _ => None,
+            })
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -234,7 +249,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     for level in &project.levels {
         let stratum_id = StratumId(level.world_depth);
         let spec: &mut StratumSpec = world.maps.entry(stratum_id).or_default();
-        spec.light_level = level.light_level_or(world.light_level);
+        spec.light_level = level.light_level().unwrap_or(world.light_level);
         for layer in &level.layer_instances {
             spec.size = Dimensions {
                 width: layer.c_width as u32,

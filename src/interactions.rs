@@ -188,9 +188,9 @@ pub fn process_interactions(
                     trace!(
                         "changing tile_idx from {:?} to {:?}",
                         tile_idx,
-                        tile_idx.opened_version()
+                        tile_idx.engaged_version()
                     );
-                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
+                    tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
                 } else {
                     info!("Player can't open an open door.");
                 }
@@ -202,7 +202,7 @@ pub fn process_interactions(
             } => {
                 if !*is_open {
                     *is_open = true;
-                    tile_idx.set_if_neq(tile_idx.opened_version().unwrap_or(*tile_idx));
+                    tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
                     info!("Player opens chest: {:?}", contents);
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     if let Some(contents) = contents {
