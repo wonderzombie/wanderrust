@@ -397,12 +397,12 @@ pub enum ParsedActor {
 
 impl LdtkEntityExt<ParsedActor> for ParsedActor {
     fn from_ldtk(entity: &LdtkEntity) -> Option<ParsedActor> {
-        let Some(e) = entity.ty() else {
+        let Some(ty) = entity.ty() else {
             warn!("unknown LdtkEntity type: {:#?}", entity);
             return None;
         };
 
-        match e {
+        match ty {
             LdtkActor::Chest | LdtkActor::Door | LdtkActor::Combatant | LdtkActor::Speaker => {
                 Interactable::from_ldtk(entity).map(Self::Interactable)
             }
