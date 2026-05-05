@@ -54,11 +54,9 @@ pub struct LdtkProject {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkLevel {
-    #[serde(rename = "layerInstances", default)]
     pub layer_instances: Vec<LdtkLayer>,
     #[serde(rename = "pxHei")]
     pub px_height: f32,
-    #[serde(rename = "worldDepth")]
     pub world_depth: i32,
     pub field_instances: Vec<LdtkField>,
 }
@@ -77,10 +75,10 @@ impl LdtkLevel {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LdtkLayer {
     #[serde(rename = "__type")]
     pub layer_type: String,
-    #[serde(rename = "gridTiles", default)]
     pub grid_tiles: Vec<LdtkGridTile>,
     #[serde(rename = "entityInstances", default)]
     pub entities: Vec<LdtkEntity>,
@@ -101,13 +99,13 @@ pub struct LdtkField {
 }
 
 #[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct LdtkEntity {
     #[serde(rename = "__grid")]
     pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.
     #[serde(rename = "__tile", default)]
     pub tile: LdtkPxTile,
-    #[serde(rename = "fieldInstances", default)]
     pub field_instances: Vec<LdtkField>,
 }
 
