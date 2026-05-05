@@ -292,13 +292,6 @@ tiles! {
     EffectSparks = 618,
     EffectImpact = 619,
 
-
-
-
-
-
-
-
     // Mouse cursor.
     Cursor1 = atlas_idx(35, 10),
 }
