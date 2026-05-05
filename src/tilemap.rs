@@ -26,51 +26,6 @@ pub struct WorldSpec {
     pub light_level: LightLevel,
 }
 
-impl From<StratumTileSpec> for WorldSpec {
-    fn from(value: StratumTileSpec) -> Self {
-        let mut out = WorldSpec::default();
-
-        let incoming_strata = value.all_tiles.keys();
-
-        for strat_id in incoming_strata {
-            let outgoing_map: &mut StratumSpec = out.maps.entry(*strat_id).or_default();
-            if let Some(tiles) = value.all_tiles.get(strat_id) {
-                outgoing_map.tiles.extend(tiles);
-            }
-
-            if let Some(portals) = value.all_portals.get(strat_id) {
-                outgoing_map.portals.extend(portals.iter().map(|(p, t, c)| {
-                    let mut p = p.clone();
-                    p.tile_idx = *t;
-                    (p, *c)
-                }));
-            }
-
-            if let Some(emitters) = value.all_emitters.get(strat_id) {
-                outgoing_map
-                    .emitters
-                    .extend(emitters.iter().map(|(e, t, c)| {
-                        let mut e = *e;
-                        e.tile_idx = *t;
-                        (e, *c)
-                    }));
-            }
-
-            if let Some(interxs) = value.all_interxs.get(strat_id) {
-                outgoing_map.interxs.extend(interxs.iter().map(|(i, t, c)| {
-                    let i = i.set_tile(*t);
-                    (i, *c)
-                }));
-            }
-
-            outgoing_map.light_level = value.light_level;
-            outgoing_map.size = value.size;
-        }
-
-        dbg!(out)
-    }
-}
-
 type TileSpec = (TileIdx, Cell);
 type PortalSpec = (Portal, Cell);
 type InterxSpec = (Interactable, Cell);
@@ -81,6 +36,7 @@ type EmitterSpec = (Emitter, Cell);
 pub struct StratumSpec {
     pub id: Option<Stratum>,
     pub size: Dimensions,
+    pub offset: Cell,
 
     pub tiles: Vec<TileSpec>,
     pub emitters: Vec<EmitterSpec>,
@@ -145,25 +101,6 @@ pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
 pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
 pub type StratInterxs = HashMap<StratumId, Vec<InterxCell>>;
 pub type StratEmitters = HashMap<StratumId, Vec<EmitterCell>>;
-
-/// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-#[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
-#[reflect(Resource)]
-pub struct StratumTileSpec {
-    /// Stratum entities will be created as children of this entity.
-    #[serde(skip)]
-    pub id: TilemapId,
-    pub size: Dimensions,
-    /// Tiles and portals keyed by StratumId drive tilemap creation.
-    pub all_tiles: StratTiles,
-    pub all_portals: StratPortals,
-    pub all_interxs: StratInterxs,
-    pub all_emitters: StratEmitters,
-    /// Starting point for the player.
-    pub spawn_point: SpawnCell,
-    /// The minimum light level for the area.
-    pub light_level: LightLevel,
-}
 
 #[derive(Component, Debug, Clone, Reflect, PartialEq)]
 pub struct ActiveStratum;

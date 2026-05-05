@@ -1,4 +1,5 @@
 mod actors;
+mod ascii_map;
 mod atlas;
 mod camera;
 mod cell;
@@ -33,13 +34,14 @@ use bevy_inspector_egui::quick::FilterQueryInspectorPlugin;
 
 use crate::{
     actors::*,
+    ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_stratum_visuals,
-    tilemap::{ActiveStratum, EntryId, Portal, StratumTileSpec, TileStorage, WorldSpec},
+    tilemap::{ActiveStratum, EntryId, Portal, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -63,9 +65,9 @@ fn main() {
     let mut app = App::new();
 
     if str_map {
-        app.insert_resource(WorldSpec::from(StratumTileSpec::from_str(map::MAP_ZERO)));
+        app.insert_resource(WorldSpec::from(AsciiMapSpec::from_str(ascii_map::MAP_ZERO)));
     } else if proc_map {
-        app.insert_resource(WorldSpec::from(StratumTileSpec::with_ptable(
+        app.insert_resource(WorldSpec::from(AsciiMapSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
             (100, 100),
