@@ -38,16 +38,6 @@ pub struct Belligerent {
     pub interactable: Interactable,
 }
 
-impl Belligerent {
-    pub fn new(params: Parameters) -> Self {
-        Self {
-            params,
-            interactable: Interactable::Combatant,
-            ..default()
-        }
-    }
-}
-
 /// Add Awareness if the Actor needs complex behavior related to the Player.
 #[derive(Component, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Reflect)]
 #[reflect(Component)]

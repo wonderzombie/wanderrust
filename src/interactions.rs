@@ -245,10 +245,6 @@ impl Dialogue {
         self.idx = (self.idx + 1) % self.phrases.len();
         phrase
     }
-
-    pub fn phrases(phrases: Vec<String>) -> Self {
-        Self { idx: 0, phrases }
-    }
 }
 
 /// Processes the dialogue of an NPC when the player listens to it.
