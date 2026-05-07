@@ -11,7 +11,16 @@ use bevy::{
     prelude::*,
     reflect::Reflect,
 };
+use bevy_egui::{
+    EguiContexts, EguiPrimaryContextPass,
+    egui::{self, Align2, Vec2},
+};
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    colors::{self, ColorExt},
+    gamestate::Screen,
+};
 
 /// A simple wrapper around a string to represent an item in the game world.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
@@ -147,10 +156,10 @@ impl Inventory {
         Some(Inventory::with_item(item, qty))
     }
 
-    pub fn from_str_array<T, I>(item_specs: I) -> Option<Inventory>
+    pub fn from_str_array<S, I>(item_specs: I) -> Option<Inventory>
     where
-        I: IntoIterator<Item = T> + std::fmt::Debug,
-        T: AsRef<str> + Clone + std::fmt::Debug,
+        S: AsRef<str> + Clone + std::fmt::Debug,
+        I: IntoIterator<Item = S> + std::fmt::Debug,
     {
         let mut inv = Inventory::default();
         for s in item_specs.into_iter() {
@@ -171,7 +180,7 @@ pub struct Acquisition {
     pub items: Inventory,
 }
 
-/// Merges [Inventory] items into the player's inventory.
+/// Merges [`Inventory`] items into the player's inventory.
 pub fn process_acquisitions(
     mut acquisitions: MessageReader<Acquisition>,
     mut player_inventory: ResMut<Inventory>,
@@ -180,4 +189,51 @@ pub fn process_acquisitions(
         info!("Player acquires items: {:?}", acquisition.items);
         player_inventory.extend(acquisition.items.clone());
     }
+}
+
+const EMPTY: &str = "( empty )";
+
+fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
+    let Ok(ctx) = contexts.ctx_mut() else {
+        return;
+    };
+
+    egui::Area::new(egui::Id::new("Inventory"))
+        .anchor(Align2::RIGHT_CENTER, Vec2::ZERO)
+        .show(ctx, |ui| {
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Body,
+                egui::FontId::new(16., egui::FontFamily::Proportional),
+            );
+
+            ui.set_min_width(128.);
+            ui.set_min_height(128.);
+
+            ui.colored_label(Color::WHITE.to_egui(), "inventory".to_ascii_uppercase());
+            if inventory.is_empty() {
+                ui.colored_label(
+                    colors::KENNEY_OFF_WHITE.to_egui(),
+                    EMPTY.to_ascii_uppercase(),
+                );
+            } else {
+                for (Item(name), &qty) in inventory.as_ref() {
+                    let name = name.replace("_", " ").to_ascii_uppercase();
+                    let item_entry = if qty > 1usize {
+                        format!("• {} {}", name, qty)
+                    } else {
+                        format!("• {}", name)
+                    };
+                    ui.colored_label(colors::KENNEY_OFF_WHITE.to_egui(), item_entry);
+                }
+            }
+        });
+}
+
+pub fn plugin(app: &mut App) {
+    app.add_systems(
+        EguiPrimaryContextPass,
+        draw_ui.run_if(in_state(Screen::Playing)),
+    )
+    .add_message::<Acquisition>()
+    .init_resource::<Inventory>();
 }
