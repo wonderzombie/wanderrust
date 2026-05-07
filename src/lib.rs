@@ -224,6 +224,10 @@ pub fn run() {
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
+    .add_systems(
+        OnEnter(GameState::AwaitingInput),
+        tilemap::snapshot_denizens,
+    )
     .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
     .add_systems(
         Last,

@@ -68,6 +68,27 @@ impl Display for LevelId {
 #[reflect(Component)]
 pub struct Level(pub Entity, pub LevelId);
 
+#[derive(Component, Debug, Reflect)]
+#[relationship_target(relationship = DenizenOf)]
+#[reflect(Component)]
+pub struct Zone(Vec<Entity>);
+
+#[derive(Component, Debug, Reflect)]
+#[relationship(relationship_target = Zone)]
+#[require(Actor)]
+#[reflect(Component)]
+pub struct DenizenOf(pub Entity);
+
+/// Syncs the presentation with gameplay concept of a Denizens of a Zone.
+pub fn snapshot_denizens(
+    mut commands: Commands,
+    query: Populated<(Entity, &ChildOf), (With<Actor>, Without<DenizenOf>)>,
+) {
+    for (actor, child_of) in query {
+        commands.entity(actor).insert(DenizenOf(child_of.parent()));
+    }
+}
+
 /// TileCell is a pair of (TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
 /// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
