@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
-    interactions::Interactable,
+    interactions::Interactable, tiles::TileIdx,
 };
 
 #[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect)]
@@ -24,7 +24,37 @@ pub struct Parameters {
     pub vision: Vision,
 }
 
-pub fn init_combatants(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
+pub fn init_combatants(
+    mut commands: Commands,
+    interxs: Populated<(Entity, &Interactable), Without<Parameters>>,
+) {
+    for (entity, interxn) in interxs {
+        let it = match interxn.default_tile() {
+            TileIdx::Skeleton => Parameters {
+                ..Default::default()
+            },
+            TileIdx::Spider => Parameters {
+                ..Default::default()
+            },
+            TileIdx::Wumpus => Parameters {
+                ..Default::default()
+            },
+            TileIdx::Rat => Parameters {
+                ..Default::default()
+            },
+            TileIdx::Bat => Parameters {
+                ..Default::default()
+            },
+            TileIdx::Slime => Parameters {
+                ..Default::default()
+            },
+            _ => continue,
+        };
+        commands.entity(entity).insert(it);
+    }
+}
+
+pub fn init_params(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
     for mut it in combatants.iter_mut() {
         it.health.hp = it.health.max;
     }

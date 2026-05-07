@@ -36,7 +36,7 @@ pub enum Interactable {
 }
 
 impl Interactable {
-    pub fn default_tile(&self) -> Option<TileIdx> {
+    pub fn default_tile(&self) -> TileIdx {
         match self {
             Self::Chest {
                 tile_idx: tile_idx_default,
@@ -45,8 +45,12 @@ impl Interactable {
             | Self::Door {
                 tile_idx: tile_idx_default,
                 ..
-            } => Some(*tile_idx_default),
-            _ => None,
+            }
+            | Self::Combatant {
+                tile_idx: tile_idx_default,
+                ..
+            } => *tile_idx_default,
+            _ => TileIdx::GridSquare,
         }
     }
 
@@ -298,7 +302,7 @@ pub fn spawn_interxs(
                 (
                     InterxBundle {
                         interx: interx.clone(),
-                        tile_idx: interx.default_tile().unwrap_or(TileIdx::GridSquare),
+                        tile_idx: interx.default_tile(),
                         piece: PieceBundle {
                             cell: *cell,
                             sprite: atlas.sprite(),
