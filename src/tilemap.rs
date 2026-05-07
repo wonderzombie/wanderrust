@@ -35,9 +35,9 @@ type EmitterSpec = (Emitter, Cell);
 #[reflect(Resource)]
 pub struct LevelSpec {
     pub id: Option<Level>,
+    pub dimensions: Dimensions,
     pub world_pos: Vec2,
     pub depth: i32,
-    pub size: Dimensions,
 
     pub tiles: Vec<TileSpec>,
     pub emitters: Vec<EmitterSpec>,
@@ -324,9 +324,9 @@ pub fn spawn_worldmap(
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let mut count = 0;
-        let mut cells = vec![TileIdx::Blank; level_spec.size.ntiles()];
+        let mut cells = vec![TileIdx::Blank; level_spec.dimensions.ntiles()];
         level_spec.tiles.iter().for_each(|(tile_idx, cell)| {
-            let idx = level_spec.size.cell_to_idx(cell);
+            let idx = level_spec.dimensions.cell_to_idx(cell);
             cells[idx] = *tile_idx;
             tally.entry(*tile_idx).and_modify(|e| *e += 1).or_insert(1);
             count += 1;
@@ -339,7 +339,8 @@ pub fn spawn_worldmap(
                 .or_insert(*v);
         }
 
-        let bundles = generate_tile_bundles(level_entity, &level_spec.size, &cells, layer, &atlas);
+        let bundles =
+            generate_tile_bundles(level_entity, &level_spec.dimensions, &cells, layer, &atlas);
 
         info!(
             "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
@@ -366,7 +367,7 @@ pub fn spawn_worldmap(
         commands
             .entity(level_entity)
             .insert(Name::new(format!("Level {:?}", level)))
-            .insert(level_spec.size)
+            .insert(level_spec.dimensions)
             .insert(level);
     }
 

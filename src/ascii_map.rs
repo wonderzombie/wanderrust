@@ -115,7 +115,7 @@ impl From<AsciiMapSpec> for WorldSpec {
             }
 
             outgoing_map.light_level = value.light_level;
-            outgoing_map.size = value.size;
+            outgoing_map.dimensions = value.size;
         }
 
         dbg!(out)

@@ -255,7 +255,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
             y: level.world_y as f32,
         };
         for layer in &level.layer_instances {
-            spec.size = Dimensions {
+            spec.dimensions = Dimensions {
                 width: layer.c_width as u32,
                 height: layer.c_height as u32,
                 ..default()
