@@ -44,7 +44,7 @@ impl Item {
 
 impl Display for Item {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0.replace("_", " "))
     }
 }
 
@@ -217,7 +217,6 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
                 );
             } else {
                 for (Item(name), &qty) in inventory.as_ref() {
-                    let name = name.replace("_", " ").to_ascii_uppercase();
                     let item_entry = if qty > 1usize {
                         format!("• {} {}", name, qty)
                     } else {
