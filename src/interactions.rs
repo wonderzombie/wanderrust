@@ -37,14 +37,12 @@ pub enum Interactable {
 
 impl Interactable {
     pub fn default_tile(&self) -> Option<TileIdx> {
-        use Interactable::*;
-
         match self {
-            Chest {
+            Self::Chest {
                 tile_idx: tile_idx_default,
                 ..
             }
-            | Door {
+            | Self::Door {
                 tile_idx: tile_idx_default,
                 ..
             } => Some(*tile_idx_default),
@@ -53,25 +51,27 @@ impl Interactable {
     }
 
     pub fn set_tile(&self, tile_idx: TileIdx) -> Self {
-        use Interactable::*;
-
         match self {
-            Chest {
+            Self::Chest {
                 is_open,
                 contents,
                 tile_idx: _,
-            } => Chest {
+            } => Self::Chest {
                 is_open: *is_open,
                 contents: contents.clone(),
                 tile_idx,
             },
-            Door {
+            Self::Door {
                 is_open,
                 requires,
                 tile_idx: _,
-            } => Door {
+            } => Self::Door {
                 is_open: *is_open,
                 requires: requires.clone(),
+                tile_idx,
+            },
+            Self::Combatant { name, tile_idx: _ } => Self::Combatant {
+                name: name.clone(),
                 tile_idx,
             },
             _ => self.clone(),
@@ -97,14 +97,13 @@ impl LdtkEntityExt<Interactable> for Interactable {
             String::from("MISSINGNAME")
         };
 
-        use Interactable::*;
         match ty {
-            LdtkActor::Combatant => Some(Combatant { name, tile_idx }),
-            LdtkActor::Speaker => Some(Speaker),
+            LdtkActor::Combatant => Some(Self::Combatant { name, tile_idx }),
+            LdtkActor::Speaker => Some(Self::Speaker),
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").map(Item);
                 let is_open = entity.get_bool("is_open");
-                Some(Door {
+                Some(Self::Door {
                     is_open,
                     requires,
                     tile_idx,
@@ -115,7 +114,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     .get_str_array("contents")
                     .and_then(Inventory::from_str_array);
                 let is_open = entity.get_bool("is_open");
-                Some(Chest {
+                Some(Self::Chest {
                     is_open,
                     contents,
                     tile_idx,
