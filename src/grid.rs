@@ -13,7 +13,8 @@ use crate::{
     tiles::{TileIdx, Walkable},
 };
 
-/// A spatial index that tracks which cells are occupied by non-walkable entities in the world.
+/// A spatial index that tracks which cells are occupied by non-walkable
+/// entities in the world.
 #[derive(Resource, Component, Default, Debug, PartialEq, Eq, Reflect)]
 #[reflect(Resource)]
 pub struct SpatialIndex {
@@ -34,7 +35,8 @@ impl SpatialIndex {
     }
 }
 
-/// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable entities in the world.
+/// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable
+/// entities in the world.
 pub(crate) fn update_spatial_index(
     query: Populated<(&Children, &mut SpatialIndex)>,
     tiles: Query<&Cell, Without<Walkable>>,

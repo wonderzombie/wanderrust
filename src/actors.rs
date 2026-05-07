@@ -17,15 +17,16 @@ use crate::{
 #[derive(Component, Debug)]
 pub struct Dead;
 
-/// A marker component for entities that perform actions in the world, such as the player or NPCs.
+/// A marker component for entities that perform actions in the world, such as
+/// the player or NPCs.
 #[derive(Component, Debug, Default)]
 pub struct Actor;
 
 #[derive(Component, Debug, Reflect)]
 pub struct Player;
 
-/// A bundle for map pieces that includes a sprite, cell position, transform, and pickable.
-/// Pickable is specific to Bevy's sprite picking system.
+/// A bundle for map pieces that includes a sprite, cell position, transform,
+/// and pickable. Pickable is specific to Bevy's sprite picking system.
 #[derive(Bundle, Default, Clone, Debug)]
 pub struct PieceBundle {
     pub sprite: Sprite,
@@ -67,7 +68,8 @@ impl PlayerStats {
 #[derive(EntityEvent, Debug)]
 pub struct Moved(pub Entity);
 
-/// Spawns the player entity at the start position of the tilemap on the player's layer.
+/// Spawns the player entity at the start position of the tilemap on the
+/// player's layer.
 pub fn setup_player(
     mut commands: Commands,
     spawn: Single<&WorldSpawn>,
@@ -120,7 +122,8 @@ pub fn setup_player(
     }
 }
 
-/// Updates the [Transform] of pieces based on their [Cell] coordinates when the cell changes.
+/// Updates the [Transform] of pieces based on their [Cell] coordinates when the
+/// cell changes.
 pub fn update_transforms(
     mut pieces: Query<(&Cell, &mut Transform, Option<&Player>), (Without<MapTile>, Changed<Cell>)>,
 ) {
@@ -135,7 +138,8 @@ pub fn update_transforms(
     }
 }
 
-/// A message representing an attempt by an actor to interact with a cell in the world, such as moving into it or interacting with an object on it.
+/// A message representing an attempt by an actor to interact with a cell in the
+/// world, such as moving into it or interacting with an object on it.
 #[derive(Message, Debug)]
 pub struct Action {
     pub entity: Entity,
@@ -205,8 +209,9 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
     }
 }
 
-/// Syncs the [Occupied] component on tiles based on actor positions, adding or removing as needed.
-/// An Occupied tile is not visible even under partially transparent sprites.
+/// Syncs the [Occupied] component on tiles based on actor positions, adding or
+/// removing as needed. An Occupied tile is not visible even under partially
+/// transparent sprites.
 pub fn sync_occupied_tiles(
     mut commands: Commands,
     actors: Query<(&Cell, &PreviousCell, &ChildOf), (Without<MapTile>, Changed<Cell>)>,

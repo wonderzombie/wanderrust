@@ -6,15 +6,16 @@ use rand::{RngExt, seq::IndexedRandom};
 #[derive(Component, Debug, Clone)]
 pub struct FixedLoot(pub inventory::Inventory);
 
-/// A LootTable represents a collection of potential "drops." Each drop
-/// is a RandomQty of some item.
+/// A LootTable represents a collection of potential "drops." Each drop is a
+/// RandomQty of some item.
 #[derive(Component, Default, Clone)]
 pub struct LootTable {
     entries: Vec<(inventory::Item, usize, usize)>,
 }
 
 impl LootTable {
-    /// Rolls a random loot drop from the table and returns an Inventory with the result.
+    /// Rolls a random loot drop from the table and returns an Inventory with
+    /// the result.
     pub fn roll(&self) -> inventory::Inventory {
         match self.entries.choose(&mut rand::rng()) {
             Some((item, min, max)) => {

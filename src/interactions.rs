@@ -12,7 +12,8 @@ use crate::{
     tiles::TileIdx,
 };
 
-/// A component representing an interactable object in the world, such as a door or chest, that can be interacted with by actors.
+/// A component representing an interactable object in the world, such as a door
+/// or chest, that can be interacted with by actors.
 #[derive(Component, Debug, Default, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 #[reflect(Component)]
 pub enum Interactable {
@@ -240,7 +241,8 @@ pub fn process_interactions(
 
 /// A component representing the dialogue of an NPC.
 ///
-/// This component is used to store and manage the dialogue of an NPC, including the current phrase and the list of phrases.
+/// This component is used to store and manage the dialogue of an NPC, including
+/// the current phrase and the list of phrases.
 #[derive(Component, Debug, Default, Serialize, Deserialize)]
 pub struct Dialogue {
     idx: usize,

@@ -26,8 +26,8 @@ pub fn sync_tiles(
         Or<(Changed<TileIdx>, Changed<TilePreview>)>,
     >,
 ) {
-    // This method only runs when [TileIdx] or [TilePreview] changes, so
-    // we apply most changes in some unconditional fashion.
+    // This method only runs when [TileIdx] or [TilePreview] changes, so we
+    // apply most changes in some unconditional fashion.
     for (entity, mut sprite, tile_idx, sync_props) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
 
@@ -88,7 +88,8 @@ pub fn update_level_visuals(
     }
 }
 
-/// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
+/// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This
+/// is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps, &ChildOf)>,
     level_light: Query<&AmbientLight, With<Level>>,

@@ -89,9 +89,11 @@ pub fn snapshot_denizens(
     }
 }
 
-/// TileCell is a pair of (TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
+/// TileCell is a pair of (TileIdx, Cell). Together with a LevelId, it should be
+/// enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
-/// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
+/// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a LevelId,
+/// it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, TileIdx, Cell);
 
 pub type InterxCell = (Interactable, TileIdx, Cell);
@@ -172,9 +174,10 @@ impl Display for Dimensions {
     }
 }
 
-/// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [LevelId].
-/// Tiles are stored as a flat vector of `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way,
-/// a cell may be empty of any tile entity.
+/// TileStorage is used to manipulate the tiles in a tilemap, typically living
+/// on the same entity as [LevelId]. Tiles are stored as a flat vector of
+/// `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way, a
+/// cell may be empty of any tile entity.
 #[derive(
     Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
 )]
@@ -406,7 +409,8 @@ pub fn despawn_tilemap(
     }
 }
 
-/// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children of a parent Entity.
+/// Generates [`MapTile`] entities from a [`TilemapSpec`] in a batch as children
+/// of a parent Entity.
 fn generate_tile_bundles(
     parent: Entity,
     dim: &Dimensions,

@@ -60,7 +60,8 @@ pub fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
     }
 }
 
-/// Finalizes [`Turn::Waiting`] actors by setting their turn to `Turn::Done` if they have no pending path or move.
+/// Finalizes [`Turn::Waiting`] actors by setting their turn to `Turn::Done` if
+/// they have no pending path or move.
 pub fn finalize_waiting_turns(
     mut actors: Query<(&mut Turn, AnyOf<(&Pathfind, &NextPos)>), (With<Actor>, Without<Player>)>,
 ) {
@@ -72,7 +73,8 @@ pub fn finalize_waiting_turns(
     }
 }
 
-/// Checks if all actors are done with their turns and transitions to `GameState::AwaitingInput` if so.
+/// Checks if all actors are done with their turns and transitions to
+/// `GameState::AwaitingInput` if so.
 pub fn check_turns_complete(
     turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
     mut next_state: ResMut<NextState<GameState>>,

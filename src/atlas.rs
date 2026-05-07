@@ -12,7 +12,8 @@ use crate::tiles;
 pub const DEFAULT_SHEET: &str = "kenney_1-bit-pack/Tilesheet/colored_packed.png";
 pub const TRANSPARENT_SHEET: &str = "kenney_1-bit-pack/Tilesheet/colored-transparent_packed.png";
 
-/// A simple wrapper around an image handle and a texture atlas layout that provides helper methods for creating sprites from the atlas.
+/// A simple wrapper around an image handle and a texture atlas layout that
+/// provides helper methods for creating sprites from the atlas.
 #[derive(Resource, Debug, Default, Reflect)]
 #[reflect(Resource)]
 pub struct SpriteAtlas {

@@ -64,17 +64,20 @@ pub const fn atlas_idx(x: u32, y: u32) -> usize {
     (y * SHEET_SIZE_G.x + x) as usize
 }
 
-/// A marker component for entities that represent tiles on the map, which can have properties like walkability and opacity.
+/// A marker component for entities that represent tiles on the map, which can
+/// have properties like walkability and opacity.
 #[derive(Component, Default, Debug, Clone, Copy, Reflect)]
 #[reflect(Component)]
 pub struct MapTile;
 
-/// A marker component for tiles that can be walked on by actors, such as the player or NPCs.
+/// A marker component for tiles that can be walked on by actors, such as the
+/// player or NPCs.
 #[derive(Component, Debug, Clone, Copy, Reflect)]
 #[reflect(Component)]
 pub struct Walkable;
 
-/// A marker component for tiles that block line of sight, affecting field of view calculations.
+/// A marker component for tiles that block line of sight, affecting field of
+/// view calculations.
 #[derive(Component, Debug, Clone, Copy, Reflect)]
 #[reflect(Component)]
 pub struct Opaque;
@@ -94,7 +97,8 @@ pub struct Highlighted;
 #[reflect(Component)]
 pub struct Occupied;
 
-/// A marker component for tiles that are currently being previewed, such as a tile being hovered over.
+/// A marker component for tiles that are currently being previewed, such as a
+/// tile being hovered over.
 #[derive(Component, Default, Debug, Clone, Copy, PartialEq, Reflect)]
 #[reflect(Component)]
 pub struct TilePreview(Option<TileIdx>);
@@ -117,7 +121,8 @@ impl TilePreview {
     }
 }
 
-// We're keeping this very simple for now. Everything with a sprite on the grid is a tile.
+// We're keeping this very simple for now. Everything with a sprite on the grid
+// is a tile, whether it's an [`Actor`] or a [`MapTile`].
 tiles! {
     // Ground
     Blank = atlas_idx(0, 0),

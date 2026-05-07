@@ -10,7 +10,8 @@ use crate::{
     tiles::{MapTile, Revealed, TileIdx},
 };
 
-/// Newtype for field of view model that's a Resource and which tracks which cells are transparent for visibility calculations.
+/// Newtype for field of view model that's a Resource and which tracks which
+/// cells are transparent for visibility calculations.
 #[derive(Resource, Component, Debug, Deref, DerefMut)]
 pub struct Fov(Mrpas);
 
@@ -34,7 +35,8 @@ impl Fov {
 pub struct View(Mrpas);
 
 impl View {
-    /// Queries a read-only MRPAS model using the origin and max_distance used to create `View`.
+    /// Queries a read-only MRPAS model using the origin and max_distance used
+    /// to create `View`.
     pub fn has(&self, pos: (i32, i32)) -> bool {
         self.0.is_in_view(pos)
     }
@@ -118,8 +120,8 @@ pub fn update_fov_markers(
 
     let view = player_fov.from(cell.into(), player_stats.vision_range);
 
-    // Since we got these tiles as children of `all_fov`, aka Level
-    // we can look up each in `tiles`, which is constrained to `MapTile`.
+    // Since we got these tiles as children of `all_fov`, aka Level we can look
+    // up each in `tiles`, which is constrained to `MapTile`.
     for &entity in child_tiles {
         if let Ok((cell, mut revealed)) = tiles.get_mut(entity) {
             let should_reveal = view.has(cell.into());

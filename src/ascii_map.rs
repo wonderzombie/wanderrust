@@ -9,7 +9,8 @@ pub type LevelPortals = HashMap<LevelId, Vec<PortalCell>>;
 pub type LevelInterxs = HashMap<LevelId, Vec<InterxCell>>;
 pub type LevelEmitters = HashMap<LevelId, Vec<EmitterCell>>;
 
-/// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
+/// A resource representing the specification of the map, including its size,
+/// default tile type, and any special pieces defined by the ASCII map.
 /// Deprecated in favor of LevelSpec.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 #[reflect(Resource)]

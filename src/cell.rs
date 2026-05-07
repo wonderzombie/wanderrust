@@ -5,8 +5,9 @@ use bevy::prelude::*;
 use bevy_northstar::prelude::AgentPos;
 use serde::{Deserialize, Serialize};
 
-/// A simple struct representing a cell in the grid-based world, with integer coordinates.
-/// i32 allows us to use offsets without extra fuss compared to unsigned integers.
+/// A simple struct representing a cell in the grid-based world, with integer
+/// coordinates. i32 allows us to use offsets without extra fuss compared to
+/// unsigned integers.
 #[derive(
     Component,
     Default,
@@ -67,13 +68,15 @@ impl Cell {
         Vec2::new(self.x as f32, self.y as f32)
     }
 
-    /// Adds the other cell to this one, modifying this cell in place, effectively treating the other cell as a vector offset.
+    /// Adds the other cell to this one, modifying this cell in place,
+    /// effectively treating the other cell as a vector offset.
     pub fn combine(&mut self, other: Cell) {
         self.x = self.x.saturating_add(other.x);
         self.y = self.y.saturating_add(other.y);
     }
 
-    /// Converts this cell to an index given a width, treating the cell as a 2D grid index.
+    /// Converts this cell to an index given a width, treating the cell as a 2D
+    /// grid index.
     pub fn to_idx(self, width: u32) -> usize {
         width
             .saturating_mul(self.y as u32)

@@ -174,7 +174,8 @@ pub fn on_toggle_visibilities(
     }
 }
 
-/// Convenience macro for getting an entity from a query, returning early if the entity is not found.
+/// Convenience macro for getting an entity from a query, returning early if the
+/// entity is not found.
 macro_rules! get_entity {
     ($query:expr, $on:expr) => {
         match $query.get_mut($on.event_target()) {
@@ -184,7 +185,8 @@ macro_rules! get_entity {
     };
 }
 
-/// Sets up global tile observers that highlight and preview tiles when the pointer is over them.
+/// Sets up global tile observers that highlight and preview tiles when the
+/// pointer is over them.
 #[allow(dead_code)]
 pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
     for &obs in editor.observers.iter() {
@@ -255,8 +257,9 @@ pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, Wit
     for tile in tiles.iter() {
         commands
             .entity(tile)
-            // TODO: we could try to remove TilePreview. Removing it means it won't be updated
-            // though so we set the TilePreview to the default [`None`].
+            // TODO: we could try to remove TilePreview. Removing it means it
+            // won't be updated though so we set the TilePreview to the default
+            // [`None`].
             .insert(TilePreview::default());
     }
 }

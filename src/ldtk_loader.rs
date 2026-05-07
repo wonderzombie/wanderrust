@@ -390,8 +390,8 @@ enum_with_str!(
     [Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn]
 );
 
-/// ParsedActor is the intermediate representation between LDtk types and wanderrust types.
-/// NB that these must match the **Actor enum in LDtk**.
+/// ParsedActor is the intermediate representation between LDtk types and
+/// wanderrust types. NB that these must match the **Actor enum in LDtk**.
 pub enum ParsedActor {
     Interactable(interactions::Interactable),
     Portal(tilemap::Portal),

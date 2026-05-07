@@ -189,7 +189,8 @@ pub fn run() {
     .add_systems(
         PostUpdate,
         (
-            // Runs when there's been a change to any tile and updates sprite & gameplay properties.
+            // Runs when there's been a change to an tile and updates sprite &
+            // gameplay properties.
             map::sync_tiles,
             (actors::update_transforms, actors::sync_occupied_tiles)
                 .in_set(GameSystem::ActorSync)
@@ -384,8 +385,9 @@ fn process_actions(
         let adjusted_cell = action.adjusted_cell();
 
         let Some(target_entity) = spatial_index.get(adjusted_cell) else {
-            // No entity at the target [`Cell`], so we can assume it's an empty walkable tile.
-            // Changing the [`Cell`] via insertion will cause the system to move the player sprite.
+            // No entity at the target [`Cell`], so we can assume it's an empty
+            // walkable tile. Changing the [`Cell`] via insertion will cause the
+            // system to move the player sprite.
             trace!("process_actions: move");
             commands
                 .entity(action.entity)
@@ -422,8 +424,9 @@ struct PendingTransition {
     arrive_at: EntryId,
 }
 
-/// Handles the pending transition, if any.
-/// Matches the [`EntryId`] in [`PendingTransition`] with the portals' [`EntryId`] to find the destination cell.
+/// Handles the pending transition, if any. Matches the [`EntryId`] in
+/// [`PendingTransition`] with the portals' [`EntryId`] to find the destination
+/// cell.
 fn handle_pending_transition(
     mut commands: Commands,
     pending_transition: Option<ResMut<PendingTransition>>,

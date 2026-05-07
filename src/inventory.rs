@@ -48,7 +48,8 @@ impl Display for Item {
     }
 }
 
-/// A resource representing the player's inventory, which is a mapping of items to their quantities.
+/// A resource representing the player's inventory, which is a mapping of items
+/// to their quantities.
 #[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
 pub struct Inventory(HashMap<Item, usize>);
@@ -133,8 +134,8 @@ impl Inventory {
         self.0.contains_key(item)
     }
 
-    /// Returns a summary of [Inventory] [Item]s as a vector of strings.
-    /// Each item will have `prefix` prepended to it.
+    /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
+    /// item will have `prefix` prepended to it.
     pub fn summary(&self, prefix: &str) -> Vec<String> {
         self.0
             .iter()
@@ -174,7 +175,8 @@ impl Inventory {
     }
 }
 
-/// A message representing the acquisition of [Inventory] items by an actor, such as the player picking up items from a chest or loot.
+/// A message representing the acquisition of [Inventory] items by an actor,
+/// such as the player picking up items from a chest or loot.
 #[derive(Message, Debug, Reflect)]
 pub struct Acquisition {
     pub items: Inventory,

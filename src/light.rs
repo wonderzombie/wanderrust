@@ -137,10 +137,10 @@ impl Emitter {
     }
 
     /// Returns all cells lit by this emitter, paired with their light level.
-    /// Follows D&D 5e light semantics: inner covers radius `inner.thickness` from the origin,
-    /// outer covers an *additional* `outer.thickness` beyond that.
-    /// E.g. "bright light for 1 tile, dim light for an additional 1 tile" →
-    /// `Emitter::new((Bright, 1), (Dim, 1))`.
+    /// Follows D&D 5e light semantics: inner covers radius `inner.thickness`
+    /// from the origin, outer covers an *additional* `outer.thickness` beyond
+    /// that. E.g. "bright light for 1 tile, dim light for an additional 1 tile"
+    /// → `Emitter::new((Bright, 1), (Dim, 1))`.
     pub fn light_cells(&self, origin: &Cell) -> LightMap {
         let outer_radius = self.inner.thickness + self.outer.thickness;
         let mut cell_map = HashMap::default();
@@ -177,7 +177,8 @@ impl LdtkEntityExt<Emitter> for Emitter {
     }
 }
 
-/// A map of cells to [`LightLevel`] values, representing the light emitted by an [`Emitter`].
+/// A map of cells to [`LightLevel`] values, representing the light emitted by
+/// an [`Emitter`].
 #[derive(Component, Default, Deref, Debug, Clone, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct LightMap(pub HashMap<Cell, LightLevel>);
@@ -218,8 +219,8 @@ impl LevelLightMap {
         let prev: HashSet<Cell> = self.prev.keys().copied().collect();
         let curr: HashSet<Cell> = self.curr.keys().copied().collect();
 
-        // Cells in the old [`LightMap`] that aren't in the new one are no longer
-        // lit at all. We apply the [`light_level`] from [`TilemapSpec`]
+        // Cells in the old [`LightMap`] that aren't in the new one are no
+        // longer lit at all. We apply the [`light_level`] from [`TilemapSpec`]
         // accordingly.
         prev.difference(&curr)
             .filter_map(|c| {
@@ -230,10 +231,10 @@ impl LevelLightMap {
                 commands.entity(tile).insert(self.default);
             });
 
-        // Cells in the new [`LightMap`] that aren't in the old one receive light
-        // from the emitter. These cells probably had the default light level for
-        // the area before this. The map has already handled overlapping emitters,
-        // so we apply the map.
+        // Cells in the new [`LightMap`] that aren't in the old one receive
+        // light from the emitter. These cells probably had the default light
+        // level for the area before this. The map has already handled
+        // overlapping emitters, so we apply the map.
         curr.difference(&prev)
             .filter_map(|c| {
                 let tile = storage.get(c)?;
@@ -246,8 +247,8 @@ impl LevelLightMap {
 
         // Cells in the old [`LightMap`] that *are* in the new map *may* need to
         // change intensity. When two overlapping emitters have different light
-        // levels and one moves away, we restore tiles to the light level from the
-        // lower-intensity emitter.
+        // levels and one moves away, we restore tiles to the light level from
+        // the lower-intensity emitter.
         prev.intersection(&curr)
             .filter_map(|c| {
                 let tile = storage.get(c)?;
