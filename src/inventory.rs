@@ -252,10 +252,6 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
 
 pub fn plugin(app: &mut App) {
     app.add_systems(PostStartup, setup_ui)
-        // .add_systems(
-        //     PreUpdate,
-        //     update_inventory.run_if(resource_changed::<PlayerInventory>),
-        // )
         .add_systems(
             EguiPrimaryContextPass,
             draw_ui.run_if(in_state(Screen::Playing)),
