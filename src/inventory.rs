@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Deref};
 
 use bevy::{
     ecs::{
@@ -220,7 +220,7 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
                     let item_entry = if qty > 1usize {
                         format!("• {} {}", name, qty)
                     } else {
-                        format!("• {}", name)
+                        format!("• {}", name)
                     };
                     ui.colored_label(colors::KENNEY_OFF_WHITE.to_egui(), item_entry);
                 }
