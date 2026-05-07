@@ -44,6 +44,10 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
                 },
                 TextLayout::new_with_justify(Justify::Center),
             ),
+            Node {
+                min_height: Val::Px(32.),
+                ..default()
+            },
             (
                 Button,
                 Text::new("START"),

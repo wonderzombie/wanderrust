@@ -58,11 +58,6 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 
 # MAYBE NEXT
 
-- Inventory becomes a Component alongside Interactable::Chest 
-
-- [x] Dead mobs get a marker struct and a system handles them
-- [x] When you kill the mob, you get the loot; that's all — could even write Acquisition
-
 The inventory list is along the right-hand side
 - [ ] It shows you what you have equipped, your HP, and inventory item names
 - [ ] When you press Shift-I, an inventory UI appears; it's not interactive yet

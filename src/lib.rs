@@ -97,12 +97,10 @@ pub fn run() {
     )
     .add_message::<actors::Action>()
     .add_message::<combat::Attack>()
-    .add_message::<inventory::Acquisition>()
     .init_resource::<actors::PlayerStats>()
     .init_resource::<atlas::SpriteAtlas>()
     .init_resource::<gamestate::WorldClock>()
     .init_resource::<grid::SpatialIndex>()
-    .init_resource::<inventory::Inventory>()
     .init_resource::<sounds::Sounds>()
     .insert_resource(CLEAR_COLOR)
     .insert_resource(SpritePickingSettings {
@@ -117,6 +115,7 @@ pub fn run() {
     .add_plugins(editor::EditorPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(interactions::plugin)
+    .add_plugins(inventory::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
