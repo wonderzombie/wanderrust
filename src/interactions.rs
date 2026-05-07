@@ -8,7 +8,7 @@ use crate::{
     event_log::MessageLog,
     inventory::{self, *},
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, WorldSpec},
+    tilemap::{Level, WorldSpec},
     tiles::TileIdx,
 };
 
@@ -282,14 +282,14 @@ pub fn spawn_interxs(
     mut commands: Commands,
     world_spec: Res<WorldSpec>,
     atlas: Res<SpriteAtlas>,
-    strata: Query<&Stratum>,
+    levels: Query<&Level>,
 ) {
-    for Stratum(strat_entity, strat_id) in strata.iter() {
-        let Some(spec) = world_spec.maps.get(strat_id) else {
+    for Level(level_entity, level_id) in levels.iter() {
+        let Some(spec) = world_spec.maps.get(level_id) else {
             continue;
         };
 
-        info!("📦 {:?}: spawning interactables", strat_id);
+        info!("📦 {:?}: spawning interactables", level_id);
 
         let mut count = 0;
         spec.interxs
@@ -306,7 +306,7 @@ pub fn spawn_interxs(
                         },
                         ..default()
                     },
-                    ChildOf(*strat_entity),
+                    ChildOf(*level_entity),
                 )
             })
             .for_each(|b| {
@@ -315,7 +315,7 @@ pub fn spawn_interxs(
                 commands.spawn(b);
             });
 
-        info!("📦 {:?} spawned {} interactables", strat_id, count);
+        info!("📦 {:?} spawned {} interactables", level_id, count);
     }
 }
 

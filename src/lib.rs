@@ -40,8 +40,8 @@ use crate::{
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
-    map::update_stratum_visuals,
-    tilemap::{ActiveStratum, EntryId, Portal, TileStorage, WorldSpec},
+    map::update_level_visuals,
+    tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -207,8 +207,8 @@ pub fn run() {
                 .after(GameSystem::ActorSync),
             (
                 light::update_emitter_maps,
-                light::update_strata_maps,
-                light::update_strata_light_levels,
+                light::update_level_maps,
+                light::update_level_light_levels,
                 light::sync_actor_light_levels,
             )
                 .chain()
@@ -228,8 +228,8 @@ pub fn run() {
     .add_systems(
         Last,
         (
-            map::update_stratum_visuals,
-            map::update_tile_visuals.after(update_stratum_visuals),
+            map::update_level_visuals,
+            map::update_tile_visuals.after(update_level_visuals),
             (
                 gamestate::finalize_waiting_turns,
                 gamestate::check_turns_complete,
@@ -326,7 +326,7 @@ fn click_observer(
                 actions.write(action);
             } else if on.button == PointerButton::Primary {
                 log.add(
-                    format!("{} = {} (strat {:?})", cell, tile_idx, child_of),
+                    format!("{} = {} (level {:?})", cell, tile_idx, child_of),
                     Color::WHITE,
                 );
             }
@@ -423,7 +423,7 @@ struct PendingTransition {
 fn handle_pending_transition(
     mut commands: Commands,
     pending_transition: Option<ResMut<PendingTransition>>,
-    active_strat: Single<Entity, With<ActiveStratum>>,
+    active_level: Single<Entity, With<ActiveLevel>>,
     portals: Query<(&Portal, &Cell, &ChildOf), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
@@ -436,11 +436,11 @@ fn handle_pending_transition(
         if portal.id == transition.arrive_at {
             info!("ℹ️ portal to {:?} at cell {:?}", portal.arrive_at, cell);
 
-            if portal_child_of.parent() != *active_strat {
+            if portal_child_of.parent() != *active_level {
                 commands
                     .entity(portal_child_of.parent())
-                    .insert(ActiveStratum);
-                commands.entity(*active_strat).remove::<ActiveStratum>();
+                    .insert(ActiveLevel);
+                commands.entity(*active_level).remove::<ActiveLevel>();
                 commands
                     .entity(*player)
                     .insert(ChildOf(portal_child_of.parent()));

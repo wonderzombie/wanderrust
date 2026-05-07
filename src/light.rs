@@ -5,7 +5,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    tilemap::{Stratum, TileStorage, WorldSpec},
+    tilemap::{Level, TileStorage, WorldSpec},
     tiles::{MapTile, Revealed, TileIdx},
 };
 use bevy::{platform::collections::HashSet, prelude::*};
@@ -198,13 +198,13 @@ impl LightMap {
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component)]
-pub struct StratumLightMap {
+pub struct LevelLightMap {
     pub curr: LightMap,
     pub prev: LightMap,
     pub default: LightLevel,
 }
 
-impl StratumLightMap {
+impl LevelLightMap {
     pub fn with_ambient(level: LightLevel) -> Self {
         Self {
             curr: LightMap::default(),
@@ -213,7 +213,7 @@ impl StratumLightMap {
         }
     }
 
-    /// Applies this StratumLightMap to the given [`TileStorage`].
+    /// Applies this LevelLightMap to the given [`TileStorage`].
     pub fn apply(&self, commands: &mut Commands, storage: &TileStorage) {
         let prev: HashSet<Cell> = self.prev.keys().copied().collect();
         let curr: HashSet<Cell> = self.curr.keys().copied().collect();
@@ -266,19 +266,14 @@ pub fn spawn(
     mut commands: Commands,
     spec: Res<WorldSpec>,
     atlas: Res<SpriteAtlas>,
-    strata: Query<&Stratum>,
+    levels: Query<&Level>,
 ) {
-    info!("🔥 spawning emitters for {} strata", strata.count());
-    for (stratum_id, spec) in spec.maps.iter() {
+    info!("🔥 spawning emitters for {} levels", levels.count());
+    for (level_id, spec) in spec.maps.iter() {
         let emitters = &spec.emitters;
-        info!(
-            "🔥 strat {:?} has {:?} emitters",
-            stratum_id,
-            emitters.len()
-        );
-        let Some(Stratum(strat_entity, _)) = strata.iter().find(|Stratum(_, id)| id == stratum_id)
-        else {
-            warn!("🔥 unable to find stratum with id {:?}", stratum_id);
+        info!("🔥 level {:?} has {:?} emitters", level_id, emitters.len());
+        let Some(Level(level_entity, _)) = levels.iter().find(|Level(_, id)| id == level_id) else {
+            warn!("🔥 unable to find level with id {:?}", level_id);
             continue;
         };
 
@@ -289,7 +284,7 @@ pub fn spawn(
             commands.spawn((
                 *emitter,
                 emitter.tile_idx,
-                ChildOf(*strat_entity),
+                ChildOf(*level_entity),
                 PieceBundle {
                     sprite: atlas.sprite_from_idx(emitter.tile_idx),
                     cell: *cell,
@@ -307,7 +302,7 @@ pub fn spawn(
 #[reflect(Component)]
 pub struct AmbientLight(pub LightLevel);
 
-/// Set up lighting for each stratum with TileStorage.
+/// Set up lighting for each level with TileStorage.
 pub fn setup(
     mut commands: Commands,
     emitter_tiles: Query<(Entity, &TileIdx), Changed<TileIdx>>,
@@ -332,11 +327,11 @@ pub fn setup(
             commands
                 .entity(entity)
                 .insert(AmbientLight(spec.light_level))
-                .insert(StratumLightMap::with_ambient(spec.light_level));
+                .insert(LevelLightMap::with_ambient(spec.light_level));
             count += 1;
         }
         if count > 0 {
-            info!("🔥 set up {} strata light maps", count);
+            info!("🔥 set up {} level light maps", count);
         }
     }
 }
@@ -357,51 +352,50 @@ pub fn update_emitter_maps(
     }
 }
 
-/// When there are emitter maps (and there are, when )
-pub fn update_strata_maps(
-    mut all_strata: Query<&mut StratumLightMap>,
+pub fn update_level_maps(
+    mut all_levels: Query<&mut LevelLightMap>,
     all_emitter_maps: Query<(&ChildOf, &LightMap)>,
 ) {
     if all_emitter_maps.is_empty() {
         return;
     }
 
-    let maps_by_stratum = all_emitter_maps
+    let maps_by_level = all_emitter_maps
         .iter()
         .map(|(child_of, light_map)| (child_of.parent(), light_map))
         .into_group_map();
 
-    for (stratum_entity, light_maps) in maps_by_stratum {
-        let merged: LightMap = light_maps.into_iter().fold(
-            LightMap(HashMap::new()),
-            |mut stratum_map, emitter_map| {
-                stratum_map.merge_with(emitter_map.clone());
-                stratum_map
-            },
-        );
+    for (level_entity, light_maps) in maps_by_level {
+        let merged: LightMap =
+            light_maps
+                .into_iter()
+                .fold(LightMap(HashMap::new()), |mut level_map, emitter_map| {
+                    level_map.merge_with(emitter_map.clone());
+                    level_map
+                });
 
         // If the this new merged map isn't different than current, skip.
-        if let Ok(stratum_map) = all_strata.get(stratum_entity) {
-            if stratum_map.curr == merged {
+        if let Ok(level_map) = all_levels.get(level_entity) {
+            if level_map.curr == merged {
                 continue;
             }
         } else {
-            panic!("unable to find stratum for {:?}", stratum_entity);
+            panic!("unable to find level for {:?}", level_entity);
         }
 
-        let mut stratum_map = all_strata.get_mut(stratum_entity).unwrap_or_else(|_| {
-            panic!("unable to get stratum map for entity {:?}", stratum_entity)
-        });
-        stratum_map.prev = stratum_map.curr.clone();
-        stratum_map.curr = merged;
+        let mut level_map = all_levels
+            .get_mut(level_entity)
+            .unwrap_or_else(|_| panic!("unable to get level map for entity {:?}", level_entity));
+        level_map.prev = level_map.curr.clone();
+        level_map.curr = merged;
     }
 }
 
-pub fn update_strata_light_levels(
+pub fn update_level_light_levels(
     mut commands: Commands,
-    all_strata_maps: Query<(&TileStorage, &StratumLightMap), Changed<StratumLightMap>>,
+    all_level_maps: Query<(&TileStorage, &LevelLightMap), Changed<LevelLightMap>>,
 ) {
-    for (storage, light_map) in all_strata_maps.iter() {
+    for (storage, light_map) in all_level_maps.iter() {
         light_map.apply(&mut commands, storage);
     }
 }
@@ -415,7 +409,7 @@ pub fn sync_actor_light_levels(
     // Actor entities should have the same LightLevel as the tile they are standing on.
     for (mut actor_sprite, actor_cell, mut actor_vis, child_of) in actors {
         let Ok((storage, ambient)) = storages.get(child_of.parent()) else {
-            warn!("no stratum found for actor: {:?}", actor_cell);
+            warn!("no level found for actor: {:?}", actor_cell);
             continue;
         };
 

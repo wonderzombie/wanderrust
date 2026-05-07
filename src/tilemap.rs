@@ -21,7 +21,7 @@ pub struct WorldId(pub Entity);
 #[reflect(Resource)]
 pub struct WorldSpec {
     pub id: Option<WorldId>,
-    pub maps: HashMap<StratumId, StratumSpec>,
+    pub maps: HashMap<LevelId, LevelSpec>,
     pub spawn_point: SpawnCell,
     pub light_level: LightLevel,
 }
@@ -33,8 +33,8 @@ type EmitterSpec = (Emitter, Cell);
 
 #[derive(Debug, Default, Resource, PartialEq, Reflect, Clone)]
 #[reflect(Resource)]
-pub struct StratumSpec {
-    pub id: Option<Stratum>,
+pub struct LevelSpec {
+    pub id: Option<Level>,
     pub size: Dimensions,
     pub offset: Cell,
 
@@ -69,41 +69,36 @@ impl TilemapId {
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
-pub struct StratumId(pub i32);
+pub struct LevelId(pub i32);
 
-impl From<i32> for StratumId {
+impl From<i32> for LevelId {
     fn from(value: i32) -> Self {
         Self(value)
     }
 }
 
-impl Display for StratumId {
+impl Display for LevelId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Stratum: {}", self.0)
+        write!(f, "Level: {}", self.0)
     }
 }
 
 #[derive(Component, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 #[reflect(Component)]
-pub struct Stratum(pub Entity, pub StratumId);
+pub struct Level(pub Entity, pub LevelId);
 
-/// TileCell is a pair of (TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
+/// TileCell is a pair of (TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
 pub type TileCell = (TileIdx, Cell);
-/// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a StratumId, it should be enough to uniquely identify a tile.
+/// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a LevelId, it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, TileIdx, Cell);
 
 pub type InterxCell = (Interactable, TileIdx, Cell);
 pub type EmitterCell = (Emitter, TileIdx, Cell);
 
-pub type SpawnCell = (StratumId, Cell);
-
-pub type StratTiles = HashMap<StratumId, Vec<TileCell>>;
-pub type StratPortals = HashMap<StratumId, Vec<PortalCell>>;
-pub type StratInterxs = HashMap<StratumId, Vec<InterxCell>>;
-pub type StratEmitters = HashMap<StratumId, Vec<EmitterCell>>;
+pub type SpawnCell = (LevelId, Cell);
 
 #[derive(Component, Debug, Clone, Reflect, PartialEq)]
-pub struct ActiveStratum;
+pub struct ActiveLevel;
 
 #[derive(
     Component, Serialize, Deref, Deserialize, Default, Debug, Clone, Copy, PartialEq, Reflect,
@@ -283,7 +278,7 @@ pub struct TileBundle {
 }
 
 #[derive(Bundle, Default)]
-pub struct TilemapBundle {
+pub struct LevelBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
@@ -307,21 +302,21 @@ pub fn spawn_worldmap(
     let world_id = WorldId(world_entity);
     world_spec.id.replace(world_id);
 
-    let (start_strat_id, cell) = world_spec.spawn_point;
+    let (start_level_id, cell) = world_spec.spawn_point;
 
     let mut grand_tally: HashMap<TileIdx, usize> = HashMap::new();
 
-    for (stratum_id, strat_spec) in world_spec.maps.iter_mut() {
-        let layer = stratum_id.0.neg() as f32 + *MAP_LAYER;
-        let strat_entity = commands.spawn(TilemapBundle::default()).id();
-        let stratum = Stratum(strat_entity, *stratum_id);
-        strat_spec.id.replace(stratum);
+    for (level_id, level_spec) in world_spec.maps.iter_mut() {
+        let layer = level_id.0.neg() as f32 + *MAP_LAYER;
+        let level_entity = commands.spawn(LevelBundle::default()).id();
+        let level = Level(level_entity, *level_id);
+        level_spec.id.replace(level);
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let mut count = 0;
-        let mut cells = vec![TileIdx::Blank; strat_spec.size.ntiles()];
-        strat_spec.tiles.iter().for_each(|(tile_idx, cell)| {
-            let idx = strat_spec.size.cell_to_idx(cell);
+        let mut cells = vec![TileIdx::Blank; level_spec.size.ntiles()];
+        level_spec.tiles.iter().for_each(|(tile_idx, cell)| {
+            let idx = level_spec.size.cell_to_idx(cell);
             cells[idx] = *tile_idx;
             tally.entry(*tile_idx).and_modify(|e| *e += 1).or_insert(1);
             count += 1;
@@ -334,35 +329,35 @@ pub fn spawn_worldmap(
                 .or_insert(*v);
         }
 
-        let bundles = generate_tile_bundles(strat_entity, &strat_spec.size, &cells, layer, &atlas);
+        let bundles = generate_tile_bundles(level_entity, &level_spec.size, &cells, layer, &atlas);
 
         info!(
             "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
-            stratum,
-            strat_spec.tiles.len(),
+            level,
+            level_spec.tiles.len(),
             bundles.len(),
             count,
         );
         commands.spawn_batch(bundles);
 
-        if start_strat_id == *stratum_id {
+        if start_level_id == *level_id {
             info!(
-                "- 📍 found spawn stratum: {:?} and cell {:?}",
-                start_strat_id, cell
+                "- 📍 found spawn level: {:?} and cell {:?}",
+                start_level_id, cell
             );
-            commands.spawn(WorldSpawn::new(strat_entity, cell));
+            commands.spawn(WorldSpawn::new(level_entity, cell));
             commands
-                .entity(strat_entity)
-                .insert((ActiveStratum, Visibility::Inherited));
+                .entity(level_entity)
+                .insert((ActiveLevel, Visibility::Inherited));
         }
 
-        info!("- 📍 {start_strat_id} tally: {:?}", tally);
+        info!("- 📍 {start_level_id} tally: {:?}", tally);
 
         commands
-            .entity(strat_entity)
-            .insert(Name::new(format!("Stratum {:?}", stratum)))
-            .insert(strat_spec.size)
-            .insert(stratum);
+            .entity(level_entity)
+            .insert(Name::new(format!("Level {:?}", level)))
+            .insert(level_spec.size)
+            .insert(level);
     }
 
     info!(
@@ -379,24 +374,24 @@ pub fn spawn_worldmap(
 #[derive(Component, Reflect, Debug, Clone, Copy)]
 #[reflect(Component)]
 pub struct WorldSpawn {
-    pub strat_entity: Entity,
+    pub level_entity: Entity,
     pub cell: Cell,
 }
 
 impl WorldSpawn {
-    pub fn new(strat_entity: Entity, cell: Cell) -> Self {
-        Self { strat_entity, cell }
+    pub fn new(level_entity: Entity, cell: Cell) -> Self {
+        Self { level_entity, cell }
     }
 }
 
 pub fn despawn_tilemap(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
-    strata: Query<Entity, With<Stratum>>,
+    levels: Query<Entity, With<Level>>,
 ) {
     commands.entity(*player).remove::<ChildOf>();
-    for stratum in strata.iter() {
-        commands.entity(stratum).despawn();
+    for level in levels.iter() {
+        commands.entity(level).despawn();
     }
 }
 
@@ -440,17 +435,17 @@ fn generate_tile_bundles(
 /// Adds all [`MapTile`] entities to [`TileStorage`] for quick lookup by [`Cell`].
 pub fn initialize_tile_storage(
     mut commands: Commands,
-    strata: Query<(&Stratum, &Dimensions, &Children)>,
+    levels: Query<(&Level, &Dimensions, &Children)>,
     tiles: Query<&Cell, With<MapTile>>,
 ) {
-    info!("📍 storing maps by cell by stratum");
-    if strata.count() < 1 {
-        panic!("zero strata found when initializing storage");
+    info!("📍 storing maps by cell by level");
+    if levels.count() < 1 {
+        panic!("zero levels found when initializing storage");
     }
 
     let mut zero_cells = 0;
 
-    for (Stratum(stratum_entity, stratum_id), size, children) in strata {
+    for (Level(level_entity, level_id), size, children) in levels {
         let mut num_cells = 0;
         let mut storage = TileStorage::new(*size);
         for entity in children.iter() {
@@ -463,30 +458,30 @@ pub fn initialize_tile_storage(
             }
         }
         info!(
-            "- 📍 stratum {}: set {}/{} tile entities ({} zero cells)",
-            stratum_id,
+            "- 📍 level {}: set {}/{} tile entities ({} zero cells)",
+            level_id,
             num_cells,
             storage.len(),
             zero_cells,
         );
-        commands.entity(*stratum_entity).insert(storage);
+        commands.entity(*level_entity).insert(storage);
     }
 }
 
 pub fn setup_portals(
     mut commands: Commands,
     world: Res<WorldSpec>,
-    strata: Query<&Stratum>,
+    levels: Query<&Level>,
     atlas: Res<SpriteAtlas>,
 ) {
-    for Stratum(strat_entity, id) in strata.iter() {
+    for Level(level_entity, id) in levels.iter() {
         if let Some(spec) = world.maps.get(id) {
             for (portal, cell) in spec.portals.iter() {
                 commands.spawn((
                     Actor,
                     portal.clone(),
                     portal.tile_idx,
-                    ChildOf(*strat_entity),
+                    ChildOf(*level_entity),
                     PieceBundle {
                         sprite: atlas.sprite_from_idx(portal.tile_idx),
                         cell: *cell,

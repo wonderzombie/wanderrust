@@ -4,20 +4,25 @@ use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+pub type LevelTiles = HashMap<LevelId, Vec<TileCell>>;
+pub type LevelPortals = HashMap<LevelId, Vec<PortalCell>>;
+pub type LevelInterxs = HashMap<LevelId, Vec<InterxCell>>;
+pub type LevelEmitters = HashMap<LevelId, Vec<EmitterCell>>;
+
 /// A resource representing the specification of the map, including its size, default tile type, and any special pieces defined by the ASCII map.
-/// Deprecated in favor of StratumSpec.
+/// Deprecated in favor of LevelSpec.
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 #[reflect(Resource)]
 pub struct AsciiMapSpec {
-    /// Stratum entities will be created as children of this entity.
+    /// Level entities will be created as children of this entity.
     #[serde(skip)]
     pub id: TilemapId,
     pub size: Dimensions,
-    /// Tiles and portals keyed by StratumId drive tilemap creation.
-    pub all_tiles: StratTiles,
-    pub all_portals: StratPortals,
-    pub all_interxs: StratInterxs,
-    pub all_emitters: StratEmitters,
+    /// Tiles and portals keyed by LevelId drive tilemap creation.
+    pub all_tiles: LevelTiles,
+    pub all_portals: LevelPortals,
+    pub all_interxs: LevelInterxs,
+    pub all_emitters: LevelEmitters,
     /// Starting point for the player.
     pub spawn_point: SpawnCell,
     /// The minimum light level for the area.
@@ -76,15 +81,15 @@ impl From<AsciiMapSpec> for WorldSpec {
     fn from(value: AsciiMapSpec) -> Self {
         let mut out = WorldSpec::default();
 
-        let incoming_strata = value.all_tiles.keys();
+        let incoming_levels = value.all_tiles.keys();
 
-        for strat_id in incoming_strata {
-            let outgoing_map: &mut StratumSpec = out.maps.entry(*strat_id).or_default();
-            if let Some(tiles) = value.all_tiles.get(strat_id) {
+        for level_id in incoming_levels {
+            let outgoing_map: &mut LevelSpec = out.maps.entry(*level_id).or_default();
+            if let Some(tiles) = value.all_tiles.get(level_id) {
                 outgoing_map.tiles.extend(tiles);
             }
 
-            if let Some(portals) = value.all_portals.get(strat_id) {
+            if let Some(portals) = value.all_portals.get(level_id) {
                 outgoing_map.portals.extend(portals.iter().map(|(p, t, c)| {
                     let mut p = p.clone();
                     p.tile_idx = *t;
@@ -92,7 +97,7 @@ impl From<AsciiMapSpec> for WorldSpec {
                 }));
             }
 
-            if let Some(emitters) = value.all_emitters.get(strat_id) {
+            if let Some(emitters) = value.all_emitters.get(level_id) {
                 outgoing_map
                     .emitters
                     .extend(emitters.iter().map(|(e, t, c)| {
@@ -102,7 +107,7 @@ impl From<AsciiMapSpec> for WorldSpec {
                     }));
             }
 
-            if let Some(interxs) = value.all_interxs.get(strat_id) {
+            if let Some(interxs) = value.all_interxs.get(level_id) {
                 outgoing_map.interxs.extend(interxs.iter().map(|(i, t, c)| {
                     let i = i.set_tile(*t);
                     (i, *c)
@@ -154,8 +159,8 @@ impl AsciiMapSpec {
             .max()
             .unwrap_or(0) as u32;
 
-        let id = StratumId(0);
-        let all_tiles: HashMap<StratumId, Vec<TileCell>> =
+        let id = LevelId(0);
+        let all_tiles: HashMap<LevelId, Vec<TileCell>> =
             vec![(id, AsciiMapSpec::parse_map_str(map_str))]
                 .into_iter()
                 .collect();
@@ -171,7 +176,7 @@ impl AsciiMapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            spawn_point: (StratumId::default(), Cell { x: 5, y: 5 }),
+            spawn_point: (LevelId::default(), Cell { x: 5, y: 5 }),
             light_level: LightLevel::Bright,
             all_portals,
             ..default()
@@ -228,20 +233,20 @@ impl AsciiMapSpec {
 
     #[allow(dead_code)]
     pub fn from_strs(one: &str, two: &str, spawn_cell: Cell, light_level: LightLevel) -> Self {
-        let id1 = StratumId(0);
-        let id2 = StratumId(1);
+        let id1 = LevelId(0);
+        let id2 = LevelId(1);
         let tiles1 = AsciiMapSpec::parse_map_str(one);
         let portals1 = AsciiMapSpec::parse_portals(&tiles1);
         let tiles2 = AsciiMapSpec::parse_map_str(two);
         let portals2 = AsciiMapSpec::parse_portals(&tiles2);
-        let spawn_point = (StratumId::default(), spawn_cell);
+        let spawn_point = (LevelId::default(), spawn_cell);
         AsciiMapSpec {
             all_tiles: vec![(id1, tiles1), (id2, tiles2)]
                 .into_iter()
-                .collect::<HashMap<StratumId, Vec<TileCell>>>(),
+                .collect::<HashMap<LevelId, Vec<TileCell>>>(),
             all_portals: vec![(id1, portals1), (id2, portals2)]
                 .into_iter()
-                .collect::<HashMap<StratumId, Vec<PortalCell>>>(),
+                .collect::<HashMap<LevelId, Vec<PortalCell>>>(),
             spawn_point,
             light_level,
             ..default()
@@ -262,12 +267,12 @@ impl AsciiMapSpec {
         info!("spawn_point: {:?}", spawn_cell);
         info!("size: {:?}", size);
 
-        let spawn_point = (StratumId::default(), spawn_cell);
+        let spawn_point = (LevelId::default(), spawn_cell);
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
 
         let all_tiles = vec![(
-            StratumId(0),
+            LevelId(0),
             (0..tiles)
                 .map(|i| {
                     let cell = Cell::from_idx(size.0, i as usize);
@@ -320,14 +325,14 @@ mod tests {
         let spec = AsciiMapSpec::from_str("");
         assert_eq!(spec.size.width, 0);
         assert_eq!(spec.size.height, 0);
-        assert!(spec.all_tiles[&StratumId(0)].is_empty());
+        assert!(spec.all_tiles[&LevelId(0)].is_empty());
     }
 
     #[test]
     fn spaces_and_unknown_chars_excluded() {
         // '?' (unknown) should produce no tiles
         let spec = AsciiMapSpec::from_str("?");
-        assert!(spec.all_tiles[&StratumId(0)].is_empty());
+        assert!(spec.all_tiles[&LevelId(0)].is_empty());
     }
 
     #[test]
@@ -364,7 +369,7 @@ mod tests {
         // ".#" on row 1 → blank at (0,1), wall at (1,1)
         let spec = AsciiMapSpec::from_str("#.\n.#");
         let tiles = &spec.all_tiles;
-        let id = StratumId(0);
+        let id = LevelId(0);
         assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
         assert_eq!(tiles[&id][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
         assert_eq!(tiles[&id][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));

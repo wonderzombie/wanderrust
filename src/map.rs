@@ -1,7 +1,7 @@
 use crate::{
     colors,
     light::{AmbientLight, LightLevel},
-    tilemap::{ActiveStratum, Stratum},
+    tilemap::{ActiveLevel, Level},
     tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
 };
 
@@ -68,21 +68,21 @@ pub fn sync_tiles(
     }
 }
 
-pub fn update_stratum_visuals(
-    active_strat: Single<(Entity, Ref<ActiveStratum>)>,
-    all_strata: Query<(&Stratum, &mut Visibility)>,
+pub fn update_level_visuals(
+    active_level: Single<(Entity, Ref<ActiveLevel>)>,
+    all_levels: Query<(&Level, &mut Visibility)>,
 ) {
-    let (active_strat, ref active_ref) = *active_strat;
+    let (active_level, ref active_ref) = *active_level;
     if !active_ref.is_changed() {
         return;
     }
 
-    for (Stratum(strat_ent, _), mut vis) in all_strata {
-        if *strat_ent == active_strat {
-            info!("Stratum active: {}", strat_ent);
+    for (Level(level_ent, _), mut vis) in all_levels {
+        if *level_ent == active_level {
+            info!("Level active: {}", level_ent);
             *vis = Visibility::Inherited;
         } else {
-            info!("Stratum inactive: {}", strat_ent);
+            info!("Level inactive: {}", level_ent);
             *vis = Visibility::Hidden;
         }
     }
@@ -91,10 +91,10 @@ pub fn update_stratum_visuals(
 /// Sync [MapTile] [Sprite] visual effects with the tile's logical state. This is orthogonal to [TileIdx].
 pub fn update_tile_visuals(
     mut tiles: Query<(&mut Sprite, &mut Visibility, VisualProps, &ChildOf)>,
-    strata_light: Query<&AmbientLight, With<Stratum>>,
+    level_light: Query<&AmbientLight, With<Level>>,
 ) {
     for (mut sprite, mut vis, t, child_of) in tiles.iter_mut() {
-        let ambient = strata_light
+        let ambient = level_light
             .get(child_of.parent())
             .ok()
             .map(|al| al.0)

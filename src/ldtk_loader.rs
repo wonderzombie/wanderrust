@@ -8,7 +8,7 @@ use crate::{
     cell::Cell,
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
-    tilemap::{self, Dimensions, Portal, StratumId, StratumSpec, TileCell, WorldSpec},
+    tilemap::{self, Dimensions, LevelId, LevelSpec, Portal, TileCell, WorldSpec},
     tiles::{SHEET_SIZE_G, TileIdx},
 };
 
@@ -242,8 +242,8 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     };
 
     for level in &project.levels {
-        let stratum_id = StratumId(level.world_depth);
-        let spec: &mut StratumSpec = world.maps.entry(stratum_id).or_default();
+        let level_id = LevelId(level.world_depth);
+        let spec: &mut LevelSpec = world.maps.entry(level_id).or_default();
         spec.light_level = level.light_level().unwrap_or(world.light_level);
         for layer in &level.layer_instances {
             spec.size = Dimensions {
@@ -272,10 +272,10 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                         Some(ParsedActor::Emitter(e)) => spec.emitters.push((e, cell)),
                         Some(ParsedActor::Portal(p)) => spec.portals.push((p, cell)),
                         Some(ParsedActor::Spawn) => {
-                            world.spawn_point = (stratum_id, cell);
-                            if stratum_id == StratumId::default() && cell == Cell::default() {
+                            world.spawn_point = (level_id, cell);
+                            if level_id == LevelId::default() && cell == Cell::default() {
                                 warn!(
-                                    "world spawn: both stratum ID and cell are defaults; zero values?"
+                                    "world spawn: both level ID and cell are defaults; zero values?"
                                 );
                             }
                         }

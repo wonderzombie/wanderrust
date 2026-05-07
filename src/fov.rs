@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
-    tilemap::{Dimensions, Stratum},
+    tilemap::{Dimensions, Level},
     tiles::{MapTile, Revealed, TileIdx},
 };
 
@@ -60,10 +60,10 @@ impl Vision {
 /// The field of view is marked as opaque beforehand.
 pub fn setup_fov(
     mut commands: Commands,
-    stratum_children: Query<(&Stratum, &Dimensions, &Children)>,
+    level_children: Query<(&Level, &Dimensions, &Children)>,
     tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
 ) {
-    for (Stratum(strat_entity, _), dimensions, children) in stratum_children {
+    for (Level(level_entity, _), dimensions, children) in level_children {
         info!("👀 checking {} children", children.iter().len());
         let mut tiles_count = 0;
         let mut opaque_count = 0;
@@ -79,7 +79,7 @@ pub fn setup_fov(
             }
         }
         fov.clear_field_of_view(); // initializes current FOV to "zero"
-        commands.entity(*strat_entity).insert(fov);
+        commands.entity(*level_entity).insert(fov);
 
         info!(
             "👀 initialized FOV model with {} tiles, {} opaque.",
@@ -108,19 +108,17 @@ pub fn update_fov_markers(
     player_stats: Res<PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
-    // TODO: figure out the real active stratum that the player is on.
-    // See also [`setup_player`].
     let (cell, player_child_of) = *player_query;
 
-    let parent_strat = player_child_of.parent();
-    let Some((child_tiles, player_fov)) = all_fov.get(parent_strat).ok() else {
-        error!("No Fov found for player's stratum.");
+    let parent_level = player_child_of.parent();
+    let Some((child_tiles, player_fov)) = all_fov.get(parent_level).ok() else {
+        error!("No Fov found for player's level.");
         return;
     };
 
     let view = player_fov.from(cell.into(), player_stats.vision_range);
 
-    // Since we got these tiles as children of `all_fov`, aka Stratum
+    // Since we got these tiles as children of `all_fov`, aka Level
     // we can look up each in `tiles`, which is constrained to `MapTile`.
     for &entity in child_tiles {
         if let Ok((cell, mut revealed)) = tiles.get_mut(entity) {

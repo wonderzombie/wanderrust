@@ -9,7 +9,7 @@ use crate::{
     cell::Cell,
     combat::{self, Awareness},
     gamestate::Turn,
-    tilemap::{Dimensions, Stratum},
+    tilemap::{Dimensions, Level},
     tiles::{TileIdx, Walkable},
 };
 
@@ -51,27 +51,27 @@ pub(crate) fn update_spatial_index(
 
 pub(crate) fn setup_spatial_indices(
     mut commands: Commands,
-    stratum_children: Populated<(&Stratum, &Children)>,
+    level_children: Populated<(&Level, &Children)>,
     unwalkable_cells: Populated<&Cell, Without<Walkable>>,
 ) {
-    for (Stratum(strat_entity, _), children) in stratum_children.iter() {
+    for (Level(level_entity, _), children) in level_children.iter() {
         let mut index = SpatialIndex::default();
         for child in children.iter() {
             if let Ok(cell) = unwalkable_cells.get(child) {
                 index.insert(*cell, child);
             }
         }
-        commands.entity(*strat_entity).insert(index);
+        commands.entity(*level_entity).insert(index);
     }
 }
 
 pub fn spawn_grid(
     mut commands: Commands,
-    strata: Populated<(Entity, &Dimensions), (With<Stratum>, Without<CardinalGrid>)>,
+    levels: Populated<(Entity, &Dimensions), (With<Level>, Without<CardinalGrid>)>,
 ) {
-    info!("🧭 spawning grid for {} strata", strata.count());
-    for (stratum, size) in strata {
-        info!("🧭 grid {:?} is {} x {}", stratum, size.width, size.height);
+    info!("🧭 spawning grid for {} levels", levels.count());
+    for (level, size) in levels {
+        info!("🧭 grid {:?} is {} x {}", level, size.width, size.height);
         let grid_settings = GridSettingsBuilder::new_2d(size.width, size.height)
             .chunk_size(16)
             .default_impassable()
@@ -79,7 +79,7 @@ pub fn spawn_grid(
 
         let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
 
-        commands.entity(stratum).insert(grid);
+        commands.entity(level).insert(grid);
     }
 }
 

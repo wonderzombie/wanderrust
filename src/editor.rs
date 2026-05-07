@@ -9,7 +9,7 @@ use crate::{
     cell::Cell,
     colors::KENNEY_RED,
     event_log,
-    tilemap::{ActiveStratum, Stratum, TileStorage},
+    tilemap::{ActiveLevel, Level, TileStorage},
     tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
 };
 
@@ -68,7 +68,7 @@ pub fn on_button_input(
     input: Res<ButtonInput<KeyCode>>,
     mut editor_state: ResMut<EditorContext>,
     mut log: ResMut<event_log::MessageLog>,
-    storages: Query<(&TileStorage, Option<&ActiveStratum>)>,
+    storages: Query<(&TileStorage, Option<&ActiveLevel>)>,
     tiles: Query<(
         &TileIdx,
         &Cell,
@@ -146,7 +146,7 @@ pub fn on_button_input(
 pub fn on_toggle_visibilities(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    strata: Query<(&Stratum, Option<&ActiveStratum>)>,
+    levels: Query<(&Level, Option<&ActiveLevel>)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut stats: ResMut<PlayerStats>,
 ) {
@@ -160,13 +160,13 @@ pub fn on_toggle_visibilities(
         && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
     {
         info!("toggling visibility");
-        for (Stratum(ent, _id), active_opt) in strata {
+        for (Level(ent, _id), active_opt) in levels {
             if active_opt.is_some() {
                 info!("{ent} is active; hiding");
-                commands.entity(*ent).remove::<ActiveStratum>();
+                commands.entity(*ent).remove::<ActiveLevel>();
             } else {
                 info!("{ent} is hidden; showing");
-                commands.entity(*ent).insert(ActiveStratum);
+                commands.entity(*ent).insert(ActiveLevel);
                 let (p, c) = *player;
                 commands.entity(p).insert((*c, ChildOf(*ent)));
             }

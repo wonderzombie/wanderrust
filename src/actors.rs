@@ -10,7 +10,7 @@ use crate::{
     combat::{Belligerent, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
-    tilemap::{self, ActiveStratum, TileStorage, WorldSpawn},
+    tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
@@ -73,17 +73,17 @@ pub fn setup_player(
     spawn: Single<&WorldSpawn>,
     atlas: Res<SpriteAtlas>,
     player: Option<Single<Entity, With<Player>>>,
-    active: Single<Entity, With<ActiveStratum>>,
+    active: Single<Entity, With<ActiveLevel>>,
 ) {
-    let WorldSpawn { strat_entity, cell } = *spawn;
+    let WorldSpawn { level_entity, cell } = *spawn;
     if let Some(entity) = player {
         info!("🕹️ respawning player");
         commands
             .entity(*entity)
-            .insert(ChildOf(*strat_entity))
+            .insert(ChildOf(*level_entity))
             .insert(*cell);
     } else {
-        info!("🕹️ spawning player at {:?} {:?}", cell, strat_entity);
+        info!("🕹️ spawning player at {:?} {:?}", cell, level_entity);
 
         commands.spawn((
             ChildOf(*active),
