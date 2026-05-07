@@ -28,7 +28,10 @@ pub enum Interactable {
     },
     #[default]
     Speaker,
-    Combatant,
+    Combatant {
+        name: String,
+        tile_idx: TileIdx,
+    },
 }
 
 impl Interactable {
@@ -87,10 +90,15 @@ impl LdtkEntityExt<Interactable> for Interactable {
         };
 
         let tile_idx = entity.get_tile();
+        let name = if let Some(name) = entity.get_string("name") {
+            name
+        } else {
+            String::from("MISSINGNAME")
+        };
 
         use Interactable::*;
         match ty {
-            LdtkActor::Combatant => Some(Combatant),
+            LdtkActor::Combatant => Some(Combatant { name, tile_idx }),
             LdtkActor::Speaker => Some(Speaker),
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").map(Item);
@@ -220,7 +228,7 @@ pub fn process_interactions(
                 );
                 speech.write(Listen { entity });
             }
-            Interactable::Combatant => {
+            Interactable::Combatant { .. } => {
                 attacks.write(combat::Attack {
                     attacker: attempt.interactor,
                     target: entity,
