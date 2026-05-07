@@ -315,7 +315,7 @@ pub fn spawn_interxs(
                 commands.spawn(b);
             });
 
-        info!("📦 {:?} spawned {} interactables", level_id, count);
+        info!("📦 {:?}: spawned {} interactables", level_id, count);
     }
 }
 

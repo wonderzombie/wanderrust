@@ -46,6 +46,7 @@ pub enum Awareness {
     #[default]
     Idling,
     // Returning,
+    /// The entity is aware of and will pursue the player.
     Alerted,
     // Hunting,
 }
