@@ -7,7 +7,7 @@ use crate::{
     interactions::Interactable, tiles::TileIdx,
 };
 
-#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect)]
+#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Health {
     pub hp: i32,
@@ -15,7 +15,7 @@ pub struct Health {
     pub is_dead: bool,
 }
 
-#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize, Reflect)]
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,
@@ -24,33 +24,73 @@ pub struct Parameters {
     pub vision: Vision,
 }
 
+impl Default for Parameters {
+    fn default() -> Self {
+        Self {
+            attack: 0,
+            defense: 0,
+            health: Health { hp: 1, ..default() },
+            vision: Vision(1),
+        }
+    }
+}
+
+macro_rules! define_parameters {
+    (
+        $( $combatant_name:ident => [ $tile:path, atk = $atk:expr, def = $def:expr, hp = $hp:expr, vis = $vis:expr ], )*
+    ) => {
+        impl Parameters {
+            pub fn is_default(&self) -> bool {
+                *self == Parameters::default()
+            }
+
+            pub fn all() -> &'static [(&'static str, TileIdx, Parameters)] {
+                &[ $( ( stringify!(Combatants::$combatant_name), $tile, Parameters { attack: $atk, defense: $def, health: Health { hp: $hp, max: $hp, is_dead: false }, vision: Vision($vis)  }), )* ]
+            }
+
+            pub fn from_name(name: impl AsRef<str>) -> Option<Parameters> {
+                Self::all().iter().find(|(n, _, _)| *n == name.as_ref()).map(|(_, _, p)| *p)
+
+            }
+
+            pub fn from_tile(tile: &TileIdx) -> Option<Parameters> {
+                Self::all().iter().find(|(_, t, _)| t == tile).map(|(_, _, p)| *p)
+            }
+        }
+    };
+}
+
+define_parameters!(
+    Bat => [TileIdx::Bat, atk = 2, def = 0, hp = 10, vis = 3],
+    Skeleton => [TileIdx::Skeleton, atk = 3, def = 2, hp = 15, vis = 2],
+);
+
 pub fn init_combatants(
     mut commands: Commands,
-    interxs: Populated<(Entity, &Interactable), Without<Parameters>>,
+    interxs: Populated<(Entity, &Interactable), (With<Belligerent>, Without<Parameters>)>,
 ) {
-    for (entity, interxn) in interxs {
-        let it = match interxn.default_tile() {
-            TileIdx::Skeleton => Parameters {
-                ..Default::default()
-            },
-            TileIdx::Spider => Parameters {
-                ..Default::default()
-            },
-            TileIdx::Wumpus => Parameters {
-                ..Default::default()
-            },
-            TileIdx::Rat => Parameters {
-                ..Default::default()
-            },
-            TileIdx::Bat => Parameters {
-                ..Default::default()
-            },
-            TileIdx::Slime => Parameters {
-                ..Default::default()
-            },
-            _ => continue,
+    for (entity, interx) in interxs.into_iter() {
+        let Interactable::Combatant { name, tile_idx } = interx else {
+            continue;
         };
-        commands.entity(entity).insert(it);
+
+        let params_opt = Parameters::from_name(name);
+
+        // Do not skip adding parameters; instead, add a default and log an error.
+        // This will keep this function from running repeatedly and doing nothing.
+        if params_opt.is_none() || params_opt.is_some_and(|it| it.is_default()) {
+            error!(
+                "no parameters exist for entity {:?} named {} with tile {:?}; using {:#?}",
+                entity, name, tile_idx, params_opt
+            );
+        }
+
+        let params = params_opt.unwrap_or_default();
+
+        commands.entity(entity).insert(CombatantBundle {
+            params,
+            ..default()
+        });
     }
 }
 
@@ -60,12 +100,14 @@ pub fn init_params(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
     }
 }
 
+#[derive(Component, Default)]
+pub struct Belligerent;
+
 #[derive(Bundle, Default)]
-pub struct Belligerent {
+pub struct CombatantBundle {
     pub params: Parameters,
     pub awareness: Awareness,
     pub turn: Turn,
-    pub interactable: Interactable,
 }
 
 /// Add Awareness if the Actor needs complex behavior related to the Player.

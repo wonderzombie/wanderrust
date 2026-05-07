@@ -7,7 +7,7 @@ use bevy_northstar::prelude::Blocking;
 use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    combat::{Belligerent, Health, Parameters},
+    combat::{CombatantBundle, Health, Parameters},
     fov::Vision,
     light::{Emitter, LightLevel},
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
@@ -101,7 +101,7 @@ pub fn setup_player(
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
-            Belligerent {
+            CombatantBundle {
                 params: Parameters {
                     attack: 2,
                     defense: 1,
