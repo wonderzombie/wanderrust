@@ -35,6 +35,7 @@ type EmitterSpec = (Emitter, Cell);
 #[reflect(Resource)]
 pub struct LevelSpec {
     pub id: Option<Level>,
+    pub identifier: String,
     pub dimensions: Dimensions,
     pub world_pos: Vec2,
     pub depth: i32,
@@ -46,27 +47,6 @@ pub struct LevelSpec {
 
     pub spawn_point: Option<SpawnCell>,
     pub light_level: LightLevel,
-}
-
-#[derive(
-    Component,
-    Copy,
-    Clone,
-    Default,
-    Debug,
-    Deref,
-    DerefMut,
-    Reflect,
-    Serialize,
-    Deserialize,
-    PartialEq,
-)]
-pub struct TilemapId(Option<Entity>);
-
-impl TilemapId {
-    pub fn _set(&mut self, id: Entity) {
-        self.0.replace(id);
-    }
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
@@ -171,7 +151,7 @@ impl Display for Dimensions {
     }
 }
 
-/// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [TilemapId].
+/// TileStorage is used to manipulate the tiles in a tilemap, typically living on the same entity as [LevelId].
 /// Tiles are stored as a flat vector of `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way,
 /// a cell may be empty of any tile entity.
 #[derive(

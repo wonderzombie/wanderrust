@@ -14,9 +14,6 @@ pub type LevelEmitters = HashMap<LevelId, Vec<EmitterCell>>;
 #[derive(Resource, Default, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq)]
 #[reflect(Resource)]
 pub struct AsciiMapSpec {
-    /// Level entities will be created as children of this entity.
-    #[serde(skip)]
-    pub id: TilemapId,
     pub size: Dimensions,
     /// Tiles and portals keyed by LevelId drive tilemap creation.
     pub all_tiles: LevelTiles,
