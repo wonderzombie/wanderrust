@@ -67,10 +67,10 @@ pub(crate) fn setup_spatial_indices(
 
 pub fn spawn_grid(
     mut commands: Commands,
-    levels: Populated<(Entity, &Dimensions), (With<Level>, Without<CardinalGrid>)>,
+    levels: Populated<(&Level, &Dimensions), Without<CardinalGrid>>,
 ) {
     info!("🧭 spawning grid for {} levels", levels.count());
-    for (level, size) in levels {
+    for (Level(level, _), size) in levels {
         info!("🧭 grid {:?} is {} x {}", level, size.width, size.height);
         let grid_settings = GridSettingsBuilder::new_2d(size.width, size.height)
             .chunk_size(16)
@@ -79,7 +79,7 @@ pub fn spawn_grid(
 
         let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
 
-        commands.entity(level).insert(grid);
+        commands.entity(*level).insert(grid);
     }
 }
 
@@ -89,9 +89,9 @@ pub fn update_grid(
 ) {
     let mut changed_grids: HashSet<Entity> = HashSet::new();
 
-    for (cell, child_of, walkable_opt) in changed_tiles {
+    for (cell, ChildOf(parent), walkable_opt) in changed_tiles {
         let (entity, mut grid) = grid
-            .get_mut(child_of.0)
+            .get_mut(*parent)
             .expect("failed to get grid for cell; was grid initialized?");
 
         if !grid.in_bounds(cell.as_vec3()) {
