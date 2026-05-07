@@ -35,8 +35,9 @@ type EmitterSpec = (Emitter, Cell);
 #[reflect(Resource)]
 pub struct LevelSpec {
     pub id: Option<Level>,
+    pub world_pos: Vec2,
+    pub depth: i32,
     pub size: Dimensions,
-    pub offset: Cell,
 
     pub tiles: Vec<TileSpec>,
     pub emitters: Vec<EmitterSpec>,
@@ -307,8 +308,17 @@ pub fn spawn_worldmap(
     let mut grand_tally: HashMap<TileIdx, usize> = HashMap::new();
 
     for (level_id, level_spec) in world_spec.maps.iter_mut() {
-        let layer = level_id.0.neg() as f32 + *MAP_LAYER;
-        let level_entity = commands.spawn(LevelBundle::default()).id();
+        let layer = level_spec.depth.neg() as f32 + *MAP_LAYER;
+        let level_entity = commands
+            .spawn(LevelBundle {
+                transform: Transform::from_xyz(
+                    level_spec.world_pos.x,
+                    level_spec.world_pos.y,
+                    layer,
+                ),
+                ..default()
+            })
+            .id();
         let level = Level(level_entity, *level_id);
         level_spec.id.replace(level);
 

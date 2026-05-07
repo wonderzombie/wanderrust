@@ -54,11 +54,14 @@ pub struct LdtkProject {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkLevel {
+    pub uid: i32,
+    pub identifier: String,
     pub layer_instances: Vec<LdtkLayer>,
-    #[serde(rename = "pxHei")]
-    pub px_height: f32,
+    pub px_hei: f32,
     pub world_depth: i32,
     pub field_instances: Vec<LdtkField>,
+    pub world_x: i32,
+    pub world_y: i32,
 }
 
 impl LdtkLevel {
@@ -242,9 +245,15 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     };
 
     for level in &project.levels {
-        let level_id = LevelId(level.world_depth);
+        let level_id = LevelId(level.uid);
         let spec: &mut LevelSpec = world.maps.entry(level_id).or_default();
+        spec.identifier = level.identifier.clone();
+        spec.depth = level.world_depth;
         spec.light_level = level.light_level().unwrap_or(world.light_level);
+        spec.world_pos = Vec2 {
+            x: level.world_x as f32,
+            y: level.world_y as f32,
+        };
         for layer in &level.layer_instances {
             spec.size = Dimensions {
                 width: layer.c_width as u32,
@@ -255,7 +264,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
             if layer.layer_type.eq_ignore_ascii_case("tiles") {
                 info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
                 spec.tiles
-                    .extend(get_grid_tiles(&layer.grid_tiles, level.px_height));
+                    .extend(get_grid_tiles(&layer.grid_tiles, level.px_hei));
             }
 
             if layer.layer_type.eq_ignore_ascii_case("entities") {
