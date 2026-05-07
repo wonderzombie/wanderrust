@@ -282,9 +282,7 @@ pub struct TileBundle {
 #[derive(Bundle, Default)]
 pub struct LevelBundle {
     pub transform: Transform,
-    pub global_transform: GlobalTransform,
     pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
 }
 
 pub(crate) const MAP_LAYER: TilemapLayer = TilemapLayer(-6.0);
@@ -299,7 +297,7 @@ pub fn spawn_worldmap(
     info!("📍 initializing worldmap");
 
     let world_entity = commands
-        .spawn((Visibility::Hidden, Transform::default()))
+        .spawn((Visibility::Inherited, Transform::default()))
         .id();
     let world_id = WorldId(world_entity);
     world_spec.id.replace(world_id);
@@ -369,6 +367,7 @@ pub fn spawn_worldmap(
             .entity(level_entity)
             .insert(Name::new(format!("Level {:?}", level)))
             .insert(level_spec.dimensions)
+            .insert(ChildOf(world_entity))
             .insert(level);
     }
 
