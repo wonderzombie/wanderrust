@@ -83,9 +83,8 @@ impl LdtkEntityExt<Interactable> for Interactable {
     fn from_ldtk(entity: &LdtkEntity) -> Option<Interactable> {
         let Some(ty) = entity.ty() else {
             warn!(
-                "📦 unknown interactable type: {:?} on LdtkEntity {:?}",
+                "📦 unknown interactable type: {:?} on LdtkEntity {entity:?}",
                 entity.ty(),
-                entity
             );
             return None;
         };
@@ -178,13 +177,13 @@ pub fn process_interactions(
                         && !required_item.0.is_empty()
                     {
                         if !player_inventory.has_item(required_item) {
-                            info!("Player lacks required item: {}", required_item.0);
+                            info!("Player lacks required item: {required_item}");
                             log.add("Locked.", colors::KENNEY_BLUE);
                             continue;
                         } else {
-                            info!("Player opens the door with {:?}.", required_item);
+                            info!("Player opens the door with {required_item:?}.");
                             log.add(
-                                format!("Opened door with {}.", required_item),
+                                format!("Opened door with {required_item}."),
                                 colors::KENNEY_BLUE,
                             );
                         }
@@ -194,8 +193,7 @@ pub fn process_interactions(
                     }
                     *is_open = true;
                     trace!(
-                        "changing tile_idx from {:?} to {:?}",
-                        tile_idx,
+                        "changing tile_idx from {tile_idx:?} to {:?}",
                         tile_idx.engaged_version()
                     );
                     tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
@@ -211,7 +209,7 @@ pub fn process_interactions(
                 if !*is_open {
                     *is_open = true;
                     tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
-                    info!("Player opens chest: {:?}", contents);
+                    info!("Player opens chest: {contents:?}");
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     if let Some(contents) = contents {
                         log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
@@ -229,6 +227,7 @@ pub fn process_interactions(
                 speech.write(Listen { entity });
             }
             Interactable::Combatant { .. } => {
+                info!("Player attacks {entity:?}");
                 attacks.write(combat::Attack {
                     attacker: attempt.interactor,
                     target: entity,
@@ -290,7 +289,7 @@ pub fn spawn_interxs(
             continue;
         };
 
-        info!("📦 {:?}: spawning interactables", level_id);
+        info!("📦 {level_id:?}: spawning interactables");
 
         let mut count = 0;
         spec.interxs
@@ -316,7 +315,7 @@ pub fn spawn_interxs(
                 commands.spawn(b);
             });
 
-        info!("📦 {:?}: spawned {} interactables", level_id, count);
+        info!("📦 {level_id:?}: spawned {count} interactables");
     }
 }
 
