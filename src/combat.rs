@@ -81,7 +81,7 @@ pub fn init_combatants(
             continue;
         };
 
-        let params_opt = Parameters::from_name(name);
+        let params_opt = Parameters::from_tile(tile_idx).or(Parameters::from_name(name));
 
         // Do not skip adding parameters; instead, add a default and log an error.
         // This will keep this function from running repeatedly and doing nothing.

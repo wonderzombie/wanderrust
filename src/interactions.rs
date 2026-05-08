@@ -91,6 +91,8 @@ impl LdtkEntityExt<Interactable> for Interactable {
         let tile_idx = entity.get_tile();
         let name = if let Some(name) = entity.get_string("name") {
             name
+        } else if !entity.identifier.is_empty() {
+            entity.identifier.clone()
         } else {
             String::from("MISSINGNAME")
         };
