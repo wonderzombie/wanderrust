@@ -7,7 +7,7 @@ use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
     tilemap::{Dimensions, Level},
-    tiles::{MapTile, Revealed, TileIdx},
+    tiles::{MapTile, Opaque, Revealed, TileIdx},
 };
 
 /// Newtype for field of view model that's a Resource and which tracks which
@@ -59,33 +59,34 @@ impl Vision {
 }
 
 /// Internalizes the field of view model by marking tiles as transparent or not.
-/// The field of view is marked as opaque beforehand.
+/// The field of view defaults to entirely opaque.
+/// We don't use the Opaque label
 pub fn setup_fov(
     mut commands: Commands,
     level_children: Query<(&Level, &Dimensions, &Children)>,
-    tiles: Query<(&Cell, &TileIdx), With<MapTile>>,
+    transparent_tiles: Query<&Cell, (With<MapTile>, Without<Opaque>)>,
 ) {
     for (Level(level_entity, _), dimensions, children) in level_children {
-        info!("👀 checking {} children", children.iter().len());
-        let mut tiles_count = 0;
-        let mut opaque_count = 0;
+        info!(
+            "👀 {level_entity:?} checking {} children",
+            children.iter().len()
+        );
+        let tiles_count = dimensions.ntiles();
+        let mut transparent_count = 0;
         let mut fov = Fov(Mrpas::new(dimensions.width as i32, dimensions.width as i32));
         for &child in children {
-            if let Ok((cell, tile_idx)) = tiles.get(child) {
+            if let Ok(cell) = transparent_tiles.get(child) {
                 // Sets individual points in the model to transparent-or-not.
-                fov.set_transparent(cell.into(), tile_idx.is_transparent());
-                tiles_count += 1;
-                if !tile_idx.is_transparent() {
-                    opaque_count += 1;
-                }
+                fov.set_transparent(cell.into(), true);
+                transparent_count += 1;
             }
         }
         fov.clear_field_of_view(); // initializes current FOV to "zero"
         commands.entity(*level_entity).insert(fov);
 
         info!(
-            "👀 initialized FOV model with {} tiles, {} opaque.",
-            tiles_count, opaque_count
+            "👀 initialized FOV model with {} tiles, {} transparent.",
+            tiles_count, transparent_count
         )
     }
 }

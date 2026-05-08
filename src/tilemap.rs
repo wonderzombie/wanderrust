@@ -143,7 +143,7 @@ impl Dimensions {
     }
 
     #[inline]
-    fn ntiles(&self) -> usize {
+    pub fn ntiles(&self) -> usize {
         (self.width * self.height) as usize
     }
 
