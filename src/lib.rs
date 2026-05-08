@@ -224,7 +224,6 @@ pub fn run() {
                 .after(GameSystem::Fov)
                 .run_if(in_state(GameState::Ramifying)),
             combat::init_combatants,
-            combat::init_params,
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)

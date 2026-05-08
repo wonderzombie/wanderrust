@@ -24,6 +24,13 @@ pub struct Parameters {
     pub vision: Vision,
 }
 
+impl Parameters {
+    pub fn init(&mut self) -> Self {
+        self.health.hp = self.health.max;
+        *self
+    }
+}
+
 impl Default for Parameters {
     fn default() -> Self {
         Self {
@@ -67,10 +74,10 @@ define_parameters!(
 
 pub fn init_combatants(
     mut commands: Commands,
-    interxs: Populated<(Entity, &Interactable), (With<Belligerent>, Without<Parameters>)>,
+    interxs: Populated<(Entity, &Interactable), (Added<Interactable>, Without<Parameters>)>,
 ) {
     for (entity, interx) in interxs.into_iter() {
-        let Interactable::Combatant { name, tile_idx } = interx else {
+        let Interactable::Belligerent { name, tile_idx } = interx else {
             continue;
         };
 
@@ -85,8 +92,7 @@ pub fn init_combatants(
             );
         }
 
-        let params = params_opt.unwrap_or_default();
-
+        let params = params_opt.unwrap_or_default().init();
         commands.entity(entity).insert(CombatantBundle {
             params,
             ..default()
@@ -94,17 +100,12 @@ pub fn init_combatants(
     }
 }
 
-pub fn init_params(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
-    for mut it in combatants.iter_mut() {
-        it.health.hp = it.health.max;
-    }
-}
-
-#[derive(Component, Default)]
-pub struct Belligerent;
+#[derive(Component, Default, Reflect)]
+pub struct Combatant;
 
 #[derive(Bundle, Default)]
 pub struct CombatantBundle {
+    pub belligerent: Combatant,
     pub params: Parameters,
     pub awareness: Awareness,
     pub turn: Turn,

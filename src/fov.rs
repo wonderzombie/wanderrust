@@ -42,7 +42,7 @@ impl View {
     }
 }
 
-#[derive(Component, Copy, Clone, Debug, Serialize, Deserialize, Reflect)]
+#[derive(Component, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Vision(pub u32);
 
