@@ -130,6 +130,23 @@ pub fn update_grid(
     });
 }
 
+pub fn init_agents(
+    mut commands: Commands,
+    grids: Populated<Entity, With<CardinalGrid>>,
+    query: Populated<(Entity, &Cell, &ChildOf), (With<Awareness>, Without<AgentOfGrid>)>,
+) {
+    for (entity, cell, child_of) in query {
+        let Ok(grid) = grids.get(child_of.parent()) else {
+            error!("");
+            continue;
+        };
+
+        commands
+            .entity(entity)
+            .insert((AgentPos(cell.into()), AgentOfGrid(grid)));
+    }
+}
+
 pub fn pathfind(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
