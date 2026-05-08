@@ -388,7 +388,18 @@ impl TileIdx {
             ],
             "chest",
         ),
+        (&[BarsDoorClosed, BarsDoorOpen], "bars"),
         (&[StairsUp, StairsDown], "stairs"),
+        (&[Candle], "candle"),
+        (&[Torch], "torch"),
+        (&[Brazier], "brazier"),
+        (&[Candelabra], "candelabra"),
+        (&[Campfire], "campfire"),
+        (&[Pot], "pot"),
+        (&[LeverBlueLeft, LeverBlueRight], "lever"),
+        (&[BoatUp, BoatDown, BoatRight], "boat"),
+        (&[Shrine], "shrine"),
+        (&[Well], "well"),
     ];
 
     pub fn reverse_lookup() -> HashMap<usize, TileIdx> {
