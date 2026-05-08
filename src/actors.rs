@@ -91,16 +91,20 @@ pub fn setup_player(
 
         commands.spawn((
             ChildOf(*active),
+            // from ecs
             Name::new("Player"),
             Actor,
             Player,
             TileIdx::Player,
+            // from bevy_northstar
             Blocking,
+            // from light
             Emitter::new(
                 TileIdx::Blank,
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
+            // from combat, fov
             CombatantBundle {
                 params: Parameters {
                     attack: 2,
