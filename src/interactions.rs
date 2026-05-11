@@ -224,14 +224,15 @@ pub fn process_interactions(
                     }
                 }
             }
-            Interactable::Speaker { .. } => {
+            Interactable::Speaker { name, .. } => {
                 info!(
                     "Player talks to {}.",
-                    name_opt.map_or("someone", |n| n.as_str())
+                    name_opt.map_or(name.as_str(), |n| n.as_str())
                 );
                 speech.write(Listen { entity });
             }
-            Interactable::Belligerent { .. } => {
+            Interactable::Belligerent { name, .. } => {
+                info!("Player attacks {name}.");
                 attacks.write(combat::Attack {
                     attacker: attempt.interactor,
                     target: entity,

@@ -140,25 +140,39 @@ pub struct CombatantStats {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &Name, &mut Parameters)>,
+    mut combatants: Query<(Entity, Option<&Name>, &mut Parameters)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
+    if attacks.len() > 0 {
+        info!("process_attacks: {}", attacks.len());
+    }
+
     for attack in attacks.read() {
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
+            warn!(
+                "either attacker {:?} or target {:?} was not found among combatants: {} vs {}",
+                attack.attacker,
+                attack.target,
+                combatants.contains(attack.attacker),
+                combatants.contains(attack.target)
+            );
             continue;
         };
 
         let (defender_id, defender_name, mut defender) = defender;
         let (_, attacker_name, attacker) = attacker;
 
+        let defender_name = defender_name.map_or("some defender", |n| n.as_str());
+        let attacker_name = attacker_name.map_or("some attacker", |n| n.as_str());
+
         if defender.health.is_dead {
             log.add(
-                format!("{} is already dead", defender_name),
+                format!("{} is already dead", defender_name,),
                 colors::KENNEY_GOLD,
             );
             continue;

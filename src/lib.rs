@@ -375,6 +375,7 @@ fn process_actions(
 ) {
     let mut acted = false;
     for action in actions.read() {
+        info!("action: {action:?}");
         let Some(spatial_index) = actors
             .get(action.entity)
             .and_then(|e| all_spatial.get(e.parent()))
@@ -391,7 +392,7 @@ fn process_actions(
             // No entity at the target [`Cell`], so we can assume it's an empty
             // walkable tile. Changing the [`Cell`] via insertion will cause the
             // system to move the player sprite.
-            trace!("process_actions: move");
+            info!("process_actions: move");
             commands
                 .entity(action.entity)
                 .insert(adjusted_cell)
@@ -401,14 +402,14 @@ fn process_actions(
         };
 
         if let Ok(portal) = portals.get(target_entity) {
-            trace!("process_actions: portal");
+            info!("process_actions: portal");
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
             continue;
         }
 
-        trace!("process_actions: interaction");
+        info!("process_actions: interaction");
         interaction_attempts.write(interactions::Examine {
             interactor: action.entity,
             target: target_entity,
@@ -432,15 +433,11 @@ struct PendingTransition {
 /// cell.
 fn handle_pending_transition(
     mut commands: Commands,
-    pending_transition: Option<ResMut<PendingTransition>>,
+    transition: If<ResMut<PendingTransition>>,
     active_level: Single<Entity, With<ActiveLevel>>,
     portals: Query<(&Portal, &Cell, &ChildOf), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
-    let Some(transition) = pending_transition.as_ref() else {
-        return;
-    };
-
     info!("looking for {:?} in {:?}", transition.arrive_at, portals);
     for (portal, cell, portal_child_of) in &portals {
         if portal.id == transition.arrive_at {
