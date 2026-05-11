@@ -111,8 +111,7 @@ mod tests {
             .build();
         assert_eq!(3, table.len());
 
-        let first = table
-            .get(0)
+        let first = table.first()
             .expect("expected entries to have WeightedEntry");
         assert!(matches!(first, WeightedEntry::Table(w, _) if *w == 1.0));
     }
