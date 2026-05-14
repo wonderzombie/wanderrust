@@ -5,6 +5,7 @@ mod camera;
 pub mod cell;
 mod colors;
 mod combat;
+mod diagnostics;
 pub mod editor;
 mod event_log;
 mod fov;
@@ -110,6 +111,7 @@ pub fn run() {
     })
     .insert_resource(event_log::MessageLog::new(10))
     .insert_state(GameState::Starting)
+    .add_plugins(diagnostics::plugin)
     .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(editor::EditorPlugin)
