@@ -53,10 +53,14 @@ impl Cell {
 
     /// Creates a cell from an index and a width, converting them to i32.
     pub fn from_idx(width: u32, idx: usize) -> Cell {
+        Self::from_idx_depth(width, idx, default())
+    }
+
+    pub fn from_idx_depth(width: u32, idx: usize, depth: i32) -> Cell {
         Cell {
             x: (idx % width as usize) as i32,
             y: (idx / width as usize) as i32,
-            z: 0,
+            z: depth,
         }
     }
 

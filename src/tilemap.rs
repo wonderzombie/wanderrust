@@ -117,7 +117,7 @@ pub struct TilemapLayer(pub f32);
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
-    pub depth: u32,
+    pub depth: i32,
     pub tile_size: u32,
 }
 
@@ -143,7 +143,7 @@ impl Dimensions {
 
     #[inline]
     pub fn idx_to_cell(&self, idx: usize) -> Cell {
-        Cell::from_idx(self.width, idx)
+        Cell::from_idx_depth(self.width, idx, self.depth)
     }
 
     #[inline]
