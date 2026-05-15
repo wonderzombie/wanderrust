@@ -89,7 +89,6 @@ pub struct LdtkEntity {
 
 const LDTK_ENTITES_ENUM: &str = "Actor";
 
-#[allow(dead_code)]
 impl LdtkEntity {
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
@@ -127,12 +126,12 @@ impl LdtkEntity {
         }
     }
 
-    pub fn get_actor_enum(&self, key: &str) -> Option<String> {
-        match self.field_val(key) {
-            Some(ParsedValue::ActorEnum(s)) => Some(s),
-            _ => None,
-        }
-    }
+    // pub fn get_actor_enum(&self, key: &str) -> Option<String> {
+    //     match self.field_val(key) {
+    //         Some(ParsedValue::ActorEnum(s)) => Some(s),
+    //         _ => None,
+    //     }
+    // }
 
     pub fn get_tile_field(&self, key: &str) -> Option<TileIdx> {
         match self.field_val(key) {
@@ -306,7 +305,7 @@ fn get_grid_tiles(grid_tiles: &Vec<LdtkGridTile>, level_px_height: f32) -> Vec<T
 pub enum ParsedValue {
     #[default]
     Unset,
-    ActorEnum(String),
+    // ActorEnum(String),
     Ztring(String),
     PxTile(TileIdx),
     Bool(bool),
@@ -327,10 +326,10 @@ impl From<&LdtkField> for ParsedValue {
         use ParsedValue::*;
         let val = field.val.clone();
         match field.field_type.as_str() {
-            "LocalEnum.Actor" => match val.as_str() {
-                Some(s) => ActorEnum(s.to_string()),
-                None => Unset,
-            },
+            // "LocalEnum.Actor" => match val.as_str() {
+            //     Some(s) => ActorEnum(s.to_string()),
+            //     None => Unset,
+            // },
             "LocalEnum.LightLevel" => match val.as_str() {
                 Some(l) => LightLevelEnum(l.to_string()),
                 None => Unset,
