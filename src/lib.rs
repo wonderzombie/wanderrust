@@ -16,6 +16,7 @@ mod inventory;
 mod ldtk_loader;
 pub mod light;
 mod loot;
+mod macros;
 mod map;
 mod mobs;
 mod procgen;
