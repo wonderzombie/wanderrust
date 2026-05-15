@@ -117,14 +117,16 @@ pub struct TilemapLayer(pub f32);
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
+    pub depth: u32,
     pub tile_size: u32,
 }
 
 impl Default for Dimensions {
     fn default() -> Self {
         Self {
-            width: Default::default(),
-            height: Default::default(),
+            width: default(),
+            height: default(),
+            depth: default(),
             tile_size: tiles::TILE_SIZE_PX as u32,
         }
     }
@@ -166,6 +168,7 @@ impl Ord for Dimensions {
         self.width
             .cmp(&other.width)
             .then(self.height.cmp(&other.height))
+            .then(self.depth.cmp(&other.depth))
             .then(self.tile_size.cmp(&other.tile_size))
     }
 }

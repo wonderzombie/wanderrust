@@ -236,6 +236,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
             spec.dimensions = Dimensions {
                 width: layer.c_width as u32,
                 height: layer.c_height as u32,
+                depth: spec.depth as u32,
                 ..default()
             };
 

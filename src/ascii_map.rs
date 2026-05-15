@@ -172,6 +172,7 @@ impl AsciiMapSpec {
                 width,
                 height,
                 tile_size: DEFAULT_TILE_SIZE,
+                ..default()
             },
             all_tiles,
             spawn_point: (LevelId::default(), Cell::new(5, 5)),
@@ -278,6 +279,7 @@ impl AsciiMapSpec {
             size: Dimensions {
                 width: size.0,
                 height: size.1,
+                depth: default(),
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
