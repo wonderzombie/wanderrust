@@ -27,6 +27,7 @@ use serde::{Deserialize, Serialize};
 pub struct Cell {
     pub x: i32,
     pub y: i32,
+    pub z: i32,
 }
 
 #[derive(
@@ -35,10 +36,10 @@ pub struct Cell {
 pub struct PreviousCell(pub Cell);
 
 impl Cell {
-    pub const ZERO: Cell = Cell { x: 0, y: 0 };
+    pub const ZERO: Cell = Cell { x: 0, y: 0, z: 0 };
 
     pub fn new(x: i32, y: i32) -> Self {
-        Cell { x, y }
+        Cell { x, y, z: 0 }
     }
 
     /// Creates a cell from x and y coordinates, converting them to i32.
@@ -46,6 +47,7 @@ impl Cell {
         Cell {
             x: x as i32,
             y: y as i32,
+            z: 0,
         }
     }
 
@@ -54,6 +56,7 @@ impl Cell {
         Cell {
             x: (idx % width as usize) as i32,
             y: (idx / width as usize) as i32,
+            z: 0,
         }
     }
 
@@ -61,6 +64,7 @@ impl Cell {
         Cell {
             x: vec.x as i32,
             y: vec.y as i32,
+            z: 0,
         }
     }
 
@@ -91,6 +95,7 @@ impl Cell {
         Cell {
             x: -self.x,
             y: -self.y,
+            z: -self.z,
         }
     }
 
@@ -106,10 +111,15 @@ impl Cell {
         UVec3::new(self.x as u32, self.y as u32, 0)
     }
 
+    pub fn at_depth(x: i32, y: i32, z: i32) -> Self {
+        Self { x, y, z }
+    }
+
     pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
         Self {
             x: agent_pos.0.x as i32,
             y: agent_pos.0.y as i32,
+            z: agent_pos.0.z as i32,
         }
     }
 
@@ -117,13 +127,14 @@ impl Cell {
         Cell {
             x: px.div(tile_size) as i32,
             y: py.div(tile_size) as i32,
+            z: 0,
         }
     }
 }
 
 impl Display for Cell {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
@@ -170,6 +181,7 @@ impl Sub<Cell> for Cell {
         Cell {
             x: self.x.saturating_sub(rhs.x),
             y: self.y.saturating_sub(rhs.y),
+            z: self.z.saturating_sub(rhs.z),
         }
     }
 }
@@ -181,6 +193,7 @@ impl Add<IVec2> for Cell {
         Cell {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+            z: self.z,
         }
     }
 }
@@ -192,6 +205,7 @@ impl Add<Cell> for Cell {
         Cell {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+            z: self.z + rhs.z,
         }
     }
 }
@@ -203,6 +217,7 @@ impl Div<i32> for &Cell {
         Cell {
             x: self.x / rhs,
             y: self.y / rhs,
+            z: self.z / rhs,
         }
     }
 }

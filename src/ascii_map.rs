@@ -174,7 +174,7 @@ impl AsciiMapSpec {
                 tile_size: DEFAULT_TILE_SIZE,
             },
             all_tiles,
-            spawn_point: (LevelId::default(), Cell { x: 5, y: 5 }),
+            spawn_point: (LevelId::default(), Cell::new(5, 5)),
             light_level: LightLevel::Bright,
             all_portals,
             ..default()
@@ -215,15 +215,7 @@ impl AsciiMapSpec {
             .enumerate()
             .flat_map(|(y, line)| {
                 line.char_indices().filter_map(move |(x, c)| {
-                    AsciiMapSpec::tile_for(c).map(|idx| {
-                        (
-                            idx,
-                            Cell {
-                                x: x as i32,
-                                y: y as i32,
-                            },
-                        )
-                    })
+                    AsciiMapSpec::tile_for(c).map(|idx| (idx, Cell::new(x as i32, y as i32)))
                 })
             })
             .collect::<Vec<_>>()
@@ -256,10 +248,7 @@ impl AsciiMapSpec {
         fx: impl Fn(&Cell, &ProbabilityTable) -> TileIdx,
         size: (u32, u32),
     ) -> Self {
-        let spawn_cell = Cell {
-            x: size.0 as i32 / 2,
-            y: size.1 as i32 / 2,
-        };
+        let spawn_cell = Cell::new(size.0 as i32 / 2, size.1 as i32 / 2);
         info!("=== map from procedure ===");
         let tiles = size.0 * size.1;
         info!("spawn_point: {:?}", spawn_cell);
@@ -368,10 +357,10 @@ mod tests {
         let spec = AsciiMapSpec::from_str("#.\n.#");
         let tiles = &spec.all_tiles;
         let id = LevelId(0);
-        assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell { x: 0, y: 0 }));
-        assert_eq!(tiles[&id][1], (TileIdx::Blank, Cell { x: 1, y: 0 }));
-        assert_eq!(tiles[&id][2], (TileIdx::Blank, Cell { x: 0, y: 1 }));
-        assert_eq!(tiles[&id][3], (TileIdx::StoneWall, Cell { x: 1, y: 1 }));
+        assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell::new(0, 0)));
+        assert_eq!(tiles[&id][1], (TileIdx::Blank, Cell::new(1, 0)));
+        assert_eq!(tiles[&id][2], (TileIdx::Blank, Cell::new(0, 1)));
+        assert_eq!(tiles[&id][3], (TileIdx::StoneWall, Cell::new(1, 1)));
     }
 
     #[test]
@@ -380,6 +369,6 @@ mod tests {
         // start is always hardcoded to (5, 5).
         let spec = AsciiMapSpec::from_str("X..\n...\n...");
         let (_, spawn_cell) = spec.spawn_point;
-        assert_eq!(spawn_cell, Cell { x: 5, y: 5 });
+        assert_eq!(spawn_cell, Cell::new(5, 5));
     }
 }
