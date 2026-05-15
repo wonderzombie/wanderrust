@@ -20,10 +20,10 @@ pub trait LdtkEntityExt<T> {
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
     pub levels: Vec<LdtkLevel>,
-    // #[serde(rename = "worldGridWidth")]
-    // pub grid_width: u32,
-    // #[serde(rename = "worldGridHeight")]
-    // pub grid_height: u32,
+    #[serde(rename = "worldGridWidth")]
+    pub grid_width: u32,
+    #[serde(rename = "worldGridHeight")]
+    pub grid_height: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -217,6 +217,8 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     let project = project.as_ref();
     let mut world = WorldSpec {
         light_level: LightLevel::Night,
+        grid_width: project.grid_width,
+        grid_height: project.grid_height,
         ..Default::default()
     };
 

@@ -22,6 +22,8 @@ pub struct WorldId(pub Entity);
 pub struct WorldSpec {
     pub id: Option<WorldId>,
     pub maps: HashMap<LevelId, LevelSpec>,
+    pub grid_width: u32,
+    pub grid_height: u32,
     pub spawn_point: SpawnCell,
     pub light_level: LightLevel,
 }
