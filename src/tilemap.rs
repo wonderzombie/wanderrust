@@ -1,4 +1,7 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{
+    platform::collections::{HashMap, HashSet},
+    prelude::*,
+};
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, ops::Neg};
@@ -26,6 +29,7 @@ pub struct WorldSpec {
     pub grid_height: u32,
     pub spawn_point: SpawnCell,
     pub light_level: LightLevel,
+    pub depths: HashSet<i32>,
 }
 
 type TileSpec = (TileIdx, Cell);
