@@ -390,7 +390,7 @@ fn process_actions(
             // No entity at the target [`Cell`], so we can assume it's an empty
             // walkable tile. Changing the [`Cell`] via insertion will cause the
             // system to move the player sprite.
-            info!("process_actions: move");
+            info!("process_actions: move to {adjusted_cell}");
             commands
                 .entity(action.entity)
                 .insert(adjusted_cell)
@@ -398,6 +398,8 @@ fn process_actions(
 
             continue;
         };
+
+        info!("entity {target_entity:?} is at {adjusted_cell}");
 
         if let Ok(portal) = portals.get(target_entity) {
             info!("process_actions: portal");
