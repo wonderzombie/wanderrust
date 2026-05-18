@@ -26,8 +26,11 @@ pub mod tiles;
 mod title_screen;
 mod tooltip;
 
+use std::time::Duration;
+
 use bevy::{
     asset::io::web::WebAssetPlugin,
+    diagnostic::LogDiagnosticsPlugin,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
@@ -38,6 +41,7 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
+    combat::Combatant,
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
@@ -111,7 +115,6 @@ pub fn run() {
     })
     .insert_resource(event_log::MessageLog::new(10))
     .insert_state(GameState::Starting)
-    .add_plugins(diagnostics::plugin)
     .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(editor::EditorPlugin)
@@ -194,9 +197,7 @@ pub fn run() {
             // Runs when there's been a change to an tile and updates sprite &
             // gameplay properties.
             map::sync_tiles,
-            (actors::update_transforms, actors::sync_occupied_tiles)
-                .in_set(GameSystem::ActorSync)
-                .after(map::sync_tiles),
+            (actors::update_transforms, actors::sync_occupied_tiles).in_set(GameSystem::ActorSync),
             camera::update.after(GameSystem::ActorSync),
             // Changes to tiles mean updates to pathing and "collision."
             (grid::update_spatial_index, grid::update_grid)

@@ -1,4 +1,5 @@
 use bevy::{
+    diagnostic::Diagnostics,
     platform::collections::{HashMap, HashSet},
     prelude::*,
 };
@@ -8,6 +9,7 @@ use crate::{
     actors::Player,
     cell::Cell,
     combat::{self, Awareness},
+    diagnostics::*,
     gamestate::Turn,
     tilemap::{Dimensions, Level},
     tiles::{TileIdx, Walkable},
@@ -137,7 +139,7 @@ pub fn init_agents(
 ) {
     for (entity, cell, child_of) in query {
         let Ok(grid) = grids.get(child_of.parent()) else {
-            error!("");
+            error!("entity {entity:?} didn't belong to a level with a grid");
             continue;
         };
 
@@ -151,14 +153,18 @@ pub fn pathfind(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
     query: Populated<(Entity, &Awareness, Option<&Pathfind>)>,
+    mut diagnostics: Diagnostics,
 ) {
+    diagnostics.add_measurement(&PATHFIND_CALLS, || 1.0);
     let player_cell: Cell = *player_cell.into_inner();
     for (entity, awareness, pathfind) in &query {
         if *awareness != Awareness::Alerted {
+            diagnostics.add_measurement(&NOT_ALERTED, || 1.0);
             continue;
         }
 
         if pathfind.is_none_or(|pf| pf.goal.eq(&player_cell.into())) {
+            diagnostics.add_measurement(&PATH_ADDED, || 1.0);
             commands
                 .entity(entity)
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
@@ -171,7 +177,9 @@ pub fn move_agents(
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<combat::Attack>,
     mut commands: Commands,
+    mut diagnostics: Diagnostics,
 ) {
+    diagnostics.add_measurement(&MOVE_AGENT_CALLS, || 1.0);
     for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         if turn.complete() {
             trace!("not moving done/idle entity {:?}", entity);
@@ -186,11 +194,13 @@ pub fn move_agents(
         let (player, player_cell) = *player;
 
         if next_pos.0 == player_cell.as_vec3() {
+            diagnostics.add_measurement(&AGENT_ATTACKS, || 1.0);
             attacks.write(combat::Attack {
                 attacker: entity,
                 target: player,
             });
         } else {
+            diagnostics.add_measurement(&AGENT_MOVES, || 1.0);
             agent_pos.0 = next_pos.0;
             commands
                 .entity(entity)

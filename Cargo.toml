@@ -12,7 +12,7 @@ bevy = { version = "0.18.1", features = [
   "bevy_remote",
   "debug",
   "dev",
-  "dynamic_linking",
+  # "dynamic_linking",
   "http",
   "https",
   "mouse",

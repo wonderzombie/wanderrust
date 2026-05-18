@@ -105,7 +105,7 @@ pub struct Combatant;
 
 #[derive(Bundle, Default)]
 pub struct CombatantBundle {
-    pub belligerent: Combatant,
+    pub combatant: Combatant,
     pub params: Parameters,
     pub awareness: Awareness,
     pub turn: Turn,
