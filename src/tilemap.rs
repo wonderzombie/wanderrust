@@ -29,8 +29,11 @@ pub struct WorldSpec {
     pub grid_height: u32,
     pub spawn_point: SpawnCell,
     pub light_level: LightLevel,
-    pub depths: HashSet<i32>,
+    pub depths: HashSet<Depth>,
 }
+
+#[derive(Component, Default, Debug, Reflect, PartialEq, Eq, Ord, PartialOrd, Hash, Clone, Copy)]
+pub struct Depth(pub(crate) i32);
 
 type TileSpec = (TileIdx, Cell);
 type PortalSpec = (Portal, Cell);

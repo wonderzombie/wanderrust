@@ -1,7 +1,4 @@
-use bevy::{
-    platform::collections::{HashMap, HashSet},
-    prelude::*,
-};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_northstar::prelude::*;
 
 use crate::{
@@ -9,8 +6,8 @@ use crate::{
     cell::Cell,
     combat::{self, Awareness},
     gamestate::Turn,
-    tilemap::{Dimensions, Level},
-    tiles::{TileIdx, Walkable},
+    tilemap::{Depth, Level, WorldId, WorldSpec},
+    tiles::Walkable,
 };
 
 /// A spatial index that tracks which cells are occupied by non-walkable
@@ -69,65 +66,60 @@ pub(crate) fn setup_spatial_indices(
 
 pub fn spawn_grid(
     mut commands: Commands,
-    levels: Populated<(&Level, &Dimensions), Without<CardinalGrid>>,
+    world_spec: Res<WorldSpec>,
+    world_entity: Single<(&WorldId, &Children)>,
 ) {
-    info!("🧭 spawning grid for {} levels", levels.count());
-    for (Level(level, _), size) in levels {
-        info!("🧭 grid {:?} is {} x {}", level, size.width, size.height);
-        let grid_settings = GridSettingsBuilder::new_2d(size.width, size.height)
-            .chunk_size(16)
+    let (WorldId(nt), _) = *world_entity;
+    let Depth(max_depth) = world_spec.depths.iter().max().copied().unwrap_or_default();
+    assert!(
+        max_depth >= 0,
+        "negative world depths (i32) are not yet supported; `bevy_northstar` needs u32"
+    );
+    let world_height: u32 = max_depth.cast_unsigned();
+
+    commands.entity(*nt).insert(CardinalGrid::new(
+        &GridSettingsBuilder::new_3d(world_spec.grid_width, world_spec.grid_height, world_height)
+            .chunk_size(8)
+            .chunk_depth(1)
             .default_impassable()
-            .build();
-
-        let grid = Grid::<CardinalNeighborhood>::new(&grid_settings);
-
-        commands.entity(*level).insert(grid);
-    }
+            .build(),
+    ));
 }
 
 pub fn update_grid(
-    mut grid: Populated<(Entity, &mut CardinalGrid)>,
-    changed_tiles: Query<(&Cell, &ChildOf, Option<&Walkable>), Changed<TileIdx>>,
+    mut nav_grid: Single<&mut CardinalGrid>,
+    changed_tiles: Populated<(&Cell, Has<Walkable>), Changed<Walkable>>,
 ) {
-    let mut changed_grids: HashSet<Entity> = HashSet::new();
-
-    for (cell, ChildOf(parent), walkable_opt) in changed_tiles {
-        let (entity, mut grid) = grid
-            .get_mut(*parent)
-            .expect("failed to get grid for cell; was grid initialized?");
-
-        if !grid.in_bounds(cell.as_vec3()) {
+    let mut grid_changed = false;
+    for (cell, is_walkable) in changed_tiles {
+        if !nav_grid.in_bounds(cell.as_vec3()) {
             error!(
                 "Skipping attempt to update grid at out-of-bounds position {}; grid is {} x {}",
                 cell,
-                grid.width(),
-                grid.height(),
+                nav_grid.width(),
+                nav_grid.height(),
             );
-            error_once!("grid dumped: {:?}", grid.view());
+            error_once!("grid dumped: {:?}", nav_grid.view());
             continue;
         }
 
-        let prev_nav = grid.nav(cell.into());
-        let next_nav = if walkable_opt.is_some() {
+        let prev_nav = nav_grid.nav(cell.into());
+        let next_nav = if is_walkable {
             Nav::Passable(1)
         } else {
             Nav::Impassable
         };
 
-        // This handles the case where `prev_nav` is `None` (there was nothing
-        // at that cell), or when `Some(prev_nav) != Some(next_nav)` (there is
-        // no change at that cell).
         if prev_nav != Some(next_nav) {
-            grid.set_nav(cell.into(), next_nav);
-            changed_grids.insert(entity);
+            grid_changed = true;
+            nav_grid.set_nav(cell.into(), next_nav);
         }
     }
 
-    changed_grids.iter().for_each(|&entity| {
-        if let Ok((_, mut grid)) = grid.get_mut(entity) {
-            grid.build();
-        }
-    });
+    if grid_changed {
+        info!("updated world grid");
+        nav_grid.build();
+    }
 }
 
 pub fn init_agents(

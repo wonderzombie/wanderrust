@@ -222,14 +222,12 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
         ..Default::default()
     };
 
-    let mut distinct_depths: HashSet<i32> = HashSet::new();
-
     for level in &project.levels {
         let level_id = LevelId(level.uid);
         let spec: &mut LevelSpec = world.maps.entry(level_id).or_default();
         spec.identifier = level.identifier.clone();
         spec.depth = level.world_depth;
-        distinct_depths.insert(spec.depth);
+        world.depths.insert(tilemap::Depth(spec.depth));
         spec.light_level = level.light_level().unwrap_or(world.light_level);
         spec.world_pos = Vec2 {
             x: level.world_x as f32,
@@ -276,9 +274,6 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
             }
         }
     }
-
-    info!("distinct depths: {distinct_depths:?}");
-    world.depths = distinct_depths;
 
     commands.insert_resource(world);
 }
