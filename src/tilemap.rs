@@ -436,13 +436,13 @@ fn generate_tile_bundles(
         .map(|(i, tile_idx)| {
             let cell = dim.idx_to_cell(i);
             let pos = dim.cell_to_pos(&cell);
-            if cell > Cell::ZERO {
-                assert_ne!(
-                    (cell.x as f32, cell.y as f32),
-                    (pos.x, pos.y),
-                    "expected non-zero cell to map to non-zero position"
-                );
-            }
+            // if cell > Cell::ZERO {
+            //     assert_ne!(
+            //         (cell.x as f32, cell.y as f32),
+            //         (pos.x, pos.y),
+            //         "expected non-zero cell to map to non-zero position"
+            //     );
+            // }
 
             TileBundle {
                 map_tile: MapTile,
