@@ -150,7 +150,7 @@ pub fn pathfind(
             continue;
         }
 
-        if pathfind.is_none_or(|pf| pf.goal.eq(&player_cell.into())) {
+        if pathfind.is_none_or(|pf| pf.goal.ne(&player_cell.into())) {
             commands
                 .entity(entity)
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
