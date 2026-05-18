@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
-    interactions::Interactable,
+    interactions::Interactable, tiles::TileIdx,
 };
 
-#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect)]
+#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Health {
     pub hp: i32,
@@ -15,7 +15,7 @@ pub struct Health {
     pub is_dead: bool,
 }
 
-#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize, Reflect)]
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,
@@ -24,18 +24,91 @@ pub struct Parameters {
     pub vision: Vision,
 }
 
-pub fn init_combatants(mut combatants: Query<&mut Parameters, Added<Parameters>>) {
-    for mut it in combatants.iter_mut() {
-        it.health.hp = it.health.max;
+impl Parameters {
+    pub fn init(&mut self) -> Self {
+        self.health.hp = self.health.max;
+        *self
     }
 }
 
+impl Default for Parameters {
+    fn default() -> Self {
+        Self {
+            attack: 0,
+            defense: 0,
+            health: Health { hp: 1, ..default() },
+            vision: Vision(1),
+        }
+    }
+}
+
+macro_rules! define_parameters {
+    (
+        $( $combatant_name:ident => [ $tile:path, atk = $atk:expr, def = $def:expr, hp = $hp:expr, vis = $vis:expr ], )*
+    ) => {
+        impl Parameters {
+            pub fn is_default(&self) -> bool {
+                *self == Parameters::default()
+            }
+
+            pub fn all() -> &'static [(&'static str, TileIdx, Parameters)] {
+                &[ $( ( stringify!(Combatants::$combatant_name), $tile, Parameters { attack: $atk, defense: $def, health: Health { hp: $hp, max: $hp, is_dead: false }, vision: Vision($vis)  }), )* ]
+            }
+
+            pub fn from_name(name: impl AsRef<str>) -> Option<Parameters> {
+                Self::all().iter().find(|(n, _, _)| *n == name.as_ref()).map(|(_, _, p)| *p)
+
+            }
+
+            pub fn from_tile(tile: &TileIdx) -> Option<Parameters> {
+                Self::all().iter().find(|(_, t, _)| t == tile).map(|(_, _, p)| *p)
+            }
+        }
+    };
+}
+
+define_parameters!(
+    Bat => [TileIdx::Bat, atk = 2, def = 0, hp = 10, vis = 3],
+    Skeleton => [TileIdx::Skeleton, atk = 3, def = 2, hp = 15, vis = 2],
+);
+
+pub fn init_combatants(
+    mut commands: Commands,
+    interxs: Populated<(Entity, &Interactable), (Added<Interactable>, Without<Parameters>)>,
+) {
+    for (entity, interx) in interxs.into_iter() {
+        let Interactable::Belligerent { name, tile_idx } = interx else {
+            continue;
+        };
+
+        let params_opt = Parameters::from_tile(tile_idx).or(Parameters::from_name(name));
+
+        // Do not skip adding parameters; instead, add a default and log an error.
+        // This will keep this function from running repeatedly and doing nothing.
+        if params_opt.is_none() || params_opt.is_some_and(|it| it.is_default()) {
+            error!(
+                "no parameters exist for entity {:?} named {} with tile {:?}; using {:#?}",
+                entity, name, tile_idx, params_opt
+            );
+        }
+
+        let params = params_opt.unwrap_or_default().init();
+        commands.entity(entity).insert(CombatantBundle {
+            params,
+            ..default()
+        });
+    }
+}
+
+#[derive(Component, Default, Reflect)]
+pub struct Combatant;
+
 #[derive(Bundle, Default)]
-pub struct Belligerent {
+pub struct CombatantBundle {
+    pub combatant: Combatant,
     pub params: Parameters,
     pub awareness: Awareness,
     pub turn: Turn,
-    pub interactable: Interactable,
 }
 
 /// Add Awareness if the Actor needs complex behavior related to the Player.
@@ -67,25 +140,39 @@ pub struct CombatantStats {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &Name, &mut Parameters)>,
+    mut combatants: Query<(Entity, Option<&Name>, &mut Parameters)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
+    if attacks.len() > 0 {
+        info!("process_attacks: {}", attacks.len());
+    }
+
     for attack in attacks.read() {
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
+            warn!(
+                "either attacker {:?} or target {:?} was not found among combatants: {} vs {}",
+                attack.attacker,
+                attack.target,
+                combatants.contains(attack.attacker),
+                combatants.contains(attack.target)
+            );
             continue;
         };
 
         let (defender_id, defender_name, mut defender) = defender;
         let (_, attacker_name, attacker) = attacker;
 
+        let defender_name = defender_name.map_or("some defender", |n| n.as_str());
+        let attacker_name = attacker_name.map_or("some attacker", |n| n.as_str());
+
         if defender.health.is_dead {
             log.add(
-                format!("{} is already dead", defender_name),
+                format!("{} is already dead", defender_name,),
                 colors::KENNEY_GOLD,
             );
             continue;

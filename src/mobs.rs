@@ -4,41 +4,37 @@ use bevy_northstar::prelude::*;
 use crate::{
     actors::{Dead, Player},
     cell::Cell,
-    combat::Awareness,
-    fov::{Fov, Vision},
+    combat::{Awareness, Parameters},
+    fov::Fov,
     gamestate::Turn,
     inventory,
     loot::{FixedLoot, LootTable},
+    tilemap::{ActiveLevel, Zone},
 };
 
 /// Checks each mob's status and alerts mobs when the player enters their FOV.
 pub fn check_fov(
     mut commands: Commands,
-    all_fov: Query<&Fov>,
-    active_mobs: Populated<
-        (Entity, &Awareness, &ChildOf, &Cell, &Vision),
-        (With<AgentOfGrid>, Without<Dead>, Without<Player>),
-    >,
+    active_zone: Single<(&Fov, &Zone), With<ActiveLevel>>,
+    active_mobs: Populated<(&Awareness, &Cell, &Parameters), (With<AgentOfGrid>, Without<Dead>)>,
     player_cell: Single<&Cell, With<Player>>,
 ) {
     let player_cell: (i32, i32) = (*player_cell).into();
-    for (mob_entity, awareness, mob_child_of, mob_cell, mob_vision) in active_mobs.iter() {
-        let Some(fov) = all_fov.get(mob_child_of.parent()).ok() else {
-            warn!("No Fov found for entity {:?}", mob_child_of.parent());
+
+    let (fov, entities) = active_zone.into_inner();
+
+    for entity in entities.iter() {
+        let Ok((awareness, cell, params)) = active_mobs.get(entity) else {
             continue;
         };
 
-        let view = fov.from(mob_cell.into(), mob_vision.range());
+        let view = fov.from(cell.into(), params.vision.range());
 
         if view.has(player_cell) && awareness < &Awareness::Alerted {
             commands
-                .entity(mob_entity)
+                .entity(entity)
                 .insert(Awareness::Alerted)
                 .insert(Turn::Waiting);
-            info!(
-                "{:?} @ {} detected player at {:?}",
-                mob_entity, mob_cell, player_cell
-            );
         }
     }
 }

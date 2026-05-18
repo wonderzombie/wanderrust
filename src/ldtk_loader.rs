@@ -79,6 +79,8 @@ pub struct LdtkField {
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkEntity {
+    #[serde(rename = "__identifier")]
+    pub identifier: String,
     #[serde(rename = "__grid")]
     pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.

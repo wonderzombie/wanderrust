@@ -17,6 +17,8 @@ use crate::{
 #[derive(Component, Debug, Default, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 #[reflect(Component)]
 pub enum Interactable {
+    #[default]
+    Invalid,
     Door {
         is_open: bool,
         requires: Option<Item>,
@@ -27,26 +29,23 @@ pub enum Interactable {
         contents: Option<Inventory>,
         tile_idx: TileIdx,
     },
-    #[default]
-    Speaker,
-    Combatant {
+    Speaker {
+        name: String,
+        tile_idx: TileIdx,
+    },
+    Belligerent {
         name: String,
         tile_idx: TileIdx,
     },
 }
 
 impl Interactable {
-    pub fn default_tile(&self) -> Option<TileIdx> {
+    pub fn tile(&self) -> TileIdx {
         match self {
-            Self::Chest {
-                tile_idx: tile_idx_default,
-                ..
-            }
-            | Self::Door {
-                tile_idx: tile_idx_default,
-                ..
-            } => Some(*tile_idx_default),
-            _ => None,
+            Self::Chest { tile_idx, .. }
+            | Self::Door { tile_idx, .. }
+            | Self::Belligerent { tile_idx, .. } => *tile_idx,
+            _ => TileIdx::GridSquare,
         }
     }
 
@@ -70,7 +69,7 @@ impl Interactable {
                 requires: requires.clone(),
                 tile_idx,
             },
-            Self::Combatant { name, tile_idx: _ } => Self::Combatant {
+            Self::Belligerent { name, tile_idx: _ } => Self::Belligerent {
                 name: name.clone(),
                 tile_idx,
             },
@@ -92,13 +91,15 @@ impl LdtkEntityExt<Interactable> for Interactable {
         let tile_idx = entity.get_tile();
         let name = if let Some(name) = entity.get_string("name") {
             name
+        } else if !entity.identifier.is_empty() {
+            entity.identifier.clone()
         } else {
             String::from("MISSINGNAME")
         };
 
         match ty {
-            LdtkActor::Combatant => Some(Self::Combatant { name, tile_idx }),
-            LdtkActor::Speaker => Some(Self::Speaker),
+            LdtkActor::Combatant => Some(Self::Belligerent { name, tile_idx }),
+            LdtkActor::Speaker => Some(Self::Speaker { name, tile_idx }),
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").map(Item);
                 let is_open = entity.get_bool("is_open");
@@ -166,6 +167,10 @@ pub fn process_interactions(
         );
 
         match interactable.as_mut() {
+            Interactable::Invalid => {
+                error!("invalid interactable; skipping: {:?}", attempt);
+                continue;
+            }
             Interactable::Door {
                 is_open,
                 requires,
@@ -219,15 +224,15 @@ pub fn process_interactions(
                     }
                 }
             }
-            Interactable::Speaker => {
+            Interactable::Speaker { name, .. } => {
                 info!(
                     "Player talks to {}.",
-                    name_opt.map_or("someone", |n| n.as_str())
+                    name_opt.map_or(name.as_str(), |n| n.as_str())
                 );
                 speech.write(Listen { entity });
             }
-            Interactable::Combatant { .. } => {
-                info!("Player attacks {entity:?}");
+            Interactable::Belligerent { name, .. } => {
+                info!("Player attacks {name}.");
                 attacks.write(combat::Attack {
                     attacker: attempt.interactor,
                     target: entity,
@@ -298,7 +303,7 @@ pub fn spawn_interxs(
                 (
                     InterxBundle {
                         interx: interx.clone(),
-                        tile_idx: interx.default_tile().unwrap_or(TileIdx::GridSquare),
+                        tile_idx: interx.tile(),
                         piece: PieceBundle {
                             cell: *cell,
                             sprite: atlas.sprite(),

@@ -39,6 +39,7 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
+    combat::Combatant,
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
@@ -112,7 +113,6 @@ pub fn run() {
     })
     .insert_resource(event_log::MessageLog::new(10))
     .insert_state(GameState::Starting)
-    .add_plugins(diagnostics::plugin)
     .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(editor::EditorPlugin)
@@ -195,9 +195,7 @@ pub fn run() {
             // Runs when there's been a change to an tile and updates sprite &
             // gameplay properties.
             map::sync_tiles,
-            (actors::update_transforms, actors::sync_occupied_tiles)
-                .in_set(GameSystem::ActorSync)
-                .after(map::sync_tiles),
+            (actors::update_transforms, actors::sync_occupied_tiles).in_set(GameSystem::ActorSync),
             camera::update.after(GameSystem::ActorSync),
             // Changes to tiles mean updates to pathing and "collision."
             (grid::update_spatial_index, grid::update_grid)
@@ -225,6 +223,7 @@ pub fn run() {
                 .after(GameSystem::Fov)
                 .run_if(in_state(GameState::Ramifying)),
             combat::init_combatants,
+            grid::init_agents,
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
@@ -375,6 +374,7 @@ fn process_actions(
 ) {
     let mut acted = false;
     for action in actions.read() {
+        info!("action: {action:?}");
         let Some(spatial_index) = actors
             .get(action.entity)
             .and_then(|e| all_spatial.get(e.parent()))
@@ -391,7 +391,7 @@ fn process_actions(
             // No entity at the target [`Cell`], so we can assume it's an empty
             // walkable tile. Changing the [`Cell`] via insertion will cause the
             // system to move the player sprite.
-            trace!("process_actions: move");
+            info!("process_actions: move");
             commands
                 .entity(action.entity)
                 .insert(adjusted_cell)
@@ -401,14 +401,14 @@ fn process_actions(
         };
 
         if let Ok(portal) = portals.get(target_entity) {
-            trace!("process_actions: portal");
+            info!("process_actions: portal");
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
             continue;
         }
 
-        trace!("process_actions: interaction");
+        info!("process_actions: interaction");
         interaction_attempts.write(interactions::Examine {
             interactor: action.entity,
             target: target_entity,
@@ -432,15 +432,11 @@ struct PendingTransition {
 /// cell.
 fn handle_pending_transition(
     mut commands: Commands,
-    pending_transition: Option<ResMut<PendingTransition>>,
+    transition: If<ResMut<PendingTransition>>,
     active_level: Single<Entity, With<ActiveLevel>>,
     portals: Query<(&Portal, &Cell, &ChildOf), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
-    let Some(transition) = pending_transition.as_ref() else {
-        return;
-    };
-
     info!("looking for {:?} in {:?}", transition.arrive_at, portals);
     for (portal, cell, portal_child_of) in &portals {
         if portal.id == transition.arrive_at {
