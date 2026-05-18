@@ -124,18 +124,14 @@ pub fn update_grid(
 
 pub fn init_agents(
     mut commands: Commands,
-    grids: Populated<Entity, With<CardinalGrid>>,
-    query: Populated<(Entity, &Cell, &ChildOf), (With<Awareness>, Without<AgentOfGrid>)>,
+    grid: Single<Entity, With<CardinalGrid>>,
+    query: Populated<(Entity, &Cell), (With<Awareness>, Without<AgentOfGrid>)>,
 ) {
-    for (entity, cell, child_of) in query {
-        let Ok(grid) = grids.get(child_of.parent()) else {
-            error!("entity {entity:?} didn't belong to a level with a grid");
-            continue;
-        };
-
+    let grid_nt = grid.into_inner();
+    for (entity, cell) in query {
         commands
             .entity(entity)
-            .insert((AgentPos(cell.into()), AgentOfGrid(grid)));
+            .insert((AgentPos(cell.into()), AgentOfGrid(grid_nt)));
     }
 }
 
