@@ -26,11 +26,8 @@ pub mod tiles;
 mod title_screen;
 mod tooltip;
 
-use std::time::Duration;
-
 use bevy::{
     asset::io::web::WebAssetPlugin,
-    diagnostic::LogDiagnosticsPlugin,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
