@@ -436,6 +436,7 @@ fn generate_tile_bundles(
         .map(|(i, tile_idx)| {
             let cell = dim.idx_to_cell(i);
             let pos = dim.cell_to_pos(&cell);
+            // TODO: detect when all cells map to (0, 0, 0) another way.
             // if cell > Cell::ZERO {
             //     assert_ne!(
             //         (cell.x as f32, cell.y as f32),
