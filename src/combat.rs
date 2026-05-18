@@ -147,7 +147,7 @@ pub fn process_attacks(
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
-    if attacks.len() > 0 {
+    if !attacks.is_empty() {
         info!("process_attacks: {}", attacks.len());
     }
 
