@@ -70,6 +70,9 @@ impl PlayerStats {
 #[derive(EntityEvent, Debug)]
 pub struct Moved(pub Entity);
 
+#[derive(EntityEvent, Debug)]
+pub struct Bonk(pub Entity);
+
 /// Spawns the player entity at the start position of the tilemap on the
 /// player's layer.
 pub fn setup_player(

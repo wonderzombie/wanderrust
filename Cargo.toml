@@ -7,18 +7,7 @@ edition = "2024"
 members = [".", "mrpas"]
 
 [dependencies]
-bevy = { version = "0.18.1", features = [
-  "2d",
-  "bevy_remote",
-  "debug",
-  "dev",
-  # "dynamic_linking",
-  "http",
-  "https",
-  "mouse",
-  "sprite_picking",
-  # "detailed_trace",
-] }
+bevy = { version = "0.18.1", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
 bevy_egui = "0.39.1"
 bevy-inspector-egui = "0.36.0"
 bevy_northstar = "0.6.1"

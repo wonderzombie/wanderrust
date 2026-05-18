@@ -3,9 +3,23 @@ use bevy_northstar::prelude::AgentOfGrid;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
-    interactions::Interactable, tiles::TileIdx,
+    actors::Dead,
+    colors,
+    event_log::MessageLog,
+    fov::Vision,
+    gamestate::Turn,
+    interactions::Interactable,
+    tiles::{TileIdx, Walkable},
 };
+
+#[derive(EntityEvent, Debug)]
+pub(crate) struct Attacked(pub Entity);
+
+#[derive(EntityEvent, Debug)]
+pub(crate) struct Hit(pub Entity);
+
+#[derive(EntityEvent, Debug)]
+pub(crate) struct Died(pub Entity);
 
 #[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
@@ -180,6 +194,7 @@ pub fn process_attacks(
 
         let damage = attacker.attack - defender.defense;
         if damage >= 0 {
+            commands.entity(defender_id).trigger(Hit);
             defender.health.hp = defender.health.hp.saturating_sub(damage);
             log.add(
                 format!("{} hits {}!", attacker_name, defender_name),
@@ -187,6 +202,7 @@ pub fn process_attacks(
             );
 
             if defender.health.hp <= 0 {
+                commands.entity(defender_id).trigger(Died);
                 defender.health.is_dead = true;
                 log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
                 spawn_floating_text(
@@ -199,6 +215,8 @@ pub fn process_attacks(
                 commands
                     .entity(defender_id)
                     .insert(Dead)
+                    .trigger(Died)
+                    .insert(Walkable)
                     .remove::<AgentOfGrid>()
                     .remove::<Turn>();
             } else {

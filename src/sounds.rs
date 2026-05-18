@@ -5,9 +5,11 @@ use bevy::{
     audio::{PlaybackMode, Volume},
     prelude::*,
 };
-use rand::seq::IndexedRandom;
 
-use crate::actors::Moved;
+use crate::{
+    actors::{Bonk, Moved, Player},
+    combat::Attacked,
+};
 
 #[derive(Resource, Default)]
 pub struct Sounds {
@@ -58,38 +60,77 @@ pub fn on_loaded(
             let audio_handle = handle.clone().try_typed::<AudioSource>().ok()?;
             let path = asset_server.get_path(handle.id())?;
             let name = path.path().file_stem()?.to_string_lossy().into_owned();
+            info!("sound: {name:?} handle {audio_handle:?}");
             Some((name, audio_handle))
         })
         .collect();
 
     sounds.loaded = true;
-    commands.add_observer(on_moved_sounds);
+
+    commands.add_observer(on_walk_sound);
+    commands.add_observer(on_bonk_sound);
+    commands.add_observer(on_attack_sound);
+    commands.add_observer(on_acquired_sound);
     info!("🔈 finished initializing sounds");
 }
 
-const GRASS_FOOTSTEPS: [&str; 5] = [
-    "footstep_grass_000",
-    "footstep_grass_001",
-    "footstep_grass_002",
-    "footstep_grass_003",
-    "footstep_grass_004",
-];
+fn on_bonk_sound(_on: On<Bonk>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("bonk") {
+        commands.spawn((
+            AudioPlayer::new(s.clone()),
+            PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::Linear(0.4),
+                ..default()
+            },
+        ));
+    }
+}
 
-fn on_moved_sounds(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
-    let mut rng = rand::rng();
+fn on_walk_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("step") {
+        commands.spawn((
+            AudioPlayer::new(s.clone()),
+            PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::Linear(0.4),
+                ..default()
+            },
+        ));
+    }
+}
 
-    let rand_footstep: &'static str = GRASS_FOOTSTEPS.choose(&mut rng).unwrap();
-    let Some(footstep) = sounds.lookup.get(rand_footstep) else {
-        error!("footstep sound not found: {}", rand_footstep);
-        return;
-    };
+fn on_attack_sound(
+    on: On<Attacked>,
+    mut commands: Commands,
+    sounds: Res<Sounds>,
+    player: Single<Entity, With<Player>>,
+) {
+    let sound = if *player == on.0 { "hit" } else { "attack" };
+    if let Some(s) = sounds.lookup.get(sound) {
+        commands.spawn((
+            AudioPlayer::new(s.clone()),
+            PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::Linear(0.4),
+                ..default()
+            },
+        ));
+    }
+}
 
-    commands.spawn((
-        AudioPlayer::new(footstep.clone()),
-        PlaybackSettings {
-            mode: PlaybackMode::Despawn,
-            volume: Volume::Linear(0.1),
-            ..default()
-        },
-    ));
+#[derive(Event, Debug)]
+struct Opened;
+
+fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("opened") {
+        commands.spawn((
+            AudioPlayer::new(s.clone()),
+            PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::Linear(0.4),
+                ..default()
+            },
+        ));
+    }
 }
