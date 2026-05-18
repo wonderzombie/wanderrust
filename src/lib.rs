@@ -39,7 +39,6 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    combat::Combatant,
     gamestate::{GameState, Screen},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
