@@ -113,7 +113,7 @@ impl Cell {
     }
 
     pub fn as_vec3(&self) -> UVec3 {
-        UVec3::new(self.x as u32, self.y as u32, 0)
+        UVec3::new(self.x as u32, self.y as u32, self.z as u32)
     }
 
     pub fn at_depth(x: i32, y: i32, z: i32) -> Self {
