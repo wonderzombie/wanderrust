@@ -27,6 +27,7 @@ use serde::{Deserialize, Serialize};
 pub struct Cell {
     pub x: i32,
     pub y: i32,
+    #[serde(skip)]
     pub z: i32,
 }
 
@@ -78,7 +79,7 @@ impl Cell {
 
     /// Adds the other cell to this one, modifying this cell in place,
     /// effectively treating the other cell as a vector offset.
-    pub fn combine(&mut self, other: Cell) {
+    pub fn combine(&mut self, other: Self) {
         self.x = self.x.saturating_add(other.x);
         self.y = self.y.saturating_add(other.y);
     }
@@ -95,8 +96,8 @@ impl Cell {
         self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
     }
 
-    pub fn neg(&self) -> Cell {
-        Cell {
+    pub fn neg(&self) -> Self {
+        Self {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -117,6 +118,14 @@ impl Cell {
 
     pub fn at_depth(x: i32, y: i32, z: i32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn with_depth(&self, depth: u32) -> UVec3 {
+        UVec3 {
+            x: self.x as u32,
+            y: self.y as u32,
+            z: depth,
+        }
     }
 
     pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
