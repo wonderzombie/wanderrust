@@ -7,7 +7,7 @@ use crate::{
     combat::{self, Awareness},
     gamestate::Turn,
     tilemap::{Depth, Level, WorldId, WorldSpec},
-    tiles::Walkable,
+    tiles::{TileIdx, Walkable},
 };
 
 /// A spatial index that tracks which cells are occupied by non-walkable
@@ -78,17 +78,21 @@ pub fn spawn_grid(
     let world_height: u32 = max_depth.cast_unsigned();
 
     commands.entity(*nt).insert(CardinalGrid::new(
-        &GridSettingsBuilder::new_3d(world_spec.grid_width, world_spec.grid_height, world_height)
-            .chunk_size(8)
-            .chunk_depth(1)
-            .default_impassable()
-            .build(),
+        &GridSettingsBuilder::new_3d(
+            world_spec.grid_width,
+            world_spec.grid_height,
+            world_height + 1,
+        )
+        .chunk_size(8)
+        .chunk_depth(1)
+        .default_impassable()
+        .build(),
     ));
 }
 
 pub fn update_grid(
     mut nav_grid: Single<&mut CardinalGrid>,
-    changed_tiles: Populated<(&Cell, Has<Walkable>), Changed<Walkable>>,
+    changed_tiles: Populated<(&Cell, Has<Walkable>), Changed<TileIdx>>,
 ) {
     let mut grid_changed = false;
     for (cell, is_walkable) in changed_tiles {
@@ -138,7 +142,7 @@ pub fn init_agents(
 pub fn pathfind(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
-    query: Populated<(Entity, &Awareness, Option<&Pathfind>)>,
+    query: Populated<(Entity, &Awareness, Option<&Pathfind>), Without<Player>>,
 ) {
     let player_cell: Cell = *player_cell.into_inner();
     for (entity, awareness, pathfind) in &query {
