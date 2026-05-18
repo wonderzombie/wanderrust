@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use serde::Deserialize;
 use serde_json::{Value, from_value};
 
