@@ -156,12 +156,12 @@ pub struct LdtkGridTile {
 }
 
 impl LdtkGridTile {
-    fn into_cell(self, level_height_px: f32) -> Cell {
+    fn into_cell(self, level_height_px: f32, depth: i32) -> Cell {
         let x = self.px.x;
         let y = self.px.y;
         let cx = (x / 16.0) as i32;
         let cy = ((level_height_px - y) / 16.0) as i32 - 1;
-        Cell::new(cx, cy)
+        Cell::at_depth(cx, cy, depth)
     }
 }
 
@@ -194,8 +194,8 @@ impl From<LdtkPxTile> for TileIdx {
 pub struct LdtkCell(Cell);
 
 impl LdtkCell {
-    fn to_wandrs(self, level_height_cells: i32) -> Cell {
-        Cell::new(self.x, level_height_cells - 1 - self.y)
+    fn to_wandrs(self, level_height_cells: i32, depth: i32) -> Cell {
+        Cell::at_depth(self.x, level_height_cells - 1 - self.y, depth)
     }
 }
 
@@ -243,14 +243,17 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
 
             if layer.layer_type.eq_ignore_ascii_case("tiles") {
                 info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
-                spec.tiles
-                    .extend(get_grid_tiles(&layer.grid_tiles, level.px_hei));
+                spec.tiles.extend(get_grid_tiles(
+                    &layer.grid_tiles,
+                    level.px_hei,
+                    level.world_depth,
+                ));
             }
 
             if layer.layer_type.eq_ignore_ascii_case("entities") {
                 info!("🧰 loading {} entities", layer.entities.len());
                 for actor in &layer.entities {
-                    let cell = actor.ldtk_cell.to_wandrs(layer.c_height);
+                    let cell = actor.ldtk_cell.to_wandrs(layer.c_height, spec.depth);
 
                     if actor.get_tile() == TileIdx::default() {
                         warn!("actor has default tile: {:?}", actor);
@@ -278,13 +281,17 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
     commands.insert_resource(world);
 }
 
-fn get_grid_tiles(grid_tiles: &Vec<LdtkGridTile>, level_px_height: f32) -> Vec<TileCell> {
+fn get_grid_tiles(
+    grid_tiles: &Vec<LdtkGridTile>,
+    level_px_height: f32,
+    world_depth: i32,
+) -> Vec<TileCell> {
     let mut new_tiles: Vec<TileCell> = vec![];
     let mut blank = 0;
     let mut zero = 0;
     for grid_tile in grid_tiles {
         let tile_idx = TileIdx::from_idx(grid_tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
-        let cell = grid_tile.into_cell(level_px_height);
+        let cell = grid_tile.into_cell(level_px_height, world_depth);
         if cell == Cell::ZERO {
             zero += 1;
         }
