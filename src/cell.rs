@@ -43,15 +43,6 @@ impl Cell {
         Cell { x, y, z: 0 }
     }
 
-    /// Creates a cell from x and y coordinates, converting them to i32.
-    pub fn at_coords(x: u32, y: u32) -> Self {
-        Cell {
-            x: x as i32,
-            y: y as i32,
-            z: 0,
-        }
-    }
-
     /// Creates a cell from an index and a width, converting them to i32.
     pub fn from_idx(width: u32, idx: usize) -> Cell {
         Self::from_idx_depth(width, idx, default())
@@ -77,13 +68,6 @@ impl Cell {
         Vec2::new(self.x as f32, self.y as f32)
     }
 
-    /// Adds the other cell to this one, modifying this cell in place,
-    /// effectively treating the other cell as a vector offset.
-    pub fn combine(&mut self, other: Self) {
-        self.x = self.x.saturating_add(other.x);
-        self.y = self.y.saturating_add(other.y);
-    }
-
     /// Converts this cell to an index given a width, treating the cell as a 2D
     /// grid index.
     pub fn to_idx(self, width: u32) -> usize {
@@ -96,22 +80,6 @@ impl Cell {
         self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
     }
 
-    pub fn neg(&self) -> Self {
-        Self {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-        }
-    }
-
-    pub fn x(&self) -> i32 {
-        self.x
-    }
-
-    pub fn y(&self) -> i32 {
-        self.y
-    }
-
     pub fn as_vec3(&self) -> UVec3 {
         UVec3::new(self.x as u32, self.y as u32, self.z as u32)
     }
@@ -120,27 +88,11 @@ impl Cell {
         Self { x, y, z }
     }
 
-    pub fn with_depth(&self, depth: u32) -> UVec3 {
-        UVec3 {
-            x: self.x as u32,
-            y: self.y as u32,
-            z: depth,
-        }
-    }
-
     pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
         Self {
             x: agent_pos.0.x as i32,
             y: agent_pos.0.y as i32,
             z: agent_pos.0.z as i32,
-        }
-    }
-
-    pub fn from_px(px: f32, py: f32, tile_size: f32) -> Self {
-        Cell {
-            x: px.div(tile_size) as i32,
-            y: py.div(tile_size) as i32,
-            z: 0,
         }
     }
 }
