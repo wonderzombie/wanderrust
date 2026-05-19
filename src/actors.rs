@@ -7,9 +7,9 @@ use bevy_northstar::prelude::Blocking;
 use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    combat::{CombatantBundle, Health, Parameters},
-    fov::Vision,
+    combat::CombatantBundle,
     light::{Emitter, LightLevel},
+    parameters::*,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };

@@ -6,12 +6,12 @@ use crate::{
     atlas::{self, SpriteAtlas},
     cell::Cell,
     colors,
-    combat::{Awareness, Parameters},
     fov::Fov,
     gamestate::{GameState, Turn},
     interactions::Interactable,
     inventory,
     loot::{FixedLoot, LootTable},
+    parameters::{Awareness, Parameters},
     tilemap::{ActiveLevel, Zone},
     tiles::TileIdx,
 };

@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use std::ops::Add;
-
 use mrpas::Mrpas;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::{Player, PlayerStats},
@@ -41,30 +38,6 @@ impl View {
     /// to create `View`.
     pub fn has(&self, pos: (i32, i32)) -> bool {
         self.0.is_in_view(pos)
-    }
-}
-
-#[derive(Component, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq)]
-#[reflect(Component)]
-pub struct Vision(pub u32);
-
-impl Default for Vision {
-    fn default() -> Self {
-        Self(2)
-    }
-}
-
-impl Vision {
-    pub fn range(&self) -> u32 {
-        self.0
-    }
-}
-
-impl Add<Vision> for Vision {
-    type Output = Self;
-
-    fn add(self, rhs: Vision) -> Self {
-        Self(self.0 + rhs.0)
     }
 }
 
