@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
 use serde::{Deserialize, Serialize};
@@ -24,6 +26,18 @@ pub struct Health {
     pub is_dead: bool,
 }
 
+impl Add<Health> for Health {
+    type Output = Self;
+
+    fn add(self, rhs: Health) -> Self::Output {
+        Self {
+            hp: self.hp,
+            max: self.max + rhs.max,
+            ..default()
+        }
+    }
+}
+
 #[derive(Component, Debug, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Parameters {
@@ -48,6 +62,29 @@ impl Default for Parameters {
             health: Health { hp: 1, ..default() },
             vision: Vision(1),
         }
+    }
+}
+
+impl Add<Parameters> for Parameters {
+    type Output = Self;
+
+    fn add(self, rhs: Parameters) -> Parameters {
+        Self {
+            attack: self.attack + rhs.attack,
+            defense: self.defense + rhs.defense,
+            health: self.health + rhs.health,
+            vision: self.vision + rhs.vision,
+        }
+    }
+}
+
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+pub(crate) struct DerivedParams(Parameters);
+
+impl DerivedParams {
+    pub(crate) fn new(p: Parameters) -> Self {
+        Self(p)
     }
 }
 

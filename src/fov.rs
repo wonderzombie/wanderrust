@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use std::ops::Add;
+
 use mrpas::Mrpas;
 use serde::{Deserialize, Serialize};
 
@@ -55,6 +57,14 @@ impl Default for Vision {
 impl Vision {
     pub fn range(&self) -> u32 {
         self.0
+    }
+}
+
+impl Add<Vision> for Vision {
+    type Output = Self;
+
+    fn add(self, rhs: Vision) -> Self {
+        Self(self.0 + rhs.0)
     }
 }
 
