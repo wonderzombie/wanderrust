@@ -8,6 +8,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
+    equipment::{Equipment, Equippable, EquippedBy, ParamsModifiers},
     light::{Emitter, LightLevel},
     parameters::*,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
@@ -73,6 +74,8 @@ pub struct Moved(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub struct Bonk(pub Entity);
 
+const STARTING_ITEMS: &[&'static Equipment] = &[&Equipment::Rags, &Equipment::Stick];
+
 /// Spawns the player entity at the start position of the tilemap on the
 /// player's layer.
 pub fn setup_player(
@@ -127,6 +130,24 @@ pub fn setup_player(
                 transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
                 ..default()
             },
+        ));
+    }
+}
+
+pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Player>>) {
+    let parent = *player;
+    for e in STARTING_ITEMS.into_iter() {
+        let Some(item) = e.as_item() else {
+            error!("invalid starting item: {e:?}");
+            continue;
+        };
+        info!("equipping {e:?}");
+        commands.spawn((
+            EquippedBy {
+                parent,
+                item: item.clone(),
+            },
+            Equippable(item, ParamsModifiers::default()),
         ));
     }
 }

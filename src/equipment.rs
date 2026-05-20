@@ -54,4 +54,13 @@ impl Equipment {
             Equipment::Shield => modifiers!(defense = 2),
         }
     }
+
+    pub fn as_item(&self) -> Option<Item> {
+        Self::pairs()
+            .iter()
+            .find(|(_, v)| self == v)
+            .copied()
+            .map(|(s, _)| s)
+            .map(Item::from)
+    }
 }
