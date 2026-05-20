@@ -14,19 +14,19 @@ use crate::{
 };
 
 #[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
-pub enum EditorState {
+pub enum DebugState {
     Disabled,
     Enabled,
 }
 
 #[derive(Resource)]
-pub struct EditorContext {
+pub struct DebugContext {
     pub active_tile: tiles::TileIdx,
     pub active_tile_idx: usize,
     pub observers: Vec<Entity>,
 }
 
-impl Default for EditorContext {
+impl Default for DebugContext {
     fn default() -> Self {
         Self {
             active_tile: tiles::TileIdx::Grass,
@@ -66,7 +66,7 @@ pub fn on_button_input(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    mut editor_state: ResMut<EditorContext>,
+    mut editor_state: ResMut<DebugContext>,
     mut log: ResMut<event_log::MessageLog>,
     storages: Query<(&TileStorage, Option<&ActiveLevel>)>,
     tiles: Query<(
@@ -188,7 +188,7 @@ macro_rules! get_entity {
 /// Sets up global tile observers that highlight and preview tiles when the
 /// pointer is over them.
 #[allow(dead_code)]
-pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
+pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<DebugContext>) {
     for &obs in editor.observers.iter() {
         commands.entity(obs).despawn()
     }
@@ -198,10 +198,10 @@ pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<E
         .add_observer(
             |on: On<Pointer<Over>>,
              mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
-             editor: Res<EditorContext>| {
+             debug_ctx: Res<DebugContext>| {
                 let preview_opt = get_entity!(tiles, on);
                 if let Some(mut preview) = preview_opt {
-                    preview.set(editor.active_tile);
+                    preview.set(debug_ctx.active_tile);
                 }
             },
         )
@@ -225,9 +225,9 @@ pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<E
         .add_observer(
             |on: On<Pointer<Click>>,
              mut tiles: Query<&mut TileIdx, With<MapTile>>,
-             editor: Res<EditorContext>,
-             state: Res<State<EditorState>>| {
-                if state.get() != &EditorState::Enabled {
+             editor: Res<DebugContext>,
+             state: Res<State<DebugState>>| {
+                if state.get() != &DebugState::Enabled {
                     return;
                 }
                 let mut tile_idx = get_entity!(tiles, on);
@@ -264,7 +264,7 @@ pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, Wit
     }
 }
 
-pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<EditorContext>) {
+pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<DebugContext>) {
     for &obs in editor.observers.iter() {
         commands.entity(obs).despawn();
     }
@@ -273,16 +273,16 @@ pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<E
 
 pub fn on_editor_toggle(
     input: Res<ButtonInput<KeyCode>>,
-    current_state: Res<State<EditorState>>,
-    mut next_state: ResMut<NextState<EditorState>>,
+    current_state: Res<State<DebugState>>,
+    mut next_state: ResMut<NextState<DebugState>>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
     if input.just_pressed(KeyCode::Backspace)
         && input.any_pressed([KeyCode::ShiftRight, KeyCode::ShiftLeft])
     {
         let next = match **current_state {
-            EditorState::Enabled => EditorState::Disabled,
-            EditorState::Disabled => EditorState::Enabled,
+            DebugState::Enabled => DebugState::Disabled,
+            DebugState::Disabled => DebugState::Enabled,
         };
         log.add(format!("! editor: {:?} !", next), Color::WHITE);
         info!("📝 ! editor: {:?} !", next);
@@ -290,9 +290,9 @@ pub fn on_editor_toggle(
     }
 }
 
-pub struct EditorPlugin;
+pub struct DebugPlugin;
 
-impl Plugin for EditorPlugin {
+impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app // .add_systems(Startup, setup_global_tile_observers)
             .add_systems(
@@ -306,17 +306,17 @@ impl Plugin for EditorPlugin {
                         on_toggle_visibilities,
                     )
                         .chain()
-                        .run_if(in_state(EditorState::Enabled)),
+                        .run_if(in_state(DebugState::Enabled)),
                     on_editor_toggle,
                 ),
             )
             .add_systems(
-                OnExit(EditorState::Enabled),
+                OnExit(DebugState::Enabled),
                 // These only need to run once per transition to Disabled.
                 (remove_editor_components, remove_global_tile_observers),
             )
-            .insert_resource(EditorContext::default())
-            .insert_state(EditorState::Enabled)
+            .insert_resource(DebugContext::default())
+            .insert_state(DebugState::Enabled)
             .add_plugins(RemotePlugin::default())
             .add_plugins(RemoteHttpPlugin::default())
             .add_plugins(DebugPickingPlugin)

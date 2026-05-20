@@ -5,8 +5,8 @@ mod camera;
 pub mod cell;
 mod colors;
 mod combat;
+pub mod debug;
 mod diagnostics;
-pub mod editor;
 mod effects;
 mod equipment;
 mod event_log;
@@ -117,7 +117,7 @@ pub fn run() {
     .insert_state(GameState::Starting)
     .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
-    .add_plugins(editor::EditorPlugin)
+    .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)

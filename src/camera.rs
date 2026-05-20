@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{actors::Player, cell::Cell, editor::DesiredZoom, tilemap::TilemapLayer, tiles};
+use crate::{actors::Player, cell::Cell, debug::DesiredZoom, tilemap::TilemapLayer, tiles};
 
 const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
