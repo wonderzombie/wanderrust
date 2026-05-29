@@ -137,6 +137,6 @@ macro_rules! define_parameters {
 }
 
 define_parameters!(
-    Bat => [TileIdx::Bat, atk = 2, def = 0, hp = 10, vis = 3],
-    Skeleton => [TileIdx::Skeleton, atk = 3, def = 2, hp = 15, vis = 2],
+    Bat => [TileIdx::Bat, atk = 3, def = 1, hp = 12, vis = 4],
+    Skeleton => [TileIdx::Skeleton, atk = 4, def = 3, hp = 20, vis = 2],
 );
