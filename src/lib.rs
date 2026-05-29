@@ -1,6 +1,7 @@
 mod actors;
 mod ascii_map;
 mod atlas;
+mod bestiary;
 mod camera;
 pub mod cell;
 mod colors;
