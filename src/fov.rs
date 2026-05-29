@@ -60,7 +60,6 @@ impl Vision {
 
 /// Internalizes the field of view model by marking tiles as transparent or not.
 /// The field of view defaults to entirely opaque.
-/// We don't use the Opaque label
 pub fn setup_fov(
     mut commands: Commands,
     level_children: Query<(&Level, &Dimensions, &Children)>,
