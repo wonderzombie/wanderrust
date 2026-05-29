@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     equipment::{Equippable, HasEquipped},
-    parameters::{DerivedParams, Parameters},
+    parameters::Parameters,
 };
 
 pub fn apply_params_modifiers(
@@ -16,6 +16,6 @@ pub fn apply_params_modifiers(
             .filter_map(|e| equipment.get(e).ok())
             .fold(base_params.clone(), |acc, eq| eq.modify(acc));
 
-        commands.entity(nt).insert(DerivedParams::new(modified));
+        // commands.entity(nt).insert(DerivedParams::new(modified));
     }
 }

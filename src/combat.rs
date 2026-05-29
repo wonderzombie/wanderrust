@@ -2,8 +2,8 @@ use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
-    actors::Dead, colors, event_log::MessageLog, gamestate::Turn, interactions::Interactable,
-    parameters::*,
+    actors::Dead, bestiary::Bestiary, colors, event_log::MessageLog, gamestate::Turn,
+    interactions::Interactable, parameters::*,
 };
 
 #[derive(EntityEvent, Debug)]
@@ -15,7 +15,6 @@ pub(crate) struct Hit(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub(crate) struct Died(pub Entity);
 
-
 pub fn init_combatants(
     mut commands: Commands,
     interxs: Populated<(Entity, &Interactable), (Added<Interactable>, Without<Parameters>)>,
@@ -25,7 +24,7 @@ pub fn init_combatants(
             continue;
         };
 
-        let params_opt = Parameters::from_tile(tile_idx).or(Parameters::from_name(name));
+        let params_opt = Bestiary::from_tile(tile_idx).or(Bestiary::from_name(name));
 
         // Do not skip adding parameters; instead, add a default and log an error.
         // This will keep this function from running repeatedly and doing nothing.
@@ -36,11 +35,19 @@ pub fn init_combatants(
             );
         }
 
-        let params = params_opt.unwrap_or_default().init();
-        commands.entity(entity).insert(CombatantBundle {
-            params,
-            ..default()
-        });
+        let params = params_opt.unwrap_or_default();
+        let health = Health {
+            hp: params.max_hp.cast_signed(),
+            is_dead: false,
+        };
+
+        commands
+            .entity(entity)
+            .insert(CombatantBundle {
+                params,
+                ..default()
+            })
+            .insert(health);
     }
 }
 
@@ -71,7 +78,7 @@ pub struct CombatantStats {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, Option<&Name>, &mut Parameters)>,
+    mut combatants: Query<(Entity, Option<&Name>, &Parameters, &mut Health)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,
@@ -95,13 +102,13 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_id, defender_name, mut defender) = defender;
-        let (_, attacker_name, attacker) = attacker;
+        let (defender_id, defender_name, def_params, mut defender) = defender;
+        let (_, attacker_name, atk_params, _) = attacker;
 
         let defender_name = defender_name.map_or("some defender", |n| n.as_str());
         let attacker_name = attacker_name.map_or("some attacker", |n| n.as_str());
 
-        if defender.health.is_dead {
+        if defender.is_dead {
             log.add(
                 format!("{} is already dead", defender_name,),
                 colors::KENNEY_GOLD,
@@ -109,18 +116,18 @@ pub fn process_attacks(
             continue;
         }
 
-        let damage = attacker.attack - defender.defense;
+        let damage = atk_params.attack - def_params.defense;
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);
-            defender.health.hp = defender.health.hp.saturating_sub(damage);
+            defender.hp = defender.hp.saturating_sub(damage);
             log.add(
                 format!("{} hits {}!", attacker_name, defender_name),
                 colors::KENNEY_GOLD,
             );
 
-            if defender.health.hp <= 0 {
+            if defender.hp <= 0 {
                 commands.entity(defender_id).trigger(Died);
-                defender.health.is_dead = true;
+                defender.is_dead = true;
                 log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
                 spawn_floating_text(
                     &mut commands,

@@ -2,26 +2,11 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Add;
 
-use crate::tiles::TileIdx;
-
 #[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect, PartialEq)]
 #[reflect(Component)]
 pub struct Health {
     pub hp: i32,
-    pub max: i32,
     pub is_dead: bool,
-}
-
-impl Add<Health> for Health {
-    type Output = Self;
-
-    fn add(self, rhs: Health) -> Self::Output {
-        Self {
-            hp: self.hp,
-            max: self.max + rhs.max,
-            ..default()
-        }
-    }
 }
 
 #[derive(Component, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq)]
@@ -66,14 +51,13 @@ pub enum Awareness {
 pub struct Parameters {
     pub attack: i32,
     pub defense: i32,
-    pub health: Health,
     pub vision: Vision,
+    pub max_hp: u32,
 }
 
 impl Parameters {
-    pub fn init(&mut self) -> Self {
-        self.health.hp = self.health.max;
-        *self
+    pub(crate) fn is_default(&self) -> bool {
+        *self == Self::default()
     }
 }
 
@@ -82,7 +66,7 @@ impl Default for Parameters {
         Self {
             attack: 0,
             defense: 0,
-            health: Health { hp: 1, ..default() },
+            max_hp: 1,
             vision: Vision(1),
         }
     }
@@ -95,48 +79,8 @@ impl Add<Parameters> for Parameters {
         Self {
             attack: self.attack + rhs.attack,
             defense: self.defense + rhs.defense,
-            health: self.health + rhs.health,
             vision: self.vision + rhs.vision,
+            max_hp: self.max_hp + rhs.max_hp,
         }
     }
 }
-
-#[derive(Component, Reflect, Debug)]
-#[reflect(Component)]
-pub(crate) struct DerivedParams(Parameters);
-
-impl DerivedParams {
-    pub(crate) fn new(p: Parameters) -> Self {
-        Self(p)
-    }
-}
-
-macro_rules! define_parameters {
-    (
-        $( $combatant_name:ident => [ $tile:path, atk = $atk:expr, def = $def:expr, hp = $hp:expr, vis = $vis:expr ], )*
-    ) => {
-        impl Parameters {
-            pub fn is_default(&self) -> bool {
-                *self == Parameters::default()
-            }
-
-            pub fn all() -> &'static [(&'static str, TileIdx, Parameters)] {
-                &[ $( ( stringify!(Combatants::$combatant_name), $tile, Parameters { attack: $atk, defense: $def, health: Health { hp: $hp, max: $hp, is_dead: false }, vision: Vision($vis)  }), )* ]
-            }
-
-            pub fn from_name(name: impl AsRef<str>) -> Option<Parameters> {
-                Self::all().iter().find(|(n, _, _)| *n == name.as_ref()).map(|(_, _, p)| *p)
-
-            }
-
-            pub fn from_tile(tile: &TileIdx) -> Option<Parameters> {
-                Self::all().iter().find(|(_, t, _)| t == tile).map(|(_, _, p)| *p)
-            }
-        }
-    };
-}
-
-define_parameters!(
-    Bat => [TileIdx::Bat, atk = 3, def = 1, hp = 12, vis = 4],
-    Skeleton => [TileIdx::Skeleton, atk = 4, def = 3, hp = 20, vis = 2],
-);

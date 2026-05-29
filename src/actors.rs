@@ -6,6 +6,7 @@ use bevy_northstar::prelude::Blocking;
 
 use crate::{
     atlas::SpriteAtlas,
+    bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
     equipment::{Equipment, Equippable, EquippedBy, ParamsModifiers},
@@ -95,6 +96,8 @@ pub fn setup_player(
     } else {
         info!("🕹️ spawning player at {:?} {:?}", cell, level_entity);
 
+        let params = Bestiary::from_tile(&TileIdx::Player).unwrap();
+
         commands.spawn((
             ChildOf(*active),
             // from ecs
@@ -110,18 +113,13 @@ pub fn setup_player(
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
+            Health {
+                hp: params.max_hp.cast_signed(),
+                is_dead: false,
+            },
             // from combat, fov
             CombatantBundle {
-                params: Parameters {
-                    attack: 2,
-                    defense: 1,
-                    health: Health {
-                        hp: 10,
-                        max: 10,
-                        is_dead: false,
-                    },
-                    vision: Vision(5),
-                },
+                params: params,
                 ..default()
             },
             PieceBundle {
