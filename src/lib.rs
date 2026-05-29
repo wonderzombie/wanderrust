@@ -29,7 +29,6 @@ mod tooltip;
 
 use bevy::{
     asset::io::web::WebAssetPlugin,
-    audio::AudioLoader,
     prelude::*,
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
