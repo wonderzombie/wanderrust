@@ -46,7 +46,7 @@ impl LdtkLevel {
             .find(|field| field.identifier == "light_level")
             .map(ParsedValue::from)
             .and_then(|it| match it {
-                ParsedValue::LightLevelEnum(level) => LightLevel::from_str(level),
+                ParsedValue::LightLevelEnum(level) => LightLevel::from_text(level),
                 _ => None,
             })
     }

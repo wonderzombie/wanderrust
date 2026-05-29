@@ -231,9 +231,7 @@ impl TileStorage {
     }
 
     pub fn into_iter(&self) -> impl Iterator<Item = Cell> {
-        (0..self.len())
-            .into_iter()
-            .map(|i| self.size.idx_to_cell(i))
+        (0..self.len()).map(|i| self.size.idx_to_cell(i))
     }
 }
 

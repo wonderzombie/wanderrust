@@ -58,7 +58,6 @@ pub fn init_indicators(
         TextureAtlas {
             layout: atlas.layout.clone(),
             index: TileIdx::Corners.into(),
-            ..default()
         },
     );
 

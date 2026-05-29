@@ -37,7 +37,7 @@ pub enum LightLevel {
 }
 
 impl LightLevel {
-    pub fn from_str(s: impl AsRef<str>) -> Option<LightLevel> {
+    pub fn from_text(s: impl AsRef<str>) -> Option<LightLevel> {
         use LightLevel::*;
         match s.as_ref() {
             "dark" => Some(Dark),
