@@ -18,6 +18,8 @@ pub struct Sounds {
     pub loaded: bool,
 }
 
+const DEFAULT_SOUND_VOL: f32 = 1.;
+
 pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
     info!("🔈 preparing to load sounds");
     let handle = asset_server.load_folder("audio");
@@ -80,7 +82,7 @@ fn on_bonk_sound(_on: On<Bonk>, mut commands: Commands, sounds: Res<Sounds>) {
             AudioPlayer::new(s.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(0.4),
+                volume: Volume::Linear(DEFAULT_SOUND_VOL),
                 ..default()
             },
         ));
@@ -93,7 +95,7 @@ fn on_walk_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
             AudioPlayer::new(s.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(0.4),
+                volume: Volume::Linear(DEFAULT_SOUND_VOL),
                 ..default()
             },
         ));
@@ -116,7 +118,7 @@ fn on_attack_sound(
             AudioPlayer::new(s.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(0.4),
+                volume: Volume::Linear(DEFAULT_SOUND_VOL),
                 ..default()
             },
         ));
@@ -132,7 +134,7 @@ fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds
             AudioPlayer::new(s.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(0.4),
+                volume: Volume::Linear(DEFAULT_SOUND_VOL),
                 ..default()
             },
         ));
