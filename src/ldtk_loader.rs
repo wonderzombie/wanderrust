@@ -226,8 +226,14 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
         let level_id = LevelId(level.uid);
         let spec: &mut LevelSpec = world.maps.entry(level_id).or_default();
         spec.identifier = level.identifier.clone();
+
+        assert!(
+            level.world_depth >= 0,
+            "negative world depths (i32) are not yet supported; `bevy_northstar` needs u32"
+        );
         spec.depth = level.world_depth;
         world.depths.insert(tilemap::Depth(spec.depth));
+        world.max_depth = world.max_depth.max(tilemap::Depth(spec.depth));
         spec.light_level = level.light_level().unwrap_or(world.light_level);
         spec.world_pos = Vec2 {
             x: level.world_x as f32,

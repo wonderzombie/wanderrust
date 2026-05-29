@@ -70,11 +70,7 @@ pub fn spawn_grid(
     world_entity: Single<(&WorldId, &Children)>,
 ) {
     let (WorldId(nt), _) = *world_entity;
-    let Depth(max_depth) = world_spec.depths.iter().max().copied().unwrap_or_default();
-    assert!(
-        max_depth >= 0,
-        "negative world depths (i32) are not yet supported; `bevy_northstar` needs u32"
-    );
+    let Depth(max_depth) = world_spec.max_depth;
     let world_height: u32 = max_depth.cast_unsigned();
 
     commands.entity(*nt).insert(CardinalGrid::new(

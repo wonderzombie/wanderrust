@@ -30,6 +30,7 @@ pub struct WorldSpec {
     pub spawn_point: SpawnCell,
     pub light_level: LightLevel,
     pub depths: HashSet<Depth>,
+    pub max_depth: Depth,
 }
 
 #[derive(Component, Default, Debug, Reflect, PartialEq, Eq, Ord, PartialOrd, Hash, Clone, Copy)]
