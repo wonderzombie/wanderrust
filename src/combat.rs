@@ -3,13 +3,8 @@ use bevy_northstar::prelude::AgentOfGrid;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::Dead,
-    colors,
-    event_log::MessageLog,
-    fov::Vision,
-    gamestate::Turn,
-    interactions::Interactable,
-    tiles::{TileIdx, Walkable},
+    actors::Dead, colors, event_log::MessageLog, fov::Vision, gamestate::Turn,
+    interactions::Interactable, tiles::TileIdx,
 };
 
 #[derive(EntityEvent, Debug)]
