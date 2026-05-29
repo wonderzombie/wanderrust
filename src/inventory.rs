@@ -224,7 +224,10 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
                     } else {
                         format!("• {}", name)
                     };
-                    ui.colored_label(colors::KENNEY_OFF_WHITE.to_egui(), item_entry);
+                    ui.colored_label(
+                        colors::KENNEY_OFF_WHITE.to_egui(),
+                        item_entry.to_ascii_uppercase(),
+                    );
                 }
             }
         });
