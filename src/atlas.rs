@@ -46,6 +46,16 @@ impl SpriteAtlas {
     }
 }
 
+pub(crate) fn default_layout() -> TextureAtlasLayout {
+    TextureAtlasLayout::from_grid(
+        UVec2::splat(tiles::TILE_SIZE_PX as u32),
+        tiles::SHEET_SIZE_G.x,
+        tiles::SHEET_SIZE_G.y,
+        None,
+        None,
+    )
+}
+
 /// Loads the spritesheet asset and creates a [SpriteAtlas] resource from it.
 pub(crate) fn load_spritesheet(
     mut atlas: ResMut<SpriteAtlas>,
@@ -53,13 +63,7 @@ pub(crate) fn load_spritesheet(
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let texture: Handle<Image> = asset_server.load(DEFAULT_SHEET);
-    let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
-        UVec2::splat(tiles::TILE_SIZE_PX as u32),
-        tiles::SHEET_SIZE_G.x,
-        tiles::SHEET_SIZE_G.y,
-        None,
-        None,
-    ));
+    let layout = atlas_layouts.add(default_layout());
 
     *atlas = SpriteAtlas {
         texture: texture.clone(),

@@ -118,6 +118,7 @@ pub fn run() {
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
+    .add_plugins(mobs::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -242,7 +243,6 @@ pub fn run() {
             )
                 .chain()
                 .run_if(in_state(GameState::Ramifying)),
-            mobs::handle_dead,
         ),
     )
     .add_observer(click_observer);

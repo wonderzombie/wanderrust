@@ -299,6 +299,8 @@ tiles! {
 
     // Mouse cursor.
     Cursor1 = atlas_idx(35, 10),
+    // Grid/mob indicators.
+    Corners = 624,
 }
 
 impl TileIdx {
