@@ -2,7 +2,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_northstar::prelude::*;
 
 use crate::{
-    actors::Player,
+    actors::{Dead, Player},
     cell::Cell,
     combat::{self, Awareness},
     gamestate::Turn,
@@ -36,7 +36,7 @@ impl SpatialIndex {
 /// entities in the world.
 pub(crate) fn update_spatial_index(
     query: Populated<(&Children, &mut SpatialIndex)>,
-    tiles: Query<&Cell, Without<Walkable>>,
+    tiles: Query<&Cell, (Without<Walkable>, Without<Dead>)>,
 ) {
     for (children, mut index) in query {
         index.clear();

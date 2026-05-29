@@ -216,7 +216,6 @@ pub fn process_attacks(
                     .entity(defender_id)
                     .insert(Dead)
                     .trigger(Died)
-                    .insert(Walkable)
                     .remove::<AgentOfGrid>()
                     .remove::<Turn>();
             } else {
