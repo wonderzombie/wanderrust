@@ -8,6 +8,7 @@ use crate::{
     event_log::MessageLog,
     inventory::{self, *},
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
+    sounds,
     tilemap::{Level, WorldSpec},
     tiles::TileIdx,
 };
@@ -142,6 +143,7 @@ pub struct Listen {
 /// and an [`Interactable`] entity. Interaction fails if the target cell is
 /// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
+    mut commands: Commands,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
     mut acquisitions: MessageWriter<Acquisition>,
@@ -201,6 +203,7 @@ pub fn process_interactions(
                         "changing tile_idx from {tile_idx:?} to {:?}",
                         tile_idx.engaged_version()
                     );
+                    commands.trigger(sounds::Opened);
                     tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
                 } else {
                     info!("Player can't open an open door.");
@@ -216,6 +219,7 @@ pub fn process_interactions(
                     tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
                     info!("Player opens chest: {contents:?}");
                     log.add("Opened chest.", colors::KENNEY_BLUE);
+                    commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
                         log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
                         acquisitions.write(inventory::Acquisition {

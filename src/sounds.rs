@@ -78,27 +78,13 @@ pub fn on_loaded(
 
 fn on_bonk_sound(_on: On<Bonk>, mut commands: Commands, sounds: Res<Sounds>) {
     if let Some(s) = sounds.lookup.get("bonk") {
-        commands.spawn((
-            AudioPlayer::new(s.clone()),
-            PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(DEFAULT_SOUND_VOL),
-                ..default()
-            },
-        ));
+        commands.spawn(one_off_sound_bundle(s));
     }
 }
 
 fn on_walk_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
     if let Some(s) = sounds.lookup.get("step") {
-        commands.spawn((
-            AudioPlayer::new(s.clone()),
-            PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(DEFAULT_SOUND_VOL),
-                ..default()
-            },
-        ));
+        commands.spawn(one_off_sound_bundle(s));
     }
 }
 
@@ -114,29 +100,26 @@ fn on_attack_sound(
         "enemy_hurt"
     };
     if let Some(s) = sounds.lookup.get(sound) {
-        commands.spawn((
-            AudioPlayer::new(s.clone()),
-            PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(DEFAULT_SOUND_VOL),
-                ..default()
-            },
-        ));
+        commands.spawn(one_off_sound_bundle(s));
     }
 }
 
 #[derive(Event, Debug)]
-struct Opened;
+pub(crate) struct Opened;
 
 fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("opened") {
-        commands.spawn((
-            AudioPlayer::new(s.clone()),
-            PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::Linear(DEFAULT_SOUND_VOL),
-                ..default()
-            },
-        ));
+    if let Some(s) = sounds.lookup.get("open") {
+        commands.spawn(one_off_sound_bundle(s));
     }
+}
+
+fn one_off_sound_bundle(handle: &Handle<AudioSource>) -> impl Bundle {
+    (
+        AudioPlayer::new(handle.clone()),
+        PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::Linear(DEFAULT_SOUND_VOL),
+            ..default()
+        },
+    )
 }

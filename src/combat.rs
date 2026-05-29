@@ -221,6 +221,7 @@ pub fn process_attacks(
                     .remove::<Turn>();
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
+                commands.trigger(Attacked(defender_id))
             }
         } else {
             log.add(
