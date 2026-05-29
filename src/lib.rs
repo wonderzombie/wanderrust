@@ -122,6 +122,7 @@ pub fn run() {
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
+    .add_plugins(equipment::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -227,6 +228,7 @@ pub fn run() {
                 .run_if(in_state(GameState::Ramifying)),
             combat::init_combatants,
             grid::init_agents,
+            actors::on_player_added,
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
@@ -234,7 +236,10 @@ pub fn run() {
         OnEnter(GameState::AwaitingInput),
         tilemap::snapshot_denizens,
     )
-    .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
+    .add_systems(
+        OnExit(GameState::AwaitingInput),
+        (snapshot_cells, effects::apply_params_modifiers),
+    )
     .add_systems(
         Last,
         (
