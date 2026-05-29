@@ -106,7 +106,11 @@ fn on_attack_sound(
     sounds: Res<Sounds>,
     player: Single<Entity, With<Player>>,
 ) {
-    let sound = if *player == on.0 { "hit" } else { "attack" };
+    let sound = if *player == on.0 {
+        "player_hurt"
+    } else {
+        "enemy_hurt"
+    };
     if let Some(s) = sounds.lookup.get(sound) {
         commands.spawn((
             AudioPlayer::new(s.clone()),
