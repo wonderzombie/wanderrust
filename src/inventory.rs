@@ -218,11 +218,11 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
                     EMPTY.to_ascii_uppercase(),
                 );
             } else {
-                for (Item(name), &qty) in inventory.as_ref() {
+                for (item, &qty) in inventory.as_ref() {
                     let item_entry = if qty > 1usize {
-                        format!("• {} {}", name, qty)
+                        format!("• {} {}", item, qty)
                     } else {
-                        format!("• {}", name)
+                        format!("• {}", item)
                     };
                     ui.colored_label(
                         colors::KENNEY_OFF_WHITE.to_egui(),
