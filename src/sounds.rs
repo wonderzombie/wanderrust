@@ -62,7 +62,7 @@ pub fn on_loaded(
             let audio_handle = handle.clone().try_typed::<AudioSource>().ok()?;
             let path = asset_server.get_path(handle.id())?;
             let name = path.path().file_stem()?.to_string_lossy().into_owned();
-            info!("sound: {name:?} handle {audio_handle:?}");
+            trace!("sound: {name:?} handle {audio_handle:?}");
             Some((name, audio_handle))
         })
         .collect();
