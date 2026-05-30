@@ -28,7 +28,7 @@ pub struct EquippedBy {
 }
 
 #[derive(Component, Reflect, Debug)]
-#[relationship_target(relationship = EquippedBy)]
+#[relationship_target(relationship = EquippedBy, linked_spawn)]
 pub struct HasEquipped(Vec<Entity>);
 
 #[derive(Component, Default, Debug, Copy, Clone, Reflect)]
