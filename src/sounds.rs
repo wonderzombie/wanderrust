@@ -41,16 +41,7 @@ pub fn on_loaded(
         return;
     }
 
-    // `folder` will always be present.
-    let state = asset_server.recursive_dependency_load_state(sounds.folder_handle.id());
-
-    if !state.is_loaded() {
-        trace!("🔈 LoadState: sounds not ready");
-        return;
-    }
-
     let Some(folder) = loaded_folders.get(&sounds.folder_handle) else {
-        info!("🔈 Assets: sounds not ready");
         return;
     };
 

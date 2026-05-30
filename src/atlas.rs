@@ -72,16 +72,6 @@ pub(crate) fn load_spritesheet(
     };
 }
 
-pub(crate) fn on_loaded(mut atlas: ResMut<SpriteAtlas>, asset_server: Res<AssetServer>) {
-    if atlas.loaded {
-        return;
-    }
-
-    let state = asset_server.recursive_dependency_load_state(atlas.texture.id());
-    if !state.is_loaded() {
-        trace!("LoadState: sprite texture not ready");
-        return;
-    }
-
-    atlas.loaded = state.is_loaded();
+pub(crate) fn on_loaded(mut atlas: ResMut<SpriteAtlas>, images: Res<Assets<Image>>) {
+    atlas.loaded = images.contains(atlas.texture.id());
 }
