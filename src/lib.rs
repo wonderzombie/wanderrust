@@ -231,6 +231,7 @@ pub fn run() {
             combat::init_combatants,
             grid::init_agents,
             actors::on_player_added,
+            effects::apply_params_modifiers,
         ),
     )
     .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
@@ -238,10 +239,7 @@ pub fn run() {
         OnEnter(GameState::AwaitingInput),
         tilemap::snapshot_denizens,
     )
-    .add_systems(
-        OnExit(GameState::AwaitingInput),
-        (snapshot_cells, effects::apply_params_modifiers),
-    )
+    .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
     .add_systems(
         Last,
         (

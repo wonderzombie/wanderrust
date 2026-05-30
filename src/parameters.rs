@@ -66,8 +66,8 @@ impl Default for Parameters {
         Self {
             attack: 0,
             defense: 0,
-            max_hp: 1,
-            vision: Vision(1),
+            max_hp: 0,
+            vision: Vision(0),
         }
     }
 }
