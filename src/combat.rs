@@ -3,7 +3,7 @@ use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
     actors::Dead, bestiary::Bestiary, colors, event_log::MessageLog, gamestate::Turn,
-    interactions::Interactable, parameters::*,
+    interactions::Interactable, parameters::*, tiles::TileIdx,
 };
 
 #[derive(EntityEvent, Debug)]
@@ -15,15 +15,29 @@ pub(crate) struct Hit(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub(crate) struct Died(pub Entity);
 
+pub fn detect_belligerents(
+    mut commands: Commands,
+    interxs: Populated<(Entity, &Interactable), Added<Interactable>>,
+) {
+    for (entity, interx) in interxs {
+        match interx {
+            Interactable::Belligerent { .. } => {
+                commands.entity(entity).insert(Combatant);
+            }
+            _ => continue,
+        }
+    }
+}
+
 pub fn init_combatants(
     mut commands: Commands,
-    interxs: Populated<(Entity, &Interactable), (Added<Interactable>, Without<Parameters>)>,
+    combatants: Populated<
+        (Entity, Option<&Name>, &TileIdx),
+        (Added<Combatant>, Without<Parameters>),
+    >,
 ) {
-    for (entity, interx) in interxs.into_iter() {
-        let Interactable::Belligerent { name, tile_idx } = interx else {
-            continue;
-        };
-
+    for (entity, name_opt, tile_idx) in combatants.into_iter() {
+        let name = name_opt.map(|it| it.as_str()).unwrap_or("default");
         let params_opt = Bestiary::from_tile(tile_idx).or(Bestiary::from_name(name));
 
         // Do not skip adding parameters; instead, add a default and log an error.
@@ -73,7 +87,8 @@ pub struct Attack {
 pub struct CombatantStats {
     pub entity: Entity,
     pub name: &'static Name,
-    pub params: &'static mut Parameters,
+    pub params: &'static Parameters,
+    pub health: &'static mut Health,
 }
 
 pub fn process_attacks(

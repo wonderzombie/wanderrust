@@ -9,9 +9,8 @@ use crate::{
     bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
-    equipment::{Equipment, Equippable, EquippedBy, ParamsModifiers},
+    equipment::{Equipment, Equippable, EquippedBy},
     light::{Emitter, LightLevel},
-    parameters::*,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
@@ -113,10 +112,6 @@ pub fn setup_player(
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
-            Health {
-                hp: params.max_hp.cast_signed(),
-                is_dead: false,
-            },
             // from combat, fov
             CombatantBundle {
                 params: params,
@@ -145,7 +140,7 @@ pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Play
                 parent,
                 item: item.clone(),
             },
-            Equippable(item, ParamsModifiers::default()),
+            Equippable(item, e.modifiers()),
         ));
     }
 }

@@ -32,10 +32,10 @@ pub struct EquippedBy {
 pub struct HasEquipped(Vec<Entity>);
 
 #[derive(Component, Default, Debug, Copy, Clone, Reflect)]
-pub(crate) struct ParamsModifiers(pub Parameters);
+pub(crate) struct Modifiers(pub Parameters);
 
 #[derive(Component, Reflect, Debug, Clone)]
-pub(crate) struct Equippable(pub Item, pub ParamsModifiers);
+pub(crate) struct Equippable(pub Item, pub Modifiers);
 
 impl Equippable {
     pub fn modify(&self, params: Parameters) -> Parameters {
@@ -47,7 +47,7 @@ enum_with_str!(Equipment, [Stick, Rags, Leather, Chainmail, Shield]);
 
 macro_rules! modifiers {
     ( $( $fieldn:tt = $fieldv:expr )* $(,)? ) => {
-        ParamsModifiers(Parameters {
+        Modifiers(Parameters {
             $( $fieldn: $fieldv, )*
             ..default()
         })
@@ -55,9 +55,9 @@ macro_rules! modifiers {
 }
 
 impl Equipment {
-    pub(crate) fn modifiers(&self) -> ParamsModifiers {
+    pub(crate) fn modifiers(&self) -> Modifiers {
         match self {
-            Equipment::Unset => ParamsModifiers::default(),
+            Equipment::Unset => Modifiers::default(),
             Equipment::Stick => modifiers!(attack = 1),
             Equipment::Rags => modifiers!(defense = 1),
             Equipment::Leather => modifiers!(defense = 3),

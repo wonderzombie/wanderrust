@@ -227,6 +227,7 @@ pub fn run() {
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::Fov)
                 .run_if(in_state(GameState::Ramifying)),
+            combat::detect_belligerents,
             combat::init_combatants,
             grid::init_agents,
             actors::on_player_added,
