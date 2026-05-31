@@ -20,10 +20,11 @@ pub fn apply_params_modifiers(
             );
         }
         trace!("params for {tile_idx}: {:?}", params);
-        let modified: Parameters = has_equipped
-            .iter()
-            .filter_map(|e| equipment.get(e).ok())
+
+        let modified: Parameters = equipment
+            .iter_many(has_equipped.iter())
             .fold(params, |acc, eq| eq.modify(acc));
+
         trace!("modified params for {tile_idx}: {:?}", modified);
 
         extant_params.set_if_neq(modified);

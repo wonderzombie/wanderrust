@@ -20,20 +20,18 @@ use crate::{
 pub fn check_fov(
     mut commands: Commands,
     active_zone: Single<(&Fov, &Zone), With<ActiveLevel>>,
-    active_mobs: Populated<(&Awareness, &Cell, &Parameters), (With<AgentOfGrid>, Without<Dead>)>,
+    active_mobs: Populated<
+        (Entity, &Awareness, &Cell, &Parameters),
+        (With<AgentOfGrid>, Without<Dead>),
+    >,
     player_cell: Single<&Cell, With<Player>>,
 ) {
     let player_cell: (i32, i32) = (*player_cell).into();
 
     let (fov, entities) = active_zone.into_inner();
 
-    for entity in entities.iter() {
-        let Ok((awareness, cell, params)) = active_mobs.get(entity) else {
-            continue;
-        };
-
+    for (entity, awareness, cell, params) in active_mobs.iter_many(entities.iter()) {
         let view = fov.from(cell.into(), params.vision.range());
-
         if view.has(player_cell) && awareness < &Awareness::Alerted {
             commands
                 .entity(entity)
