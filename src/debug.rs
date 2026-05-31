@@ -10,7 +10,7 @@ use crate::{
     colors::KENNEY_RED,
     event_log,
     tilemap::{ActiveLevel, Level, TileStorage},
-    tiles::{self, Highlighted, MapTile, TileIdx, TilePreview},
+    tiles::{self, TileIdx},
 };
 
 #[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
@@ -174,103 +174,6 @@ pub fn on_toggle_visibilities(
     }
 }
 
-/// Convenience macro for getting an entity from a query, returning early if the
-/// entity is not found.
-macro_rules! get_entity {
-    ($query:expr, $on:expr) => {
-        match $query.get_mut($on.event_target()) {
-            Ok(val) => val,
-            Err(_) => return,
-        }
-    };
-}
-
-/// Sets up global tile observers that highlight and preview tiles when the
-/// pointer is over them.
-#[allow(dead_code)]
-pub fn _setup_global_tile_observers(mut commands: Commands, mut editor: ResMut<DebugContext>) {
-    for &obs in editor.observers.iter() {
-        commands.entity(obs).despawn()
-    }
-    editor.observers.clear();
-
-    let over_obs = commands
-        .add_observer(
-            |on: On<Pointer<Over>>,
-             mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>,
-             debug_ctx: Res<DebugContext>| {
-                let preview_opt = get_entity!(tiles, on);
-                if let Some(mut preview) = preview_opt {
-                    preview.set(debug_ctx.active_tile);
-                }
-            },
-        )
-        .insert(Name::new("editor over observer"))
-        .id();
-    let out_obs = commands
-        .add_observer(
-            |on: On<Pointer<Out>>,
-             mut commands: Commands,
-             mut tiles: Query<Option<&mut TilePreview>, With<MapTile>>| {
-                let preview_opt = get_entity!(tiles, on);
-                commands.entity(on.event_target()).remove::<Highlighted>();
-                if let Some(mut preview) = preview_opt {
-                    preview.clear();
-                }
-            },
-        )
-        .insert(Name::new("editor out observer"))
-        .id();
-    let click_obs = commands
-        .add_observer(
-            |on: On<Pointer<Click>>,
-             mut tiles: Query<&mut TileIdx, With<MapTile>>,
-             editor: Res<DebugContext>,
-             state: Res<State<DebugState>>| {
-                if state.get() != &DebugState::Enabled {
-                    return;
-                }
-                let mut tile_idx = get_entity!(tiles, on);
-                *tile_idx = match on.button {
-                    PointerButton::Primary => editor.active_tile,
-                    PointerButton::Secondary => TileIdx::Blank,
-                    _ => *tile_idx,
-                };
-            },
-        )
-        .insert(Name::new("editor click observer"))
-        .id();
-
-    editor
-        .observers
-        .extend_from_slice(&[over_obs, out_obs, click_obs]);
-}
-
-/// Adds [Pickable] and [TilePreview] components to newly added [MapTile] entities.
-pub fn add_editor_components(mut commands: Commands, tiles: Query<Entity, Added<MapTile>>) {
-    for tile in tiles.iter() {
-        commands.entity(tile).insert(TilePreview::default());
-    }
-}
-
-pub fn remove_editor_components(mut commands: Commands, tiles: Query<Entity, With<MapTile>>) {
-    for tile in tiles.iter() {
-        commands
-            .entity(tile)
-            // TODO: we could try to remove TilePreview. Removing it means it
-            // won't be updated though so we set the TilePreview to the default
-            // [`None`].
-            .insert(TilePreview::default());
-    }
-}
-
-pub fn remove_global_tile_observers(mut commands: Commands, mut editor: ResMut<DebugContext>) {
-    for &obs in editor.observers.iter() {
-        commands.entity(obs).despawn();
-    }
-    editor.observers.clear();
-}
-
 pub fn on_editor_toggle(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<DebugState>>,
@@ -300,7 +203,6 @@ impl Plugin for DebugPlugin {
                 (
                     (
                         // This should run in case any map tiles have been added/removed.
-                        add_editor_components,
                         on_button_input,
                         on_zoom_button_input,
                         on_toggle_visibilities,
@@ -309,11 +211,6 @@ impl Plugin for DebugPlugin {
                         .run_if(in_state(DebugState::Enabled)),
                     on_editor_toggle,
                 ),
-            )
-            .add_systems(
-                OnExit(DebugState::Enabled),
-                // These only need to run once per transition to Disabled.
-                (remove_editor_components, remove_global_tile_observers),
             )
             .insert_resource(DebugContext::default())
             .insert_state(DebugState::Enabled)

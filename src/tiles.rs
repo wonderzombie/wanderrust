@@ -97,30 +97,6 @@ pub struct Highlighted;
 #[reflect(Component)]
 pub struct Occupied;
 
-/// A marker component for tiles that are currently being previewed, such as a
-/// tile being hovered over.
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Reflect)]
-#[reflect(Component)]
-pub struct TilePreview(Option<TileIdx>);
-
-impl TilePreview {
-    pub fn get(&self) -> Option<TileIdx> {
-        self.0
-    }
-
-    pub fn set(&mut self, idx: TileIdx) {
-        self.0 = Some(idx);
-    }
-
-    pub fn clear(&mut self) {
-        self.0 = None;
-    }
-
-    pub fn is_active(&self) -> bool {
-        self.0.is_some()
-    }
-}
-
 // We're keeping this very simple for now. Everything with a sprite on the grid
 // is a tile, whether it's an [`Actor`] or a [`MapTile`].
 tiles! {

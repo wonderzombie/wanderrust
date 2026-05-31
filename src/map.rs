@@ -2,7 +2,7 @@ use crate::{
     colors,
     light::{AmbientLight, LightLevel},
     tilemap::{ActiveLevel, Level},
-    tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TilePreview, Walkable},
+    tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, Walkable},
 };
 
 use bevy::ecs::query::QueryData;
@@ -12,7 +12,6 @@ use bevy::prelude::*;
 #[derive(QueryData)]
 #[query_data(derive(Debug))]
 pub struct SyncProps {
-    tile_preview: Option<&'static TilePreview>,
     walkable: Option<&'static Walkable>,
     opaque: Option<&'static Opaque>,
     pickable: Option<&'static Pickable>,
@@ -21,26 +20,20 @@ pub struct SyncProps {
 /// Sync [TileIdx] and [Sprite] visuals along with their gameplay properties.
 pub fn sync_tiles(
     mut commands: Commands,
-    mut tiles: Query<
-        (Entity, &mut Sprite, &TileIdx, SyncProps),
-        Or<(Changed<TileIdx>, Changed<TilePreview>)>,
-    >,
+    mut tiles: Query<(Entity, &mut Sprite, &TileIdx, SyncProps), Changed<TileIdx>>,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so we
     // apply most changes in some unconditional fashion.
     for (entity, mut sprite, tile_idx, sync_props) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
 
-        let preview_opt = sync_props.tile_preview;
         let walkable_opt = sync_props.walkable;
         let opaque_opt = sync_props.opaque;
         let pickable_opt = sync_props.pickable;
 
-        // If there's a preview, we should apply that tile index instead.
-        let next_idx = preview_opt.and_then(|it| it.get()).unwrap_or(*tile_idx);
-        // Apply the texture atlas index unconditionally.
+        // Apply the texture atlas index unconditionally since it has changed.
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
-            texture_atlas.index = next_idx.into();
+            texture_atlas.index = tile_idx.into();
         }
 
         // Update tile Walkable only when necessary.
@@ -114,10 +107,6 @@ pub fn update_tile_visuals(
         } else {
             Color::NONE
         };
-
-        if t.preview_active() {
-            sprite.color.set_alpha(0.5);
-        }
     }
 }
 
@@ -128,7 +117,6 @@ pub struct VisualProps {
     occupied: Option<&'static Occupied>,
     highlighted: Option<&'static Highlighted>,
     revealed: Option<&'static Revealed>,
-    tile_preview: Option<&'static TilePreview>,
     light_level: Option<&'static LightLevel>,
 }
 
@@ -139,10 +127,6 @@ impl<'w, 's> VisualPropsItem<'w, 's> {
 
     pub const fn highlighted(&self) -> bool {
         self.highlighted.is_some()
-    }
-
-    pub fn preview_active(&self) -> bool {
-        self.tile_preview.is_some_and(TilePreview::is_active)
     }
 
     pub fn light_or(&self, other: &LightLevel) -> LightLevel {
