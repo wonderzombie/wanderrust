@@ -48,9 +48,9 @@ pub fn setup_fov(
     level_children: Query<(&Level, &Dimensions, &Children)>,
     transparent_tiles: Query<&Cell, (With<MapTile>, Without<Opaque>)>,
 ) {
-    for (Level(level_entity, _), dimensions, children) in level_children {
+    for (Level(level_entity, level_id), dimensions, children) in level_children {
         info!(
-            "👀 {level_entity:?} checking {} children",
+            "👀 {level_id:?} checking {} children",
             children.iter().len()
         );
         let tiles_count = dimensions.ntiles();
@@ -65,7 +65,9 @@ pub fn setup_fov(
         fov.clear_field_of_view(); // initializes current FOV to "zero"
         commands.entity(*level_entity).insert(fov);
 
-        info!("👀 initialized FOV model with {tiles_count} tiles, {transparent_count} transparent.",)
+        info!(
+            "👀 {level_id:?}: initialized FOV model with {tiles_count} tiles, {transparent_count} transparent.",
+        )
     }
 }
 
