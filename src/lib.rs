@@ -190,6 +190,7 @@ pub fn run() {
                 .in_set(GameSystem::Ramifications),
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
+            combat::animate_icons,
             ldtk_loader::generate_ldtk_world.run_if(resource_added::<LdtkProject>),
         ),
     )
@@ -306,42 +307,16 @@ fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
 
 fn click_observer(
     on: On<Pointer<Click>>,
-    mut commands: Commands,
-    tile_cells: Query<(&TileIdx, &Cell, &ChildOf)>,
-    player: Single<(Entity, &Cell), With<Player>>,
+    tile_cells: Query<(&TileIdx, &Cell, Option<&Name>)>,
     mut log: ResMut<event_log::MessageLog>,
 ) {
-    let (entity, &origin_cell) = *player;
     match tile_cells.get(on.event_target()) {
-        Ok((tile_idx, &cell, child_of)) => {
-            let orig = origin_cell;
-            let delta = orig - cell;
-
-            if on.button == PointerButton::Secondary {
-                // Find direction relative to the player
-                let d = delta.as_vec().normalize_or_zero();
-                if d == Vec2::ZERO {
-                    return;
-                }
-                let direction = Cell::from_vec(d);
-                let target_cell = origin_cell - direction;
-
-                if target_cell == origin_cell {
-                    return;
-                }
-
-                let action = Action {
-                    entity,
-                    origin_cell,
-                    target_cell,
-                };
-                info!("action: {action:?}");
-                commands.insert_resource(action);
-            } else if on.button == PointerButton::Primary {
-                log.add(
-                    format!("{cell} = {tile_idx} (level {child_of:?})"),
-                    Color::WHITE,
-                );
+        Ok((tile_idx, &cell, name_opt)) => {
+            if on.button == PointerButton::Primary {
+                let name = name_opt
+                    .map(|it| it.to_string())
+                    .unwrap_or(format!("{tile_idx}"));
+                log.add(format!("{cell} = {name}"), Color::WHITE);
             }
         }
         Err(err) => {
@@ -390,29 +365,34 @@ fn process_actions(
         return;
     };
 
-    let adjusted_cell = action.adjusted_cell();
+    match action.act {
+        Act::Direction(_) => {
+            let adjusted_cell = action.adjusted_cell();
 
-    match spatial_index.get(adjusted_cell) {
-        None => {
-            commands
-                .entity(action.entity)
-                .insert(adjusted_cell)
-                .trigger(Moved);
+            match spatial_index.get(adjusted_cell) {
+                None => {
+                    commands
+                        .entity(action.entity)
+                        .insert(adjusted_cell)
+                        .trigger(Moved);
+                }
+                Some(target) if portals.get(target).is_ok() => {
+                    let portal = portals.get(target).unwrap();
+                    info!("process_actions: portal");
+                    commands.insert_resource(PendingTransition {
+                        arrive_at: portal.arrive_at.clone(),
+                    });
+                }
+                Some(target) => {
+                    info!("process_actions: interaction");
+                    interaction_attempts.write(interactions::Examine {
+                        interactor: action.entity,
+                        target,
+                    });
+                }
+            }
         }
-        Some(target) if portals.get(target).is_ok() => {
-            let portal = portals.get(target).unwrap();
-            info!("process_actions: portal");
-            commands.insert_resource(PendingTransition {
-                arrive_at: portal.arrive_at.clone(),
-            });
-        }
-        Some(target) => {
-            info!("process_actions: interaction");
-            interaction_attempts.write(interactions::Examine {
-                interactor: action.entity,
-                target,
-            });
-        }
+        Act::Pass => (),
     }
 
     trace!("ramifying actions");

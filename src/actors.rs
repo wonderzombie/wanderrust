@@ -161,12 +161,15 @@ pub fn update_transforms(
 pub struct Action {
     pub entity: Entity,
     pub origin_cell: Cell,
-    pub target_cell: Cell,
+    pub act: Act,
 }
 
 impl Action {
     pub fn adjusted_cell(&self) -> Cell {
-        self.origin_cell + (self.target_cell - self.origin_cell)
+        if let Act::Direction(dir) = self.act {
+            return self.origin_cell + dir;
+        }
+        self.origin_cell
     }
 }
 
@@ -174,10 +177,16 @@ impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Action(entity={:?}, origin_cell={}, target_cell={})",
-            self.entity, self.origin_cell, self.target_cell
+            "Action(entity={:?}, origin_cell={}, act={:?})",
+            self.entity, self.origin_cell, self.act
         )
     }
+}
+
+#[derive(Resource, Debug)]
+pub enum Act {
+    Direction(IVec2),
+    Pass,
 }
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.
@@ -189,17 +198,25 @@ pub fn handle_player_input(
     if !input.is_changed() {
         return;
     }
-    let Some(direction) = get_direction(&input) else {
-        return;
-    };
 
-    let (player_entity, player_cell) = *player_query;
+    let (entity, &origin_cell) = *player_query;
 
-    commands.insert_resource(Action {
-        entity: player_entity,
-        origin_cell: *player_cell,
-        target_cell: player_cell.add(direction),
-    });
+    if let Some(act) = get_action(&input) {
+        commands.insert_resource(Action {
+            entity,
+            origin_cell,
+            act,
+        });
+    }
+}
+
+fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
+    if let Some(dir) = get_direction(&input) {
+        return Some(Act::Direction(dir));
+    } else if input.any_just_pressed([KeyCode::KeyP, KeyCode::Space]) {
+        return Some(Act::Pass);
+    }
+    None
 }
 
 /// Returns the [IVec2] direction implied by [KeyCode], if any.
