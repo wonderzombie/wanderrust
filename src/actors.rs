@@ -157,7 +157,7 @@ pub fn update_transforms(
 
 /// A message representing an attempt by an actor to interact with a cell in the
 /// world, such as moving into it or interacting with an object on it.
-#[derive(Message, Debug)]
+#[derive(Resource, Debug)]
 pub struct Action {
     pub entity: Entity,
     pub origin_cell: Cell,
@@ -182,7 +182,7 @@ impl Display for Action {
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.
 pub fn handle_player_input(
-    mut events: MessageWriter<Action>,
+    mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     player_query: Single<(Entity, &Cell), With<Player>>,
 ) {
@@ -195,7 +195,7 @@ pub fn handle_player_input(
 
     let (player_entity, player_cell) = *player_query;
 
-    events.write(Action {
+    commands.insert_resource(Action {
         entity: player_entity,
         origin_cell: *player_cell,
         target_cell: player_cell.add(direction),

@@ -101,7 +101,6 @@ pub fn run() {
                 ..default()
             }),
     )
-    .add_message::<actors::Action>()
     .add_message::<combat::Attack>()
     .init_resource::<actors::PlayerStats>()
     .init_resource::<atlas::SpriteAtlas>()
@@ -307,10 +306,10 @@ fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
 
 fn click_observer(
     on: On<Pointer<Click>>,
+    mut commands: Commands,
     tile_cells: Query<(&TileIdx, &Cell, &ChildOf)>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut log: ResMut<event_log::MessageLog>,
-    mut actions: MessageWriter<Action>,
 ) {
     let (entity, &origin_cell) = *player;
     match tile_cells.get(on.event_target()) {
@@ -337,7 +336,7 @@ fn click_observer(
                     target_cell,
                 };
                 info!("action: {:?}", action);
-                actions.write(action);
+                commands.insert_resource(action);
             } else if on.button == PointerButton::Primary {
                 log.add(
                     format!("{} = {} (level {:?})", cell, tile_idx, child_of),
@@ -373,61 +372,51 @@ fn set_mouse_cursor(
 /// Routes [`Action`] messages. Interaction execution is handled in [`Examine`].
 fn process_actions(
     mut commands: Commands,
-    mut actions: MessageReader<Action>,
+    action: If<Res<Action>>,
     portals: Query<&Portal>,
     mut interaction_attempts: MessageWriter<interactions::Examine>,
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
 ) {
-    let mut acted = false;
-    for action in actions.read() {
-        trace!("action: {action:?}");
-        let Some(spatial_index) = actors
-            .get(action.entity)
-            .and_then(|e| all_spatial.get(e.parent()))
-            .ok()
-        else {
-            warn!("Failed to get spatial index for entity {:?}", action.entity);
-            continue;
-        };
-        acted = true;
+    trace!("action: {action:?}");
+    commands.remove_resource::<Action>();
 
-        let adjusted_cell = action.adjusted_cell();
+    let Some(spatial_index) = actors
+        .get(action.entity)
+        .and_then(|e| all_spatial.get(e.parent()))
+        .ok()
+    else {
+        warn!("no spatial index for {:?}; dropping action", action.entity);
+        return;
+    };
 
-        let Some(target_entity) = spatial_index.get(adjusted_cell) else {
-            // No entity at the target [`Cell`], so we can assume it's an empty
-            // walkable tile. Changing the [`Cell`] via insertion will cause the
-            // system to move the player sprite.
-            info!("process_actions: move to {adjusted_cell}");
+    let adjusted_cell = action.adjusted_cell();
+
+    match spatial_index.get(adjusted_cell) {
+        None => {
             commands
                 .entity(action.entity)
                 .insert(adjusted_cell)
                 .trigger(Moved);
-
-            continue;
-        };
-
-        info!("entity {target_entity:?} is at {adjusted_cell}");
-
-        if let Ok(portal) = portals.get(target_entity) {
+        }
+        Some(target) if portals.get(target).is_ok() => {
+            let portal = portals.get(target).unwrap();
             info!("process_actions: portal");
             commands.insert_resource(PendingTransition {
                 arrive_at: portal.arrive_at.clone(),
             });
-            continue;
         }
-
-        info!("process_actions: interaction");
-        interaction_attempts.write(interactions::Examine {
-            interactor: action.entity,
-            target: target_entity,
-        });
+        Some(target) => {
+            info!("process_actions: interaction");
+            interaction_attempts.write(interactions::Examine {
+                interactor: action.entity,
+                target,
+            });
+        }
     }
 
-    if acted {
-        trace!("ramifying actions");
-        commands.set_state(GameState::Ramifying);
-    }
+    trace!("ramifying actions");
+    commands.set_state(GameState::Ramifying);
 }
 
 /// The destination will be marked by this [`EntryId`].
