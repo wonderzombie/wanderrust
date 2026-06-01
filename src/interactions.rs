@@ -163,14 +163,11 @@ pub fn process_interactions(
             continue;
         };
 
-        trace!(
-            "process_interactions: matched interactable: {:#?}",
-            interactable
-        );
+        trace!("process_interactions: matched interactable: {interactable:#?}",);
 
         match interactable.as_mut() {
             Interactable::Invalid => {
-                error!("invalid interactable; skipping: {:?}", attempt);
+                error!("invalid interactable; skipping: {attempt:?}");
                 continue;
             }
             Interactable::Door {
@@ -319,7 +316,7 @@ pub fn spawn_interxs(
                 )
             })
             .for_each(|b| {
-                trace!("spawning {:?}", &b);
+                trace!("spawning {b:?}");
                 count += 1;
                 commands.spawn(b);
             });

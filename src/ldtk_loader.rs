@@ -277,7 +277,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                                 );
                             }
                         }
-                        None => warn!("ignoring unparsable actor: {:?}", actor),
+                        None => warn!("ignoring unparsable actor: {actor:?}"),
                     }
                 }
             }
@@ -294,26 +294,24 @@ fn get_grid_tiles(
 ) -> Vec<TileCell> {
     let mut new_tiles: Vec<TileCell> = vec![];
     let mut blank = 0;
-    let mut zero = 0;
+    let mut nzero = 0;
     for grid_tile in grid_tiles {
         let tile_idx = TileIdx::from_idx(grid_tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
         let cell = grid_tile.into_cell(level_px_height, world_depth);
         if cell == Cell::ZERO {
-            zero += 1;
+            nzero += 1;
         }
         if tile_idx == TileIdx::Blank {
             blank += 1;
         }
         new_tiles.push((tile_idx, cell));
     }
-    // info!("🧰 blank tiles: {}; zero tiles: {}", blank, zero);
     if blank == grid_tiles.len() {
-        error!("🧰 {} out of {} tiles were blank", blank, grid_tiles.len());
+        error!("🧰 {blank} out of {} tiles were blank", grid_tiles.len());
     }
-    if zero == grid_tiles.len() {
+    if nzero == grid_tiles.len() {
         error!(
-            "🧰 {} out of {} tiles were at (0, 0)",
-            zero,
+            "🧰 {nzero} out of {} tiles were at (0, 0)",
             grid_tiles.len()
         );
     }
@@ -395,7 +393,7 @@ pub enum ParsedActor {
 impl LdtkEntityExt<ParsedActor> for ParsedActor {
     fn from_ldtk(entity: &LdtkEntity) -> Option<ParsedActor> {
         let Some(ty) = entity.ty() else {
-            warn!("unknown LdtkEntity type: {:#?}", entity);
+            warn!("unknown LdtkEntity type: {entity:#?}");
             return None;
         };
 
@@ -407,7 +405,7 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
             LdtkActor::Spawn => Some(Self::Spawn),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
             LdtkActor::Unset => {
-                warn!("unknown LdtkEntity type: {:#?}", entity);
+                warn!("unknown LdtkEntity type: {entity:#?}");
                 None
             }
         }

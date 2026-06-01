@@ -50,9 +50,8 @@ where
     };
 
     format!(
-        "{} {} {}",
+        "{} {text} {}",
         brackets.chars().next().unwrap_or('?'),
-        text,
         brackets.chars().nth(1).unwrap_or('?'),
     )
 }

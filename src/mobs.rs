@@ -60,14 +60,14 @@ pub fn init_indicators(
     );
 
     let xform = Transform::from_xyz(0., 0., 1.);
-    for (nty, interx) in query {
+    for (nt, interx) in query {
         match interx {
             Interactable::Belligerent { .. } | Interactable::Speaker { .. } => {
-                info!("initialized indicator for {nty:?}");
+                info!("initialized indicator for {nt:?}");
                 commands.spawn((
                     Indicator,
                     xform,
-                    ChildOf(nty),
+                    ChildOf(nt),
                     TileIdx::Corners,
                     sprite.clone(),
                     Visibility::Inherited,

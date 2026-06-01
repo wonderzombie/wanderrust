@@ -165,7 +165,7 @@ impl Inventory {
         let mut inv = Inventory::default();
         for s in item_specs.into_iter() {
             if s.as_ref().is_empty() {
-                warn!("skipping empty item spec: {:?}", &s);
+                warn!("skipping empty item spec: {s:?}");
                 continue;
             }
             let (item, qty) = Item::from_spec(s.as_ref());

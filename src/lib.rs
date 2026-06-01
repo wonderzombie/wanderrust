@@ -335,17 +335,17 @@ fn click_observer(
                     origin_cell,
                     target_cell,
                 };
-                info!("action: {:?}", action);
+                info!("action: {action:?}");
                 commands.insert_resource(action);
             } else if on.button == PointerButton::Primary {
                 log.add(
-                    format!("{} = {} (level {:?})", cell, tile_idx, child_of),
+                    format!("{cell} = {tile_idx} (level {child_of:?})"),
                     Color::WHITE,
                 );
             }
         }
         Err(err) => {
-            trace!("couldn't get_entity() on.event_target(): {:?}", err);
+            trace!("couldn't get_entity() on.event_target(): {err:?}");
         }
     }
 }
@@ -378,7 +378,7 @@ fn process_actions(
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
 ) {
-    trace!("action: {action:?}");
+    trace!("{action:?}");
     commands.remove_resource::<Action>();
 
     let Some(spatial_index) = actors
@@ -435,10 +435,10 @@ fn handle_pending_transition(
     portals: Query<(&Portal, &Cell, &ChildOf), With<Actor>>,
     player: Single<Entity, With<Player>>,
 ) {
-    info!("looking for {:?} in {:?}", transition.arrive_at, portals);
+    info!("looking for {:?} in {portals:?}", transition.arrive_at);
     for (portal, cell, portal_child_of) in &portals {
         if portal.id == transition.arrive_at {
-            info!("ℹ️ portal to {:?} at cell {:?}", portal.arrive_at, cell);
+            info!("ℹ️ portal to {:?} at cell {cell}", portal.arrive_at);
 
             if portal_child_of.parent() != *active_level {
                 commands

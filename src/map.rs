@@ -70,12 +70,12 @@ pub fn update_level_visuals(
         return;
     }
 
-    for (Level(level_ent, _), mut vis) in all_levels {
-        if *level_ent == active_level {
-            info!("Level active: {}", level_ent);
+    for (Level(level_nt, _), mut vis) in all_levels {
+        if *level_nt == active_level {
+            info!("Level active: {level_nt}");
             *vis = Visibility::Inherited;
         } else {
-            info!("Level inactive: {}", level_ent);
+            info!("Level inactive: {level_nt}");
             *vis = Visibility::Hidden;
         }
     }

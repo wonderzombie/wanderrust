@@ -122,7 +122,7 @@ impl Emitter {
                     ));
                 }
                 _ => {
-                    error!("tile is emitter but unrecognized: {:?}", tile_idx);
+                    error!("tile is emitter but unrecognized: {tile_idx}");
                     return None;
                 }
             }
@@ -170,7 +170,7 @@ impl Emitter {
 impl LdtkEntityExt<Emitter> for Emitter {
     fn from_ldtk(entity: &LdtkEntity) -> Option<Emitter> {
         if entity.ty().is_none_or(|it| it != LdtkActor::Emitter) {
-            warn!("entity unknown or not an emitter: {:?}", entity);
+            warn!("entity unknown or not an emitter: {entity:?}");
             return None;
         }
         Emitter::from_tile(&entity.get_tile())
@@ -272,16 +272,16 @@ pub fn spawn(
     info!("🔥 spawning emitters for {} levels", levels.count());
     for (level_id, spec) in spec.maps.iter() {
         let emitters = &spec.emitters;
-        info!("🔥 level {:?} has {:?} emitters", level_id, emitters.len());
+        info!("🔥 level {level_id:?} has {:?} emitters", emitters.len());
         let Some(Level(level_entity, _)) = levels.iter().find(|Level(_, id)| id == level_id) else {
-            warn!("🔥 unable to find level with id {:?}", level_id);
+            warn!("🔥 unable to find level with id {level_id:?}");
             continue;
         };
 
         let mut count = 0;
         for (emitter, cell) in emitters.iter() {
             count += 1;
-            trace!("🔥 spawning {:?} at {:?}", emitter, cell);
+            trace!("🔥 spawning {emitter:?} at {cell:?}");
             commands.spawn((
                 *emitter,
                 emitter.tile_idx,
@@ -294,7 +294,7 @@ pub fn spawn(
             ));
         }
         if count > 0 {
-            info!("🔥 spawned {} emitters", count);
+            info!("🔥 spawned {count} emitters");
         }
     }
 }
@@ -320,7 +320,7 @@ pub fn setup(
             count += 1;
         }
         if count > 0 {
-            info!("🔥 set up {} emitter tiles", count);
+            info!("🔥 set up {count} emitter tiles");
         }
 
         count = 0;
@@ -332,7 +332,7 @@ pub fn setup(
             count += 1;
         }
         if count > 0 {
-            info!("🔥 set up {} level light maps", count);
+            info!("🔥 set up {count} level light maps");
         }
     }
 }
@@ -349,7 +349,7 @@ pub fn update_emitter_maps(
     }
 
     if count > 0 {
-        trace!("🔥 updated {} emitter maps", count);
+        trace!("🔥 updated {count} emitter maps");
     }
 }
 
@@ -381,12 +381,12 @@ pub fn update_level_maps(
                 continue;
             }
         } else {
-            panic!("unable to find level for {:?}", level_entity);
+            panic!("unable to find level for {level_entity:?}");
         }
 
         let mut level_map = all_levels
             .get_mut(level_entity)
-            .unwrap_or_else(|_| panic!("unable to get level map for entity {:?}", level_entity));
+            .unwrap_or_else(|_| panic!("unable to get level map for entity {level_entity:?}"));
         level_map.prev = level_map.curr.clone();
         level_map.curr = merged;
     }
@@ -410,16 +410,15 @@ pub fn sync_actor_light_levels(
     // Actor entities should have the same LightLevel as the tile they are standing on.
     for (mut actor_sprite, actor_cell, mut actor_vis, child_of) in actors {
         let Ok((storage, ambient)) = storages.get(child_of.parent()) else {
-            warn!("no level found for actor: {:?}", actor_cell);
+            warn!("no level found for actor: {actor_cell}");
             continue;
         };
 
         // actor_cell allows access to the logical tile.
         let Some(actor_tile) = storage.get(actor_cell) else {
             warn!(
-                "{:?}: no cell found for actor: {:?}",
+                "{:?}: no cell found for actor: {actor_cell}",
                 child_of.parent(),
-                actor_cell
             );
             continue;
         };

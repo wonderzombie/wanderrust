@@ -66,10 +66,7 @@ pub fn setup_fov(
         fov.clear_field_of_view(); // initializes current FOV to "zero"
         commands.entity(*level_entity).insert(fov);
 
-        info!(
-            "👀 initialized FOV model with {} tiles, {} transparent.",
-            tiles_count, transparent_count
-        )
+        info!("👀 initialized FOV model with {tiles_count} tiles, {transparent_count} transparent.",)
     }
 }
 

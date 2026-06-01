@@ -356,30 +356,25 @@ pub fn spawn_worldmap(
             generate_tile_bundles(level_entity, &level_spec.dimensions, &cells, layer, &atlas);
 
         info!(
-            "📍 {:?}: {} tiles; {} bundles; {} mapped tiles",
-            level,
+            "📍 {level:?}: {} tiles; {} bundles; {count} mapped tiles",
             level_spec.tiles.len(),
             bundles.len(),
-            count,
         );
         commands.spawn_batch(bundles);
 
         if start_level_id == *level_id {
-            info!(
-                "- 📍 found spawn level: {:?} and cell {:?}",
-                start_level_id, cell
-            );
+            info!("- 📍 found spawn level: {start_level_id:?} and cell {cell}",);
             commands.spawn(WorldSpawn::new(level_entity, cell));
             commands
                 .entity(level_entity)
                 .insert((ActiveLevel, Visibility::Inherited));
         }
 
-        info!("- 📍 {start_level_id} tally: {:?}", tally);
+        info!("- 📍 {start_level_id} tally: {tally:?}");
 
         commands
             .entity(level_entity)
-            .insert(Name::new(format!("Level {:?}", level)))
+            .insert(Name::new(format!("Level {level:?}")))
             .insert(level_spec.dimensions)
             .insert(ChildOf(world_entity))
             .insert(level);
@@ -485,11 +480,8 @@ pub fn initialize_tile_storage(
             }
         }
         info!(
-            "- 📍 level {}: set {}/{} tile entities ({} zero cells)",
-            level_id,
-            num_cells,
+            "- 📍 level {level_id}: set {num_cells}/{} tile entities ({zero_cells} zero cells)",
             storage.len(),
-            zero_cells,
         );
         commands.entity(*level_entity).insert(storage);
     }
@@ -516,7 +508,7 @@ pub fn setup_portals(
                         ..default()
                     },
                 ));
-                info!("- 📍 inserted portal {:?} at {:?}", portal, cell);
+                info!("- 📍 inserted portal {portal:?} at {cell:?}");
             }
         }
     }

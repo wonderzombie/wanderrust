@@ -92,7 +92,7 @@ pub fn setup_player(
             .insert(ChildOf(*level_entity))
             .insert(*cell);
     } else {
-        info!("🕹️ spawning player at {:?} {:?}", cell, level_entity);
+        info!("🕹️ spawning player at {cell} {level_entity:?}");
 
         commands.spawn((
             ChildOf(*active),

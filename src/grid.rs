@@ -95,8 +95,7 @@ pub fn update_grid(
     for (cell, is_walkable) in changed_tiles {
         if !nav_grid.in_bounds(cell.as_vec3()) {
             error!(
-                "Skipping attempt to update grid at out-of-bounds position {}; grid is {} x {}",
-                cell,
+                "Skipping attempt to update grid at out-of-bounds position {cell}; grid is {} x {}",
                 nav_grid.width(),
                 nav_grid.height(),
             );
@@ -163,14 +162,11 @@ pub fn move_agents(
 ) {
     for (entity, mut agent_pos, next_pos, mut turn) in query.iter_mut() {
         if turn.complete() {
-            trace!("not moving done/idle entity {:?}", entity);
+            trace!("not moving done/idle entity {entity:?}");
             continue;
         }
 
-        trace!(
-            "🧭 entity {} moving from {:?} to {:?}",
-            entity, agent_pos, next_pos
-        );
+        trace!("🧭 entity {entity} moving from {agent_pos:?} to {next_pos:?}",);
 
         let (player, player_cell) = *player;
 
