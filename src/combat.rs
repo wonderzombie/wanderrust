@@ -98,7 +98,7 @@ pub fn process_attacks(
 
         if defender.is_dead {
             log.add(
-                format!("{} is already dead", defender_name),
+                format!("{defender_name} is already dead"),
                 colors::KENNEY_GOLD,
             );
             continue;
@@ -109,14 +109,14 @@ pub fn process_attacks(
             commands.entity(defender_id).trigger(Hit);
             defender.hp = defender.hp.saturating_sub(damage);
             log.add(
-                format!("{} hits {}!", attacker_name, defender_name),
+                format!("{attacker_name} hits {defender_name}!"),
                 colors::KENNEY_GOLD,
             );
 
             if defender.hp <= 0 {
                 commands.entity(defender_id).trigger(Died);
                 defender.is_dead = true;
-                log.add(format!("{} is dead", defender_name), colors::KENNEY_RED);
+                log.add(format!("{defender_name} is dead"), colors::KENNEY_RED);
                 spawn_floating_text(
                     &mut commands,
                     colors::KENNEY_RED,
@@ -136,7 +136,7 @@ pub fn process_attacks(
             }
         } else {
             log.add(
-                format!("{} does no damage", attacker_name),
+                format!("{attacker_name} does no damage"),
                 colors::KENNEY_GOLD,
             )
         }
