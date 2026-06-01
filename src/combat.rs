@@ -74,6 +74,10 @@ pub fn init_combatants(
             .or_else(|| Bestiary::from_name(name))
             .unwrap_or_default();
 
+        if params.is_default() {
+            warn!("{entity:?} {name} {tile_idx} uses default combat Parameters");
+        }
+
         let health = Health {
             hp: params.max_hp.cast_signed(),
             is_dead: false,
