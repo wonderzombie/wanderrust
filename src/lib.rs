@@ -177,7 +177,9 @@ pub fn run() {
     .add_systems(
         Update,
         (
-            actors::handle_player_input.run_if(in_state(GameState::AwaitingInput)),
+            actors::handle_player_input
+                .run_if(in_state(GameState::AwaitingInput))
+                .before(GameSystem::Ramifications),
             (
                 process_actions,
                 interactions::process_interactions,
