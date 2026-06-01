@@ -363,7 +363,7 @@ pub fn update_level_maps(
 
     let maps_by_level = all_emitter_maps
         .iter()
-        .map(|(child_of, light_map)| (child_of.parent(), light_map))
+        .map(|(ChildOf(parent), light_map)| (*parent, light_map))
         .into_group_map();
 
     for (level_entity, light_maps) in maps_by_level {
@@ -429,10 +429,10 @@ pub fn sync_actor_light_levels(
             .copied()
             .unwrap_or_default();
 
-        let level = lit_tiles.get(actor_tile).ok().copied().unwrap_or(ambient.0);
+        let lighting = lit_tiles.get(actor_tile).ok().copied().unwrap_or(ambient.0);
 
         actor_vis.set_if_neq(if revealed.0 {
-            actor_sprite.color = Color::WHITE.with_alpha(level.into());
+            actor_sprite.color = Color::WHITE.with_alpha(lighting.into());
             Visibility::Inherited
         } else {
             actor_sprite.color = Color::BLACK.with_alpha(0.0);

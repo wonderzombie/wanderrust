@@ -84,16 +84,16 @@ pub fn update_mob_indicators(
     mobs: Populated<(&Awareness, Has<Dead>)>,
     indicators: Query<(Entity, &ChildOf, &mut Sprite), With<Indicator>>,
 ) {
-    let active_mob_ntys = zone.collection();
-    for (indic_nty, ChildOf(parent), mut sprite) in indicators {
+    let mob_nts = zone.collection();
+    for (indicator_nt, ChildOf(parent), mut sprite) in indicators {
         // TODO: verify that we don't need to hide the indicator explicitly
         // since the parent of the indicator should be hidden along with its
         // parent, the mob entity.
         if let Ok((awareness, is_dead)) = mobs.get(*parent)
-            && active_mob_ntys.contains(parent)
+            && mob_nts.contains(parent)
         {
             if is_dead {
-                commands.entity(indic_nty).despawn();
+                commands.entity(indicator_nt).despawn();
             } else {
                 match awareness {
                     Awareness::Idling => sprite.color = colors::KENNEY_OFF_WHITE,
