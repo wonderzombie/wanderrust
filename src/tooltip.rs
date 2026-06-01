@@ -6,7 +6,7 @@ use crate::{
     colors,
     interactions::Interactable,
     tilemap::Portal,
-    tiles::TileIdx,
+    tiles::{MapTile, TileIdx},
 };
 
 /// Marker struct for the entity with a tooltip background sprite and text.
@@ -67,7 +67,7 @@ fn over_observer(
             Option<&Interactable>,
             Option<&Portal>,
         ),
-        With<Actor>,
+        Without<MapTile>,
     >,
     tooltip: Single<(Entity, &mut Sprite, &mut Text2d), With<Tooltip>>,
     mut commands: Commands,
