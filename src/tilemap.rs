@@ -458,7 +458,7 @@ fn generate_tile_bundles(
 pub fn initialize_tile_storage(
     mut commands: Commands,
     levels: Query<(&Level, &Dimensions, &Children)>,
-    tiles: Query<&Cell, With<MapTile>>,
+    tiles: Query<(Entity, &Cell), With<MapTile>>,
 ) {
     info!("📍 storing maps by cell by level");
     if levels.count() < 1 {
@@ -470,14 +470,12 @@ pub fn initialize_tile_storage(
     for (Level(level_entity, level_id), size, children) in levels {
         let mut num_cells = 0;
         let mut storage = TileStorage::new(*size);
-        for entity in children.iter() {
-            if let Ok(cell) = tiles.get(entity) {
-                if cell == &Cell::ZERO {
-                    zero_cells += 1;
-                }
-                storage.set(cell, entity);
-                num_cells += 1;
+        for (nt, cell) in tiles.iter_many(children.iter()) {
+            if cell == &Cell::ZERO {
+                zero_cells += 1;
             }
+            storage.set(cell, nt);
+            num_cells += 1;
         }
         info!(
             "- 📍 level {level_id}: set {num_cells}/{} tile entities ({zero_cells} zero cells)",

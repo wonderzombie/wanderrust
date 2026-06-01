@@ -56,13 +56,12 @@ pub fn setup_fov(
         let tiles_count = dimensions.ntiles();
         let mut transparent_count = 0;
         let mut fov = Fov(Mrpas::new(dimensions.width as i32, dimensions.width as i32));
-        for &child in children {
-            if let Ok(cell) = transparent_tiles.get(child) {
-                // Sets individual points in the model to transparent-or-not.
-                fov.set_transparent(cell.into(), true);
-                transparent_count += 1;
-            }
+
+        for cell in transparent_tiles.iter_many(children) {
+            fov.set_transparent(cell.into(), true);
+            transparent_count += 1;
         }
+
         fov.clear_field_of_view(); // initializes current FOV to "zero"
         commands.entity(*level_entity).insert(fov);
 

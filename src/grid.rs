@@ -52,14 +52,12 @@ pub(crate) fn update_spatial_index(
 pub(crate) fn setup_spatial_indices(
     mut commands: Commands,
     level_children: Populated<(&Level, &Children)>,
-    unwalkable_cells: Populated<&Cell, Without<Walkable>>,
+    unwalkable_cells: Populated<(Entity, &Cell), Without<Walkable>>,
 ) {
     for (Level(level_entity, _), children) in level_children.iter() {
         let mut index = SpatialIndex::default();
-        for child in children.iter() {
-            if let Ok(cell) = unwalkable_cells.get(child) {
-                index.insert(*cell, child);
-            }
+        for (nt, cell) in unwalkable_cells.iter_many(children) {
+            index.insert(*cell, nt);
         }
         commands.entity(*level_entity).insert(index);
     }
