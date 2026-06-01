@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    actors::{Actor, Player},
+    actors::Player,
     atlas::SpriteAtlas,
     colors,
     interactions::Interactable,

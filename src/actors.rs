@@ -73,7 +73,7 @@ pub struct Moved(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub struct Bonk(pub Entity);
 
-const STARTING_ITEMS: &[&'static Equipment] = &[&Equipment::Rags, &Equipment::Stick];
+const STARTING_ITEMS: &[&Equipment] = &[&Equipment::Rags, &Equipment::Stick];
 
 /// Spawns the player entity at the start position of the tilemap on the
 /// player's layer.
@@ -123,7 +123,7 @@ pub fn setup_player(
 
 pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Player>>) {
     let parent = *player;
-    for e in STARTING_ITEMS.into_iter() {
+    for e in STARTING_ITEMS.iter() {
         let Some(item) = e.as_item() else {
             error!("invalid starting item: {e:?}");
             continue;
