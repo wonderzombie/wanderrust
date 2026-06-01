@@ -95,7 +95,7 @@ pub fn update_fov_markers(
 
     let parent_level = player_child_of.parent();
     let Some((child_tiles, player_fov)) = all_fov.get(parent_level).ok() else {
-        error!("No Fov found for player's level.");
+        error!("no Fov found for player's level: {parent_level:?}");
         return;
     };
 
