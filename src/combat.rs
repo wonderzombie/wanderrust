@@ -2,8 +2,8 @@ use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
-    actors::Dead, bestiary::Bestiary, colors, event_log::MessageLog, gamestate::Turn,
-    interactions::Interactable, parameters::*, tiles::TileIdx,
+    actors::Dead, atlas::SpriteAtlas, bestiary::Bestiary, colors, event_log::MessageLog,
+    gamestate::Turn, interactions::Interactable, parameters::*, tiles::TileIdx,
 };
 
 #[derive(EntityEvent, Debug)]
@@ -30,6 +30,37 @@ pub fn detect_belligerents(
     }
 }
 
+#[derive(Component)]
+pub(crate) struct AttackIcon(pub Timer);
+
+impl AttackIcon {
+    pub(crate) fn new(duration: f32) -> Self {
+        Self(Timer::from_seconds(duration, TimerMode::Once))
+    }
+}
+
+pub fn on_attacked(on: On<Attacked>, mut commands: Commands, atlas: Res<SpriteAtlas>) {
+    let defender = on.event_target();
+    let sprite = atlas.sprite_from_idx(TileIdx::SlashDiagonal);
+
+    commands
+        .entity(defender)
+        .with_child((AttackIcon::new(0.5), sprite));
+}
+
+pub(crate) fn animate_icons(
+    mut commands: Commands,
+    time: Res<Time>,
+    anims: Populated<(Entity, &mut AttackIcon)>,
+) {
+    for (nt, mut icon) in anims {
+        icon.0.tick(time.delta());
+        if icon.0.is_finished() {
+            commands.entity(nt).despawn();
+        }
+    }
+}
+
 /// Adds combat parameters and health to entities that have received a Combatant component.
 /// They will only receive Parameters if they don't have any, but they always receive health.
 pub fn init_combatants(
@@ -50,7 +81,11 @@ pub fn init_combatants(
 
         info!("initialized combatant {entity:?}: {params:?} and {health:?}");
 
-        commands.entity(entity).insert_if_new(params).insert(health);
+        commands
+            .entity(entity)
+            .insert_if_new(params)
+            .insert(health)
+            .observe(on_attacked);
     }
 }
 
