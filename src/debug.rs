@@ -217,6 +217,6 @@ impl Plugin for DebugPlugin {
             .add_plugins(RemotePlugin::default())
             .add_plugins(RemoteHttpPlugin::default())
             .add_plugins(DebugPickingPlugin)
-            .insert_resource(DebugPickingMode::Normal);
+            .insert_resource(DebugPickingMode::Disabled);
     }
 }
