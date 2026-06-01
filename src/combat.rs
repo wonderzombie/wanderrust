@@ -72,19 +72,15 @@ pub struct Attack {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, Option<&Name>, &Parameters, &mut Health)>,
+    mut combatants: Query<(Entity, &Name, &Parameters, &mut Health)>,
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
-    if !attacks.is_empty() {
-        info!("process_attacks: {}", attacks.len());
-    }
-
     for attack in attacks.read() {
-        info!("attack: {attack:?}");
+        info!("{attack:?}");
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
             warn!(
@@ -100,12 +96,9 @@ pub fn process_attacks(
         let (defender_id, defender_name, def_params, mut defender) = defender;
         let (_, attacker_name, atk_params, _) = attacker;
 
-        let defender_name = defender_name.map_or("some defender", |n| n.as_str());
-        let attacker_name = attacker_name.map_or("some attacker", |n| n.as_str());
-
         if defender.is_dead {
             log.add(
-                format!("{} is already dead", defender_name,),
+                format!("{} is already dead", defender_name),
                 colors::KENNEY_GOLD,
             );
             continue;
