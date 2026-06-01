@@ -1,4 +1,4 @@
-use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
+use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::AgentOfGrid;
 
 use crate::{
@@ -15,53 +15,42 @@ pub(crate) struct Hit(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub(crate) struct Died(pub Entity);
 
+/// Detects entities with Interactable that may be Belligerents.
+/// Adds Combatant and Name components.
 pub fn detect_belligerents(
     mut commands: Commands,
     interxs: Populated<(Entity, &Interactable), Added<Interactable>>,
 ) {
     for (entity, interx) in interxs {
-        match interx {
-            Interactable::Belligerent { .. } => {
-                commands.entity(entity).insert(Combatant);
-            }
-            _ => continue,
+        if let Interactable::Belligerent { name, .. } = interx {
+            commands
+                .entity(entity)
+                .insert((CombatantBundle::default(), Name::new(name.clone())));
         }
     }
 }
 
+/// Adds combat parameters and health to entities that have received a Combatant component.
+/// They will only receive Parameters if they don't have any, but they always receive health.
 pub fn init_combatants(
     mut commands: Commands,
-    combatants: Populated<
-        (Entity, Option<&Name>, &TileIdx),
-        (Added<Combatant>, Without<Parameters>),
-    >,
+    combatants: Populated<(Entity, &TileIdx, &Name, Option<&Parameters>), Added<Combatant>>,
 ) {
-    for (entity, name_opt, tile_idx) in combatants.into_iter() {
-        let name = name_opt.map(|it| it.as_str()).unwrap_or("default");
-        let params_opt = Bestiary::from_tile(tile_idx).or(Bestiary::from_name(name));
+    for (entity, tile_idx, name, params_opt) in combatants.into_iter() {
+        let params = params_opt
+            .copied()
+            .or_else(|| Bestiary::from_tile(tile_idx))
+            .or_else(|| Bestiary::from_name(name))
+            .unwrap_or_default();
 
-        // Do not skip adding parameters; instead, add a default and log an error.
-        // This will keep this function from running repeatedly and doing nothing.
-        if params_opt.is_none() || params_opt.is_some_and(|it| it.is_default()) {
-            error!(
-                "no parameters exist for entity {:?} named {} with tile {:?}; using {:#?}",
-                entity, name, tile_idx, params_opt
-            );
-        }
-
-        let params = params_opt.unwrap_or_default();
         let health = Health {
             hp: params.max_hp.cast_signed(),
             is_dead: false,
         };
 
-        commands
-            .entity(entity)
-            .insert(CombatantBundle {
-                params,
-                ..default()
-            })
-            .insert(health);
+        info!("initialized combatant {entity:?}: {params:?} and {health:?}");
+
+        commands.entity(entity).insert_if_new(params).insert(health);
     }
 }
 
@@ -71,7 +60,6 @@ pub struct Combatant;
 #[derive(Bundle, Default)]
 pub struct CombatantBundle {
     pub combatant: Combatant,
-    pub params: Parameters,
     pub awareness: Awareness,
     pub turn: Turn,
 }
@@ -80,15 +68,6 @@ pub struct CombatantBundle {
 pub struct Attack {
     pub attacker: Entity,
     pub target: Entity,
-}
-
-#[derive(QueryData)]
-#[query_data(mutable)]
-pub struct CombatantStats {
-    pub entity: Entity,
-    pub name: &'static Name,
-    pub params: &'static Parameters,
-    pub health: &'static mut Health,
 }
 
 pub fn process_attacks(
@@ -105,6 +84,7 @@ pub fn process_attacks(
     }
 
     for attack in attacks.read() {
+        info!("attack: {attack:?}");
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
             warn!(

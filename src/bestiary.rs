@@ -24,7 +24,7 @@ macro_rules! define_bestiary {
 }
 
 define_bestiary!(
-    Player => [TileIdx::Player, atk = 1, def = 1, hp = 20, vis = 5],
+    Player => [TileIdx::Player, atk = 3, def = 1, hp = 20, vis = 5],
     Bat => [TileIdx::Bat, atk = 3, def = 1, hp = 12, vis = 4],
     Skeleton => [TileIdx::Skeleton, atk = 4, def = 3, hp = 20, vis = 2],
 );

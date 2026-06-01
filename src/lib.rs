@@ -381,7 +381,7 @@ fn process_actions(
 ) {
     let mut acted = false;
     for action in actions.read() {
-        info!("action: {action:?}");
+        trace!("action: {action:?}");
         let Some(spatial_index) = actors
             .get(action.entity)
             .and_then(|e| all_spatial.get(e.parent()))
