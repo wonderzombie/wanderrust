@@ -51,7 +51,7 @@ pub fn setup_fov(
     for (Level(level_entity, level_id), dimensions, children) in level_children {
         info!(
             "👀 {level_id:?} checking {} children",
-            children.iter().len()
+            children.collection().len()
         );
         let tiles_count = dimensions.ntiles();
         let mut transparent_count = 0;
