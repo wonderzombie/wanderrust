@@ -11,7 +11,7 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 131,
+	"nextUid": 132,
 	"identifierStyle": "Free",
 	"toc": [
 		{
@@ -4005,7 +4005,84 @@
 					"entityInstances": []
 				}
 			],
-			"__neighbours": [{ "levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c", "dir": "<" }]
+			"__neighbours": [ { "levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c", "dir": "<" }, { "levelIid": "30835510-48b0-11f1-9037-d17afcac579f", "dir": ">" } ]
+		},
+		{
+			"identifier": "Level_2",
+			"iid": "30835510-48b0-11f1-9037-d17afcac579f",
+			"uid": 131,
+			"worldX": 0,
+			"worldY": 0,
+			"worldDepth": 2,
+			"pxWid": 1600,
+			"pxHei": 1600,
+			"__bgColor": "#472D3C",
+			"bgColor": null,
+			"useAutoIdentifier": true,
+			"bgRelPath": null,
+			"bgPos": null,
+			"bgPivotX": 0.5,
+			"bgPivotY": 0.5,
+			"__smartColor": "#9A8C94",
+			"__bgPos": null,
+			"externalRelPath": null,
+			"fieldInstances": [
+				{ "__identifier": "light_level", "__type": "LocalEnum.LightLevel", "__value": null, "__tile": null, "defUid": 53, "realEditorValues": [] },
+				{ "__identifier": "name", "__type": "String", "__value": "", "__tile": null, "defUid": 84, "realEditorValues": [] }
+			],
+			"layerInstances": [
+				{
+					"__identifier": "LayerEntities",
+					"__type": "Entities",
+					"__cWid": 100,
+					"__cHei": 100,
+					"__gridSize": 16,
+					"__opacity": 1,
+					"__pxTotalOffsetX": 0,
+					"__pxTotalOffsetY": 0,
+					"__tilesetDefUid": null,
+					"__tilesetRelPath": null,
+					"iid": "30835511-48b0-11f1-9037-07473761197a",
+					"levelId": 131,
+					"layerDefUid": 9,
+					"pxOffsetX": 0,
+					"pxOffsetY": 0,
+					"visible": true,
+					"optionalRules": [],
+					"intGridCsv": [],
+					"autoLayerTiles": [],
+					"seed": 4618583,
+					"overrideTilesetUid": null,
+					"gridTiles": [],
+					"entityInstances": []
+				},
+				{
+					"__identifier": "LayerTiles",
+					"__type": "Tiles",
+					"__cWid": 100,
+					"__cHei": 100,
+					"__gridSize": 16,
+					"__opacity": 1,
+					"__pxTotalOffsetX": 0,
+					"__pxTotalOffsetY": 0,
+					"__tilesetDefUid": 2,
+					"__tilesetRelPath": "../assets/kenney_1-bit-pack/Tilesheet/colored_packed.png",
+					"iid": "30835512-48b0-11f1-9037-bfa682230ee1",
+					"levelId": 131,
+					"layerDefUid": 3,
+					"pxOffsetX": 0,
+					"pxOffsetY": 0,
+					"visible": true,
+					"optionalRules": [],
+					"intGridCsv": [],
+					"autoLayerTiles": [],
+					"seed": 3794936,
+					"overrideTilesetUid": null,
+					"gridTiles": [],
+					"entityInstances": []
+				}
+			],
+			"__neighbours": [{ "levelIid": "e36e0960-21a0-11f1-94b8-8f25cfddaee3", "dir": "<" }]
 		}
 	],
 	"worlds": [],
