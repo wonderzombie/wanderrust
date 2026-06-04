@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::ops::Add;
 
 use bevy::prelude::*;
 use bevy_northstar::prelude::Blocking;
@@ -142,12 +141,12 @@ pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Play
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the
 /// cell changes.
 pub fn update_transforms(
-    mut pieces: Query<(&Cell, &mut Transform, Option<&Player>), (Without<MapTile>, Changed<Cell>)>,
+    mut pieces: Query<(&Cell, &mut Transform, Has<Player>), (Without<MapTile>, Changed<Cell>)>,
 ) {
     for (piece_cell, mut transform, is_player) in pieces.iter_mut() {
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
-        transform.translation.z = if is_player.is_none() {
+        transform.translation.z = if is_player {
             *tilemap::ACTOR_LAYER
         } else {
             *tilemap::PLAYER_LAYER
