@@ -147,9 +147,9 @@ pub fn update_transforms(
         transform.translation.x = piece_cell.x as f32 * tiles::TILE_SIZE_PX;
         transform.translation.y = piece_cell.y as f32 * tiles::TILE_SIZE_PX;
         transform.translation.z = if is_player {
-            *tilemap::ACTOR_LAYER
-        } else {
             *tilemap::PLAYER_LAYER
+        } else {
+            *tilemap::ACTOR_LAYER
         };
     }
 }
