@@ -91,9 +91,8 @@ pub fn update_fov_markers(
     player_stats: Res<PlayerStats>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
-    let (cell, player_child_of) = *player_query;
+    let (cell, &ChildOf(parent_level)) = *player_query;
 
-    let parent_level = player_child_of.parent();
     let Some((child_tiles, player_fov)) = all_fov.get(parent_level).ok() else {
         error!("no Fov found for player's level: {parent_level:?}");
         return;
@@ -103,12 +102,10 @@ pub fn update_fov_markers(
 
     // Since we got these tiles as children of `all_fov`, aka Level we can look
     // up each in `tiles`, which is constrained to `MapTile`.
-    for &entity in child_tiles {
-        if let Ok((cell, mut revealed)) = tiles.get_mut(entity) {
+    for &tile_entity in child_tiles {
+        if let Ok((cell, mut revealed)) = tiles.get_mut(tile_entity) {
             let should_reveal = view.has(cell.into());
-            if should_reveal != revealed.0 {
-                revealed.0 = should_reveal;
-            }
+            revealed.set_if_neq(Revealed(should_reveal));
         }
     }
 }
