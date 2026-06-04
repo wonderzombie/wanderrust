@@ -153,7 +153,6 @@ pub fn process_attacks(
             );
 
             if defender.hp <= 0 {
-                commands.entity(defender_id).trigger(Died);
                 defender.is_dead = true;
                 log.add(format!("{defender_name} is dead"), colors::KENNEY_RED);
                 spawn_floating_text(
