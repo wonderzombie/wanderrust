@@ -189,6 +189,7 @@ pub fn run() {
                 handle_pending_transition,
             )
                 .chain()
+                .after(PathingSet)
                 .in_set(GameSystem::Ramifications),
             event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,

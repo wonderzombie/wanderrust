@@ -1,5 +1,5 @@
 use bevy::{prelude::*, sprite::Text2dShadow};
-use bevy_northstar::prelude::AgentOfGrid;
+use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking};
 
 use crate::{
     actors::Dead, atlas::SpriteAtlas, bestiary::Bestiary, colors, event_log::MessageLog,
@@ -167,6 +167,8 @@ pub fn process_attacks(
                     .insert(Dead)
                     .trigger(Died)
                     .remove::<AgentOfGrid>()
+                    .remove::<AgentPos>()
+                    .remove::<Blocking>()
                     .remove::<Turn>();
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);

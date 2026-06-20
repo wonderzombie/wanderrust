@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use bevy::prelude::*;
-use bevy_northstar::prelude::Blocking;
 
 use crate::{
     atlas::SpriteAtlas,
@@ -100,15 +99,13 @@ pub fn setup_player(
             Actor,
             Player,
             TileIdx::Player,
-            // from bevy_northstar
-            Blocking,
-            // from light
+            // from crate::light
             Emitter::new(
                 TileIdx::Blank,
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
-            // from combat, fov
+            // from crate::combat, crate::fov
             CombatantBundle::default(),
             PieceBundle {
                 sprite: atlas.sprite(),
