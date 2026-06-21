@@ -1,11 +1,37 @@
 use bevy::prelude::*;
-use bevy_northstar::prelude::*;
-use std::fmt::Display;
+use itertools::Itertools;
+use std::{collections::BTreeMap, fmt::Display};
 
-use crate::actors::{Actor, Player};
+use crate::actors::Player;
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct WorldClock(usize);
+
+impl WorldClock {
+    pub fn tick(&mut self) -> &mut Self {
+        self.0 += 1;
+        self
+    }
+
+    pub fn advance_to(&mut self, tick: usize) -> &mut Self {
+        while self.0 < tick {
+            self.tick();
+        }
+        self
+    }
+
+    pub fn now(&self) -> usize {
+        self.0
+    }
+
+    pub fn recovery_after(&self, action: usize) -> Recovery {
+        Recovery(action + self.0)
+    }
+
+    pub fn recovery_now(&self) -> Recovery {
+        Recovery(self.0)
+    }
+}
 
 impl Display for WorldClock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -35,54 +61,61 @@ pub enum GameState {
 
 /// Represents the current turn state of an actor.
 #[derive(Component, Debug, Default, PartialEq, Eq, Reflect)]
-pub enum Turn {
-    /// Isn't taking actions but may at some point in the future.
-    #[default]
-    Idling,
-    /// Waiting to take their turn.
-    Waiting,
-    /// They are done with their turn.
-    Done,
-}
+pub struct Turn;
 
-impl Turn {
-    pub fn complete(&self) -> bool {
-        self == &Turn::Done || self == &Turn::Idling
-    }
-}
+#[derive(Resource, Debug, Reflect)]
+pub struct TurnDelay(pub f32);
 
-/// Resets all actors' turns to [`Turn::Waiting`] at the beginning of ramifying.
-pub fn on_enter_ramifying(mut actors: Query<&mut Turn, With<Actor>>) {
-    for mut turn in actors.iter_mut() {
-        if turn.as_ref() != &Turn::Idling {
-            turn.set_if_neq(Turn::Waiting);
-        }
-    }
-}
+#[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord)]
+pub struct Recovery(pub usize);
 
-/// Finalizes [`Turn::Waiting`] actors by setting their turn to `Turn::Done` if
-/// they have no pending path or move.
-pub fn finalize_waiting_turns(
-    mut actors: Query<(&mut Turn, AnyOf<(&Pathfind, &NextPos)>), (With<Actor>, Without<Player>)>,
+#[derive(Resource, Debug, Reflect)]
+pub struct NextTurn(pub Entity);
+
+pub fn ramifying(
+    mut commands: Commands,
+    mut turn_timer: Local<Timer>,
+    time: Res<Time>,
+    actors: Query<(NameOrEntity, &Recovery, Has<Player>), With<Turn>>,
+    mut ns: ResMut<NextState<GameState>>,
+    mut world_clock: ResMut<WorldClock>,
+    next_turn: Option<Res<NextTurn>>,
+    turn_delay: Res<TurnDelay>,
 ) {
-    for (mut turn, (pathfind, next_pos)) in actors.iter_mut() {
-        if *turn == Turn::Waiting && pathfind.is_none() && next_pos.is_none() {
-            trace!("finalizing waiting actor to Done (no pending path/move)");
-            *turn = Turn::Done;
-        }
+    if next_turn.is_some() {
+        info!("current actor still needs to take turn: {next_turn:?}");
+        return;
     }
-}
 
-/// Checks if all actors are done with their turns and transitions to
-/// `GameState::AwaitingInput` if so.
-pub fn check_turns_complete(
-    turn_actors: Query<&Turn, (With<Actor>, Without<Player>)>,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut ticks: ResMut<WorldClock>,
-) {
-    let all_done = turn_actors.iter().all(Turn::complete);
-    if all_done || turn_actors.is_empty() {
-        next_state.set(GameState::AwaitingInput);
-        ticks.0 += 1;
+    let TurnDelay(delay) = *turn_delay;
+
+    if *turn_timer == Timer::default() {
+        *turn_timer = Timer::from_seconds(delay, TimerMode::Repeating);
     }
+
+    if !turn_timer.tick(time.delta()).just_finished() {
+        return;
+    }
+
+    let schedule: BTreeMap<usize, Vec<_>> = actors
+        .iter()
+        .into_group_map_by(|it| it.1.0)
+        .into_iter()
+        .collect();
+
+    let Some((&tick, entities)) = schedule.first_key_value() else {
+        return;
+    };
+
+    world_clock.advance_to(tick);
+
+    if entities.into_iter().any(|(_, _, is_player)| *is_player) {
+        ns.set(GameState::AwaitingInput);
+        return;
+    }
+
+    let next_entity = entities.first().unwrap();
+
+    info!("next entity: {:?}", next_entity.0);
+    commands.insert_resource(NextTurn(next_entity.0.entity));
 }

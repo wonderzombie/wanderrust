@@ -50,7 +50,9 @@ pub enum Awareness {
 #[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,
+    pub attack_speed: usize,
     pub defense: i32,
+    pub move_speed: usize,
     pub vision: Vision,
     pub max_hp: u32,
 }
@@ -65,7 +67,9 @@ impl Default for Parameters {
     fn default() -> Self {
         Self {
             attack: 0,
+            attack_speed: 0,
             defense: 0,
+            move_speed: 0,
             max_hp: 0,
             vision: Vision(0),
         }
@@ -78,7 +82,9 @@ impl Add<Parameters> for Parameters {
     fn add(self, rhs: Parameters) -> Parameters {
         Self {
             attack: self.attack + rhs.attack,
+            attack_speed: self.attack_speed + rhs.attack_speed,
             defense: self.defense + rhs.defense,
+            move_speed: self.move_speed + rhs.move_speed,
             vision: self.vision + rhs.vision,
             max_hp: self.max_hp + rhs.max_hp,
         }

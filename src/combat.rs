@@ -2,8 +2,15 @@ use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking};
 
 use crate::{
-    actors::Dead, atlas::SpriteAtlas, bestiary::Bestiary, colors, event_log::MessageLog,
-    gamestate::Turn, interactions::Interactable, parameters::*, tiles::TileIdx,
+    actors::Dead,
+    atlas::SpriteAtlas,
+    bestiary::Bestiary,
+    colors,
+    event_log::MessageLog,
+    gamestate::{Recovery, Turn, WorldClock},
+    interactions::Interactable,
+    parameters::*,
+    tiles::TileIdx,
 };
 
 #[derive(EntityEvent, Debug)]
@@ -115,6 +122,7 @@ pub fn process_attacks(
     mut attacks: MessageReader<Attack>,
     mut log: ResMut<MessageLog>,
     asset_server: Res<AssetServer>,
+    clock: Res<WorldClock>,
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
@@ -133,7 +141,11 @@ pub fn process_attacks(
         };
 
         let (defender_id, defender_name, def_params, mut defender) = defender;
-        let (_, attacker_name, atk_params, _) = attacker;
+        let (attacker_id, attacker_name, atk_params, _) = attacker;
+
+        commands
+            .entity(attacker_id)
+            .insert(clock.recovery_after(atk_params.attack_speed));
 
         if defender.is_dead {
             log.add(
@@ -142,7 +154,6 @@ pub fn process_attacks(
             );
             continue;
         }
-
         let damage = atk_params.attack - def_params.defense;
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);

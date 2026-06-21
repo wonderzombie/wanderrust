@@ -43,10 +43,11 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Screen},
+    gamestate::{GameState, Recovery, Screen, TurnDelay, WorldClock},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
+    parameters::Parameters,
     tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
@@ -107,6 +108,7 @@ pub fn run() {
     .init_resource::<gamestate::WorldClock>()
     .init_resource::<grid::SpatialIndex>()
     .init_resource::<sounds::Sounds>()
+    .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
     .insert_resource(SpritePickingSettings {
         // clicking on a sprite ignores alpha transparency
@@ -237,7 +239,10 @@ pub fn run() {
             effects::apply_params_modifiers,
         ),
     )
-    .add_systems(OnEnter(GameState::Ramifying), gamestate::on_enter_ramifying)
+    .add_systems(
+        Update,
+        gamestate::ramifying.run_if(in_state(GameState::Ramifying)),
+    )
     .add_systems(
         OnEnter(GameState::AwaitingInput),
         tilemap::snapshot_denizens,
@@ -248,12 +253,6 @@ pub fn run() {
         (
             map::update_level_visuals,
             map::update_tile_visuals.after(update_level_visuals),
-            (
-                gamestate::finalize_waiting_turns,
-                gamestate::check_turns_complete,
-            )
-                .chain()
-                .run_if(in_state(GameState::Ramifying)),
         ),
     )
     .add_observer(click_observer);
@@ -355,6 +354,8 @@ fn process_actions(
     mut interaction_attempts: MessageWriter<interactions::Examine>,
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
+    player: Single<&Parameters, With<Player>>,
+    clock: Res<WorldClock>,
 ) {
     trace!("{action:?}");
     commands.remove_resource::<Action>();
@@ -374,14 +375,18 @@ fn process_actions(
 
             match spatial_index.get(adjusted_cell) {
                 None => {
+                    info!("move: recovery after: {}", player.move_speed);
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
+                        .insert(clock.recovery_after(player.move_speed))
                         .trigger(Moved);
                 }
                 Some(target) if portals.get(target).is_ok() => {
                     let portal = portals.get(target).unwrap();
                     info!("process_actions: portal");
+                    // TODO: extract to constant.
+                    commands.entity(action.entity).insert(Recovery(1));
                     commands.insert_resource(PendingTransition {
                         arrive_at: portal.arrive_at.clone(),
                     });
