@@ -13,8 +13,8 @@ use crate::{
 
 /// A spatial index that tracks which cells are occupied by non-walkable
 /// entities in the world.
-#[derive(Resource, Component, Default, Debug, PartialEq, Eq, Reflect)]
-#[reflect(Resource)]
+#[derive(Component, Default, Debug, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
 pub struct SpatialIndex {
     occupied: HashMap<Cell, Entity>,
 }

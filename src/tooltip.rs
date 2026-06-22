@@ -23,8 +23,8 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>, atlas: Res<
         sprite,
         Tooltip,
         TextFont {
-            font: font.clone(),
-            font_size: 8.,
+            font: FontSource::Handle(font.clone()),
+            font_size: FontSize::Px(8.),
             ..Default::default()
         },
         TextColor(colors::KENNEY_OFF_WHITE),

@@ -107,7 +107,6 @@ pub fn run() {
     .init_resource::<actors::PlayerStats>()
     .init_resource::<atlas::SpriteAtlas>()
     .init_resource::<gamestate::WorldClock>()
-    .init_resource::<grid::SpatialIndex>()
     .init_resource::<sounds::Sounds>()
     .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
