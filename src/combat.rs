@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     colors,
     event_log::MessageLog,
-    gamestate::{Recovery, Turn, WorldClock},
+    gamestate::{Turn, WorldClock},
     interactions::Interactable,
     parameters::*,
     tiles::TileIdx,

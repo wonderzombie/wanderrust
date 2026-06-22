@@ -10,7 +10,9 @@ members = [".", "mrpas"]
 bevy = { version = "0.19", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
 bevy_egui = "0.40.0"
 bevy-inspector-egui = "0.37.0"
-bevy_northstar = "0.6.2"
+# bevy_northstar = "0.6.2"
+# TODO: revert to normal version spec when bevy_northstar publishes its update to 0.19.
+bevy_northstar = { git = "https://github.com/JtotheThree/bevy_northstar.git", branch = "bevy-0.19" }
 fxhash = "0.2.1"
 itertools = "0.15.0"
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
