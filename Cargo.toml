@@ -7,12 +7,12 @@ edition = "2024"
 members = [".", "mrpas"]
 
 [dependencies]
-bevy = { version = "0.18.1", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
-bevy_egui = "0.39.1"
-bevy-inspector-egui = "0.36.0"
-bevy_northstar = "0.6.1"
+bevy = { version = "0.19", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
+bevy_egui = "0.40.0"
+bevy-inspector-egui = "0.37.0"
+bevy_northstar = "0.6.2"
 fxhash = "0.2.1"
-itertools = "0.14.0"
+itertools = "0.15.0"
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 mrpas = { path = "mrpas" }
 rand = "0.10.0"
