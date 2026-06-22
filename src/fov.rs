@@ -11,7 +11,7 @@ use crate::{
 
 /// Newtype for field of view model that's a Resource and which tracks which
 /// cells are transparent for visibility calculations.
-#[derive(Resource, Component, Debug, Deref, DerefMut)]
+#[derive(Component, Debug, Deref, DerefMut)]
 pub struct Fov(Mrpas);
 
 impl Fov {

@@ -221,8 +221,8 @@ pub fn spawn_floating_text(
             rise_speed: 32.,
         },
         TextFont {
-            font: font.clone(),
-            font_size: 12.,
+            font: FontSource::Handle(font.clone()),
+            font_size: FontSize::Px(12.),
             ..Default::default()
         },
     ));
