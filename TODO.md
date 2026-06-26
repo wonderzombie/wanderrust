@@ -1,11 +1,5 @@
 # THINGS TO DO MAYBE
 
-## REVISIT PARENTING ENTITIES. 
-
-If we have all entities as a child of the map entity, the initial part becomes way easier. IF we're Below, we hide Above. If we're Above, we show Below but Dim or Night. 
-
--- In the end I have both. For Visibility, I use the parent/child relationship. For differentiating which tiles belong to which stratum, we have the `Stratum` enum.
-
 ## LANTERN ABILITY
 
 Maybe you can *throw "flares."* We could even *treat the flare like it has real physics.*
@@ -58,20 +52,9 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 
 # MAYBE NEXT
 
-The inventory list is along the right-hand side
-- [ ] It shows you what you have equipped, your HP, and inventory item names
-- [ ] When you press Shift-I, an inventory UI appears; it's not interactive yet
-
-- Equipment could also be a component?
-
-- Stamina is a non-numeric stat. You get some back each combat tick.
-
 - XP lets you raise your stats. We are going to use the same three: Alacrity, Acumen, and Grit. 
 - To raise a stat, spend XP equal to the new value. e.g. 2 -> 3 costs 3 XP.
 
 - Consider implementing something like the Shroud. It's not damage over time; it's a countdown. 
-
-- How about an interface for populating a Chest that is a text box. Items are formatted like this (proposal): `gold:10 sword torch:3 mail`. 
-- A key is a separate box; leave empty for no key
 
 - start with something like hold tab to highlight and click on interesting tiles.
