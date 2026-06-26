@@ -30,6 +30,7 @@ pub mod tilemap;
 pub mod tiles;
 mod title_screen;
 mod tooltip;
+mod you_died_screen;
 
 use bevy::{
     asset::io::web::WebAssetPlugin,
@@ -121,6 +122,7 @@ pub fn run() {
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
+    .add_plugins(you_died_screen::YouDiedScreenPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
@@ -241,13 +243,20 @@ pub fn run() {
     )
     .add_systems(
         Update,
-        gamestate::ramifying.run_if(in_state(GameState::Ramifying)),
+        gamestate::ramify.run_if(in_state(GameState::Ramifying)),
     )
     .add_systems(
         OnEnter(GameState::AwaitingInput),
         tilemap::snapshot_denizens,
     )
     .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
+    .add_systems(
+        OnTransition::<GameState> {
+            exited: GameState::Defeat,
+            entered: GameState::AwaitingInput,
+        },
+        gamestate::respawn,
+    )
     .add_systems(
         Last,
         (
