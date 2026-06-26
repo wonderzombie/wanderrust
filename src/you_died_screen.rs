@@ -40,11 +40,11 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             (
                 Text::new("YOU DIED"),
                 TextFont {
-                    font: font.clone(),
-                    font_size: 54.0,
+                    font: FontSource::Handle(font.clone()),
+                    font_size: FontSize::Px(54.0),
                     ..default()
                 },
-                TextLayout::new_with_justify(Justify::Center),
+                TextLayout::justify(Justify::Center),
             ),
             Node {
                 min_height: Val::Px(32.),
@@ -54,11 +54,11 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
                 Button,
                 Text::new("RESPAWN"),
                 TextFont {
-                    font: font.clone(),
-                    font_size: 33.0,
+                    font: FontSource::Handle(font.clone()),
+                    font_size: FontSize::Px(33.),
                     ..default()
                 },
-                TextLayout::new_with_justify(Justify::Center),
+                TextLayout::justify(Justify::Center),
             )
         ],
     )
