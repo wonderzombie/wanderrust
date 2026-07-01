@@ -7,33 +7,15 @@ use bevy::remote::http::RemoteHttpPlugin;
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
-    colors::KENNEY_RED,
     event_log,
-    tilemap::{ActiveLevel, Level, TileStorage},
-    tiles::{self, TileIdx},
+    gamestate::{GameState, Screen},
+    tilemap::{ActiveLevel, Level, WorldSpawn},
 };
 
 #[derive(States, Clone, Debug, Hash, Eq, PartialEq)]
 pub enum DebugState {
     Disabled,
     Enabled,
-}
-
-#[derive(Resource)]
-pub struct DebugContext {
-    pub active_tile: tiles::TileIdx,
-    pub active_tile_idx: usize,
-    pub observers: Vec<Entity>,
-}
-
-impl Default for DebugContext {
-    fn default() -> Self {
-        Self {
-            active_tile: tiles::TileIdx::Grass,
-            active_tile_idx: default(),
-            observers: Vec::new(),
-        }
-    }
 }
 
 #[derive(Resource)]
@@ -65,81 +47,26 @@ pub fn on_zoom_button_input(
 pub fn on_button_input(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
-    input: Res<ButtonInput<KeyCode>>,
-    mut editor_state: ResMut<DebugContext>,
-    mut log: ResMut<event_log::MessageLog>,
-    storages: Query<(&TileStorage, Option<&ActiveLevel>)>,
-    tiles: Query<(
-        &TileIdx,
-        &Cell,
-        &Visibility,
-        &InheritedVisibility,
-        Option<&Transform>,
-        Option<&GlobalTransform>,
-    )>,
+    mut input: ResMut<ButtonInput<KeyCode>>,
+    game_state: Res<State<GameState>>,
+    screen_state: Res<State<Screen>>,
+    world_spawn: Single<&WorldSpawn>,
 ) {
     if !input.is_changed() {
         return;
     }
 
-    let lookup = tiles::TileIdx::all();
-
-    if input.just_pressed(KeyCode::Digit1) {
-        // First tile index
-        editor_state.active_tile_idx = 0;
-    } else if input.just_pressed(KeyCode::Digit2) {
-        // Previous tile index
-        editor_state.active_tile_idx = editor_state.active_tile_idx.saturating_sub(1);
-    } else if input.just_pressed(KeyCode::Digit3) {
-        // Next tile index
-        editor_state.active_tile_idx = (editor_state.active_tile_idx + 1).min(lookup.len() - 1);
-    } else if input.just_pressed(KeyCode::Digit4) {
-        // Last viable tile index
-        editor_state.active_tile_idx = lookup.len() - 1;
-    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
-        && input.just_released(KeyCode::KeyP)
+    if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
+        && input.just_released(KeyCode::Digit5)
     {
-        info!("relocating player");
-        commands.entity(*player).insert(Cell::new(5, 5));
-        return;
-    } else if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
-        && input.just_released(KeyCode::KeyT)
-    {
-        for (storage, active_opt) in storages.iter() {
-            let mut out: Vec<(
-                TileIdx,
-                Cell,
-                Visibility,
-                InheritedVisibility,
-                Option<Transform>,
-                Option<GlobalTransform>,
-            )> = vec![];
-            for cell in storage.into_iter() {
-                if let Some(ent) = storage.get(&cell)
-                    && let Some(tile_info) = tiles.get(ent).ok()
-                {
-                    let (a, b, c, d, e, f) = tile_info;
-                    out.push((*a, *b, *c, *d, e.copied(), f.copied()));
-                }
-            }
-            dbg!(active_opt, out);
-        }
-        return;
-    } else {
-        return;
+        info!("game state is: {game_state:?} {:?}", game_state.get());
+        info!("game state is: {screen_state:?} {:?}", screen_state.get());
+        input.reset_all();
+    } else if input.just_released(KeyCode::F1) {
+        info!("relocating player to world spawn");
+        let WorldSpawn { cell, .. } = *world_spawn;
+        commands.entity(*player).insert(*cell);
     }
-
-    // TODO: update the tile preview that follows the cursor.
-    // At present it doesn't update until the mouse moves.
-    editor_state.active_tile = *lookup
-        .get(editor_state.active_tile_idx)
-        .unwrap_or(&editor_state.active_tile);
-
-    log.add(
-        format!("active tile is now {:?}", editor_state.active_tile),
-        KENNEY_RED,
-    );
-    info!("📝 active tile is now {:?}", editor_state.active_tile);
 }
 
 /// Toggles the player's field of view range.
@@ -174,7 +101,7 @@ pub fn on_toggle_visibilities(
     }
 }
 
-pub fn on_editor_toggle(
+pub fn on_toggle_debug(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<DebugState>>,
     mut next_state: ResMut<NextState<DebugState>>,
@@ -209,10 +136,9 @@ impl Plugin for DebugPlugin {
                     )
                         .chain()
                         .run_if(in_state(DebugState::Enabled)),
-                    on_editor_toggle,
+                    on_toggle_debug,
                 ),
             )
-            .insert_resource(DebugContext::default())
             .insert_state(DebugState::Enabled)
             .add_plugins(RemotePlugin::default())
             .add_plugins(RemoteHttpPlugin::default())
