@@ -18,8 +18,10 @@ use bevy_egui::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    actors::{Flasks, Player},
     colors::{self, ColorExt},
     gamestate::Screen,
+    parameters::Health,
 };
 
 /// A simple wrapper around a string to represent an item in the game world.
@@ -195,7 +197,12 @@ pub fn process_acquisitions(
 
 const EMPTY: &str = "( empty )";
 
-fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
+fn draw_ui(
+    mut contexts: EguiContexts,
+    inventory: Res<Inventory>,
+    health: Single<&Health, With<Player>>,
+    flasks: Single<&Flasks, With<Player>>,
+) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -210,6 +217,16 @@ fn draw_ui(mut contexts: EguiContexts, inventory: Res<Inventory>) {
 
             ui.set_min_width(128.);
             ui.set_min_height(128.);
+
+            ui.colored_label(
+                Color::WHITE.to_egui(),
+                format!("HP: {}", health.hp).to_ascii_uppercase(),
+            );
+
+            ui.colored_label(
+                Color::WHITE.to_egui(),
+                format!("Flasks: {}", flasks.0).to_ascii_uppercase(),
+            );
 
             ui.colored_label(Color::WHITE.to_egui(), "inventory".to_ascii_uppercase());
             if inventory.is_empty() {

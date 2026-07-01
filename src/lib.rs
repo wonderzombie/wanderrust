@@ -47,7 +47,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
-    parameters::Parameters,
+    parameters::{Health, Parameters},
     tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
@@ -353,7 +353,7 @@ fn process_actions(
     mut interaction_attempts: MessageWriter<interactions::Examine>,
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
-    player: Single<&Parameters, With<Player>>,
+    player: Single<(&Parameters, &mut Health, &mut Flasks), With<Player>>,
     clock: Res<WorldClock>,
 ) {
     trace!("{action:?}");
@@ -368,17 +368,19 @@ fn process_actions(
         return;
     };
 
+    let (params, mut health, mut flasks) = player.into_inner();
+
     match action.act {
         Act::Direction(_) => {
             let adjusted_cell = action.adjusted_cell();
 
             match spatial_index.get(adjusted_cell) {
                 None => {
-                    info!("move: recovery after: {}", player.move_speed);
+                    info!("move: recovery after: {}", params.move_speed);
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
-                        .insert(clock.recovery_after(player.move_speed))
+                        .insert(clock.recovery_after(params.move_speed))
                         .trigger(Moved);
                 }
                 Some(target) if portals.get(target).is_ok() => {
@@ -400,6 +402,10 @@ fn process_actions(
             }
         }
         Act::Pass => (),
+        Act::Flask => {
+            health.hp += 8;
+            flasks.0 = flasks.0 - 1;
+        }
     }
 
     trace!("ramifying actions");

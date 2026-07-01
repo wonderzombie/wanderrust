@@ -105,6 +105,7 @@ pub fn setup_player(
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
+            Flasks(3),
             // from crate::combat, crate::fov
             CombatantBundle::default(),
             PieceBundle {
@@ -183,7 +184,11 @@ impl Display for Action {
 pub enum Act {
     Direction(IVec2),
     Pass,
+    Flask,
 }
+
+#[derive(Component, Debug)]
+pub struct Flasks(pub i32);
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.
 pub fn handle_player_input(
@@ -211,6 +216,10 @@ fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
         return Some(Act::Direction(dir));
     } else if input.any_just_pressed([KeyCode::KeyP, KeyCode::Space]) {
         return Some(Act::Pass);
+    } else if input.any_just_released([KeyCode::KeyF])
+        && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+    {
+        return Some(Act::Flask);
     }
     None
 }
