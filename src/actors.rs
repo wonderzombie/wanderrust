@@ -7,6 +7,8 @@ use crate::{
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
     equipment::{Equipment, Equippable, EquippedBy},
+    inventory::{Acquisition, Inventory},
+    inventory_subscreen::ToggleUi,
     light::{Emitter, LightLevel},
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
@@ -71,7 +73,11 @@ pub struct Moved(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub struct Bonk(pub Entity);
 
-const STARTING_ITEMS: &[&Equipment] = &[&Equipment::Rags, &Equipment::Stick];
+const STARTING_EQUIPMENT: &[&Equipment] = &[&Equipment::Rags, &Equipment::Stick];
+
+pub fn starting_items() -> Inventory {
+    Inventory::from_str_array(["gold:2", "strange key", "glowing tome", "red salve:3"]).unwrap()
+}
 
 /// Spawns the player entity at the start position of the tilemap on the
 /// player's layer.
@@ -117,9 +123,13 @@ pub fn setup_player(
     }
 }
 
-pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Player>>) {
+pub fn on_player_added(
+    mut commands: Commands,
+    player: Single<Entity, Added<Player>>,
+    mut acquires: MessageWriter<Acquisition>,
+) {
     let parent = *player;
-    for e in STARTING_ITEMS.iter() {
+    for e in STARTING_EQUIPMENT.iter() {
         let Some(item) = e.as_item() else {
             error!("invalid starting item: {e:?}");
             continue;
@@ -133,6 +143,10 @@ pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Play
             Equippable(item, e.modifiers()),
         ));
     }
+
+    acquires.write(Acquisition {
+        items: starting_items().clone(),
+    });
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the
@@ -197,7 +211,10 @@ pub fn handle_player_input(
 
     let (entity, &origin_cell) = *player_query;
 
-    if let Some(act) = get_action(&input) {
+    if input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft) {
+        info!("handle_player_input: toggle inventory");
+        commands.trigger(ToggleUi);
+    } else if let Some(act) = get_action(&input) {
         commands.insert_resource(Action {
             entity,
             origin_cell,

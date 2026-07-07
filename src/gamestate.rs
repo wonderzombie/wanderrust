@@ -44,6 +44,7 @@ pub enum Screen {
     #[default]
     Title,
     Playing,
+    Inventory,
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
@@ -57,6 +58,8 @@ pub enum GameState {
     AwaitingInput,
     /// Ramifying is when we realize the player's action.
     Ramifying,
+    /// In a menu or subscreen
+    Menu,
 }
 
 /// Represents the current turn state of an actor.
