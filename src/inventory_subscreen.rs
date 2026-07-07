@@ -63,7 +63,27 @@ fn update_item_list(
     }
 }
 
+fn item_list(nitems: usize) -> impl SceneList {
+    let items = (0..nitems)
+        .map(|n| {
+            bsn! {
+                Node Text::new(format!("ITEM{n}")) pcsr_font(12)
+            }
+        })
+        .collect::<Vec<_>>();
+
+    bsn! {
+        Node {
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceBetween,
+        }
+        ItemList
+        Children [ {items} ]
+    }
+}
+
 pub fn screen_bundle() -> impl Scene {
+    let item_list = item_list(10usize);
     bsn! {
         InventorySubscreen
         BackgroundColor(Color::BLACK)
@@ -81,23 +101,7 @@ pub fn screen_bundle() -> impl Scene {
                 TextLayout::justify(Justify::Center)
                 pcsr_font(16)
             ),
-            (
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::SpaceBetween,
-                }
-                ItemList
-                Children [
-                    Node Text::new("ITEM1") pcsr_font(12) TextColor(colors::KENNEY_GOLD),
-                    Node Text::new("ITEM2") pcsr_font(12),
-                    Node Text::new("ITEM3") pcsr_font(12),
-                    Node Text::new("ITEM4") pcsr_font(12),
-                    Node Text::new("ITEM5") pcsr_font(12),
-                    Node Text::new("ITEM6") pcsr_font(12),
-                    Node Text::new("ITEM7") pcsr_font(12),
-                    Node Text::new("ITEM8") pcsr_font(12),
-                ]
-            ),
+            { item_list }
         ]
     }
 }
@@ -149,6 +153,7 @@ pub fn interaction_system(
     if !input.is_changed() {
         return;
     }
+    let nlabels = labels.count();
     if input.any_just_pressed(up_down_keycodes().iter().copied()) {
         let mut next = highlighted.as_ref().0;
         if input.any_just_pressed([KeyCode::ArrowUp, KeyCode::KeyK]) {
@@ -158,7 +163,7 @@ pub fn interaction_system(
             info!("interaction_system: down");
             next = next.saturating_add(1);
         }
-        next = next.clamp(0, 10);
+        next = next.clamp(0, nlabels);
         highlighted.set_if_neq(Highlighted(next));
     } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
         let Some(selected) = item_list.iter().nth(highlighted.as_ref().0) else {
