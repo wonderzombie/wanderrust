@@ -211,7 +211,9 @@ pub fn handle_player_input(
 
     let (entity, &origin_cell) = *player_query;
 
-    if input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft) {
+    if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
+        || input.just_released(KeyCode::Tab)
+    {
         info!("handle_player_input: toggle inventory");
         commands.trigger(ToggleUi);
     } else if let Some(act) = get_action(&input) {
