@@ -90,13 +90,16 @@ pub fn screen_bundle() -> impl Scene {
         Visibility::Hidden
         Node {
             min_width: px(196),
-            height: px(180),
+            min_height: px(180),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::SpaceEvenly,
             padding: UiRect { left: px(12.), right: px(12.), top: px(12.), bottom: px(12.) }
         }
         Children [
             (
+                Node {
+                    margin: UiRect { left: px(8), right: px(8), top: px(8), bottom: px(8) }
+                }
                 Text::new("INVENTORY")
                 TextLayout::justify(Justify::Center)
                 pcsr_font(16)
@@ -163,7 +166,7 @@ pub fn interaction_system(
             info!("interaction_system: down");
             next = next.saturating_add(1);
         }
-        next = next.clamp(0, nlabels);
+        next = next.clamp(0, nlabels - 1);
         highlighted.set_if_neq(Highlighted(next));
     } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
         let Some(selected) = item_list.iter().nth(highlighted.as_ref().0) else {
