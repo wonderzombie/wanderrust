@@ -67,7 +67,10 @@ fn item_list(nitems: usize) -> impl SceneList {
     let items = (0..nitems)
         .map(|n| {
             bsn! {
-                Node Text::new(format!("ITEM{n}")) pcsr_font(12)
+                Node
+                Text::new(format!("ITEM{n}"))
+                pcsr_font(12)
+                TextColor(colors::KENNEY_OFF_WHITE)
             }
         })
         .collect::<Vec<_>>();
@@ -199,7 +202,9 @@ pub fn update_highlighted(
         };
 
         if idx != highlighted.0 {
-            commands.entity(child).insert(TextColor(Color::WHITE));
+            commands
+                .entity(child)
+                .insert(TextColor(colors::KENNEY_OFF_WHITE));
         } else {
             commands
                 .entity(child)
