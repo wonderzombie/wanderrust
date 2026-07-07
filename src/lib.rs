@@ -16,6 +16,7 @@ pub mod gamestate;
 mod grid;
 mod interactions;
 mod inventory;
+mod inventory_subscreen;
 mod ldtk_loader;
 pub mod light;
 mod loot;
@@ -120,6 +121,7 @@ pub fn run() {
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
+    .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
