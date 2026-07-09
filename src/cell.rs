@@ -111,19 +111,7 @@ impl From<Cell> for (i32, i32) {
 
 impl From<&Cell> for (i32, i32) {
     fn from(value: &Cell) -> Self {
-        (value.x, value.y)
-    }
-}
-
-impl From<&Cell> for (u32, u32) {
-    fn from(value: &Cell) -> Self {
-        (value.x as u32, value.y as u32)
-    }
-}
-
-impl From<&Cell> for IVec2 {
-    fn from(value: &Cell) -> Self {
-        IVec2::new(value.x, value.y)
+        (*value).into()
     }
 }
 
@@ -135,7 +123,7 @@ impl From<Cell> for UVec3 {
 
 impl From<&Cell> for UVec3 {
     fn from(value: &Cell) -> Self {
-        value.as_vec3()
+        (*value).into()
     }
 }
 
