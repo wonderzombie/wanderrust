@@ -1,3 +1,4 @@
+mod items;
 mod actors;
 mod ascii_map;
 mod atlas;

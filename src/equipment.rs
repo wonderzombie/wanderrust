@@ -31,7 +31,7 @@ pub struct EquippedBy {
 #[relationship_target(relationship = EquippedBy, linked_spawn)]
 pub struct HasEquipped(Vec<Entity>);
 
-#[derive(Component, Default, Debug, Copy, Clone, Reflect)]
+#[derive(Component, Default, Hash, Debug, Copy, Clone, Reflect, PartialEq, Eq)]
 pub(crate) struct Modifiers(pub Parameters);
 
 #[derive(Component, Reflect, Debug, Clone)]
@@ -46,23 +46,24 @@ impl Equippable {
 enum_with_str!(Equipment, [Stick, Rags, Leather, Chainmail, Shield]);
 
 macro_rules! modifiers {
-    ( $( $fieldn:tt = $fieldv:expr )* $(,)? ) => {
+    ( $( $fieldn:tt: $fieldv:expr )* $(,)? ) => {
         Modifiers(Parameters {
             $( $fieldn: $fieldv, )*
-            ..default()
+            ..Default::default()
         })
     };
 }
+pub(crate) use modifiers;
 
 impl Equipment {
     pub(crate) fn modifiers(&self) -> Modifiers {
         match self {
             Equipment::Unset => Modifiers::default(),
-            Equipment::Stick => modifiers!(attack = 1),
-            Equipment::Rags => modifiers!(defense = 1),
-            Equipment::Leather => modifiers!(defense = 3),
-            Equipment::Chainmail => modifiers!(defense = 5),
-            Equipment::Shield => modifiers!(defense = 2),
+            Equipment::Stick => modifiers!(attack: 1),
+            Equipment::Rags => modifiers!(defense: 1),
+            Equipment::Leather => modifiers!(defense: 3),
+            Equipment::Chainmail => modifiers!(defense: 5),
+            Equipment::Shield => modifiers!(defense: 2),
         }
     }
 
