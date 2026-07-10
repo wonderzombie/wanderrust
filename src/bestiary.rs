@@ -1,23 +1,52 @@
 use crate::{parameters::Parameters, parameters::Vision, tiles::TileIdx};
+use bevy::prelude::*;
 
 macro_rules! define_bestiary {
     (
-        $( $combatant_name:ident => [ $tile:path, atk = $atk:expr, atk_spd = $atk_spd:expr, def = $def:expr, hp = $hp:expr, mov = $mov:expr, vis = $vis:expr ], )*
+        $( $name:ident => [
+            $tile:path,
+            atk = $atk:expr,
+            atk_spd = $atk_spd:expr,
+            def = $def:expr,
+            hp = $hp:expr,
+            mov = $mov:expr,
+            vis = $vis:expr
+        ], )* $(,)?
     ) => {
-        pub(crate) struct Bestiary;
+        #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+        pub enum Bestiary {
+            $( $name, )*
+        }
 
         impl Bestiary {
-            pub fn all() -> &'static [(&'static str, TileIdx, Parameters)] {
-                &[ $( ( stringify!(Combatants::$combatant_name), $tile, Parameters { attack: $atk, attack_speed: $atk_spd, defense: $def, max_hp: $hp, move_speed: $mov, vision: Vision($vis)  }), )* ]
+            // pub const ALL: &'static [Bestiary] = &[ $( Bestiary::$name, )* ];
+
+            pub fn params(self) -> Parameters {
+                match self {
+                    $( Bestiary::$name => Parameters {
+                             attack: $atk,
+                             attack_speed: $atk_spd,
+                             defense: $def,
+                             max_hp: $hp,
+                             move_speed: $mov,
+                             vision: Vision($vis)
+                    }, )*
+                }
             }
 
             pub fn from_name(name: impl AsRef<str>) -> Option<Parameters> {
-                Self::all().iter().find(|(n, _, _)| *n == name.as_ref()).map(|(_, _, p)| *p)
-
+                match name.as_ref() {
+                    $( stringify!($name) => Some((Bestiary::$name).params()), )*
+                    _ => None,
+                }
             }
 
-            pub fn from_tile(tile: &TileIdx) -> Option<Parameters> {
-                Self::all().iter().find(|(_, t, _)| t == tile).map(|(_, _, p)| *p)
+            pub fn from_tile(tile_idx: &TileIdx) -> Option<Parameters> {
+                match tile_idx {
+                    $( $tile => Some((Bestiary::$name).params()), )*
+                    _ => None,
+                }
+
             }
         }
     };
