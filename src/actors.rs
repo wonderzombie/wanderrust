@@ -6,9 +6,10 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
-    equipment::{Equipment, Equippable, EquippedBy},
+    equipment::EquippedBy,
     inventory::{Acquisition, Inventory},
     inventory_subscreen::ToggleUi,
+    items::ItemId,
     light::{Emitter, LightLevel},
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
@@ -73,7 +74,7 @@ pub struct Moved(pub Entity);
 #[derive(EntityEvent, Debug)]
 pub struct Bonk(pub Entity);
 
-const STARTING_EQUIPMENT: &[&Equipment] = &[&Equipment::Rags, &Equipment::Stick];
+const STARTING_EQUIPMENT: &[&ItemId] = &[&ItemId::Rags, &ItemId::Stick];
 
 pub fn starting_items() -> Inventory {
     Inventory::from_str_array(["gold:2", "strange key", "glowing tome", "red salve:3"]).unwrap()
@@ -131,18 +132,9 @@ pub fn on_player_added(
 ) {
     let parent = *player;
     for e in STARTING_EQUIPMENT.iter() {
-        let Some(item) = e.as_item() else {
-            error!("invalid starting item: {e:?}");
-            continue;
-        };
         info!("equipping {e:?}");
-        commands.spawn((
-            EquippedBy {
-                parent,
-                item: item.clone(),
-            },
-            Equippable(item, e.modifiers()),
-        ));
+        // TODO: use Slots.
+        commands.spawn((EquippedBy(parent), **e));
     }
 
     acquires.write(Acquisition {

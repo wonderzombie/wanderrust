@@ -53,10 +53,11 @@ fn update_item_list(
 
         if let Some(text_nt) = item_list.iter().nth(idx) {
             if let Ok(mut text) = text_items.get_mut(text_nt) {
+                let label = itam.def();
                 if qty > 1 {
-                    text.0 = format!("{itam} ({qty})").to_uppercase();
+                    text.0 = format!("{label} ({qty})").to_uppercase();
                 } else {
-                    text.0 = format!("{itam}").to_uppercase();
+                    text.0 = format!("{label}").to_uppercase();
                 }
             }
         }
