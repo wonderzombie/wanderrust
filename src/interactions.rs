@@ -7,6 +7,7 @@ use crate::{
     colors, combat,
     event_log::MessageLog,
     inventory::{self, *},
+    items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     sounds,
     tilemap::{Level, WorldSpec},
@@ -22,7 +23,7 @@ pub enum Interactable {
     Invalid,
     Door {
         is_open: bool,
-        requires: Option<Item>,
+        requires: Option<ItemId>,
         tile_idx: TileIdx,
     },
     Chest {
@@ -102,7 +103,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Combatant => Some(Self::Belligerent { name, tile_idx }),
             LdtkActor::Speaker => Some(Self::Speaker { name, tile_idx }),
             LdtkActor::Door => {
-                let requires = entity.get_string("requires").map(Item);
+                let requires = entity.get_string("requires").and_then(ItemId::from_label);
                 let is_open = entity.get_bool("is_open");
                 Some(Self::Door {
                     is_open,
@@ -177,17 +178,16 @@ pub fn process_interactions(
             } => {
                 trace!("process_interactions: door");
                 if !*is_open {
-                    if let Some(required_item) = requires
-                        && !required_item.0.is_empty()
-                    {
+                    if let Some(required_item) = requires {
+                        let reqd_itam = required_item.def();
                         if !player_inventory.has_item(required_item) {
-                            info!("Player lacks required item: {required_item}");
+                            info!("Player lacks required item: {reqd_itam}");
                             log.add("Locked.", colors::KENNEY_BLUE);
                             continue;
                         } else {
-                            info!("Player opens the door with {required_item:?}.");
+                            info!("Player opens the door with {reqd_itam}.");
                             log.add(
-                                format!("Opened door with {required_item}."),
+                                format!("Opened door with {reqd_itam}."),
                                 colors::KENNEY_BLUE,
                             );
                         }
