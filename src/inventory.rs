@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use bevy::{
     ecs::{
         message::{Message, MessageReader},
@@ -21,64 +19,39 @@ use crate::{
     actors::{Flasks, Player},
     colors::{self, ColorExt},
     gamestate::Screen,
+    items::ItemId,
     parameters::Health,
 };
-
-/// A simple wrapper around a string to represent an item in the game world.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
-pub struct Item(pub String);
-
-impl Item {
-    pub fn from(name: impl AsRef<str>) -> Self {
-        Item(name.as_ref().to_string())
-    }
-
-    pub fn from_spec(item_spec: impl AsRef<str>) -> (Self, usize) {
-        if let Some((it, n)) = item_spec.as_ref().split_once(':') {
-            let item = Item::from(it);
-            let qty = n.parse().unwrap_or(1);
-            (item, qty)
-        } else {
-            (Item::from(item_spec.as_ref()), 1)
-        }
-    }
-}
-
-impl Display for Item {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.replace("_", " "))
-    }
-}
 
 /// A resource representing the player's inventory, which is a mapping of items
 /// to their quantities.
 #[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
-pub struct Inventory(HashMap<Item, usize>);
+pub struct Inventory(HashMap<ItemId, usize>);
 
-impl From<HashMap<Item, usize>> for Inventory {
+impl From<HashMap<ItemId, usize>> for Inventory {
     /// Creates a new [Inventory] from a [HashMap] of [Item]s and their quantities.
-    fn from(items: HashMap<Item, usize>) -> Self {
+    fn from(items: HashMap<ItemId, usize>) -> Self {
         Inventory(items)
     }
 }
 
-impl From<&[Item]> for Inventory {
+impl From<&[ItemId]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
-    fn from(items: &[Item]) -> Self {
+    fn from(items: &[ItemId]) -> Self {
         items.iter().cloned().map(|it| (it, 1)).collect()
     }
 }
 
-impl From<&[(Item, usize)]> for Inventory {
+impl From<&[(ItemId, usize)]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s and their quantities.
-    fn from(items: &[(Item, usize)]) -> Self {
+    fn from(items: &[(ItemId, usize)]) -> Self {
         items.iter().cloned().collect()
     }
 }
 
-impl FromIterator<(Item, usize)> for Inventory {
-    fn from_iter<I: IntoIterator<Item = (Item, usize)>>(iter: I) -> Self {
+impl FromIterator<(ItemId, usize)> for Inventory {
+    fn from_iter<I: IntoIterator<Item = (ItemId, usize)>>(iter: I) -> Self {
         let mut inv = Inventory::default();
         inv.extend(iter);
         inv
@@ -86,9 +59,9 @@ impl FromIterator<(Item, usize)> for Inventory {
 }
 
 impl IntoIterator for Inventory {
-    type Item = (Item, usize);
+    type Item = (ItemId, usize);
 
-    type IntoIter = hash_map::IntoIter<Item, usize>;
+    type IntoIter = hash_map::IntoIter<ItemId, usize>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -96,17 +69,17 @@ impl IntoIterator for Inventory {
 }
 
 impl<'a> IntoIterator for &'a Inventory {
-    type Item = (&'a Item, &'a usize);
+    type Item = (&'a ItemId, &'a usize);
 
-    type IntoIter = hash_map::Iter<'a, Item, usize>;
+    type IntoIter = hash_map::Iter<'a, ItemId, usize>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
 }
 
-impl Extend<(Item, usize)> for Inventory {
-    fn extend<I: IntoIterator<Item = (Item, usize)>>(&mut self, iter: I) {
+impl Extend<(ItemId, usize)> for Inventory {
+    fn extend<I: IntoIterator<Item = (ItemId, usize)>>(&mut self, iter: I) {
         for (it, n) in iter {
             self.add_item(it, n);
         }
@@ -120,19 +93,19 @@ pub fn empty() -> Inventory {
 
 impl Inventory {
     /// Adds an [Item] to this [Inventory], incrementing its count if it already exists.
-    pub fn add_item(&mut self, item: Item, count: usize) -> &mut Self {
+    pub fn add_item(&mut self, item: ItemId, count: usize) -> &mut Self {
         *self.0.entry(item).or_insert(0) += count;
         self
     }
 
     /// Creates a new [Inventory] with a single [Item] and count.
-    pub fn with_item(item: Item, count: usize) -> Self {
+    pub fn with_item(item: ItemId, count: usize) -> Self {
         let mut inventory = HashMap::new();
         inventory.insert(item, count);
         Inventory(inventory)
     }
 
-    pub fn has_item(&self, item: &Item) -> bool {
+    pub fn has_item(&self, item: &ItemId) -> bool {
         self.0.contains_key(item)
     }
 
@@ -141,7 +114,7 @@ impl Inventory {
     pub fn summary(&self, prefix: &str) -> Vec<String> {
         self.0
             .iter()
-            .map(|(k, v)| format!("{} {} {}", prefix, v, k))
+            .map(|(k, v)| format!("{} {} {}", prefix, v, k.def()))
             .collect::<Vec<_>>()
     }
 
@@ -155,7 +128,7 @@ impl Inventory {
             return None;
         }
 
-        let (item, qty) = Item::from_spec(item_spec);
+        let (item, qty) = ItemId::from_spec(item_spec);
         Some(Inventory::with_item(item, qty))
     }
 
@@ -170,7 +143,7 @@ impl Inventory {
                 warn!("skipping empty item spec: {s:?}");
                 continue;
             }
-            let (item, qty) = Item::from_spec(s.as_ref());
+            let (item, qty) = ItemId::from_spec(s.as_ref());
             inv.add_item(item, qty);
         }
         Some(inv)
@@ -237,9 +210,9 @@ fn draw_ui(
             } else {
                 for (item, &qty) in inventory.as_ref() {
                     let item_entry = if qty > 1usize {
-                        format!("• {} {}", item, qty)
+                        format!("• {} {}", item.def(), qty)
                     } else {
-                        format!("• {}", item)
+                        format!("• {}", item.def())
                     };
                     ui.colored_label(
                         colors::KENNEY_OFF_WHITE.to_egui(),
