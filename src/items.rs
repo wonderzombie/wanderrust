@@ -133,10 +133,25 @@ define_items!(
         desc: "a key a locked door.",
         kind: Key,
     },
+    StrangeKey => {
+        label: "strange key",
+        desc: "a cold, ornate key.",
+        kind: Key,
+    },
     HolySymbol => {
         label: "holy symbol",
         desc: "of some forgotten deity.",
         kind: Integral,
+    },
+    GlowingTome => {
+        label: "glowing tome",
+        desc: "emits a sickly light.",
+        kind: Integral,
+    },
+    RedSalve => {
+        label: "red salve",
+        desc: "soothes burns.",
+        kind: Consumable,
     },
     Stick => {
         label: "stick",
