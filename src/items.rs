@@ -95,6 +95,18 @@ impl Display for ItemDef {
     }
 }
 
+/// A Component on an entity representing a quantity of an associated ItemId.
+/// When there's no Quantity, it's equivalent to `Quantity(1)`.
+#[derive(Component, Copy, Clone, Reflect, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+pub struct Quantity(pub usize);
+
+impl std::fmt::Display for Quantity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ItemDef {
     pub label: &'static str,
