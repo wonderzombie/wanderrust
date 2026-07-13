@@ -19,7 +19,7 @@ use crate::{
     actors::{Flasks, Player},
     colors::{self, ColorExt},
     gamestate::Screen,
-    items::ItemId,
+    items::{ItemId, Quantity},
     parameters::Health,
 };
 
@@ -28,6 +28,14 @@ use crate::{
 #[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
 pub struct Inventory(HashMap<ItemId, usize>);
+
+#[derive(Component, Reflect, Debug)]
+#[relationship(relationship_target = Carrying)]
+pub struct CarriedBy(pub Entity);
+
+#[derive(Component, Reflect, Debug, Serialize, Deserialize)]
+#[relationship_target(relationship = CarriedBy)]
+pub struct Carrying(Vec<Entity>);
 
 impl From<HashMap<ItemId, usize>> for Inventory {
     /// Creates a new [Inventory] from a [HashMap] of [Item]s and their quantities.
