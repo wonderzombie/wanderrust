@@ -1,0 +1,39 @@
+# mdBook config for the wanderrust design docs.
+#
+# Build:  mdbook build      (output lands in ./book — add that to .gitignore)
+# Serve:  mdbook serve      (live reload at http://localhost:3000)
+#
+# Install: cargo install mdbook
+#          cargo install mdbook-frontmatter-strip   # optional, see below
+
+[book]
+title = "wanderrust"
+description = "Design docs and working notes for wanderrust."
+authors = ["Matthew Montgomery"]
+src = "docs"
+language = "en"
+
+[build]
+# Files in docs/ that aren't listed in SUMMARY.md (the templates, for
+# instance) are simply not rendered. No error, no page.
+create-missing = false
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+# Uncomment and fill in once the repo is on GitHub — gives you an "edit
+# this page" link and a repo icon in the nav bar.
+# git-repository-url = "https://github.com/USERNAME/wanderrust"
+# edit-url-template = "https://github.com/USERNAME/wanderrust/edit/main/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+# mdBook does not understand YAML frontmatter. Without a preprocessor it
+# renders the --- block as a horizontal rule, a paragraph of metadata, and
+# another horizontal rule. This strips it. Uncomment after:
+#     cargo install mdbook-frontmatter-strip
+#
+# [preprocessor.frontmatter-strip]
+# renderers = ["html"]
