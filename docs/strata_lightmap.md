@@ -4,7 +4,7 @@
 
 1. The basic primitive is an Emitter. `Emitter::light_cells()` accepts a cell and returns a HashMap of cells to their light levels. If we have a source with radius 1 (simplified example) and we put in (3, 3), we'd get a HashMap which would define a rectangle with UL at (2, 2) and BR at (4, 4). It's `radius * 2 + 1` because the provided cell is the "origin" from which the light "radiates."
 1. When we merge LightMaps, the brightest cell wins; they don't combine.
-1. Local<LightMap> is the light map calculated the time the system previously ran. This allows us to skip modifying cells that didn't change and we don't leak that info to other systems.
+1. `Local<LightMap>` is the light map calculated the time the system previously ran. This allows us to skip modifying cells that didn't change and we don't leak that info to other systems.
 
 The first part of the procedure is like:
 

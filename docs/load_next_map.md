@@ -5,10 +5,13 @@
 ## formats & types
 
 **Some alases:**
-- type TileCell = (TileIdx, Cell)
-- type PortalCell = (Portal, Cell)
-- type StratTiles = HashMap<StratumId, Vec<TileCell>>
-- type StratPortals = HashMap<StratumId, Vec<PortalCell>>
+
+```rust
+type TileCell = (TileIdx, Cell)
+type PortalCell = (Portal, Cell)
+type StratTiles = HashMap<StratumId, Vec<TileCell>>
+type StratPortals = HashMap<StratumId, Vec<PortalCell>>
+```
 
 **Types:**
 - A "map package" consists of a TilemapSpec with `(TileIdx, Cell)` and Portals `(Portal, Cell)`, saved separately, loaded separately (but unified in memory).

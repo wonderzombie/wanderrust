@@ -86,11 +86,11 @@ We can start by putting each of these on a Stratum:
 
 Observers are another example.
 
-**Using With<ActiveStratum> to narrow queries can work, but if it's in one place, it will need to be everywhere.** 
+**Using `With<ActiveStratum>` to narrow queries can work, but if it's in one place, it will need to be everywhere.** 
 
-### could we still use Res<Fov>, for instance?
+### could we still use `Res<Fov>`, for instance?
 
-**Important:** the main draw of Res<Foo> is to keep existing systems from needing to query any `Stratum`. As soon as systems stop being able to use `With<MapTile>`, a bunch of logic will have to change. `Single<&TilemapStorage>` is inevitably going to change; that's OK. But maybe `Res<TileStorage>` is a better move overall. 
+**Important:** the main draw of `Res<Foo>` is to keep existing systems from needing to query any `Stratum`. As soon as systems stop being able to use `With<MapTile>`, a bunch of logic will have to change. `Single<&TilemapStorage>` is inevitably going to change; that's OK. But maybe `Res<TileStorage>` is a better move overall. 
 
 A system that sets the active stratum *could* update each `Res<T>` associated with a stratum. Example: an `Added<ActiveStratum>` system could replace a set of resources with ones from the active stratum when it changes.
 
