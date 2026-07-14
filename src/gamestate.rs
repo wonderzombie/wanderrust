@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 use std::{collections::BTreeMap, fmt::Display};
 
-use crate::{actors::Player, tiles::Revealed};
+use crate::{actors::Player, tilemap::{ActiveLevel, WorldSpawn}, tiles::Revealed};
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct WorldClock(usize);
@@ -45,6 +45,7 @@ pub enum Screen {
     Title,
     Intro,
     Playing,
+    YouDied,
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
@@ -68,6 +69,8 @@ pub enum GameState {
     Ramifying,
     /// In a menu or subscreen
     Menu,
+    /// Defeat is when the player has been defeated and may choose to respawn.
+    Defeat,
 }
 
 // Menu doesn't have but one possible reference, so this makes Selection a
@@ -94,7 +97,7 @@ pub struct Recovery(pub usize);
 #[derive(Resource, Debug, Reflect)]
 pub struct NextTurn(pub Entity);
 
-pub fn ramifying(
+pub fn ramify(
     mut commands: Commands,
     mut turn_timer: Local<Timer>,
     time: Res<Time>,
@@ -151,4 +154,17 @@ pub fn ramifying(
 
     info!("next entity: {}", name_or_nt);
     commands.insert_resource(NextTurn(name_or_nt.entity));
+}
+
+pub fn respawn(
+    mut commands: Commands,
+    respawn_point: Single<&WorldSpawn>,
+    player: Single<Entity, With<Player>>,
+) {
+    let WorldSpawn { level_entity, cell } = *respawn_point;
+
+    commands
+        .entity(*player)
+        .insert((*cell, ChildOf(*level_entity)));
+    commands.entity(*level_entity).insert(ActiveLevel);
 }

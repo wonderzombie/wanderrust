@@ -2,11 +2,11 @@ use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking};
 
 use crate::{
-    actors::Dead,
+    actors::{Dead, Player},
     atlas::SpriteAtlas,
     bestiary::Bestiary,
     colors,
-    gamestate::{Turn, WorldClock},
+    gamestate::{GameState, Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
@@ -121,7 +121,7 @@ pub struct Attack {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &Name, &Parameters, &mut Health)>,
+    mut combatants: Query<(Entity, &Name, &Parameters, &mut Health, Has<Player>)>,
     mut attacks: MessageReader<Attack>,
     mut log: MessageWriter<LogEvent>,
     asset_server: Res<AssetServer>,
@@ -143,8 +143,8 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_id, defender_name, def_params, mut defender) = defender;
-        let (attacker_id, attacker_name, atk_params, _) = attacker;
+        let (defender_id, defender_name, def_params, mut defender, is_player) = defender;
+        let (attacker_id, attacker_name, atk_params, _, _) = attacker;
 
         commands
             .entity(attacker_id)
@@ -183,10 +183,11 @@ pub fn process_attacks(
                     .entity(defender_id)
                     .insert(Dead)
                     .trigger(Died)
-                    .remove::<AgentOfGrid>()
-                    .remove::<AgentPos>()
-                    .remove::<Blocking>()
-                    .remove::<Turn>();
+                    .remove::<(AgentOfGrid, AgentPos, Blocking)>()
+                    .remove::<(Awareness, Turn)>();
+                if is_player {
+                    commands.set_state_if_neq(GameState::Defeat);
+                }
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
                 commands.trigger(Attacked(defender_id))

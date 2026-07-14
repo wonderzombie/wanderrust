@@ -37,6 +37,7 @@ mod title_screen;
 mod tooltip;
 mod typewriter;
 mod ui;
+mod you_died_screen;
 
 use bevy::{
     asset::io::web::WebAssetPlugin,
@@ -130,6 +131,7 @@ pub fn run() {
     .add_plugins(equipment_menu::EquipmentMenuPlugin)
     .add_plugins(equipment::plugin)
     .add_plugins(status_panel::plugin)
+    .add_plugins(you_died_screen::YouDiedScreenPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
@@ -248,9 +250,16 @@ pub fn run() {
     )
     .add_systems(
         Update,
-        gamestate::ramifying.run_if(in_state(GameState::Ramifying)),
+        gamestate::ramify.run_if(in_state(GameState::Ramifying)),
     )
     .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
+    .add_systems(
+        OnTransition::<GameState> {
+            exited: GameState::Defeat,
+            entered: GameState::AwaitingInput,
+        },
+        gamestate::respawn,
+    )
     .add_systems(
         Last,
         (
