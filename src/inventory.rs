@@ -11,18 +11,7 @@ use bevy::{
     prelude::*,
     reflect::Reflect,
 };
-use bevy_egui::{
-    EguiContexts, EguiPrimaryContextPass,
-    egui::{self, Align2, Vec2},
-};
 use serde::{Deserialize, Serialize};
-
-use crate::{
-    actors::{Flasks, Player},
-    colors::{self, ColorExt},
-    gamestate::Screen,
-    parameters::Health,
-};
 
 /// A simple wrapper around a string to represent an item in the game world.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
@@ -195,66 +184,7 @@ pub fn process_acquisitions(
     }
 }
 
-const EMPTY: &str = "( empty )";
-
-fn draw_ui(
-    mut contexts: EguiContexts,
-    inventory: Res<Inventory>,
-    health: Single<&Health, With<Player>>,
-    flasks: Single<&Flasks, With<Player>>,
-) {
-    let Ok(ctx) = contexts.ctx_mut() else {
-        return;
-    };
-
-    egui::Area::new(egui::Id::new("Inventory"))
-        .anchor(Align2::RIGHT_CENTER, Vec2::ZERO)
-        .show(ctx, |ui| {
-            ui.style_mut().text_styles.insert(
-                egui::TextStyle::Body,
-                egui::FontId::new(16., egui::FontFamily::Proportional),
-            );
-
-            ui.set_min_width(128.);
-            ui.set_min_height(128.);
-
-            ui.colored_label(
-                Color::WHITE.to_egui(),
-                format!("HP: {}", health.hp).to_ascii_uppercase(),
-            );
-
-            ui.colored_label(
-                Color::WHITE.to_egui(),
-                format!("Flasks: {}", flasks.0).to_ascii_uppercase(),
-            );
-
-            ui.colored_label(Color::WHITE.to_egui(), "inventory".to_ascii_uppercase());
-            if inventory.is_empty() {
-                ui.colored_label(
-                    colors::KENNEY_OFF_WHITE.to_egui(),
-                    EMPTY.to_ascii_uppercase(),
-                );
-            } else {
-                for (item, &qty) in inventory.as_ref() {
-                    let item_entry = if qty > 1usize {
-                        format!("• {} {}", item, qty)
-                    } else {
-                        format!("• {}", item)
-                    };
-                    ui.colored_label(
-                        colors::KENNEY_OFF_WHITE.to_egui(),
-                        item_entry.to_ascii_uppercase(),
-                    );
-                }
-            }
-        });
-}
-
 pub fn plugin(app: &mut App) {
-    app.add_systems(
-        EguiPrimaryContextPass,
-        draw_ui.run_if(in_state(Screen::Playing)),
-    )
-    .add_message::<Acquisition>()
-    .init_resource::<Inventory>();
+    app.add_message::<Acquisition>()
+        .init_resource::<Inventory>();
 }
