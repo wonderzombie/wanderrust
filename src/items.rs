@@ -70,21 +70,21 @@ macro_rules! define_items {
 }
 
 impl ItemId {
-    // TODO: this should return Option<(Self, usize)> instead of panic.
-    pub fn from_spec(item_spec: impl AsRef<str>) -> (Self, usize) {
+    // TODO: this should return Option<(Self, Quantity)> instead of panic.
+    pub fn from_spec(item_spec: impl AsRef<str>) -> (Self, Quantity) {
         if let Some((it, n)) = item_spec.as_ref().split_once(':') {
             let item = ItemId::from_label(it);
             if item.is_none() {
                 panic!("invalid item spec: {:?}", item_spec.as_ref());
             }
             let qty = n.parse().unwrap_or(1);
-            (item.unwrap(), qty)
+            (item.unwrap(), Quantity(qty))
         } else {
             let item = ItemId::from_label(item_spec.as_ref());
             if item.is_none() {
                 panic!("invalid item spec: {:?}", item_spec.as_ref());
             }
-            (item.unwrap(), 1)
+            (item.unwrap(), Quantity(1))
         }
     }
 }
