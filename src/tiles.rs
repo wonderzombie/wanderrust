@@ -59,9 +59,16 @@ impl From<&TileIdx> for usize {
 pub const TILE_SIZE_PX: f32 = 16.0;
 /// The size of the tile sheet in grid units.
 pub const SHEET_SIZE_G: UVec2 = UVec2::new(49, 22);
+/// The count of tiles in the sheet.
+pub const NUM_TILES: u32 = SHEET_SIZE_G.x * SHEET_SIZE_G.y;
 
-pub const fn atlas_idx(x: u32, y: u32) -> usize {
-    (y * SHEET_SIZE_G.x + x) as usize
+const fn atlas_idx_page(x: u32, y: u32, page: u32) -> usize {
+    let page_offset = NUM_TILES * page;
+    ((y * SHEET_SIZE_G.x + x) + page_offset) as usize
+}
+
+const fn atlas_idx(x: u32, y: u32) -> usize {
+    atlas_idx_page(x, y, 0)
 }
 
 /// A marker component for entities that represent tiles on the map, which can
@@ -123,7 +130,7 @@ tiles! {
     Skull = atlas_idx(0, 15),
 
     // Walls
-    StoneWall = atlas_idx(0, 13),
+    StoneWall = atlas_idx_page(0, 13, 0),
     StoneWallWindowBars = atlas_idx(1, 13),
     StoneWallWindow = atlas_idx(2, 13),
     StoneWallWindowPlus = atlas_idx(2, 12),
