@@ -1,0 +1,97 @@
+# wanderrust
+
+
+## FEATURES
+
+- [x] grid-based movement w/ solidity
+- [x] field of view with occlusion (MRPAS)
+- [x] movable & static lighting w/ varying brightness
+- [x] game event log 
+- [x] lockable, openable doors
+- [x] chests w/ loot
+- [x] basic dialogue
+- [x] simple stats: attack, defense, attack speed, movement speed
+  - [x] equipment w/ stat effect
+- [x] turn-based combat w/ delays
+  - [x] fast enemies go more often 
+- [x] damage numbers!
+- [x] LDtk to create levels w/ enemies, chests, et al
+- [x] level transitions ("portals")
+- [x] simple inventory UI
+  - [x] item defintions w/ descriptions
+  - [x] examine carried items
+- [x] simple title screen
+- [x] drop tables for enemies
+- [x] tooltips for interactables (chests, enemies, etc) 
+- [x] simple healing (flasks)
+- [x] basic time, hp, flasks display
+- [x] equipment definitions w/ slots
+- [ ] enemy AI 
+  - [x] enemy pathing AI via bevy_northstar
+  - [x] enemies idle until they see player
+  - [ ] enemy patrol routes
+- [ ] quests
+  - [x] check/track status
+  - [x] change status
+  - [ ] simple content pipeline :P
+- [ ] alternative tiles
+  - [ ] tile flipping
+  - [ ] tile aliasing
+- [ ] UI prompts
+  - [ ] dialogue
+  - [ ] examine
+  - [ ] shop
+- [ ] respawning
+  - [ ] player respawns at shrines
+  - [ ] players respawn -> enemies respawn
+- [ ] equipment UI
+  - [ ] equip/un-equip
+  - [ ] show equipment stats
+- [ ] distinct weapon qualities
+  - [x] stick
+  - [ ] sword
+  - [ ] axe
+  - [ ] spear
+- [ ] distinct armor qualities
+  - [x] rags
+  - [ ] leather
+  - [ ] chain
+- [ ] distinct trinkets
+  - [ ] dragon scale
+  - [ ] amulet
+  - [ ] ring
+- [ ] levers & gates
+- [ ] persistent progression (save/load)
+  - [ ] save/load slots/characters
+- [ ] classes and/or character creation
+  - [ ] change colors :D
+  - [ ] distinct stats
+- [ ] more actual levels/zones
+  - [ ] the valley (zone)
+  - [ ] the town
+  - [ ] the mine
+  - [ ] the cave
+  - [ ] the ruins
+  - [ ] the temple
+- [ ] more enemies w/ distinct qualities
+  - [x] bat (fast swarming attacker)
+  - [ ] skeleton
+  - [ ] dog-rat
+  - [ ] marauder
+  - [ ] death knight
+  - [ ] WUMPUS!
+- [ ] items w/ effects
+  - [ ] consumables
+    - [ ] salve
+    - [ ] chalk
+  - [ ] tools
+    - [ ] clock
+    - [ ] 
+- [ ] stores
+- [ ] light-related gameplay
+  - [ ] modal player light
+  - [ ] player light source qualities
+  - [ ] environment reacts to player light
+- [ ] NPCs
+- [ ] day/night cycle (inc lighting)
+- [ ] blackjack w/ gambling :P
