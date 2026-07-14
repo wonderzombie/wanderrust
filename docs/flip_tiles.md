@@ -132,7 +132,9 @@ Finally, `sync_tiles()` needs to actually query for the xform and update the til
         sprite.flip_y = tile_xform.flip_y;
 ```
 
-## ALTERNATIVES CONSIDERED: GODOT'S TileSetAtlasSource BITWISE OPS 
+## ALTERNATIVES CONSIDERED
+
+### Alternative: GODOT'S TileSetAtlasSource BITWISE OPS 
 
 In Godot, a TileMapLayer uses a TileSet uses a TileSetSource, of which TileSetAtlasSource is one type. TileSetAtlasSource tells the Godot engine how to use an atlas for a given TileSet. The TileMapLayer APIs define a tile with a triple of:
 
@@ -157,13 +159,13 @@ if not alternate_id & TileSetAtlasSource.TRANSFORM_FLIP_H:
 
 `source_id` and `atlas_coords` are sufficient to identify which tile in which atlas, so `alternative_id` can simultaneously point to one tile unambiguously *and* indicate that the user intends for the tile to be flipped vertically or horizontally.
 
-### WHY NOT?
+#### WHY NOT?
 
 We don't do this because we don't have an `alternative_id` system, nor a design for one. 
 
 The very heart of the `tiles!` macro is `enum TileIdx { ( $tile = $idx, )* }` alongside `From<TileIdx> for usize`. This simplicity has paid off again and again; there are zero surprises. The juice is not the worth the squeeze when we have simpler and more straightforward alternatives.
 
-## ALTERNATIVES CONSIDERED: Option<TileXform> IN `TileBundle` AND/OR `sync_tiles()`
+## Alternative: `Option<TileXform>` IN `TileBundle` AND/OR `sync_tiles()`
 
 It *would* be possible to change `tile_xform` to `Option<TileXform>` in both `sync_tiles()` and in `TileBundle`. This would allow `TileIdx` entities without `TileXform`.
 
@@ -173,7 +175,7 @@ Even if the procedures after `ldtk_loader.rs` would treat it as optional, once `
 
 On the rendering side, we might paraphrase the query in `sync_tiles()` as `Query<&TileIdx, Option<TileXform>>`. During iteration, `tile_xform_opt.unwrap_or_default()` keeps logic flat and straightforward irrespective of whether the component is present.
 
-### WHY NOT?
+#### WHY NOT?
 
 The reason we *don't* do this is two parts: simplicity and consistency. 
 
