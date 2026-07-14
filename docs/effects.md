@@ -1,14 +1,13 @@
 # EFFECTS (née EQUIPMENT)
 
-## PRIOR ART
+## PRIOR ART: NETHACK
+
+- [prop.h](https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/prop.h)
+- [artifact.h](https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/artifact.h)
+- [monattk.h](https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/monattk.h)
 
 
-https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/prop.h
-https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/artifact.h
-https://github.com/NetHack/NetHack/blob/5333747f02ea125c689f347b4c584b5624ef4b23/include/monattk.h
-
-
-## NETHACK
+## SUMMARY OF NETHACK
 
 The way nethack does this appeals to me, although I need to think it through a little bit more.
 
