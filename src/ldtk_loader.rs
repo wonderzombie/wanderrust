@@ -9,8 +9,8 @@ use crate::{
     enum_with_str,
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
-    tilemap::{self, Dimensions, LevelId, LevelSpec, Portal, TileCell, WorldSpec},
-    tiles::{SHEET_SIZE_G, TileIdx},
+    tilemap::{self, Dimensions, LevelId, LevelSpec, Portal, TileSpec, WorldSpec},
+    tiles::{SHEET_SIZE_G, TileIdx, TileXform},
 };
 
 pub trait LdtkEntityExt<T> {
@@ -153,6 +153,8 @@ pub struct LdtkGridTile {
     pub atlas_idx: usize,
     #[serde(rename = "px")]
     px: Vec2,
+    #[serde(rename = "f")]
+    f: i8,
 }
 
 impl LdtkGridTile {
@@ -162,6 +164,15 @@ impl LdtkGridTile {
         let cx = (x / 16.0) as i32;
         let cy = ((level_height_px - y) / 16.0) as i32 - 1;
         Cell::at_depth(cx, cy, depth)
+    }
+}
+
+impl From<LdtkGridTile> for TileXform {
+    fn from(value: LdtkGridTile) -> Self {
+        Self {
+            flip_x: value.f | 1 == value.f,
+            flip_y: value.f | 2 == value.f,
+        }
     }
 }
 
@@ -291,20 +302,21 @@ fn get_grid_tiles(
     grid_tiles: &Vec<LdtkGridTile>,
     level_px_height: f32,
     world_depth: i32,
-) -> Vec<TileCell> {
-    let mut new_tiles: Vec<TileCell> = vec![];
+) -> Vec<TileSpec> {
+    let mut new_tiles: Vec<TileSpec> = vec![];
     let mut blank = 0;
     let mut nzero = 0;
     for grid_tile in grid_tiles {
         let tile_idx = TileIdx::from_idx(grid_tile.atlas_idx).unwrap_or(TileIdx::GridSquare);
         let cell = grid_tile.into_cell(level_px_height, world_depth);
+        let xform = TileXform::from(*grid_tile);
         if cell == Cell::ZERO {
             nzero += 1;
         }
         if tile_idx == TileIdx::Blank {
             blank += 1;
         }
-        new_tiles.push((tile_idx, cell));
+        new_tiles.push((tile_idx, cell, xform));
     }
     if blank == grid_tiles.len() {
         error!("🧰 {blank} out of {} tiles were blank", grid_tiles.len());

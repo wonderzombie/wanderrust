@@ -1,10 +1,18 @@
-use crate::{cell::Cell, light::LightLevel, ptable::ProbabilityTable, tilemap::*, tiles::TileIdx};
+use crate::{
+    cell::Cell,
+    light::LightLevel,
+    ptable::ProbabilityTable,
+    tilemap::*,
+    tiles::{TileIdx, TileXform},
+};
 
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-pub type LevelTiles = HashMap<LevelId, Vec<TileCell>>;
+type TileCell = (TileIdx, Cell);
+
+pub type LevelTiles = HashMap<LevelId, Vec<TileSpec>>;
 pub type LevelPortals = HashMap<LevelId, Vec<PortalCell>>;
 pub type LevelInterxs = HashMap<LevelId, Vec<InterxCell>>;
 pub type LevelEmitters = HashMap<LevelId, Vec<EmitterCell>>;
@@ -158,7 +166,7 @@ impl AsciiMapSpec {
             .unwrap_or(0) as u32;
 
         let id = LevelId(0);
-        let all_tiles: HashMap<LevelId, Vec<TileCell>> =
+        let all_tiles: HashMap<LevelId, Vec<TileSpec>> =
             vec![(id, AsciiMapSpec::parse_map_str(map_str))]
                 .into_iter()
                 .collect();
@@ -182,10 +190,10 @@ impl AsciiMapSpec {
         }
     }
 
-    fn parse_portals(tiles: &[(TileIdx, Cell)]) -> Vec<PortalCell> {
+    fn parse_portals(tiles: &[(TileIdx, Cell, TileXform)]) -> Vec<PortalCell> {
         tiles
             .iter()
-            .filter_map(|(idx, cell)| match *idx {
+            .filter_map(|(idx, cell, _)| match *idx {
                 TileIdx::StairsDown => Some((
                     Portal {
                         id: EntryId(format!("{:?}", TileIdx::StairsDown)),
@@ -209,14 +217,15 @@ impl AsciiMapSpec {
             .collect::<Vec<_>>()
     }
 
-    fn parse_map_str(map_str: &str) -> Vec<TileCell> {
+    fn parse_map_str(map_str: &str) -> Vec<TileSpec> {
         let lines: Vec<&str> = map_str.lines().collect();
         lines
             .iter()
             .enumerate()
             .flat_map(|(y, line)| {
                 line.char_indices().filter_map(move |(x, c)| {
-                    AsciiMapSpec::tile_for(c).map(|idx| (idx, Cell::new(x as i32, y as i32)))
+                    AsciiMapSpec::tile_for(c)
+                        .map(|idx| (idx, Cell::new(x as i32, y as i32), TileXform::default()))
                 })
             })
             .collect::<Vec<_>>()
@@ -234,7 +243,7 @@ impl AsciiMapSpec {
         AsciiMapSpec {
             all_tiles: vec![(id1, tiles1), (id2, tiles2)]
                 .into_iter()
-                .collect::<HashMap<LevelId, Vec<TileCell>>>(),
+                .collect::<HashMap<LevelId, Vec<TileSpec>>>(),
             all_portals: vec![(id1, portals1), (id2, portals2)]
                 .into_iter()
                 .collect::<HashMap<LevelId, Vec<PortalCell>>>(),
@@ -266,7 +275,7 @@ impl AsciiMapSpec {
                     let cell = Cell::from_idx(size.0, i as usize);
                     let tile_idx = fx(&cell, &table);
                     tally.entry(tile_idx).and_modify(|e| *e += 1).or_insert(1);
-                    (tile_idx, cell)
+                    (tile_idx, cell, TileXform::default())
                 })
                 .collect(),
         )]
@@ -332,7 +341,7 @@ mod tests {
             .all_tiles
             .values()
             .flatten()
-            .map(|(idx, _)| *idx)
+            .map(|(idx, _, _)| *idx)
             .collect();
         assert_eq!(
             tile_types,
@@ -359,10 +368,22 @@ mod tests {
         let spec = AsciiMapSpec::from_str("#.\n.#");
         let tiles = &spec.all_tiles;
         let id = LevelId(0);
-        assert_eq!(tiles[&id][0], (TileIdx::StoneWall, Cell::new(0, 0)));
-        assert_eq!(tiles[&id][1], (TileIdx::Blank, Cell::new(1, 0)));
-        assert_eq!(tiles[&id][2], (TileIdx::Blank, Cell::new(0, 1)));
-        assert_eq!(tiles[&id][3], (TileIdx::StoneWall, Cell::new(1, 1)));
+        assert_eq!(
+            tiles[&id][0],
+            (TileIdx::StoneWall, Cell::new(0, 0), TileXform::default())
+        );
+        assert_eq!(
+            tiles[&id][1],
+            (TileIdx::Blank, Cell::new(1, 0), TileXform::default())
+        );
+        assert_eq!(
+            tiles[&id][2],
+            (TileIdx::Blank, Cell::new(0, 1), TileXform::default())
+        );
+        assert_eq!(
+            tiles[&id][3],
+            (TileIdx::StoneWall, Cell::new(1, 1), TileXform::default())
+        );
     }
 
     #[test]

@@ -3,6 +3,7 @@
     "allow": [
       "Bash(cargo check)",
       "Bash(cargo check:*)",
+      "Bash(cargo clippy *)",
       "Bash(cargo clippy)",
       "Bash(cargo test:*)",
       "Bash(git rebase *)",

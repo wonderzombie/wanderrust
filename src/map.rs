@@ -2,7 +2,7 @@ use crate::{
     colors,
     light::{AmbientLight, LightLevel},
     tilemap::{ActiveLevel, Level},
-    tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, Walkable},
+    tiles::{Highlighted, MapTile, Occupied, Opaque, Revealed, TileIdx, TileXform, Walkable},
 };
 
 use bevy::ecs::query::QueryData;
@@ -20,11 +20,14 @@ pub struct SyncProps {
 /// Sync [TileIdx] and [Sprite] visuals along with their gameplay properties.
 pub fn sync_tiles(
     mut commands: Commands,
-    mut tiles: Query<(Entity, &mut Sprite, &TileIdx, SyncProps), Changed<TileIdx>>,
+    mut tiles: Query<
+        (Entity, &mut Sprite, &TileIdx, &TileXform, SyncProps),
+        (Changed<TileIdx>, Changed<TileXform>),
+    >,
 ) {
     // This method only runs when [TileIdx] or [TilePreview] changes, so we
     // apply most changes in some unconditional fashion.
-    for (entity, mut sprite, tile_idx, sync_props) in tiles.iter_mut() {
+    for (entity, mut sprite, tile_idx, tile_xform, sync_props) in tiles.iter_mut() {
         let mut entity_command = commands.entity(entity);
 
         let walkable = sync_props.walkable;
@@ -35,6 +38,9 @@ pub fn sync_tiles(
         if let Some(texture_atlas) = &mut sprite.texture_atlas {
             texture_atlas.index = tile_idx.into();
         }
+
+        sprite.flip_x = tile_xform.flip_x;
+        sprite.flip_y = tile_xform.flip_y;
 
         // Update tile Walkable only when necessary.
         if tile_idx.is_walkable() && !walkable {

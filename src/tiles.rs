@@ -55,6 +55,14 @@ impl From<&TileIdx> for usize {
     }
 }
 
+#[derive(
+    Component, Default, Debug, Clone, Copy, Reflect, Hash, Serialize, Deserialize, PartialEq,
+)]
+pub struct TileXform {
+    pub flip_x: bool,
+    pub flip_y: bool,
+}
+
 /// The tile size in pixels.
 pub const TILE_SIZE_PX: f32 = 16.0;
 /// The size of the tile sheet in grid units.

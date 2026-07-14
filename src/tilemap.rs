@@ -13,7 +13,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     light::{Emitter, LightLevel},
-    tiles::{self, MapTile, Revealed, TileIdx},
+    tiles::{self, MapTile, Revealed, TileIdx, TileXform},
 };
 
 #[derive(Component, Copy, Clone, Debug, PartialEq, Reflect)]
@@ -36,7 +36,7 @@ pub struct WorldSpec {
 #[derive(Component, Default, Debug, Reflect, PartialEq, Eq, Ord, PartialOrd, Hash, Clone, Copy)]
 pub struct Depth(pub(crate) i32);
 
-type TileSpec = (TileIdx, Cell);
+pub type TileSpec = (TileIdx, Cell, TileXform);
 type PortalSpec = (Portal, Cell);
 type InterxSpec = (Interactable, Cell);
 type EmitterSpec = (Emitter, Cell);
@@ -99,9 +99,6 @@ pub fn snapshot_denizens(
     }
 }
 
-/// TileCell is a pair of (TileIdx, Cell). Together with a LevelId, it should be
-/// enough to uniquely identify a tile.
-pub type TileCell = (TileIdx, Cell);
 /// PortalCell is a triple of (Portal, TileIdx, Cell). Together with a LevelId,
 /// it should be enough to uniquely identify a tile.
 pub type PortalCell = (Portal, TileIdx, Cell);
@@ -286,6 +283,7 @@ pub struct TileBundle {
     pub map_tile: MapTile,
     pub tile_idx: TileIdx,
     pub cell: Cell,
+    pub tile_xform: TileXform,
     pub transform: Transform,
     pub sprite: Sprite,
     pub revealed: Revealed,
@@ -337,10 +335,7 @@ pub fn spawn_worldmap(
 
         let mut tally: HashMap<TileIdx, usize> = HashMap::new();
         let mut count = 0;
-        let mut cells = vec![TileIdx::Blank; level_spec.dimensions.ntiles()];
-        level_spec.tiles.iter().for_each(|(tile_idx, cell)| {
-            let idx = level_spec.dimensions.cell_to_idx(cell);
-            cells[idx] = *tile_idx;
+        level_spec.tiles.iter().for_each(|(tile_idx, _, _)| {
             tally.entry(*tile_idx).and_modify(|e| *e += 1).or_insert(1);
             count += 1;
         });
@@ -352,8 +347,13 @@ pub fn spawn_worldmap(
                 .or_insert(*v);
         }
 
-        let bundles =
-            generate_tile_bundles(level_entity, &level_spec.dimensions, &cells, layer, &atlas);
+        let bundles = generate_tile_bundles(
+            level_entity,
+            &level_spec.dimensions,
+            &level_spec.tiles,
+            layer,
+            &atlas,
+        );
 
         info!(
             "📍 {level:?}: {} tiles; {} bundles; {count} mapped tiles",
@@ -420,16 +420,14 @@ pub fn despawn_tilemap(
 fn generate_tile_bundles(
     parent: Entity,
     dim: &Dimensions,
-    tiles: &[TileIdx],
+    tile_specs: &[TileSpec],
     layer: f32,
     sheet: &SpriteAtlas,
 ) -> Vec<TileBundle> {
-    tiles
+    tile_specs
         .iter()
-        .enumerate()
-        .map(|(i, tile_idx)| {
-            let cell = dim.idx_to_cell(i);
-            let pos = dim.cell_to_pos(&cell);
+        .map(|(tile_idx, cell, tile_xform)| {
+            let pos = dim.cell_to_pos(cell);
             // TODO: detect when all cells map to (0, 0, 0) another way.
             // if cell > Cell::ZERO {
             //     assert_ne!(
@@ -442,7 +440,8 @@ fn generate_tile_bundles(
             TileBundle {
                 map_tile: MapTile,
                 tile_idx: *tile_idx,
-                cell,
+                cell: *cell,
+                tile_xform: *tile_xform,
                 // This puts the tile at the correct z-order based on the layer.
                 transform: Transform::from_xyz(pos.x, pos.y, layer),
                 sprite: sheet.sprite_from_idx(*tile_idx),
