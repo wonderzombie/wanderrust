@@ -15,6 +15,7 @@ argument is usually below it.
 | [Strata](strata.md) | done | Maps divided into vertical layers; visibility and hierarchy |
 | [Strata: lightmaps](strata_lightmap.md) | done | Per-emitter and per-stratum light maps, merged and diffed |
 | [wanderl2r](wanderl2r.md) | superseded | Converting Godot `TileMapLayer` maps into wanderrust RON |
+| [You died screen](you_died_screen.md) | building | Players respawn after death |
 | [Levers and gates](levers_and_gates.md) | proposed | Doors opened by a specific lever |
 | [Active stratum](active_stratum.md) | superseded | `ActiveStratum` resource; `StandingOn` / `StoodOn` |
 | [Level-wise spawning](levelwise_spawning.md) | proposed | Multiple LDtk levels at one world depth |
