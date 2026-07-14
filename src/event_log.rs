@@ -7,7 +7,7 @@ use bevy_egui::{
 
 use bevy::prelude::*;
 
-use crate::{actors::Player, cell::Cell, colors::ColorExt, gamestate::WorldClock};
+use crate::colors::ColorExt;
 
 #[derive(Resource, Debug, Default)]
 pub struct EguiFontsLoaded;
@@ -40,12 +40,7 @@ pub fn setup_fonts(mut contexts: EguiContexts, mut commands: Commands) {
 }
 
 /// Draws the message log UI using Egui using [MessageLog] resource.
-pub fn draw_ui(
-    mut contexts: EguiContexts,
-    log: Res<MessageLog>,
-    ticks: Res<WorldClock>,
-    cell: Single<&Cell, With<Player>>,
-) {
+pub fn draw_ui(mut contexts: EguiContexts, log: Res<MessageLog>) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -67,25 +62,6 @@ pub fn draw_ui(
             for (msg, color) in log.as_color_text() {
                 ui.colored_label(color.to_egui(), msg);
             }
-        });
-
-    egui::Area::new(egui::Id::new("Ticks"))
-        .anchor(Align2::RIGHT_TOP, Vec2::ZERO)
-        .show(ctx, |ui| {
-            ui.style_mut().text_styles.insert(
-                egui::TextStyle::Body,
-                egui::FontId::new(18.0, egui::FontFamily::Proportional),
-            );
-
-            ui.set_min_width(128.);
-            ui.colored_label(
-                Color::WHITE.to_egui(),
-                format!("Ticks: {:}", *ticks).to_ascii_uppercase(),
-            );
-            ui.colored_label(
-                Color::WHITE.to_egui(),
-                format!("Cell: {:}", *cell).to_ascii_uppercase(),
-            );
         });
 }
 
