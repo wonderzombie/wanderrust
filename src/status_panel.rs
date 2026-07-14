@@ -20,17 +20,15 @@ impl Plugin for StatusPanelPlugin {
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct StatusPanel;
 
-#[derive(Component, Copy, Clone, Debug, Default)]
-pub struct HpLabel;
-
-#[derive(Component, Copy, Clone, Debug, Default)]
-pub struct FlasksLabel;
-
-#[derive(Component, Copy, Clone, Debug, Default)]
-pub struct TicksLabel;
-
-#[derive(Component, Copy, Clone, Debug, Default)]
-pub struct CellLabel;
+#[derive(Component, Copy, Clone, Debug, FromTemplate)]
+pub enum Label {
+    #[default]
+    None,
+    Hp,
+    Flasks,
+    Ticks,
+    Cell,
+}
 
 fn setup(mut commands: Commands) {
     commands.spawn_scene(panel_bundle());
@@ -38,22 +36,21 @@ fn setup(mut commands: Commands) {
 
 fn update_labels(
     status: Single<(&Health, &Flasks), With<Player>>,
-    mut labels: ParamSet<(
-        Single<&mut Text, With<HpLabel>>,
-        Single<&mut Text, With<FlasksLabel>>,
-        Single<&mut Text, With<TicksLabel>>,
-        Single<&mut Text, With<CellLabel>>,
-    )>,
+    mut labels: Query<(&mut Text, &Label)>,
     clock: Res<WorldClock>,
     cell: Single<&Cell, With<Player>>,
 ) {
     let (health, flasks) = *status;
 
-    // TODO: consider replacing FooLabel markers with newtypes over Text.
-    labels.p0().0 = format!("HP: {}", health.hp);
-    labels.p1().0 = format!("FR: {}", flasks.0);
-    labels.p2().0 = format!("T: {}", *clock);
-    labels.p3().0 = format!("C: {}", *cell);
+    for (mut text, label) in labels.iter_mut() {
+        match label {
+            Label::Hp => text.0 = format!("HP: {}", health.hp),
+            Label::Flasks => text.0 = format!("FR: {}", flasks.0),
+            Label::Ticks => text.0 = format!("T:  {}", *clock),
+            Label::Cell => text.0 = format!("C:  {}", *cell),
+            _ => error!("found invalid label: {:?} {:?}", text, label),
+        }
+    }
 }
 
 fn pcsr_font(font_size: i32) -> impl Scene {
@@ -86,27 +83,27 @@ fn panel_bundle() -> impl Scene {
             (
                 Node
                 Text::new("HP: ??")
-                HpLabel
+                Label::Hp
                 pcsr_font(12)
                 TextColor(colors::KENNEY_OFF_WHITE)
             ),
             (
                 Node
-                FlasksLabel
+                Label::Flasks
                 Text::new("FR: ??")
                 pcsr_font(12)
                 TextColor(colors::KENNEY_OFF_WHITE)
             ),
             (
                 Node
-                TicksLabel
+                Label::Ticks
                 Text::new("T: ??")
                 pcsr_font(12)
                 TextColor(colors::KENNEY_OFF_WHITE)
             ),
             (
                 Node
-                CellLabel
+                Label::Cell
                 Text::new("C: ??")
                 pcsr_font(12)
                 TextColor(colors::KENNEY_OFF_WHITE)
