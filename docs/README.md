@@ -14,22 +14,21 @@ argument is usually below it.
 |---|---|---|
 | [Strata](strata.md) | done | Maps divided into vertical layers; visibility and hierarchy |
 | [Strata: lightmaps](strata_lightmap.md) | done | Per-emitter and per-stratum light maps, merged and diffed |
-| [wanderl2r](wanderl2r.md) | done | Converting Godot `TileMapLayer` maps into wanderrust RON |
-| [Levers and gates](levers_and_gates.md) | building | Doors opened by a specific lever |
-| [Active stratum](active_stratum.md) | proposed | `ActiveStratum` resource; `StandingOn` / `StoodOn` |
-| [Load next map](load_next_map.md) | proposed | Tearing down and rebuilding strata to move between areas |
+| [wanderl2r](wanderl2r.md) | superseded | Converting Godot `TileMapLayer` maps into wanderrust RON |
+| [Levers and gates](levers_and_gates.md) | proposed | Doors opened by a specific lever |
+| [Active stratum](active_stratum.md) | superseded | `ActiveStratum` resource; `StandingOn` / `StoodOn` |
+| [Load next map](load_next_map.md) | draft | Tearing down and rebuilding strata to move between areas |
 | [Level-wise spawning](levelwise_spawning.md) | proposed | Multiple LDtk levels at one world depth |
-| [LDtk as pipeline](ldtk_as_pipeline.md) | proposed | Using LDtk project entities as the item catalog |
-| [Alternative tiles](alt_tiles.md) | proposed | "Pages" of tiles: same sprite, different properties |
-| [Big tiles](big_tiles.md) | proposed | 2x2 tiles for giant/ancient spaces |
-| [Tile flipping](flip_tiles.md) | proposed | `TileTransform` for horizontal/vertical/diagonal flips |
-| [Mini health bars](mini_health_bars.md) | proposed | Small HP indicator near the tooltip |
-| [Items as entities](items_as_entities.md) | proposed | Item catalog, kinds, and equipment slots |
-| [Effects](effects.md) | draft | NetHack-style intrinsic/extrinsic properties |
+| [LDtk as pipeline](ldtk_as_pipeline.md) | draft | Using LDtk project entities as the item catalog |
+| [Alternative tiles](alt_tiles.md) | building | "Pages" of tiles: same sprite, different properties |
+| [Big tiles](big_tiles.md) | draft | 2x2 tiles for giant/ancient spaces |
+| [Tile flipping](flip_tiles.md) | building | `TileTransform` for horizontal/vertical/diagonal flips |
+| [Mini health bars](mini_health_bars.md) | draft | Small HP indicator near the tooltip |
+| [Items as entities](items_as_entities.md) | building | Item catalog, kinds, and equipment slots |
+| [Effects](effects.md) | building | NetHack-style intrinsic/extrinsic properties |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
 
 <!--
-Statuses are my best guess from reading the docs — fix any I got wrong.
 The vocabulary is: draft | proposed | building | done | superseded | abandoned
 
 This table is hand-maintained, which is fine at this size. If it ever
