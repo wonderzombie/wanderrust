@@ -1,4 +1,7 @@
-use crate::{inventory, items};
+use crate::{
+    inventory,
+    items::{self, Quantity},
+};
 use bevy::prelude::*;
 use rand::{RngExt, seq::IndexedRandom};
 
@@ -20,7 +23,7 @@ impl LootTable {
         match self.entries.choose(&mut rand::rng()) {
             Some((item, min, max)) => {
                 let qty = rand::rng().random_range(*min..=*max);
-                inventory::Inventory::with_item(item.clone(), qty)
+                inventory::Inventory::with_item(item.clone(), Quantity(qty))
             }
             None => inventory::empty(),
         }
