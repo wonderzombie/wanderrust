@@ -239,3 +239,8 @@ pub fn update_fov_markers(
 - [ ] **`LightMap` and `update_emitter_lights`.** This is straightforward with one exception: `Local<LightMap>`. The prior impl made great use of this. Now there exists one for each Stratum. `Query<(&Emitter, &ChildOf, &Cell, Option<&PreviousCell>), Changed<Cell>>` gives us the emitter, where it is now, and where it was before, if any. 
   - Consider an abstraction that contains both `Cell` and `PreviousCell`. If `Cell` changes, `PreviousCell` must exist/change — they don't make much sense without each other. Maybe it's as simple as a `QueryData` type like `Mover`. 
   - Consider `AgentPos`, `NextPos`, and/or `AgentOfGrid` could benefit from something similar (lower priority because `mobs.rs` is the only thing that uses it.) Or, again, QueryData type or type alias.
+
+## OUTCOME
+
+- **Largely implemented except for `Above` and `Below`.**
+- **Written before LDtk migration.**
