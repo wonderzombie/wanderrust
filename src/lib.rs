@@ -22,6 +22,7 @@ pub mod light;
 mod loot;
 mod macros;
 mod map;
+mod message_log;
 mod mobs;
 mod parameters;
 mod procgen;
@@ -127,6 +128,7 @@ pub fn run() {
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
+    .add_plugins(message_log::MessageLogPlugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
