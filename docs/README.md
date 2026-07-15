@@ -25,8 +25,8 @@ argument is usually below it.
 | [Tile flipping](flip_tiles.md) | building | `TileTransform` for horizontal/vertical/diagonal flips |
 | [Mini health bars](mini_health_bars.md) | draft | Small HP indicator near the tooltip |
 | [Items as entities](items_as_entities.md) | building | Item catalog, kinds, and equipment slots |
-| [Effects](effects.md) | building | NetHack-style intrinsic/extrinsic properties |
 | [Bevy UI Message Log](bevy_ui_message_log.md) | building | Replace egui gameplay log with Bevy UI |
+| [Effects](effects.md) | done | NetHack-style intrinsic/extrinsic properties |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
 | [Respawning monsters](respawning_monsters.md) | proposed | Resetting monster status |
 | [Respawning](respawning.md) | abandoned | Respawning monsters; shrines |
