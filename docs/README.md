@@ -28,7 +28,8 @@ argument is usually below it.
 | [Bevy UI Message Log](bevy_ui_message_log.md) | building | Replace egui gameplay log with Bevy UI |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
 | [Respawning monsters](respawning_monsters.md) | proposed | Resetting monster status |
-| [Respawning](respawning.md) | superseded | abandoned | All things respawning |
+| [Respawning](respawning.md) | abandoned | Respawning monsters; shrines |
+| [You Died screen](you_died_screen.md) | building | Defeat interstitial and reset scenario |
 
 <!--
 The vocabulary is: draft | proposed | building | done | superseded | abandoned

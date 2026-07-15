@@ -29,6 +29,7 @@
 
 - [Levers and gates](levers_and_gates.md)
 - [Respawning monsters](respawning_monsters.md)
+- [You Died screen](you_died_screen.md)
 
 # UI
 
