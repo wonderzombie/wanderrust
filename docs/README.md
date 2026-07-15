@@ -17,7 +17,6 @@ argument is usually below it.
 | [wanderl2r](wanderl2r.md) | superseded | Converting Godot `TileMapLayer` maps into wanderrust RON |
 | [Levers and gates](levers_and_gates.md) | proposed | Doors opened by a specific lever |
 | [Active stratum](active_stratum.md) | superseded | `ActiveStratum` resource; `StandingOn` / `StoodOn` |
-| [Load next map](load_next_map.md) | draft | Tearing down and rebuilding strata to move between areas |
 | [Level-wise spawning](levelwise_spawning.md) | proposed | Multiple LDtk levels at one world depth |
 | [LDtk as pipeline](ldtk_as_pipeline.md) | draft | Using LDtk project entities as the item catalog |
 | [Alternative tiles](alt_tiles.md) | building | "Pages" of tiles: same sprite, different properties |
