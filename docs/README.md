@@ -28,6 +28,8 @@ argument is usually below it.
 | [Effects](effects.md) | building | NetHack-style intrinsic/extrinsic properties |
 | [Bevy UI Message Log](bevy_ui_message_log.md) | building | Replace egui gameplay log with Bevy UI |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
+| [Respawning monsters](respawning_monsters.md) | draft | Resetting monster status |
+| [Respawning](respawning.md) | superseded | abandoned | All things respawning |
 
 <!--
 The vocabulary is: draft | proposed | building | done | superseded | abandoned
