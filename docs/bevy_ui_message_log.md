@@ -108,3 +108,9 @@ pub fn process_log_messages(
     }
 }
 ```
+
+## WORK ITEMS
+
+- [x] Add UI skeleton (w/o scrolling)
+- [x] Add automatic scrolling
+- [ ] Remove egui message log
