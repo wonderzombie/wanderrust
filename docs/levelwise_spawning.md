@@ -27,3 +27,13 @@ To keep it simple, I wanted to use the world grid. We allocate slots in `Vec<Opt
 To put level 2 where it's supposed to go, we'd need `LdtkLevel` need to surface `world_x` and `world_y` (in pixels). Internally, its coordinates [0, 0] map to position (0, 0), so it's going to say [25, 13] for the coordinates of an entity — relative to world position (0, 256). In _world grid coordinates_, the position of the same entity is [25, 29]. In other words, we need either to keep these systems straight, or pick one as early in the pipeline as possible.
 
 Or maybe we can just short-circuit that: `TilemapBundle` is used to create the `Stratum` entity, which is itself the parent to all the tiles and entities. Moving the stratum entity to `world_x` and `world_y` should let us have it both ways. Any changes to the transform for a given entity will be relative to its parent.
+
+## OUTCOME
+
+**Largely implemented.**
+
+Every LDtk level is a `Level`. Everything defined as belonging to that level (such as when you add/edit things in LDtk) becomes a `ChildOf` that level. 
+
+`ChildOf` is special in Bevy: the engine ensures that `ChildOf` entities inherit their parent's `Visibiity` and `Transform`. When we use `world_pos` as part of a `Transform`, any children with a `Transform` will be offset accordingly.
+
+I don't see the appeal of a world grid. Or, rather, if we wanted to do a world grid, we could make a giant level and just use that.
