@@ -58,3 +58,12 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 - Consider implementing something like the Shroud. It's not damage over time; it's a countdown. 
 
 - start with something like hold tab to highlight and click on interesting tiles.
+
+# MISC
+
+- `process_actions()` could stipulate `ActiveLevel` and thus use `Single<&grid::SpatialIndex>`.
+- `process_actions()` could possibly (?) use `Zone` with `ActiveLevel`
+- `process_actions()` should figure out if an entity is among combatants and dispatch attacks — it is getting the entity from the `SpatialIndex` anyway
+- change `interaction_attempts` from a `Message` to something like `Res<Examine>`; `process_interactions()` can then use `If<Res<Examine>>`. This eliminates a SystemParam.
+- `process_interactions()` should stop using `Belligerent` once `process_actions()` dispatches attacks; this will allow us to move spawning of combatants out of `interactions.rs`
+- add convenience "zero-value except for Z" transforms to `tilemap.rs`, like `actor_layer()` if const won't work
