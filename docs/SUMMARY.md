@@ -28,6 +28,7 @@
 # World & interaction
 
 - [Levers and gates](levers_and_gates.md)
+- [Respawning monsters](respawning_monsters.md)
 
 # UI
 
