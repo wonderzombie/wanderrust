@@ -67,3 +67,43 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 - change `interaction_attempts` from a `Message` to something like `Res<Examine>`; `process_interactions()` can then use `If<Res<Examine>>`. This eliminates a SystemParam.
 - `process_interactions()` should stop using `Belligerent` once `process_actions()` dispatches attacks; this will allow us to move spawning of combatants out of `interactions.rs`
 - add convenience "zero-value except for Z" transforms to `tilemap.rs`, like `actor_layer()` if const won't work
+
+# digression: effects
+
+We might have a Relationship for area effects, like `AffectedBy` for a tile and `AreaEfect`, which also describes the specific mechanics of whatever `AreaEffect` has on `AffectedBy`?
+
+I am sleep deprived now so this isn't making sense. 
+
+We'll start with a shape of some kind or another, which can apply to tile entities. `Populated<(&Cell, &AffectedBy)>` and `Populated<&AreaEffect>`. Cross reference with `Populated<(&Cell, &Health), With<Actor>>`. We start with AreaEffects, so for each of those we would `fx.iter_many(affected_by_cells.iter())`.
+
+The next check can't be entities; it has to go from cell to actor.
+
+So in reality maybe it's actually
+
+```rust
+for effect in effects.iter() {
+    for cell in affected_by.iter_many(effect.iter()) {
+    // spatial index tracks non-walkable tiles/cells
+    // and it is used for collision
+    // actors are not walkable; dead ones need to be excluded
+    let Some(actor_nt) = spatial_index.get(cell) else {
+    //
+      continue;
+    };
+  }
+}
+```
+
+`affected_by` probably doesn't need to be qualified as such. `Query<&Cell, With<AffectedBy>` and then `affected_cells.iter_many(effect.iter())` — that's "of all the entities affected by any effect, limit this iteration to the entities with a relationship to *this* effect" — and since we just have cells, we `get()` from the SpatialIndex.
+
+```rust
+// relationship component
+pub struct AffectedBy(pub Entity);
+
+// relationship target; component
+pub struct AreaEffect{
+    #[relationship] // this compiled; seems ok based on docs
+    entities; Vec<Entity>,
+    hazard: Hazard,
+};
+```
