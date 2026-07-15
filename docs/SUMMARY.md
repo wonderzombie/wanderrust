@@ -10,7 +10,6 @@
 - [Strata: lightmaps](strata_lightmap.md)
 - [Active stratum](active_stratum.md)
 - [Level-wise spawning](levelwise_spawning.md)
-- [Load next map](load_next_map.md)
 - [LDtk as pipeline](ldtk_as_pipeline.md)
 - [wanderl2r: Godot to Bevy](wanderl2r.md)
 
@@ -43,3 +42,4 @@
 # Archive
 
 - [LDtk, Northstar, world depth](archive/ldtk_2_5d.md)
+- [Load next map](archive/load_next_map.md)
