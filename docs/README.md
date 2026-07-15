@@ -26,6 +26,7 @@ argument is usually below it.
 | [Mini health bars](mini_health_bars.md) | draft | Small HP indicator near the tooltip |
 | [Items as entities](items_as_entities.md) | building | Item catalog, kinds, and equipment slots |
 | [Effects](effects.md) | building | NetHack-style intrinsic/extrinsic properties |
+| [Bevy UI Message Log](bevy_ui_message_log.md) | building | Replace egui gameplay log with Bevy UI |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
 
 <!--
