@@ -1,7 +1,7 @@
 # wanderrust
 
-Design docs and working notes for **wanderrust**, a roguelike built in Rust
-with Bevy. Successor to `wanderlust`, which was built in Godot.
+Design docs and working notes for **wanderrust**, a soulslike-roguelike built in
+Rust with Bevy. Successor to `wanderlust`, which was built in Godot.
 
 These are working documents, not specifications. They're written to think
 with, and most of them include the dead ends and the reasoning that got
@@ -27,7 +27,7 @@ argument is usually below it.
 | [Effects](effects.md) | building | NetHack-style intrinsic/extrinsic properties |
 | [Bevy UI Message Log](bevy_ui_message_log.md) | building | Replace egui gameplay log with Bevy UI |
 | [Notes on some patterns](notes_on_some_patterns.md) | reference | Bevy/ECS patterns used throughout |
-| [Respawning monsters](respawning_monsters.md) | draft | Resetting monster status |
+| [Respawning monsters](respawning_monsters.md) | proposed | Resetting monster status |
 | [Respawning](respawning.md) | superseded | abandoned | All things respawning |
 
 <!--
