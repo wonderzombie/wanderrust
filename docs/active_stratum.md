@@ -44,6 +44,8 @@ pub fn update_foo(strata: Query<&Stratum, &Children>, active: Res<ActiveStratum>
 
 ## OUTCOME
 
+**Largely implemented.**
+
 It was very close to the preceding. impl of these concepts presently: 
 
 ```rust
