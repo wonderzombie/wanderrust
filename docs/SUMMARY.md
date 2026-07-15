@@ -30,6 +30,10 @@
 
 - [Levers and gates](levers_and_gates.md)
 
+# UI
+
+- [Bevy UI Message Log](bevy_ui_message_log.md)
+
 # Reference
 
 - [Notes on some patterns](notes_on_some_patterns.md)
