@@ -147,14 +147,14 @@ pub fn toggle_inventory(
 #[derive(Resource, Clone, Default, Debug, Copy, PartialEq)]
 pub struct Highlighted(pub usize);
 
-fn up_down_keycodes() -> &'static [KeyCode] {
-    &[
-        KeyCode::ArrowDown,
-        KeyCode::ArrowUp,
-        KeyCode::KeyK,
-        KeyCode::KeyJ,
-    ]
-}
+const UP_DOWN_INPUTS: [KeyCode; 4] = [
+    KeyCode::ArrowDown,
+    KeyCode::ArrowUp,
+    KeyCode::KeyK,
+    KeyCode::KeyJ,
+];
+
+const INTERACT_INPUTS: [KeyCode; 3] = [KeyCode::KeyE, KeyCode::Space, KeyCode::Enter];
 
 pub fn interaction_system(
     input: Res<ButtonInput<KeyCode>>,
@@ -167,7 +167,7 @@ pub fn interaction_system(
         return;
     }
     let nlabels = labels.count();
-    if input.any_just_pressed(up_down_keycodes().iter().copied()) {
+    if input.any_just_pressed(UP_DOWN_INPUTS) {
         let mut next = highlighted.as_ref().0;
         if input.any_just_pressed([KeyCode::ArrowUp, KeyCode::KeyK]) {
             info!("interaction_system: up");
@@ -178,7 +178,7 @@ pub fn interaction_system(
         }
         next = next.clamp(0, nlabels - 1);
         highlighted.set_if_neq(Highlighted(next));
-    } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
+    } else if input.any_just_pressed(INTERACT_INPUTS) {
         let Some(selected) = item_list.iter().nth(highlighted.as_ref().0) else {
             return;
         };
@@ -189,7 +189,7 @@ pub fn interaction_system(
 
         info!("selected {highlighted:?} {txt:?}");
 
-        log.add(txt.0.clone(), colors::KENNEY_GREEN);
+        log.add(txt.to_string(), colors::KENNEY_GREEN);
     }
 }
 
