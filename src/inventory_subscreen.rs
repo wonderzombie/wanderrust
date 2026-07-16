@@ -103,12 +103,12 @@ pub fn screen_bundle() -> impl Scene {
             min_height: px(180),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::SpaceEvenly,
-            padding: UiRect { left: px(12.), right: px(12.), top: px(12.), bottom: px(12.) }
+            padding: UiRect::all(px(12)),
         }
         Children [
             (
                 Node {
-                    margin: UiRect { left: px(8), right: px(8), top: px(8), bottom: px(8) }
+                    margin: UiRect::all(px(8))
                 }
                 Text::new("INVENTORY")
                 TextLayout::justify(Justify::Center)
