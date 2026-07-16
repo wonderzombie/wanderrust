@@ -1,14 +1,6 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::gamestate::{GameState, Screen};
-
-/// Set up and show the title screen using Bevy's UI APIs.
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(screen_bundle(asset_server));
-}
-
-#[derive(Component, Debug)]
-pub struct TitleScreen;
 
 pub struct TitleScreenPlugin;
 
@@ -21,56 +13,66 @@ impl Plugin for TitleScreenPlugin {
     }
 }
 
-pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
-    let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
-    (
-        TitleScreen,
-        BackgroundColor(Color::BLACK),
+#[derive(Component, Clone, Default, Debug)]
+pub struct TitleScreen;
+
+/// Set up and show the title screen using Bevy's UI APIs.
+pub fn setup(mut commands: Commands) {
+    commands.spawn_scene(screen_bundle_bsn());
+}
+
+fn pcsr_font(font_size: i32) -> impl Scene {
+    let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
+    bsn! {
+        TextFont { font, font_size: px(font_size) }
+    }
+}
+
+pub fn screen_bundle_bsn() -> impl Scene {
+    bsn! {
+        TitleScreen
+        BackgroundColor(Color::BLACK)
         Node {
             width: percent(100),
             height: percent(100),
+            flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            ..default()
-        },
-        children![
-            (
-                Text::new("ADVENTUREGAME"),
-                TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(54.0),
-                    ..default()
-                },
-                TextLayout::justify(Justify::Center),
-            ),
+        }
+        Children [
+            Text("ADVENTUREGAME")
+            pcsr_font(54),
+
             Node {
-                min_height: Val::Px(32.),
-                ..default()
+                min_height: px(32)
             },
-            (
-                Button,
-                Text::new("START"),
-                TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(33.),
-                    ..default()
-                },
-                TextLayout::justify(Justify::Center),
-            )
-        ],
-    )
+
+            Button
+            Text("[ START ]")
+            pcsr_font(33)
+        ]
+    }
 }
 
 pub fn interaction_system(
     mut commands: Commands,
-    interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
+    interactions: Query<&Interaction, Changed<Interaction>>,
+    input: Res<ButtonInput<KeyCode>>,
 ) {
-    for (_, interaction) in interactions.iter() {
-        if interaction == &Interaction::Pressed {
-            commands.set_state_if_neq(Screen::Playing);
-            commands.set_state_if_neq(GameState::AwaitingInput);
+    let mut go_play = false;
+
+    for interaction in interactions.iter() {
+        match interaction {
+            Interaction::Pressed => go_play = true,
+            _ => (),
         }
+    }
+
+    go_play |= input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
+
+    if go_play {
+        commands.set_state_if_neq(Screen::Playing);
+        commands.set_state_if_neq(GameState::AwaitingInput);
     }
 }
 
