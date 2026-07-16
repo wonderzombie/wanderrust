@@ -18,7 +18,7 @@ pub struct TitleScreen;
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands) {
-    commands.spawn_scene(screen_bundle_bsn());
+    commands.spawn_scene(screen_bundle());
 }
 
 fn pcsr_font(font_size: i32) -> impl Scene {
@@ -28,7 +28,7 @@ fn pcsr_font(font_size: i32) -> impl Scene {
     }
 }
 
-pub fn screen_bundle_bsn() -> impl Scene {
+pub fn screen_bundle() -> impl Scene {
     bsn! {
         TitleScreen
         BackgroundColor(Color::BLACK)
