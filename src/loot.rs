@@ -25,7 +25,7 @@ impl LootTable {
                 let qty = rand::rng().random_range(*min..=*max);
                 inventory::Inventory::with_item(item.clone(), Quantity(qty))
             }
-            None => inventory::empty(),
+            None => inventory::Inventory::empty(),
         }
     }
 }

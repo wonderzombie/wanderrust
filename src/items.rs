@@ -106,7 +106,6 @@ impl std::fmt::Display for Quantity {
     }
 }
 
-
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ItemDef {
     pub label: &'static str,

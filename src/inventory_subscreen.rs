@@ -1,6 +1,12 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors, event_log, gamestate::Screen, inventory::Inventory, items::ItemId};
+use crate::{
+    actors::Player,
+    colors, event_log,
+    gamestate::Screen,
+    inventory::{CarriedBy, Carrying},
+    items::{ItemId, Quantity},
+};
 
 pub struct InventorySubscreenPlugin;
 
@@ -47,9 +53,10 @@ fn update_item_list(
     mut commands: Commands,
     item_list: Single<&Children, With<ItemList>>,
     mut text_items: Query<&mut Text>,
-    player_inventory: Res<Inventory>,
+    carrying: Single<&Carrying, With<Player>>,
+    itams: Query<(&ItemId, &Quantity), With<CarriedBy>>,
 ) {
-    for (idx, (itam, &qty)) in player_inventory.into_iter().enumerate() {
+    for (idx, (itam, qty)) in itams.iter_many(carrying.iter()).enumerate() {
         info!("index: {idx} {itam:?}");
 
         if let Some(text_nt) = item_list.iter().nth(idx) {
