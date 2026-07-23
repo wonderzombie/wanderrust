@@ -20,6 +20,16 @@ pub struct EquippedBy(pub Entity);
 #[relationship_target(relationship = EquippedBy, linked_spawn)]
 pub struct HasEquipped(Vec<Entity>);
 
+impl IntoIterator for HasEquipped {
+    type Item = Entity;
+
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 #[derive(Component, Default, Hash, Debug, Copy, Clone, Reflect, PartialEq, Eq)]
 pub struct Modifiers(pub Parameters);
 

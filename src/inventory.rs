@@ -163,7 +163,7 @@ impl Inventory {
 #[relationship(relationship_target = Carrying)]
 pub(super) struct CarriedBy(pub Entity);
 
-#[derive(Component, Reflect, Debug, Serialize, Deserialize)]
+#[derive(Component, Reflect, Debug, Serialize, Deserialize, Default)]
 #[relationship_target(relationship = CarriedBy)]
 pub(super) struct Carrying(Vec<Entity>);
 
@@ -239,9 +239,10 @@ pub(super) fn process_inventory_changes(
     all_carried: Query<(Entity, &ItemId, &Quantity), With<CarriedBy>>,
 ) {
     for inv_change in changes.read() {
-        let Ok(target_carrying) = all_carrying.get(inv_change.entity) else {
-            error!("process_inventory_changes: unknown entity in change {inv_change:?}");
-            continue;
+        info!("process_inventory_changes: {inv_change:?}");
+        let target_carrying = match all_carrying.get(inv_change.entity) {
+            Ok(carrying) => carrying,
+            Err(_) => &Carrying(vec![]),
         };
 
         let carried_items = all_carried.iter_many(target_carrying.iter());
@@ -293,6 +294,8 @@ fn acquire<'a>(
         .find(|(_, it, _)| change.item_id == **it)
         .unwrap_or_else(|| (commands.spawn_empty().id(), &change.item_id, &change.delta));
 
+    info!("acquiring item: {:?}", (item_nt, item_id, curr_q));
+
     commands
         .entity(item_nt)
         .insert_if_new((*item_id, *curr_q))
@@ -300,15 +303,15 @@ fn acquire<'a>(
 }
 
 fn snapshot_inventory(
-    mut inventory_cache: ResMut<Inventory>,
+    mut commands: Commands,
     player_carrying: Single<&Carrying, With<Player>>,
-    all_items: Query<(&ItemId, &Quantity), With<Carrying>>,
+    all_items: Query<(&ItemId, &Quantity), With<CarriedBy>>,
 ) {
-    inventory_cache.set_if_neq(
-        all_items
-            .iter_many(player_carrying.iter())
-            .map(|(it, q)| ItemEntry(*it, *q))
-            .collect::<Vec<ItemEntry>>()
-            .into(),
-    );
+    let inv: Inventory = all_items
+        .iter_many(player_carrying.iter())
+        .map(|(it, q)| ItemEntry(*it, *q))
+        .collect::<Vec<ItemEntry>>()
+        .into();
+
+    commands.insert_resource(inv);
 }
