@@ -14,7 +14,7 @@ use crate::{
 /// ItemEntry is a representation of an Item and its Quantity.
 /// Modifying this has no impact on item-related components or relationships;
 /// this is a type that makes many type signatures substantially simpler.
-#[derive(Resource, Debug, Serialize, Deserialize, Clone, PartialEq, Reflect, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Reflect, Eq)]
 pub struct ItemEntry(pub ItemId, pub Quantity);
 
 impl From<(ItemId, Quantity)> for ItemEntry {
@@ -34,7 +34,7 @@ impl From<(&ItemId, &Quantity)> for ItemEntry {
 /// used as a resource primarily for the Player's inventory. Write `Acquisition`
 /// messages to modify what a player is carrying. Modifying an Inventory has
 /// *no* effect on Relationships like Carrying or CarriedBy.
-#[derive(Resource, Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Resource, Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Reflect)]
 pub struct Inventory(Vec<ItemEntry>);
 
 impl From<Vec<ItemEntry>> for Inventory {
@@ -96,13 +96,22 @@ impl Inventory {
         self.0.is_empty()
     }
 
-    pub fn add_item(&mut self, itam: ItemId, q: Quantity) -> &mut Self {
+    pub fn include_item(&mut self, itam: ItemId, q: Quantity) -> &mut Self {
         self.0.push((itam, q).into());
         self
     }
 
-    pub fn has_item(&self, want_itam: ItemId) -> bool {
-        self.0.iter().any(|ItemEntry(it, _)| *it == want_itam)
+    pub fn has_item(&self, want_itam: &ItemId) -> bool {
+        self.0.iter().any(|ItemEntry(it, _)| it == want_itam)
+    }
+
+    /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
+    /// item will have `prefix` prepended to it.
+    pub fn summarized(&self, prefix: &str) -> Vec<String> {
+        self.0
+            .iter()
+            .map(|ItemEntry(k, v)| format!("{} {} {}", prefix, v, k.def()))
+            .collect::<Vec<_>>()
     }
 
     pub fn empty() -> Self {
@@ -198,6 +207,31 @@ pub struct Acquisition {
     pub items: Vec<ItemEntry>,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Change {
+    Acquired,
+    Removed,
+}
+
+#[derive(Message, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct InventoryChange {
+    /// Change the items belonging to this entity.
+    entity: Entity,
+    /// Whether the change adds or removes inventory.
+    typ: Change,
+    /// The item whose quantity will change.
+    item_id: ItemId,
+    /// The quantity to add or remove from inventory.
+    delta: Quantity,
+}
+
+impl InventoryChange {
+    #[inline]
+    pub(crate) fn q(&self) -> usize {
+        self.delta.0
+    }
+}
+
 /// Merges [`Inventory`] items into the player's inventory.
 pub fn process_acquisitions(
     mut commands: Commands,
@@ -212,7 +246,83 @@ pub fn process_acquisitions(
     }
 }
 
-pub fn plugin(app: &mut App) {
-    app.add_message::<Acquisition>()
-        .init_resource::<Inventory>();
+pub fn process_inventory_changes(
+    mut commands: Commands,
+    mut changes: MessageReader<InventoryChange>,
+    all_carrying: Query<&Carrying>,
+    all_carried: Query<(Entity, &ItemId, &Quantity), With<CarriedBy>>,
+) {
+    for inv_change in changes.read() {
+        let Ok(target_carrying) = all_carrying.get(inv_change.entity) else {
+            error!("process_inventory_changes: unknown entity in change {inv_change:?}");
+            continue;
+        };
+
+        let carried_items = all_carried.iter_many(target_carrying.iter());
+        match inv_change.typ {
+            Change::Acquired => acquire(&mut commands, inv_change, carried_items),
+            Change::Removed => remove(&mut commands, inv_change, carried_items),
+        }
+    }
+}
+
+fn remove<'a>(
+    commands: &mut Commands,
+    change: &InventoryChange,
+    carried_items: impl IntoIterator<Item = (Entity, &'a ItemId, &'a Quantity)>,
+) {
+    let Some((item_nt, item_id, Quantity(curr_q))) = carried_items
+        .into_iter()
+        .find(|(_, it, _)| change.item_id == **it)
+    else {
+        error!("remove: could not find item: {change:?}");
+        return;
+    };
+
+    if *curr_q < change.q() {
+        error!(
+            "remove: insufficient quantity of item: have {item_id:?} {curr_q}, needed at least {change:?}"
+        );
+        return;
+    }
+
+    let new_q = curr_q.saturating_sub(change.q());
+
+    if new_q == 0 {
+        info!("remove: despawned {item_id:?}");
+        commands.entity(item_nt).despawn();
+    } else {
+        info!("remove: deducted {} from {item_id:?} {curr_q}", change.q());
+        commands.entity(item_nt).insert(Quantity(new_q));
+    }
+}
+
+fn acquire<'a>(
+    commands: &mut Commands,
+    change: &InventoryChange,
+    carried_items: impl IntoIterator<Item = (Entity, &'a ItemId, &'a Quantity)>,
+) {
+    let (item_nt, item_id, curr_q) = carried_items
+        .into_iter()
+        .find(|(_, it, _)| change.item_id == **it)
+        .unwrap_or_else(|| (commands.spawn_empty().id(), &change.item_id, &change.delta));
+
+    commands
+        .entity(item_nt)
+        .insert_if_new((*item_id, *curr_q))
+        .insert(CarriedBy(change.entity));
+}
+
+fn snapshot_inventory(
+    mut inventory_cache: ResMut<Inventory>,
+    player_carrying: Single<&Carrying, With<Player>>,
+    all_items: Query<(&ItemId, &Quantity), With<Carrying>>,
+) {
+    inventory_cache.set_if_neq(
+        all_items
+            .iter_many(player_carrying.iter())
+            .map(|(it, q)| ItemEntry(*it, *q))
+            .collect::<Vec<ItemEntry>>()
+            .into(),
+    );
 }
