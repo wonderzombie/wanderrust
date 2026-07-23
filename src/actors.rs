@@ -5,9 +5,11 @@ use bevy::prelude::*;
 use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
+    colors,
     combat::CombatantBundle,
     equipment::EquippedBy,
-    inventory::{Acquisition, Inventory},
+    event_log::MessageLog,
+    inventory::{Inventory, InventoryChange},
     inventory_subscreen::ToggleUi,
     items::ItemId,
     light::{Emitter, LightLevel},
@@ -77,7 +79,8 @@ pub struct Bonk(pub Entity);
 const STARTING_EQUIPMENT: &[&ItemId] = &[&ItemId::Rags, &ItemId::Stick];
 
 pub fn starting_items() -> Inventory {
-    Inventory::from_str_array(["gold:2", "strange key", "glowing tome", "red salve:3"]).unwrap()
+    Inventory::from_str_array(["gold:2", "strange key", "glowing tome", "red salve:3"])
+        .unwrap_or_else(|| Inventory::empty())
 }
 
 /// Spawns the player entity at the start position of the tilemap on the
@@ -128,18 +131,19 @@ pub fn setup_player(
 pub fn on_player_added(
     mut commands: Commands,
     player: Single<Entity, Added<Player>>,
-    mut acquires: MessageWriter<Acquisition>,
+    mut inv_changes: MessageWriter<InventoryChange>,
+    mut log: ResMut<MessageLog>,
 ) {
     let parent = *player;
-    for e in STARTING_EQUIPMENT.iter() {
-        info!("equipping {e:?}");
+    for itam in STARTING_EQUIPMENT.iter() {
+        info!("equipping {} {itam:?}", itam.def());
         // TODO: use Slots.
-        commands.spawn((EquippedBy(parent), **e));
+        commands.spawn((EquippedBy(parent), **itam));
+        log.add(format!("equipped {}", itam.def()), colors::KENNEY_GREEN);
     }
 
-    acquires.write(Acquisition {
-        items: starting_items().clone(),
-    });
+    // add starting items as well
+    inv_changes.write_batch(InventoryChange::acquire(*player, starting_items()));
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the

@@ -1,4 +1,3 @@
-mod items;
 mod actors;
 mod ascii_map;
 mod atlas;
@@ -18,6 +17,7 @@ mod grid;
 mod interactions;
 mod inventory;
 mod inventory_subscreen;
+mod items;
 mod ldtk_loader;
 pub mod light;
 mod loot;
@@ -189,7 +189,7 @@ pub fn run() {
                 process_actions,
                 interactions::process_interactions,
                 interactions::process_dialogue,
-                inventory::process_acquisitions,
+                inventory::process_inventory_changes,
                 combat::process_attacks,
                 handle_pending_transition,
             )
@@ -246,10 +246,7 @@ pub fn run() {
         Update,
         gamestate::ramifying.run_if(in_state(GameState::Ramifying)),
     )
-    .add_systems(
-        OnEnter(GameState::AwaitingInput),
-        tilemap::snapshot_denizens,
-    )
+    .add_systems(PreUpdate, tilemap::snapshot_denizens)
     .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
     .add_systems(
         Last,
