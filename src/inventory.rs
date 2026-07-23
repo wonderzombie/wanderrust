@@ -14,7 +14,7 @@ use crate::{
 /// ItemEntry is a representation of an Item and its Quantity.
 /// Modifying this has no impact on item-related components or relationships;
 /// this is a type that makes many type signatures substantially simpler.
-#[derive(Resource, Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Resource, Debug, Serialize, Deserialize, Clone, PartialEq, Reflect, Eq)]
 pub struct ItemEntry(pub ItemId, pub Quantity);
 
 impl From<(ItemId, Quantity)> for ItemEntry {
@@ -29,11 +29,11 @@ impl From<(&ItemId, &Quantity)> for ItemEntry {
     }
 }
 
-/// Inventory is a colleciton of items constituting a view, typically
-/// of the player's current inventory.
-/// Adding items has *no* effect on the Relationship model of Carrying/CarriedBy.
-/// It's an abstraction over the entire concept for the purpose of reading or
-/// conveying a list of items.
+/// Inventory is a colleciton of items constituting a view, typically of the
+/// player's current inventory. It's an abstraction over Carrying/CarriedBy,
+/// used as a resource primarily for the Player's inventory. Write `Acquisition`
+/// messages to modify what a player is carrying. Modifying an Inventory has
+/// *no* effect on Relationships like Carrying or CarriedBy.
 #[derive(Resource, Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 pub struct Inventory(Vec<ItemEntry>);
 
@@ -58,9 +58,14 @@ impl From<Vec<(&ItemId, &Quantity)>> for Inventory {
 
 impl Extend<(ItemId, Quantity)> for Inventory {
     fn extend<I: IntoIterator<Item = (ItemId, Quantity)>>(&mut self, iter: I) {
-        for (it, n) in iter {
-            self.add_item(it, n);
-        }
+        self.0
+            .extend(iter.into_iter().map(|it| ItemEntry::from(it)));
+    }
+}
+
+impl Extend<ItemEntry> for Inventory {
+    fn extend<I: IntoIterator<Item = ItemEntry>>(&mut self, iter: I) {
+        self.0.extend(iter);
     }
 }
 
@@ -87,8 +92,8 @@ impl Inventory {
         Inventory(vec![(itam, q).into()])
     }
 
-    pub fn is_empty(&self) {
-        self.0.is_empty();
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 
     pub fn add_item(&mut self, itam: ItemId, q: Quantity) -> &mut Self {
@@ -190,7 +195,7 @@ impl From<&[ItemId]> for Inventory {
 /// such as the player picking up items from a chest or loot.
 #[derive(Message, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Acquisition {
-    pub items: Vec<(ItemId, Quantity)>,
+    pub items: Vec<ItemEntry>,
 }
 
 /// Merges [`Inventory`] items into the player's inventory.
@@ -201,7 +206,7 @@ pub fn process_acquisitions(
 ) {
     for acquisition in acquisitions.read() {
         info!("Player acquires items: {:?}", acquisition.items);
-        for (itam, q) in acquisition.items.iter() {
+        for ItemEntry(itam, q) in acquisition.items.iter() {
             commands.spawn((*itam, *q, CarriedBy(*player)));
         }
     }
