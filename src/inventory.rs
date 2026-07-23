@@ -1,11 +1,6 @@
 use bevy::{
-    ecs::{
-        message::{Message, MessageReader},
-        resource::Resource,
-        system::ResMut,
-    },
-    log::{info, warn},
-    platform::collections::{HashMap, hash_map},
+    ecs::message::{Message, MessageReader},
+    log::info,
     prelude::*,
     reflect::Reflect,
 };
@@ -16,11 +11,122 @@ use crate::{
     items::{ItemId, Quantity},
 };
 
-/// A resource representing the player's inventory, which is a mapping of items
-/// to their quantities.
-#[derive(Resource, Default, Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
-#[reflect(Resource)]
-pub struct Inventory(HashMap<ItemId, Quantity>);
+/// ItemEntry is a representation of an Item and its Quantity.
+/// Modifying this has no impact on item-related components or relationships;
+/// this is a type that makes many type signatures substantially simpler.
+#[derive(Resource, Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct ItemEntry(pub ItemId, pub Quantity);
+
+impl From<(ItemId, Quantity)> for ItemEntry {
+    fn from(value: (ItemId, Quantity)) -> Self {
+        ItemEntry(value.0, value.1)
+    }
+}
+
+impl From<(&ItemId, &Quantity)> for ItemEntry {
+    fn from(value: (&ItemId, &Quantity)) -> Self {
+        Self::from((*value.0, *value.1))
+    }
+}
+
+/// Inventory is a colleciton of items constituting a view, typically
+/// of the player's current inventory.
+/// Adding items has *no* effect on the Relationship model of Carrying/CarriedBy.
+/// It's an abstraction over the entire concept for the purpose of reading or
+/// conveying a list of items.
+#[derive(Resource, Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+pub struct Inventory(Vec<ItemEntry>);
+
+impl From<Vec<ItemEntry>> for Inventory {
+    fn from(value: Vec<ItemEntry>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&[(ItemId, Quantity)]> for Inventory {
+    /// Creates a new [Inventory] from a slice of [Item]s and their quantities.
+    fn from(items: &[(ItemId, Quantity)]) -> Self {
+        items.iter().cloned().collect()
+    }
+}
+
+impl From<Vec<(&ItemId, &Quantity)>> for Inventory {
+    fn from(value: Vec<(&ItemId, &Quantity)>) -> Self {
+        Inventory(value.iter().map(|(it, q)| (*it, *q).into()).collect())
+    }
+}
+
+impl Extend<(ItemId, Quantity)> for Inventory {
+    fn extend<I: IntoIterator<Item = (ItemId, Quantity)>>(&mut self, iter: I) {
+        for (it, n) in iter {
+            self.add_item(it, n);
+        }
+    }
+}
+
+impl FromIterator<(ItemId, Quantity)> for Inventory {
+    fn from_iter<I: IntoIterator<Item = (ItemId, Quantity)>>(iter: I) -> Self {
+        let mut inv = Inventory::default();
+        inv.extend(iter);
+        inv
+    }
+}
+
+impl IntoIterator for Inventory {
+    type Item = ItemEntry;
+
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl Inventory {
+    pub fn with_item(itam: ItemId, q: Quantity) -> Self {
+        Inventory(vec![(itam, q).into()])
+    }
+
+    pub fn is_empty(&self) {
+        self.0.is_empty();
+    }
+
+    pub fn add_item(&mut self, itam: ItemId, q: Quantity) -> &mut Self {
+        self.0.push((itam, q).into());
+        self
+    }
+
+    pub fn has_item(&self, want_itam: ItemId) -> bool {
+        self.0.iter().any(|ItemEntry(it, _)| *it == want_itam)
+    }
+
+    pub fn empty() -> Self {
+        Self(vec![])
+    }
+
+    pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
+        let spec: String = item_spec.as_ref().into();
+        if spec.is_empty() {
+            return None;
+        }
+
+        let (item, qty) = ItemId::from_spec(item_spec);
+        Some(Inventory::with_item(item, qty))
+    }
+
+    pub fn from_str_array<S, I>(item_specs: I) -> Option<Inventory>
+    where
+        S: AsRef<str> + Clone + std::fmt::Debug,
+        I: IntoIterator<Item = S> + std::fmt::Debug,
+    {
+        Some(
+            item_specs
+                .into_iter()
+                .map(|it| ItemId::from_spec(it.as_ref()))
+                .collect(),
+        )
+    }
+}
 
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = Carrying)]
@@ -30,44 +136,22 @@ pub struct CarriedBy(pub Entity);
 #[relationship_target(relationship = CarriedBy)]
 pub struct Carrying(Vec<Entity>);
 
-// impl From<HashMap<ItemId, usize>> for Inventory {
-//     /// Creates a new [Inventory] from a [HashMap] of [Item]s and their quantities.
-//     fn from(items: HashMap<ItemId, usize>) -> Self {
-//         Inventory(items.into_iter().map(|(k, v)| (k, Quantity(v))).collect())
-//     }
-// }
+impl IntoIterator for Carrying {
+    type Item = Entity;
 
-// impl From<&[ItemId]> for Inventory {
-//     /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
-//     fn from(items: &[ItemId]) -> Self {
-//         items.iter().cloned().map(|it| (it, Quantity(1))).collect()
-//     }
-// }
+    type IntoIter = vec::IntoIter<Self::Item>;
 
-// impl From<&[(ItemId, Quantity)]> for Inventory {
-//     /// Creates a new [Inventory] from a slice of [Item]s and their quantities.
-//     fn from(items: &[(ItemId, Quantity)]) -> Self {
-//         items.iter().cloned().collect()
-//     }
-// }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
 
-// impl FromIterator<(ItemId, Quantity)> for Inventory {
-//     fn from_iter<I: IntoIterator<Item = (ItemId, Quantity)>>(iter: I) -> Self {
-//         let mut inv = Inventory::default();
-//         inv.extend(iter);
-//         inv
-//     }
-// }
-
-// impl IntoIterator for Inventory {
-//     type Item = (ItemId, Quantity);
-
-//     type IntoIter = hash_map::IntoIter<ItemId, Quantity>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.0.into_iter()
-//     }
-// }
+impl From<&[ItemId]> for Inventory {
+    /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
+    fn from(items: &[ItemId]) -> Self {
+        items.iter().cloned().map(|it| (it, Quantity(1))).collect()
+    }
+}
 
 // impl<'a> IntoIterator for &'a Inventory {
 //     type Item = (&'a ItemId, &'a Quantity);
@@ -79,36 +163,12 @@ pub struct Carrying(Vec<Entity>);
 //     }
 // }
 
-// impl Extend<(ItemId, Quantity)> for Inventory {
-//     fn extend<I: IntoIterator<Item = (ItemId, Quantity)>>(&mut self, iter: I) {
-//         for (it, n) in iter {
-//             self.add_item(it, n);
-//         }
-//     }
-// }
-
 // /// Returns the default [Inventory] with no items.
 // pub fn empty() -> Inventory {
 //     Inventory::default()
 // }
 
 // impl Inventory {
-//     /// Adds an [Item] to this [Inventory], incrementing its count if it already exists.
-//     pub fn add_item(&mut self, item: ItemId, count: Quantity) -> &mut Self {
-//         self.0
-//             .entry(item)
-//             .and_modify(|q| q.0 += count.0)
-//             .or_insert(count);
-//         self
-//     }
-
-//     /// Creates a new [Inventory] with a single [Item] and count.
-//     pub fn with_item(item: ItemId, count: Quantity) -> Self {
-//         let mut inventory = HashMap::new();
-//         inventory.insert(item, count);
-//         Inventory(inventory)
-//     }
-
 //     pub fn has_item(&self, item: &ItemId) -> bool {
 //         self.0.contains_key(item)
 //     }
@@ -126,37 +186,9 @@ pub struct Carrying(Vec<Entity>);
 //         self.0.is_empty()
 //     }
 
-//     pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
-//         let spec: String = item_spec.as_ref().into();
-//         if spec.is_empty() {
-//             return None;
-//         }
-
-//         let (item, qty) = ItemId::from_spec(item_spec);
-//         Some(Inventory::with_item(item, qty))
-//     }
-
-//     pub fn from_str_array<S, I>(item_specs: I) -> Option<Inventory>
-//     where
-//         S: AsRef<str> + Clone + std::fmt::Debug,
-//         I: IntoIterator<Item = S> + std::fmt::Debug,
-//     {
-//         let mut inv = Inventory::default();
-//         for s in item_specs.into_iter() {
-//             if s.as_ref().is_empty() {
-//                 warn!("skipping empty item spec: {s:?}");
-//                 continue;
-//             }
-//             let (item, qty) = ItemId::from_spec(s.as_ref());
-//             inv.add_item(item, qty);
-//         }
-//         Some(inv)
-//     }
-// }
-
 /// A message representing the acquisition of [Inventory] items by an actor,
 /// such as the player picking up items from a chest or loot.
-#[derive(Message, Debug, Reflect)]
+#[derive(Message, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Acquisition {
     pub items: Vec<(ItemId, Quantity)>,
 }
@@ -169,7 +201,7 @@ pub fn process_acquisitions(
 ) {
     for acquisition in acquisitions.read() {
         info!("Player acquires items: {:?}", acquisition.items);
-        for (itam, q) in acquisition.items.0.iter() {
+        for (itam, q) in acquisition.items.iter() {
             commands.spawn((*itam, *q, CarriedBy(*player)));
         }
     }

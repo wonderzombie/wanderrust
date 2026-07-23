@@ -28,7 +28,7 @@ pub enum Interactable {
     },
     Chest {
         is_open: bool,
-        contents: Option<Inventory>,
+        contents: Option<Acquisition>,
         tile_idx: TileIdx,
     },
     Speaker {
