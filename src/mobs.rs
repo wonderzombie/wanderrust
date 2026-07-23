@@ -9,7 +9,7 @@ use crate::{
     fov::Fov,
     gamestate::{GameState, Turn, WorldClock},
     interactions::Interactable,
-    inventory,
+    inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
     tilemap::{ActiveLevel, Zone},
@@ -107,8 +107,9 @@ pub fn update_mob_indicators(
 }
 
 pub fn handle_dead(
+    player_nt: Single<Entity, With<Player>>,
     query: Populated<(Option<&FixedLoot>, Option<&LootTable>), (With<Dead>, With<Turn>)>,
-    mut acquisitions: MessageWriter<inventory::Acquisition>,
+    mut inv_changes: MessageWriter<inventory::InventoryChange>,
 ) {
     for (fixed_loot_opt, loot_opt) in &query {
         let mut acquired = inventory::Inventory::default();
@@ -122,7 +123,8 @@ pub fn handle_dead(
         }
 
         if !acquired.is_empty() {
-            acquisitions.write(inventory::Acquisition { items: acquired });
+            let changes = InventoryChange::acquire(*player_nt, acquired);
+            inv_changes.write_batch(changes);
         }
     }
 }

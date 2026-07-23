@@ -4,12 +4,19 @@ use bevy::{
     prelude::*,
     reflect::Reflect,
 };
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::Player,
     items::{ItemId, Quantity},
 };
+
+pub(super) fn plugin(app: &mut App) {
+    app.init_resource::<Inventory>()
+        .add_message::<InventoryChange>()
+        .add_systems(PreUpdate, snapshot_inventory);
+}
 
 /// ItemEntry is a representation of an Item and its Quantity.
 /// Modifying this has no impact on item-related components or relationships;
@@ -31,7 +38,7 @@ impl From<(&ItemId, &Quantity)> for ItemEntry {
 
 /// Inventory is a colleciton of items constituting a view, typically of the
 /// player's current inventory. It's an abstraction over Carrying/CarriedBy,
-/// used as a resource primarily for the Player's inventory. Write `Acquisition`
+/// used as a resource primarily for the Player's inventory. Write `InventoryChange`
 /// messages to modify what a player is carrying. Modifying an Inventory has
 /// *no* effect on Relationships like Carrying or CarriedBy.
 #[derive(Resource, Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Reflect)]
@@ -77,6 +84,12 @@ impl FromIterator<(ItemId, Quantity)> for Inventory {
     }
 }
 
+impl FromIterator<ItemEntry> for Inventory {
+    fn from_iter<I: IntoIterator<Item = ItemEntry>>(iter: I) -> Self {
+        iter.into_iter().collect_vec().into()
+    }
+}
+
 impl IntoIterator for Inventory {
     type Item = ItemEntry;
 
@@ -88,8 +101,8 @@ impl IntoIterator for Inventory {
 }
 
 impl Inventory {
-    pub fn with_item(itam: ItemId, q: Quantity) -> Self {
-        Inventory(vec![(itam, q).into()])
+    pub fn empty() -> Self {
+        Self(vec![])
     }
 
     pub fn is_empty(&self) -> bool {
@@ -105,6 +118,10 @@ impl Inventory {
         self.0.iter().any(|ItemEntry(it, _)| it == want_itam)
     }
 
+    pub fn iter_items(&self) -> impl Iterator<Item = &ItemEntry> {
+        self.0.iter()
+    }
+
     /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
     /// item will have `prefix` prepended to it.
     pub fn summarized(&self, prefix: &str) -> Vec<String> {
@@ -114,8 +131,8 @@ impl Inventory {
             .collect::<Vec<_>>()
     }
 
-    pub fn empty() -> Self {
-        Self(vec![])
+    pub fn with_item(itam: ItemId, q: Quantity) -> Self {
+        Inventory(vec![(itam, q).into()])
     }
 
     pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
@@ -144,11 +161,11 @@ impl Inventory {
 
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = Carrying)]
-pub struct CarriedBy(pub Entity);
+pub(super) struct CarriedBy(pub Entity);
 
 #[derive(Component, Reflect, Debug, Serialize, Deserialize)]
 #[relationship_target(relationship = CarriedBy)]
-pub struct Carrying(Vec<Entity>);
+pub(super) struct Carrying(Vec<Entity>);
 
 impl IntoIterator for Carrying {
     type Item = Entity;
@@ -167,49 +184,11 @@ impl From<&[ItemId]> for Inventory {
     }
 }
 
-// impl<'a> IntoIterator for &'a Inventory {
-//     type Item = (&'a ItemId, &'a Quantity);
-
-//     type IntoIter = hash_map::Iter<'a, ItemId, Quantity>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.0.iter()
-//     }
-// }
-
-// /// Returns the default [Inventory] with no items.
-// pub fn empty() -> Inventory {
-//     Inventory::default()
-// }
-
-// impl Inventory {
-//     pub fn has_item(&self, item: &ItemId) -> bool {
-//         self.0.contains_key(item)
-//     }
-
-//     /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
-//     /// item will have `prefix` prepended to it.
-//     pub fn summary(&self, prefix: &str) -> Vec<String> {
-//         self.0
-//             .iter()
-//             .map(|(k, v)| format!("{} {} {}", prefix, v, k.def()))
-//             .collect::<Vec<_>>()
-//     }
-
-//     pub fn is_empty(&self) -> bool {
-//         self.0.is_empty()
-//     }
-
-/// A message representing the acquisition of [Inventory] items by an actor,
-/// such as the player picking up items from a chest or loot.
-#[derive(Message, Debug, Clone, Reflect, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Acquisition {
-    pub items: Vec<ItemEntry>,
-}
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Change {
     Acquired,
+    // TODO: use this when shops are implemented.
+    #[allow(dead_code)]
     Removed,
 }
 
@@ -230,23 +209,30 @@ impl InventoryChange {
     pub(crate) fn q(&self) -> usize {
         self.delta.0
     }
-}
 
-/// Merges [`Inventory`] items into the player's inventory.
-pub fn process_acquisitions(
-    mut commands: Commands,
-    mut acquisitions: MessageReader<Acquisition>,
-    player: Single<Entity, With<Player>>,
-) {
-    for acquisition in acquisitions.read() {
-        info!("Player acquires items: {:?}", acquisition.items);
-        for ItemEntry(itam, q) in acquisition.items.iter() {
-            commands.spawn((*itam, *q, CarriedBy(*player)));
-        }
+    fn from_inv(entity: Entity, inv: Inventory, typ: Change) -> Vec<InventoryChange> {
+        inv.into_iter()
+            .map(|entry| InventoryChange {
+                entity,
+                typ: typ,
+                item_id: entry.0,
+                delta: entry.1,
+            })
+            .collect()
+    }
+
+    pub(crate) fn acquire(entity: Entity, inv: Inventory) -> Vec<InventoryChange> {
+        Self::from_inv(entity, inv, Change::Acquired)
+    }
+
+    // TODO: use this when shops are implemented.
+    #[allow(dead_code)]
+    pub(crate) fn remove(entity: Entity, inv: Inventory) -> Vec<InventoryChange> {
+        Self::from_inv(entity, inv, Change::Removed)
     }
 }
 
-pub fn process_inventory_changes(
+pub(super) fn process_inventory_changes(
     mut commands: Commands,
     mut changes: MessageReader<InventoryChange>,
     all_carrying: Query<&Carrying>,

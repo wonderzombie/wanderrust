@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::{Actor, PieceBundle},
+    actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     colors, combat,
     event_log::MessageLog,
-    inventory::{self, *},
+    inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     sounds,
@@ -28,7 +28,7 @@ pub enum Interactable {
     },
     Chest {
         is_open: bool,
-        contents: Option<Acquisition>,
+        contents: Option<Inventory>,
         tile_idx: TileIdx,
     },
     Speaker {
@@ -147,10 +147,11 @@ pub fn process_interactions(
     mut commands: Commands,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
-    mut acquisitions: MessageWriter<Acquisition>,
+    mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
-    player_inventory: Res<Inventory>,
+    player_inv: Res<Inventory>,
+    player_nt: Single<Entity, With<Player>>,
     mut log: ResMut<MessageLog>,
 ) {
     for attempt in attempts.read() {
@@ -180,7 +181,7 @@ pub fn process_interactions(
                 if !*is_open {
                     if let Some(required_item) = requires {
                         let reqd_itam = required_item.def();
-                        if !player_inventory.has_item(required_item) {
+                        if !player_inv.has_item(required_item) {
                             info!("Player lacks required item: {reqd_itam}");
                             log.add("Locked.", colors::KENNEY_BLUE);
                             continue;
@@ -218,10 +219,9 @@ pub fn process_interactions(
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
-                        log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                        acquisitions.write(inventory::Acquisition {
-                            items: contents.clone(),
-                        });
+                        inv_changes
+                            .write_batch(InventoryChange::acquire(*player_nt, contents.clone()));
+                        log.add_all(contents.summarized("got").as_ref(), colors::KENNEY_GREEN);
                     }
                 }
             }
