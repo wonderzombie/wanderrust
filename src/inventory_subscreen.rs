@@ -90,31 +90,19 @@ fn update_item_list(
     }
 }
 
-fn inv_menu_items(nitems: usize) -> impl SceneList {
-    let items = (0..nitems)
-        .map(|_| {
-            bsn! {
-                Node
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-                Text
-                ItemRow
-            }
-        })
-        .collect::<Vec<_>>();
-
+fn item_row() -> impl Scene {
     bsn! {
-        Node {
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::SpaceBetween,
-        }
-        ItemList
-        Children [ {items} ]
+        Node
+        pcsr_font(14)
+        TextColor(colors::KENNEY_OFF_WHITE)
+        Text
+        ItemRow
     }
 }
 
 pub fn screen_bundle() -> impl Scene {
-    let inv_menu_items = inv_menu_items(10usize);
+    let items = (1..5usize).map(|_| item_row()).collect::<Vec<_>>();
+
     bsn! {
         InventorySubscreen
         BackgroundColor(Color::BLACK)
@@ -128,6 +116,7 @@ pub fn screen_bundle() -> impl Scene {
         }
         Children [
             (
+                #Heading
                 Node {
                     margin: UiRect::all(px(8))
                 }
@@ -135,7 +124,19 @@ pub fn screen_bundle() -> impl Scene {
                 TextLayout::justify(Justify::Center)
                 pcsr_font(16)
             ),
-            { inv_menu_items }
+            (
+                #ListMenu
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::SpaceBetween,
+                }
+                ItemList
+                Children [
+                        item_row()
+                        Selection(#ListMenu),
+                        {items}
+                ]
+            )
         ]
     }
 }
