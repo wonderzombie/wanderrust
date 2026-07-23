@@ -175,9 +175,9 @@ enum MenuInput {
 fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     use MenuInput::*;
 
-    if input.any_just_pressed([KeyCode::KeyJ, KeyCode::ArrowDown]) {
+    if input.any_just_pressed([KeyCode::KeyJ, KeyCode::ArrowDown, KeyCode::BracketRight]) {
         Some(Down)
-    } else if input.any_just_pressed([KeyCode::KeyK, KeyCode::ArrowUp]) {
+    } else if input.any_just_pressed([KeyCode::KeyK, KeyCode::ArrowUp, KeyCode::BracketLeft]) {
         Some(Up)
     } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
         Some(Interact)
