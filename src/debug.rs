@@ -4,6 +4,9 @@ use bevy::prelude::*;
 use bevy::remote::RemotePlugin;
 use bevy::remote::http::RemoteHttpPlugin;
 
+use crate::equipment::{EquippedBy, HasEquipped};
+use crate::inventory::{CarriedBy, Inventory};
+use crate::items::{ItemId, Quantity};
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
@@ -44,13 +47,17 @@ pub fn on_zoom_button_input(
 }
 
 /// Handles button input, updating the active tile and logging events.
-pub fn on_button_input(
+pub(super) fn on_button_input(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
     mut input: ResMut<ButtonInput<KeyCode>>,
     game_state: Res<State<GameState>>,
     screen_state: Res<State<Screen>>,
     world_spawn: Single<&WorldSpawn>,
+    all_items: Query<(Entity, &ItemId, &Quantity, &CarriedBy)>,
+    inventory: Res<Inventory>,
+    player_equipped: Single<&HasEquipped, With<Player>>,
+    all_equipment: Query<&ItemId, With<EquippedBy>>,
 ) {
     if !input.is_changed() {
         return;
@@ -66,6 +73,21 @@ pub fn on_button_input(
         info!("relocating player to world spawn");
         let WorldSpawn { cell, .. } = *world_spawn;
         commands.entity(*player).insert(*cell);
+    } else if input.just_released(KeyCode::F6) {
+        if input.pressed(KeyCode::ShiftLeft) {
+            info!("dumping all carried items; player id is {:?}", *player);
+            dbg!(all_items.iter().collect::<Vec<_>>());
+        } else {
+            info!("dumping player inventory");
+            dbg!(inventory);
+        }
+    } else if input.just_released(KeyCode::F7) {
+        info!("dumping player equipment");
+        let equipped = all_equipment
+            .iter_many(player_equipped.iter())
+            .map(|it| it.def())
+            .collect::<Vec<_>>();
+        dbg!(equipped);
     }
 }
 

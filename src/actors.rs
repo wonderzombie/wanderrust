@@ -143,7 +143,7 @@ pub fn on_player_added(
     }
 
     // add starting items as well
-    inv_changes.write_batch(InventoryChange::acquire(*player, starting_items()));
+    inv_changes.write_batch(InventoryChange::acquire(parent, starting_items()));
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the
