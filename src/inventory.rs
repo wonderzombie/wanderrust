@@ -122,6 +122,13 @@ impl Inventory {
         self.0.iter()
     }
 
+    pub fn item_quantity(&self, itam: &ItemId) -> Option<Quantity> {
+        self.0
+            .iter()
+            .find(|ItemEntry(it, _)| it == itam)
+            .map(|ItemEntry(_, q)| *q)
+    }
+
     /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
     /// item will have `prefix` prepended to it.
     pub fn summarized(&self, prefix: &str) -> Vec<String> {
@@ -286,20 +293,30 @@ fn remove<'a>(
 
 fn acquire<'a>(
     commands: &mut Commands,
-    change: &InventoryChange,
+    InventoryChange {
+        entity,
+        typ: _,
+        item_id,
+        delta: Quantity(delta),
+    }: &InventoryChange,
     carried_items: impl IntoIterator<Item = (Entity, &'a ItemId, &'a Quantity)>,
 ) {
-    let (item_nt, item_id, curr_q) = carried_items
+    let (item_nt, _, Quantity(n)) = carried_items
         .into_iter()
-        .find(|(_, it, _)| change.item_id == **it)
-        .unwrap_or_else(|| (commands.spawn_empty().id(), &change.item_id, &change.delta));
+        .find(|(_, it, _)| item_id == *it)
+        .unwrap_or_else(|| (commands.spawn_empty().id(), item_id, &Quantity(0)));
 
-    info!("acquiring item: {:?}", (item_nt, item_id, curr_q));
+    info!(
+        "acquiring item {:?} for {:?}",
+        (item_nt, item_id, delta),
+        entity
+    );
 
+    info!("had {n}, getting {delta}, total {}", n + delta);
     commands
         .entity(item_nt)
-        .insert_if_new((*item_id, *curr_q))
-        .insert(CarriedBy(change.entity));
+        .insert((*item_id, Quantity(n + delta)))
+        .insert_if_new(CarriedBy(*entity));
 }
 
 fn snapshot_inventory(
