@@ -140,6 +140,14 @@ pub fn snapshot_inventory(
 }
 ```
 
+### Unsuccessful acquire/remove -- "not enough gold"
+
+The scenario in mind is trying to buy something from a shop. If `ItemChange` comes in saying deduct 50 gold and the player only has 49 gold, what happens? How do we indicate to the player they can't afford it? `ItemChange` is one-way communication.
+
+Because `Inventory` is a `Resource` synced from the relevant `Component`s, it is the public "read" API for the `Carrying` system. The "write" API is `ItemChange`. The API """contract""" for `ItemChange` is that the caller has done their due diligence. We won't panic if we get an invalid change, but we will `error!()`. 
+
+The answer is: it's the shop's responsibility to use the `Inventory` API. (This goes for any system that wants to make changes to the player's inventory.) 
+
 ## ALTERNATIVES CONSIDERED
 
 ### Keep `Inventory` as the source of truth, sync entities from it
