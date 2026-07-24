@@ -25,54 +25,54 @@ fn update_log(
     input: Res<ButtonInput<KeyCode>>,
     scrolling_log: Single<(Entity, &Node, &Children, &mut ScrollPosition), With<MessageLog>>,
 ) {
-    if input.just_pressed(KeyCode::F7) {
+    if input.just_pressed(KeyCode::F8) {
         let (log_nt, _, _, mut scroll_pos) = scrolling_log.into_inner();
 
-        info!("adding a message");
+        if input.pressed(KeyCode::ShiftLeft) {
+            info!("adding a message");
 
-        let nt = commands
-            .spawn_scene(bsn! {
-                Node
-                pcsr_font(12)
-                Text::new("and away we go")
-                TextColor(colors::KENNEY_OFF_WHITE)
-            })
-            .id();
+            let options = textwrap::Options::new(26).initial_indent("• ");
 
-        commands.entity(log_nt).add_child(nt);
+            let out = if input.pressed(KeyCode::SuperLeft) {
+                "ABCDEFGHIJLKMNOPQRSTUVWXYZ01234567890"
+            } else if input.pressed(KeyCode::ShiftLeft) {
+                "ABCDEFGHIJLKMNOPQRSTUVWXYZ"
+            } else {
+                "Jubilant griffons vexed the wizard king’s phlegmatic quest."
+            };
 
-        let scroll_amt = Vec2 { x: 0., y: 12. };
-        *scroll_pos = scroll_pos.add(scroll_amt).into();
-    } else if input.just_pressed(KeyCode::F8) {
-        let (log_nt, node, children, mut scroll_pos) = scrolling_log.into_inner();
+            let wrapped = textwrap::fill(out, options);
+            let n = (1 + wrapped.bytes().filter(|&s| s == b'\n').count()) * 16;
 
-        info!("adding a message");
+            let nt = commands
+                .spawn_scene(bsn! {
+                    Node
+                    pcsr_font(12)
+                    Text::new(wrapped)
+                    TextColor(colors::KENNEY_OFF_WHITE)
+                })
+                .id();
 
-        let options = textwrap::Options::new(26).initial_indent("• ");
-
-        let out = if input.pressed(KeyCode::SuperLeft) {
-            "ABCDEFGHIJLKMNOPQRSTUVWXYZ01234567890"
-        } else if input.pressed(KeyCode::ShiftLeft) {
-            "ABCDEFGHIJLKMNOPQRSTUVWXYZ"
+            commands.entity(log_nt).add_child(nt);
+            let scroll_amt = Vec2 { x: 0., y: n as f32 };
+            *scroll_pos = scroll_pos.add(scroll_amt).into();
         } else {
-            "Jubilant griffons vexed the wizard king’s phlegmatic quest."
-        };
+            info!("adding a message");
 
-        let wrapped = textwrap::fill(out, options);
-        let n = (1 + wrapped.bytes().filter(|&s| s == b'\n').count()) * 16;
+            let nt = commands
+                .spawn_scene(bsn! {
+                    Node
+                    pcsr_font(12)
+                    Text::new("and away we go")
+                    TextColor(colors::KENNEY_OFF_WHITE)
+                })
+                .id();
 
-        let nt = commands
-            .spawn_scene(bsn! {
-                Node
-                pcsr_font(12)
-                Text::new(wrapped)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            })
-            .id();
+            commands.entity(log_nt).add_child(nt);
 
-        commands.entity(log_nt).add_child(nt);
-        let scroll_amt = Vec2 { x: 0., y: n as f32 };
-        *scroll_pos = scroll_pos.add(scroll_amt).into();
+            let scroll_amt = Vec2 { x: 0., y: 12. };
+            *scroll_pos = scroll_pos.add(scroll_amt).into();
+        }
     }
 }
 
