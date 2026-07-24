@@ -28,6 +28,7 @@ mod parameters;
 mod procgen;
 mod ptable;
 mod sounds;
+mod status_panel;
 pub mod tilemap;
 pub mod tiles;
 mod title_screen;
@@ -123,10 +124,10 @@ pub fn run() {
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
+    .add_plugins(status_panel::StatusPanelPlugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
-    .add_plugins(equipment::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -376,7 +377,7 @@ fn process_actions(
 
             match spatial_index.get(adjusted_cell) {
                 None => {
-                    info!("move: recovery after: {}", params.move_speed);
+                    trace!("move: recovery after: {}", params.move_speed);
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
