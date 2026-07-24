@@ -1,7 +1,8 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::{
-    colors, event_log,
+    colors,
+    event_log::MessageLog,
     gamestate::Screen,
     inventory::{Inventory, ItemEntry},
 };
@@ -10,9 +11,7 @@ pub struct InventorySubscreenPlugin;
 
 impl Plugin for InventorySubscreenPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Highlighted>()
-            .add_systems(Startup, setup)
-            // .add_systems(OnExit(Screen::Inventory), discard)
+        app.add_systems(Startup, setup)
             .add_systems(
                 Update,
                 (
@@ -32,13 +31,15 @@ pub struct ToggleUi;
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands) {
-    commands.add_observer(toggle_inventory);
-    commands.insert_resource(Highlighted(0));
     commands.spawn_scene(screen_bundle());
+    commands.add_observer(toggle_inventory);
 }
 
 #[derive(Component, Clone, Default)]
 pub struct ItemList;
+
+#[derive(Component, Clone, Default)]
+pub struct ItemRow;
 
 fn pcsr_font(font_size: i32) -> impl Scene {
     let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
@@ -49,51 +50,59 @@ fn pcsr_font(font_size: i32) -> impl Scene {
 
 fn update_item_list(
     mut commands: Commands,
-    item_list: Single<&Children, With<ItemList>>,
-    mut text_items: Query<&mut Text>,
+    menu: Single<(Entity, &Children), With<ItemList>>,
+    mut item_rows: Query<&mut Text, With<ItemRow>>,
     player_inv: Res<Inventory>,
 ) {
-    for (idx, ItemEntry(itam, qty)) in player_inv.iter_items().enumerate() {
-        info!("index: {idx} {itam:?}");
+    let mut inventory = player_inv.iter_items();
+    let (menu_nt, menu_items) = *menu;
 
-        if let Some(text_nt) = item_list.iter().nth(idx) {
-            if let Ok(mut text) = text_items.get_mut(text_nt) {
-                commands.entity(text_nt).insert(*itam);
+    info!(
+        "updating inventory rows (children {}) (rows {})",
+        menu_items.iter().count(),
+        item_rows.count()
+    );
+
+    // The item list drives iteration as it limits the display count.
+    for &item_nt in menu_items.into_iter() {
+        if let Ok(mut row) = item_rows.get_mut(item_nt) {
+            // Try to read an item from the player's inventory.
+            // An empty iterator means this `item_nt` becomes "blank."
+            if let Some(ItemEntry(itam, qty)) = inventory.next() {
+                commands.entity(item_nt).insert(*itam);
                 let label = itam.def();
                 if qty.0 > 1 {
-                    text.0 = format!("{label} ({qty})").to_uppercase();
+                    row.0 = format!("{label} ({qty})").to_uppercase();
                 } else {
-                    text.0 = format!("{label}").to_uppercase();
+                    row.0 = format!("{label}").to_uppercase();
                 }
+            } else {
+                // We must have run out of inventory, so initialize this to empty.
+                row.0 = format!("--");
             }
         }
     }
+
+    if let Some(first_nt) = menu_items.iter().next() {
+        commands.entity(first_nt).insert(Selection(menu_nt));
+    } else {
+        error!("unable to determine first list item");
+    }
 }
 
-fn item_list(nitems: usize) -> impl SceneList {
-    let items = (0..nitems)
-        .map(|n| {
-            bsn! {
-                Node
-                Text::new(format!("ITEM{n}"))
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            }
-        })
-        .collect::<Vec<_>>();
-
+fn item_row() -> impl Scene {
     bsn! {
-        Node {
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::SpaceBetween,
-        }
-        ItemList
-        Children [ {items} ]
+        Node
+        pcsr_font(14)
+        TextColor(colors::KENNEY_OFF_WHITE)
+        Text
+        ItemRow
     }
 }
 
 pub fn screen_bundle() -> impl Scene {
-    let item_list = item_list(10usize);
+    let items = (1..5usize).map(|_| item_row()).collect::<Vec<_>>();
+
     bsn! {
         InventorySubscreen
         BackgroundColor(Color::BLACK)
@@ -103,18 +112,31 @@ pub fn screen_bundle() -> impl Scene {
             min_height: px(180),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::SpaceEvenly,
-            padding: UiRect { left: px(12.), right: px(12.), top: px(12.), bottom: px(12.) }
+            padding: UiRect::all(px(12)),
         }
         Children [
             (
+                #Heading
                 Node {
-                    margin: UiRect { left: px(8), right: px(8), top: px(8), bottom: px(8) }
+                    margin: UiRect::all(px(8))
                 }
                 Text::new("INVENTORY")
                 TextLayout::justify(Justify::Center)
                 pcsr_font(16)
             ),
-            { item_list }
+            (
+                #ListMenu
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::SpaceBetween,
+                }
+                ItemList
+                Children [
+                        item_row()
+                        Selection(#ListMenu),
+                        {items}
+                ]
+            )
         ]
     }
 }
@@ -139,83 +161,122 @@ pub fn toggle_inventory(
         }
     };
 
-    info!("toggle_inventory: {vis:?} -> {new_vis:?}");
+    debug!("toggle_inventory: {vis:?} -> {new_vis:?}");
 
     commands.entity(nt).insert(new_vis);
 }
 
-#[derive(Resource, Clone, Default, Debug, Copy, PartialEq)]
-pub struct Highlighted(pub usize);
-
-fn up_down_keycodes() -> &'static [KeyCode] {
-    &[
-        KeyCode::ArrowDown,
-        KeyCode::ArrowUp,
-        KeyCode::KeyK,
-        KeyCode::KeyJ,
-    ]
+#[derive(Debug, Copy, Clone)]
+enum MenuInput {
+    Up,
+    Down,
+    Interact,
 }
 
-pub fn interaction_system(
+fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
+    use MenuInput::*;
+
+    if input.any_just_pressed([KeyCode::KeyJ, KeyCode::ArrowDown, KeyCode::BracketRight]) {
+        Some(Down)
+    } else if input.any_just_pressed([KeyCode::KeyK, KeyCode::ArrowUp, KeyCode::BracketLeft]) {
+        Some(Up)
+    } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
+        Some(Interact)
+    } else {
+        None
+    }
+}
+
+// Menu doesn't have but one possible reference, so this makes Selection a
+// singleton *for a specific Menu* due to the Bevy relationship system.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
+#[relationship(relationship_target = Menu)]
+pub struct Selection(pub Entity);
+
+// Each Menu entity can have a single Selection.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
+#[relationship_target(relationship = Selection)]
+pub struct Menu(Entity);
+
+fn interaction_system(
+    mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    mut highlighted: ResMut<Highlighted>,
-    item_list: Single<&Children, With<ItemList>>,
-    labels: Query<&Text>,
-    mut log: ResMut<event_log::MessageLog>,
+    selected_opt: Option<Single<Entity, With<Selection>>>,
+    menu: Single<(Entity, &Children), With<ItemList>>,
+    itam_texts: Query<&Text, With<ItemRow>>,
+    mut log: ResMut<MessageLog>,
 ) {
     if !input.is_changed() {
         return;
     }
-    let nlabels = labels.count();
-    if input.any_just_pressed(up_down_keycodes().iter().copied()) {
-        let mut next = highlighted.as_ref().0;
-        if input.any_just_pressed([KeyCode::ArrowUp, KeyCode::KeyK]) {
-            info!("interaction_system: up");
-            next = next.saturating_sub(1);
-        } else if input.any_just_pressed([KeyCode::ArrowDown, KeyCode::KeyJ]) {
-            info!("interaction_system: down");
-            next = next.saturating_add(1);
+    let Some(action) = read_menu_input(&input) else {
+        return;
+    };
+
+    let (menu_nt, menu_items) = *menu;
+    let selected_nt = match selected_opt.map(|nt| *nt) {
+        Some(nt) => nt,
+        None => match menu_items.into_iter().next() {
+            Some(&nt) => nt,
+            None => {
+                error!("unable to find an itemrow suitable for selection");
+                return;
+            }
+        },
+    };
+
+    if matches!(action, MenuInput::Interact) {
+        match itam_texts.get(selected_nt) {
+            Ok(txt) => {
+                log.add(txt.to_string(), colors::KENNEY_GREEN);
+            }
+            Err(e) => {
+                error!(
+                    "selected menu item does not appear to have text: {:?}; error {e}",
+                    selected_nt
+                );
+            }
         }
-        next = next.clamp(0, nlabels - 1);
-        highlighted.set_if_neq(Highlighted(next));
-    } else if input.any_just_pressed([KeyCode::KeyE, KeyCode::Space, KeyCode::Enter]) {
-        let Some(selected) = item_list.iter().nth(highlighted.as_ref().0) else {
-            return;
-        };
-
-        let Ok(txt) = labels.get(selected) else {
-            return;
-        };
-
-        info!("selected {highlighted:?} {txt:?}");
-
-        log.add(txt.0.clone(), colors::KENNEY_GREEN);
-    }
-}
-
-pub fn update_highlighted(
-    mut commands: Commands,
-    highlighted: ResMut<Highlighted>,
-    items: Single<&Children, With<ItemList>>,
-    text: Query<(), With<Text>>,
-) {
-    if !highlighted.is_changed() {
         return;
     }
 
-    for (idx, child) in items.iter().enumerate() {
-        if !text.contains(child) {
-            continue;
+    // From here, the scenario is exclusively MenuInput{Up,Down}. We find the
+    // position of the selected entity, if any, and default to the zeroth.
+    let Some(idx) = menu_items.iter().position(|e| e == selected_nt) else {
+        error!("unable to find selected item");
+        return;
+    };
+
+    let next_idx = match action {
+        MenuInput::Down => idx.saturating_add(1).min(itam_texts.count() - 1),
+        MenuInput::Up => idx.saturating_sub(1),
+        _ => {
+            warn!("unsupported MenuInput; ignoring {action:?}");
+            return;
+        }
+    };
+
+    // As the Menu component can only contain a single entity,
+    // there's only ever one ItemRow with Selection.
+    if let Some(nt) = menu_items.iter().nth(next_idx) {
+        commands.entity(nt).insert(Selection(menu_nt));
+    } else {
+        error!("unable to change selection from {} to {}", idx, next_idx);
+    }
+}
+
+fn update_highlighted(
+    mut commands: Commands,
+    highlighted: Single<Entity, Added<Selection>>,
+    menu: Single<&Children, With<ItemList>>,
+) {
+    for &text_nt in menu.into_iter() {
+        let color = if *highlighted == text_nt {
+            colors::KENNEY_GOLD
+        } else {
+            colors::KENNEY_OFF_WHITE
         };
 
-        if idx != highlighted.0 {
-            commands
-                .entity(child)
-                .insert(TextColor(colors::KENNEY_OFF_WHITE));
-        } else {
-            commands
-                .entity(child)
-                .insert(TextColor(colors::KENNEY_GOLD));
-        }
+        commands.entity(text_nt).insert(TextColor(color));
     }
 }
