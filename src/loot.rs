@@ -1,4 +1,7 @@
-use crate::inventory;
+use crate::{
+    inventory,
+    items::{self, Quantity},
+};
 use bevy::prelude::*;
 use rand::{RngExt, seq::IndexedRandom};
 
@@ -7,10 +10,10 @@ use rand::{RngExt, seq::IndexedRandom};
 pub struct FixedLoot(pub inventory::Inventory);
 
 /// A LootTable represents a collection of potential "drops." Each drop is a
-/// RandomQty of some item.
+/// RandomQty of some item, where each usize is minimum and maximum.
 #[derive(Component, Default, Clone)]
 pub struct LootTable {
-    entries: Vec<(inventory::Item, usize, usize)>,
+    entries: Vec<(items::ItemId, usize, usize)>,
 }
 
 impl LootTable {
@@ -20,9 +23,9 @@ impl LootTable {
         match self.entries.choose(&mut rand::rng()) {
             Some((item, min, max)) => {
                 let qty = rand::rng().random_range(*min..=*max);
-                inventory::Inventory::with_item(item.clone(), qty)
+                inventory::Inventory::with_item(item.clone(), Quantity(qty))
             }
-            None => inventory::empty(),
+            None => inventory::Inventory::empty(),
         }
     }
 }

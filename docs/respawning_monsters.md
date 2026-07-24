@@ -29,6 +29,51 @@ No, we must specifically focus on enemies.
 
 ## DESIGN
 
+We have two components used in identifying and cataloguing enemy entities: `Interactable::Belligerent` is what an enemy spawns with, and `combat::Combatant` represents an enemy that has been initialized.
+
+`LevelSpec` is the wanderrust-native definition of a level, and defines interactables thus:
+
+```rust
+type InterxSpec = (Interactable, Cell);
+```
+
+With that in mind, we need a few things:
+
+1. A way to know where an enemy needs to be
+2. A way to know what kind of enemy it should be
+3. A way to know when we need to reinitialize enemies
+4. A way to do the preceding even when an enemy is dead
+
+A proposal:
+
+- Every `Belligerent` will get a `Component` that's a newtype for a `Cell` called `SpawnCell`.
+  - This is initialized from `InterxSpec`. The enemy will return here when respawning.
+  - This component nor Belligerent ever changes. They *may* be copied/cloned from one entity to the next since they are very simple.
+- `bestiary.rs` allows us to re-initialize a monster's stats using its `TileIdx` or `Name`, which are two fields already present in `Belligerent`, to obtain the enemy's `Parameters`.
+- We know we need to reinitialize enemies when we exit a `GameState::Defeat` state and enter `GameState::AwaitingInput`.
+
+To reinitialize:
+
+```rust
+fn reinit_enemies(
+    mut commands: Commands,
+    // we may not need &Interactable since we have &TileIdx
+    enemies: Query<(Entity, &TileIdx, &Interactable, &SpawnCell), With<Combatant>>,
+    zone: Query<&Zone, With<ActiveLevel>>
+) {
+    // only iterate on entities in the currently active level. this assumes that
+    // the game has reset the ActiveLevel to where the player respawns.
+    for (nt, tile_idx, interx, spawn_cell) in enemies.iter(zone.iter()) {
+        // handle "this ain't a thing" more intelligently than this
+        let params = Bestiary::from_tile(tile_idx).or_else(|| Parameters::default());
+
+        
+    }
+}
+```
+
+### elaborating the respawn mechanism
+
 Add a new `Component` tied to `Belligerent` *or* add a field on `Belligerent`. The meaning is `SpawnCell` or `OriginCell`. We'll use this to return enemies to their place.
 
 We'll trigger enemies respawning when the game's state changes from Defeat to AwaitingInput. 

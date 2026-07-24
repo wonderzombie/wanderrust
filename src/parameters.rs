@@ -9,7 +9,7 @@ pub struct Health {
     pub is_dead: bool,
 }
 
-#[derive(Component, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq)]
+#[derive(Component, Hash, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq, Eq)]
 #[reflect(Component)]
 pub struct Vision(pub u32);
 
@@ -46,7 +46,7 @@ pub enum Awareness {
     // Hunting,
 }
 
-#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq)]
+#[derive(Component, Debug, Hash, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq, Eq)]
 #[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,

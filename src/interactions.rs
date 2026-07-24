@@ -2,11 +2,12 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::{Actor, PieceBundle},
+    actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     colors, combat,
     event_log::MessageLog,
-    inventory::{self, *},
+    inventory::*,
+    items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     sounds,
     tilemap::{Level, WorldSpec},
@@ -22,7 +23,7 @@ pub enum Interactable {
     Invalid,
     Door {
         is_open: bool,
-        requires: Option<Item>,
+        requires: Option<ItemId>,
         tile_idx: TileIdx,
     },
     Chest {
@@ -102,7 +103,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Combatant => Some(Self::Belligerent { name, tile_idx }),
             LdtkActor::Speaker => Some(Self::Speaker { name, tile_idx }),
             LdtkActor::Door => {
-                let requires = entity.get_string("requires").map(Item);
+                let requires = entity.get_string("requires").and_then(ItemId::from_label);
                 let is_open = entity.get_bool("is_open");
                 Some(Self::Door {
                     is_open,
@@ -146,10 +147,11 @@ pub fn process_interactions(
     mut commands: Commands,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
-    mut acquisitions: MessageWriter<Acquisition>,
+    mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
-    player_inventory: Res<Inventory>,
+    player_inv: Res<Inventory>,
+    player_nt: Single<Entity, With<Player>>,
     mut log: ResMut<MessageLog>,
 ) {
     for attempt in attempts.read() {
@@ -177,17 +179,16 @@ pub fn process_interactions(
             } => {
                 trace!("process_interactions: door");
                 if !*is_open {
-                    if let Some(required_item) = requires
-                        && !required_item.0.is_empty()
-                    {
-                        if !player_inventory.has_item(required_item) {
-                            info!("Player lacks required item: {required_item}");
+                    if let Some(required_item) = requires {
+                        let reqd_itam = required_item.def();
+                        if !player_inv.has_item(required_item) {
+                            info!("Player lacks required item: {reqd_itam}");
                             log.add("Locked.", colors::KENNEY_BLUE);
                             continue;
                         } else {
-                            info!("Player opens the door with {required_item:?}.");
+                            info!("Player opens the door with {reqd_itam}.");
                             log.add(
-                                format!("Opened door with {required_item}."),
+                                format!("Opened door with {reqd_itam}."),
                                 colors::KENNEY_BLUE,
                             );
                         }
@@ -218,10 +219,9 @@ pub fn process_interactions(
                     log.add("Opened chest.", colors::KENNEY_BLUE);
                     commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
-                        log.add_all(contents.summary("got").as_ref(), colors::KENNEY_GREEN);
-                        acquisitions.write(inventory::Acquisition {
-                            items: contents.clone(),
-                        });
+                        inv_changes
+                            .write_batch(InventoryChange::acquire(*player_nt, contents.clone()));
+                        log.add_all(contents.summarized("got").as_ref(), colors::KENNEY_GREEN);
                     }
                 }
             }

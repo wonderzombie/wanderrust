@@ -1,6 +1,10 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors, event_log, gamestate::Screen, inventory::Inventory};
+use crate::{
+    colors, event_log,
+    gamestate::Screen,
+    inventory::{Inventory, ItemEntry},
+};
 
 pub struct InventorySubscreenPlugin;
 
@@ -44,19 +48,22 @@ fn pcsr_font(font_size: i32) -> impl Scene {
 }
 
 fn update_item_list(
+    mut commands: Commands,
     item_list: Single<&Children, With<ItemList>>,
     mut text_items: Query<&mut Text>,
-    player_inventory: Res<Inventory>,
+    player_inv: Res<Inventory>,
 ) {
-    for (idx, (itam, &qty)) in player_inventory.into_iter().enumerate() {
+    for (idx, ItemEntry(itam, qty)) in player_inv.iter_items().enumerate() {
         info!("index: {idx} {itam:?}");
 
         if let Some(text_nt) = item_list.iter().nth(idx) {
             if let Ok(mut text) = text_items.get_mut(text_nt) {
-                if qty > 1 {
-                    text.0 = format!("{itam} ({qty})").to_uppercase();
+                commands.entity(text_nt).insert(*itam);
+                let label = itam.def();
+                if qty.0 > 1 {
+                    text.0 = format!("{label} ({qty})").to_uppercase();
                 } else {
-                    text.0 = format!("{itam}").to_uppercase();
+                    text.0 = format!("{label}").to_uppercase();
                 }
             }
         }
