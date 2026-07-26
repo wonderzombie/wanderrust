@@ -70,7 +70,7 @@ pub struct Turn;
 #[derive(Resource, Debug, Reflect)]
 pub struct TurnDelay(pub f32);
 
-#[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct Recovery(pub usize);
 
 #[derive(Resource, Debug, Reflect)]
@@ -94,10 +94,12 @@ pub fn ramifying(
     let TurnDelay(delay) = *turn_delay;
 
     if *turn_timer == Timer::default() {
+        info!("setting turn timer to {delay}");
         *turn_timer = Timer::from_seconds(delay, TimerMode::Repeating);
     }
 
     if !turn_timer.tick(time.delta()).just_finished() {
+        info!("waiting {turn_timer:?}");
         return;
     }
 
@@ -111,11 +113,17 @@ pub fn ramifying(
         return;
     };
 
+    info!("next in schedule: {entities:?} after recovery {tick}");
+
     world_clock.advance_to(tick);
 
     if entities.into_iter().any(|(_, _, is_player)| *is_player) {
+        info!("player turn");
         ns.set(GameState::AwaitingInput);
+        *turn_timer = Timer::from_seconds(delay, TimerMode::Repeating);
         return;
+    } else {
+        *turn_timer = Timer::from_seconds(delay * 3., TimerMode::Repeating);
     }
 
     let next_entity = entities.first().unwrap();
