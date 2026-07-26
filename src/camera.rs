@@ -11,6 +11,8 @@ pub fn setup_camera(mut commands: Commands) {
             scale: 0.5,
             ..OrthographicProjection::default_2d()
         }),
+        Msaa::Off,
+        UiAntiAlias::Off,
         Transform::from_xyz(0., 0., *CAMERA_LAYER),
     ));
 }

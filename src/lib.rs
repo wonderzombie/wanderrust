@@ -31,6 +31,7 @@ pub mod tilemap;
 pub mod tiles;
 mod title_screen;
 mod tooltip;
+mod typewriter;
 
 use bevy::{
     asset::io::web::WebAssetPlugin,
@@ -126,6 +127,7 @@ pub fn run() {
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
     .add_plugins(equipment::plugin)
+    .add_plugins(typewriter::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),

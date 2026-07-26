@@ -1,6 +1,11 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
-use crate::gamestate::{GameState, Screen};
+use crate::{
+    gamestate::{GameState, Screen},
+    typewriter::Typewriter,
+};
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -36,13 +41,19 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
         },
         children![
             (
-                Text::new("ADVENTUREGAME"),
+                Text::new(""),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
                     font_size: FontSize::Px(54.0),
+                    font_smoothing: FontSmoothing::None,
                     ..default()
                 },
                 TextLayout::justify(Justify::Center),
+                Typewriter {
+                    tint: Color::WHITE,
+                    per_char: Duration::from_millis(100),
+                    txt: String::from("ADVENTUREGAME"),
+                }
             ),
             Node {
                 min_height: Val::Px(32.),
