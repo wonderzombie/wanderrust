@@ -188,9 +188,9 @@ impl Display for Dimensions {
 }
 
 /// TileStorage is used to manipulate the tiles in a tilemap, typically living
-/// on the same entity as [LevelId]. Tiles are stored as a flat vector of
+/// on the same entity as [Level]. Tiles are stored as a flat vector of
 /// `Option<Entity>`, indexed by `cell.to_idx(map_size.width)`. In this way, a
-/// cell may be empty of any tile entity.
+/// cell may be empty of any tile entity, and we avoid storing cell coordinates.
 #[derive(
     Component, Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect,
 )]
