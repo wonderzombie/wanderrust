@@ -26,6 +26,13 @@ impl Plugin for TitleScreenPlugin {
     }
 }
 
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+enum ButtonTy {
+    Start,
+    Intro,
+}
+
 pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
     (
@@ -61,7 +68,23 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             },
             (
                 Button,
+                ButtonTy::Start,
                 Text::new("START"),
+                TextFont {
+                    font: FontSource::Handle(font.clone()),
+                    font_size: FontSize::Px(33.),
+                    ..default()
+                },
+                TextLayout::justify(Justify::Center),
+            ),
+            Node {
+                min_height: Val::Px(32.),
+                ..default()
+            },
+            (
+                Button,
+                ButtonTy::Intro,
+                Text::new("INTRO"),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
                     font_size: FontSize::Px(33.),
@@ -73,14 +96,21 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     )
 }
 
-pub fn interaction_system(
+fn interaction_system(
     mut commands: Commands,
-    interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
+    interactions: Query<(&Interaction, &ButtonTy), Changed<Interaction>>,
 ) {
-    for (_, interaction) in interactions.iter() {
-        if interaction == &Interaction::Pressed {
-            commands.set_state_if_neq(Screen::Playing);
-            commands.set_state_if_neq(GameState::AwaitingInput);
+    for (interaction, button_ty) in interactions.iter() {
+        if interaction != &Interaction::Pressed {
+            continue;
+        }
+
+        match button_ty {
+            ButtonTy::Start => {
+                commands.set_state_if_neq(Screen::Playing);
+                commands.set_state_if_neq(GameState::AwaitingInput);
+            }
+            _ => (),
         }
     }
 }
