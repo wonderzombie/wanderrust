@@ -1,6 +1,10 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
+use std::time::Duration;
 
-use crate::gamestate::{GameState, Screen};
+use crate::{
+    gamestate::{GameState, Screen},
+    typewriter::Typewriter,
+};
 
 pub struct TitleScreenPlugin;
 
@@ -24,7 +28,7 @@ pub fn setup(mut commands: Commands) {
 fn pcsr_font(font_size: i32) -> impl Scene {
     let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
     bsn! {
-        TextFont { font, font_size: px(font_size) }
+        TextFont { font, font_size: px(font_size), font_smoothing: FontSmoothing::None }
     }
 }
 
@@ -40,9 +44,15 @@ pub fn screen_bundle() -> impl Scene {
             justify_content: JustifyContent::Center,
         }
         Children [
-            Text("ADVENTUREGAME")
-            pcsr_font(54),
-
+            pcsr_font(54)
+            Text("")
+            TextLayout::justify(Justify::Center)
+            Typewriter {
+                tint: Color::WHITE,
+                per_char: Duration::from_millis(100),
+                txt: String::from("ADVENTUREGAME"),
+            }
+            ,
             Node {
                 min_height: px(32)
             },
