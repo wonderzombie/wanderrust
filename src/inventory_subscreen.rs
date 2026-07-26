@@ -201,7 +201,7 @@ pub struct Menu(Entity);
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    selected_opt: Option<Single<Entity, With<Selection>>>,
+    selected_nt: Single<Entity, With<Selection>>,
     menu: Single<(Entity, &Children), With<ItemList>>,
     itam_texts: Query<&Text, With<ItemRow>>,
     mut log: ResMut<MessageLog>,
@@ -213,39 +213,29 @@ fn interaction_system(
         return;
     };
 
-    let (menu_nt, menu_items) = *menu;
-    let selected_nt = match selected_opt.map(|nt| *nt) {
-        Some(nt) => nt,
-        None => match menu_items.into_iter().next() {
-            Some(&nt) => nt,
-            None => {
-                error!("unable to find an itemrow suitable for selection");
-                return;
-            }
-        },
-    };
-
     if matches!(action, MenuInput::Interact) {
-        match itam_texts.get(selected_nt) {
+        match itam_texts.get(*selected_nt) {
             Ok(txt) => {
                 log.add(txt.to_string(), colors::KENNEY_GREEN);
             }
             Err(e) => {
                 error!(
                     "selected menu item does not appear to have text: {:?}; error {e}",
-                    selected_nt
+                    *selected_nt
                 );
             }
         }
         return;
     }
 
+    let (menu_nt, menu_items) = *menu;
+
     // From here, the scenario is exclusively MenuInput{Up,Down}. We find the
     // position of the selected entity, if any, and default to the zeroth.
-    let Some(idx) = menu_items.iter().position(|e| e == selected_nt) else {
-        error!("unable to find selected item");
-        return;
-    };
+    let idx = menu_items
+        .iter()
+        .position(|e| e == *selected_nt)
+        .unwrap_or_default();
 
     let next_idx = match action {
         MenuInput::Down => idx.saturating_add(1).min(itam_texts.count() - 1),
