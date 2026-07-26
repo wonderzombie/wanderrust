@@ -32,6 +32,14 @@ fn pcsr_font(font_size: i32) -> impl Scene {
     }
 }
 
+#[derive(Component, Reflect, Debug, Clone, FromTemplate)]
+#[reflect(Component)]
+enum ButtonTy {
+    #[default]
+    Start,
+    Intro,
+}
+
 pub fn screen_bundle() -> impl Scene {
     bsn! {
         TitleScreen
@@ -57,23 +65,40 @@ pub fn screen_bundle() -> impl Scene {
                 min_height: px(32)
             },
 
+            // TODO: justify center
             Button
+            ButtonTy::Start
             Text("[ START ]")
-            pcsr_font(33)
+            pcsr_font(33),
+
+            // TODO: justify center
+            Button
+            ButtonTy::Intro
+            Text("[ INTRO ]")
+            pcsr_font(33),
+
         ]
     }
 }
 
-pub fn interaction_system(
+fn interaction_system(
     mut commands: Commands,
-    interactions: Query<&Interaction, Changed<Interaction>>,
     input: Res<ButtonInput<KeyCode>>,
+    interactions: Query<(&Interaction, &ButtonTy), Changed<Interaction>>,
 ) {
     let mut go_play = false;
 
-    for interaction in interactions.iter() {
-        match interaction {
-            Interaction::Pressed => go_play = true,
+    for (interaction, button_ty) in interactions.iter() {
+        if interaction != &Interaction::Pressed {
+            continue;
+        }
+
+        go_play |= matches!(button_ty, ButtonTy::Start);
+
+        match button_ty {
+            ButtonTy::Start => {
+                go_play = true;
+            }
             _ => (),
         }
     }
