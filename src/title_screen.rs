@@ -1,6 +1,8 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
+use bevy::prelude::*;
+
 use crate::{
     colors,
     debug::DebugState,
@@ -13,9 +15,8 @@ pub struct TitleScreenPlugin;
 impl Plugin for TitleScreenPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(Screen::Title)
-            .add_systems(Startup, setup)
-            .add_systems(OnEnter(Screen::Title), show)
-            .add_systems(OnExit(Screen::Title), hide)
+            .add_systems(OnEnter(Screen::Title), setup)
+            .add_systems(OnExit(Screen::Title), discard)
             .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
     }
 }
@@ -36,6 +37,11 @@ fn pcsr_font(font_size: i32) -> impl Scene {
 
 pub fn setup(mut commands: Commands) {
     commands.spawn_scene(screen_bundle());
+}
+
+fn discard(mut commands: Commands, screen: Single<Entity, With<TitleScreen>>) {
+    info!("discard");
+    commands.entity(*screen).despawn();
 }
 
 #[derive(Component, Reflect, Debug, Clone, FromTemplate)]
@@ -163,32 +169,4 @@ fn interaction_system(
 
         commands.spawn_batch(bundles);
     }
-}
-
-fn show(
-    screen: Single<Entity, With<TitleScreen>>,
-    title: Single<Entity, With<TitleText>>,
-    mut commands: Commands,
-) {
-    info!("showing title screen {:?} {:?}", *screen, *title);
-    commands.entity(*screen).insert(Visibility::Inherited);
-    commands.entity(*title).insert(Typewriter {
-        tint: Color::WHITE,
-        per_char: Duration::from_millis(100),
-        txt: String::from("ADVENTUREGAME"),
-    });
-}
-
-fn hide(
-    screen: Single<Entity, With<TitleScreen>>,
-    title: Single<Entity, With<TitleText>>,
-    mut commands: Commands,
-) {
-    info!("hiding title screen {:?} {:?}", *screen, *title);
-    commands.entity(*screen).insert(Visibility::Hidden);
-
-    commands
-        .entity(*title)
-        .remove::<Writing>()
-        .despawn_children();
 }

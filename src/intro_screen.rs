@@ -4,13 +4,12 @@ use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::{
     gamestate::{GameState, Screen},
-    typewriter::{FinishNow, Finished, Typewriter, Writing},
+    typewriter::{FinishNow, Finished, Typewriter},
 };
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, setup)
-        .add_systems(OnEnter(Screen::Intro), show)
-        .add_systems(OnExit(Screen::Intro), hide)
+    app.add_systems(OnEnter(Screen::Intro), setup)
+        .add_systems(OnExit(Screen::Intro), discard)
         .add_systems(Update, interaction_system.run_if(in_state(Screen::Intro)));
 }
 
@@ -20,36 +19,14 @@ struct IntroScreen;
 #[derive(Component, Clone, Default)]
 struct IntroText;
 
-pub fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands) {
+    info!("setup");
     commands.spawn_scene(screen_bundle());
 }
 
-fn show(
-    mut commands: Commands,
-    screen: Single<Entity, With<IntroScreen>>,
-    txt: Single<Entity, With<IntroText>>,
-) {
-    debug!("showing intro");
-    commands.entity(*screen).insert(Visibility::Inherited);
-    debug!("added typewriter to {:?}", *txt);
-    commands.entity(*txt).insert(Typewriter {
-        tint: Color::WHITE,
-        per_char: Duration::from_millis(100),
-        txt: intro_text(),
-    });
-}
-
-fn hide(
-    mut commands: Commands,
-    screen: Single<Entity, With<IntroScreen>>,
-    intro: Single<Entity, With<IntroText>>,
-) {
-    debug!("hiding intro {:?} {:?}", *screen, *intro);
-    commands.entity(*screen).insert(Visibility::Hidden);
-    commands
-        .entity(*intro)
-        .remove::<Writing>()
-        .despawn_children();
+fn discard(mut commands: Commands, screen: Single<Entity, With<IntroScreen>>) {
+    info!("discard");
+    commands.entity(*screen).despawn();
 }
 
 fn pcsr_font(font_size: i32) -> impl Scene {
@@ -67,7 +44,6 @@ fn screen_bundle() -> impl Scene {
     bsn! {
         IntroScreen
         BackgroundColor(Color::BLACK)
-        Visibility::Hidden
         Node {
             width: percent(100),
             height: percent(100),
@@ -81,6 +57,11 @@ fn screen_bundle() -> impl Scene {
             pcsr_font(20)
             Text("")
             TextLayout::justify(Justify::Start)
+            Typewriter {
+                tint: Color::WHITE,
+                per_char: Duration::from_millis(100),
+                txt: intro_text(),
+            }
         ]
     }
 }
@@ -93,7 +74,7 @@ fn intro_text() -> String {
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    typewriter: Query<(Entity, Has<Finished>), (With<Typewriter>, With<IntroText>)>,
+    typewriter: Query<(Entity, Has<Finished>), With<Typewriter>>,
 ) {
     if !input.any_just_pressed([KeyCode::Escape]) {
         return;
