@@ -22,10 +22,6 @@ pub struct TitleScreen;
 struct TitleText;
 
 /// Set up and show the title screen using Bevy's UI APIs.
-pub fn setup(mut commands: Commands) {
-    commands.spawn_scene(screen_bundle());
-}
-
 fn pcsr_font(font_size: i32) -> impl Scene {
     let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
     bsn! {
@@ -33,9 +29,13 @@ fn pcsr_font(font_size: i32) -> impl Scene {
     }
 }
 
+pub fn setup(mut commands: Commands) {
+    commands.spawn_scene(screen_bundle());
+}
+
 #[derive(Component, Reflect, Debug, Clone, FromTemplate)]
 #[reflect(Component)]
-enum ButtonTy {
+enum Buttons {
     #[default]
     Start,
     Intro,
@@ -68,13 +68,13 @@ pub fn screen_bundle() -> impl Scene {
 
             // TODO: justify center
             Button
-            ButtonTy::Start
+            Buttons::Start
             Text("[ START ]")
             pcsr_font(33),
 
             // TODO: justify center
             Button
-            ButtonTy::Intro
+            Buttons::Intro
             Text("[ INTRO ]")
             pcsr_font(33),
 
@@ -85,10 +85,8 @@ pub fn screen_bundle() -> impl Scene {
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    interactions: Query<(&Interaction, &ButtonTy), Changed<Interaction>>,
+    interactions: Query<(&Interaction, &Buttons), Changed<Interaction>>,
 ) {
-    let mut go_play = false;
-
     for (interaction, button_ty) in interactions.iter() {
         if interaction != &Interaction::Pressed {
             continue;
@@ -97,15 +95,13 @@ fn interaction_system(
         let quick_skip =
             input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
-        if quick_skip || matches!(button_ty, ButtonTy::Start) {
+        if quick_skip || matches!(button_ty, Buttons::Start) {
             commands.set_state_if_neq(Screen::Playing);
-        } else if matches!(button_ty, ButtonTy::Intro) {
+            return;
+        } else if matches!(button_ty, Buttons::Intro) {
             commands.set_state_if_neq(Screen::Intro);
+            return;
         };
-    }
-
-    if go_play {
-        commands.set_state_if_neq(Screen::Playing);
     }
 }
 
