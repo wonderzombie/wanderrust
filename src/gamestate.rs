@@ -43,6 +43,7 @@ impl Display for WorldClock {
 pub enum Screen {
     #[default]
     Title,
+    Intro,
     Playing,
     Inventory,
 }

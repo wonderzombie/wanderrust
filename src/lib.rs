@@ -15,6 +15,7 @@ mod fov;
 pub mod gamestate;
 mod grid;
 mod interactions;
+mod intro_screen;
 mod inventory;
 mod inventory_subscreen;
 mod ldtk_loader;
@@ -120,6 +121,7 @@ pub fn run() {
     .insert_state(GameState::Starting)
     .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
+    .add_plugins(typewriter::plugin)
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
@@ -127,7 +129,7 @@ pub fn run() {
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
     .add_plugins(equipment::plugin)
-    .add_plugins(typewriter::plugin)
+    .add_plugins(intro_screen::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),

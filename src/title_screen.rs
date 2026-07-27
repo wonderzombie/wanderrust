@@ -2,29 +2,30 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::{
-    gamestate::{GameState, Screen},
-    typewriter::Typewriter,
-};
+use crate::{gamestate::Screen, typewriter::Typewriter};
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(screen_bundle(asset_server));
 }
 
-#[derive(Component, Debug)]
-pub struct TitleScreen;
-
 pub struct TitleScreenPlugin;
 
 impl Plugin for TitleScreenPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(Screen::Title)
-            .add_systems(OnEnter(Screen::Title), setup)
-            .add_systems(OnExit(Screen::Title), discard)
+            .add_systems(Startup, setup)
+            .add_systems(OnEnter(Screen::Title), show)
+            .add_systems(OnExit(Screen::Title), hide)
             .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
     }
 }
+
+#[derive(Component, Debug)]
+struct TitleScreen;
+
+#[derive(Component, Reflect, Debug)]
+struct TitleText;
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
@@ -33,7 +34,7 @@ enum ButtonTy {
     Intro,
 }
 
-pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
+fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
     (
         TitleScreen,
@@ -48,6 +49,7 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
         },
         children![
             (
+                TitleText,
                 Text::new(""),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
@@ -108,14 +110,38 @@ fn interaction_system(
         match button_ty {
             ButtonTy::Start => {
                 commands.set_state_if_neq(Screen::Playing);
-                commands.set_state_if_neq(GameState::AwaitingInput);
             }
-            _ => (),
+            ButtonTy::Intro => {
+                commands.set_state_if_neq(Screen::Intro);
+            }
         }
     }
 }
 
-/// Despawn the title screen.
-pub fn discard(entity: Single<Entity, With<TitleScreen>>, mut commands: Commands) {
-    commands.entity(*entity).despawn();
+fn show(
+    screen: Single<Entity, With<TitleScreen>>,
+    title: Single<Entity, With<TitleText>>,
+    mut commands: Commands,
+) {
+    info!("showing title screen {:?} {:?}", *screen, *title);
+    commands.entity(*screen).insert(Visibility::Inherited);
+    commands.entity(*title).insert(Typewriter {
+        tint: Color::WHITE,
+        per_char: Duration::from_millis(100),
+        txt: String::from("ADVENTUREGAME"),
+    });
+}
+
+fn hide(
+    screen: Single<Entity, With<TitleScreen>>,
+    title: Single<Entity, With<TitleText>>,
+    mut commands: Commands,
+) {
+    info!("hiding title screen {:?} {:?}", *screen, *title);
+    commands.entity(*screen).insert(Visibility::Hidden);
+
+    commands
+        .entity(*title)
+        .despawn_children()
+        .remove::<Typewriter>();
 }
