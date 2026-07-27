@@ -4,11 +4,6 @@ use bevy::prelude::*;
 
 use crate::{gamestate::Screen, typewriter::Typewriter};
 
-/// Set up and show the title screen using Bevy's UI APIs.
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(screen_bundle(asset_server));
-}
-
 pub struct TitleScreenPlugin;
 
 impl Plugin for TitleScreenPlugin {
@@ -27,15 +22,21 @@ struct TitleScreen;
 #[derive(Component, Reflect, Debug)]
 struct TitleText;
 
+/// Set up and show the title screen using Bevy's UI APIs.
+pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(screen_bundle(asset_server));
+}
+
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-enum ButtonTy {
+enum Buttons {
     Start,
     Intro,
 }
 
 fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
+    // TODO: convert this to bsn!
     (
         TitleScreen,
         BackgroundColor(Color::BLACK),
@@ -58,6 +59,8 @@ fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
                     ..default()
                 },
                 TextLayout::justify(Justify::Center),
+                // TODO: we start with this because it's the title screen.
+                // However, `show()` should do it for us.
                 Typewriter {
                     tint: Color::WHITE,
                     per_char: Duration::from_millis(100),
@@ -70,7 +73,7 @@ fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             },
             (
                 Button,
-                ButtonTy::Start,
+                Buttons::Start,
                 Text::new("START"),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
@@ -85,7 +88,7 @@ fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             },
             (
                 Button,
-                ButtonTy::Intro,
+                Buttons::Intro,
                 Text::new("INTRO"),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
@@ -100,7 +103,7 @@ fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
 
 fn interaction_system(
     mut commands: Commands,
-    interactions: Query<(&Interaction, &ButtonTy), Changed<Interaction>>,
+    interactions: Query<(&Interaction, &Buttons), Changed<Interaction>>,
 ) {
     for (interaction, button_ty) in interactions.iter() {
         if interaction != &Interaction::Pressed {
@@ -108,10 +111,10 @@ fn interaction_system(
         }
 
         match button_ty {
-            ButtonTy::Start => {
+            Buttons::Start => {
                 commands.set_state_if_neq(Screen::Playing);
             }
-            ButtonTy::Intro => {
+            Buttons::Intro => {
                 commands.set_state_if_neq(Screen::Intro);
             }
         }
