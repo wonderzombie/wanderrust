@@ -2,6 +2,8 @@ use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
 use crate::{
+    colors,
+    debug::DebugState,
     gamestate::Screen,
     typewriter::{Revealing, Typewriter},
 };
@@ -85,16 +87,20 @@ pub fn screen_bundle() -> impl Scene {
     }
 }
 
+#[derive(Component, Debug)]
+struct ColorTest;
+
+#[derive(Component, Debug)]
+struct TextTest;
+
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     interactions: Query<(&Interaction, &Buttons), Changed<Interaction>>,
+    ct: Single<Entity, With<ColorTest>>,
+    debug_mode: Res<State<DebugState>>,
 ) {
     for (interaction, button_ty) in interactions.iter() {
-        if interaction != &Interaction::Pressed {
-            continue;
-        }
-
         let quick_skip =
             input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
@@ -105,6 +111,32 @@ fn interaction_system(
             commands.set_state_if_neq(Screen::Intro);
             return;
         };
+    }
+
+    if matches!(**debug_mode, DebugState::Disabled) {
+        return;
+    }
+
+    if input.all_just_pressed([KeyCode::KeyC, KeyCode::AltRight]) {
+        info!("spawning color test");
+        let bundles = colors::Ramp::kenney_test()
+            .iter()
+            .map(|&c| {
+                (
+                    TextTest,
+                    Text("[COLOR]".into()),
+                    TextFont {
+                        font: FontSource::Handle(font.clone()),
+                        ..default()
+                    },
+                    Visibility::Inherited,
+                    TextColor(c),
+                    ChildOf(*ct),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        commands.spawn_batch(bundles);
     }
 }
 

@@ -137,8 +137,8 @@ pub fn on_toggle_debug(
             DebugState::Enabled => DebugState::Disabled,
             DebugState::Disabled => DebugState::Enabled,
         };
-        log.write((format!("! editor: {:?} !", next).as_str(), Color::WHITE).into());
-        info!("📝 ! editor: {:?} !", next);
+        log.write((format!("! debug: {:?} !", next).as_str(), Color::WHITE).into());
+        info!("📝 ! debug: {:?} !", next);
         next_state.set(next);
     }
 }
@@ -166,24 +166,23 @@ pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        app // .add_systems(Startup, setup_global_tile_observers)
-            .add_systems(
-                Update,
+        app.add_systems(
+            Update,
+            ((
                 (
-                    (
-                        on_button_input,
-                        on_zoom_button_input,
-                        on_toggle_visibilities,
-                    )
-                        .chain()
-                        .run_if(in_state(DebugState::Enabled)),
-                    on_toggle_debug,
-                ),
-            )
-            .insert_state(DebugState::Enabled)
-            .add_plugins(RemotePlugin::default())
-            .add_plugins(RemoteHttpPlugin::default())
-            .add_plugins(DebugPickingPlugin)
-            .insert_resource(DebugPickingMode::Disabled);
+                    on_button_input,
+                    on_zoom_button_input,
+                    on_toggle_visibilities,
+                )
+                    .chain()
+                    .run_if(in_state(DebugState::Enabled)),
+                on_toggle_debug,
+            ),),
+        )
+        .insert_state(DebugState::Enabled)
+        .add_plugins(RemotePlugin::default())
+        .add_plugins(RemoteHttpPlugin::default())
+        .add_plugins(DebugPickingPlugin)
+        .insert_resource(DebugPickingMode::Disabled);
     }
 }
