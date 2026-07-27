@@ -1,6 +1,6 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors, event_log, gamestate::Screen, inventory::Inventory};
+use crate::{colors, gamestate::Screen, inventory::Inventory, message_log::LogEvent};
 
 pub struct InventorySubscreenPlugin;
 
@@ -154,7 +154,7 @@ pub fn interaction_system(
     mut highlighted: ResMut<Highlighted>,
     item_list: Single<&Children, With<ItemList>>,
     labels: Query<&Text>,
-    mut log: ResMut<event_log::MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     if !input.is_changed() {
         return;
@@ -182,7 +182,7 @@ pub fn interaction_system(
 
         info!("selected {highlighted:?} {txt:?}");
 
-        log.add(txt.0.clone(), colors::KENNEY_GREEN);
+        log.write((txt.0.clone().as_str(), colors::KENNEY_GREEN).into());
     }
 }
 

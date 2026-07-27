@@ -1,20 +1,46 @@
-use std::ops::Add;
-
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors, gamestate::Screen};
+use crate::{colors::Palette, gamestate::Screen};
 
 pub struct MessageLogPlugin;
 
 impl Plugin for MessageLogPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Screen::Playing), setup.run_if(run_once))
-            .add_systems(PostUpdate, update_log.run_if(in_state(Screen::Playing)));
+        app.add_message::<LogEvent>()
+            .add_systems(OnEnter(Screen::Playing), setup.run_if(run_once))
+            .add_systems(Update, update_log.run_if(in_state(Screen::Playing)));
     }
 }
 
+const WRAP_CHARS: usize = 26;
+const INIT_INDENT: &str = "• ";
+
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct MessageLog;
+
+#[derive(Message, Clone, Debug, Default)]
+pub struct LogEvent {
+    pub txt: String,
+    pub color: Option<Color>,
+}
+
+impl LogEvent {
+    pub fn from_txt(txt: impl AsRef<str>) -> Self {
+        Self {
+            txt: txt.as_ref().into(),
+            color: None,
+        }
+    }
+}
+
+impl From<(&str, Color)> for LogEvent {
+    fn from(value: (&str, Color)) -> Self {
+        Self {
+            txt: value.0.into(),
+            color: Some(value.1),
+        }
+    }
+}
 
 fn setup(mut commands: Commands) {
     commands.spawn_scene(log_bundle());
@@ -22,57 +48,23 @@ fn setup(mut commands: Commands) {
 
 fn update_log(
     mut commands: Commands,
-    input: Res<ButtonInput<KeyCode>>,
-    scrolling_log: Single<(Entity, &Node, &Children, &mut ScrollPosition), With<MessageLog>>,
+    mut log_events: MessageReader<LogEvent>,
+    log_entity: Single<Entity, With<MessageLog>>,
 ) {
-    if input.just_pressed(KeyCode::F8) {
-        let (log_nt, _, _, mut scroll_pos) = scrolling_log.into_inner();
+    for LogEvent { txt, color } in log_events.read() {
+        let options = textwrap::Options::new(WRAP_CHARS).initial_indent(INIT_INDENT);
 
-        if input.pressed(KeyCode::ShiftLeft) {
-            info!("adding a message");
+        let out_txt = textwrap::fill(txt.to_ascii_uppercase().as_str(), options);
+        let out_color = color.unwrap_or_else(|| Palette::KenneyOffWhite.srgb());
+        let log_nt = *log_entity;
 
-            let options = textwrap::Options::new(26).initial_indent("• ");
-
-            let out = if input.pressed(KeyCode::SuperLeft) {
-                "ABCDEFGHIJLKMNOPQRSTUVWXYZ01234567890"
-            } else if input.pressed(KeyCode::ShiftLeft) {
-                "ABCDEFGHIJLKMNOPQRSTUVWXYZ"
-            } else {
-                "Jubilant griffons vexed the wizard king’s phlegmatic quest."
-            };
-
-            let wrapped = textwrap::fill(out, options);
-            let n = (1 + wrapped.bytes().filter(|&s| s == b'\n').count()) * 16;
-
-            let nt = commands
-                .spawn_scene(bsn! {
-                    Node
-                    pcsr_font(12)
-                    Text::new(wrapped)
-                    TextColor(colors::KENNEY_OFF_WHITE)
-                })
-                .id();
-
-            commands.entity(log_nt).add_child(nt);
-            let scroll_amt = Vec2 { x: 0., y: n as f32 };
-            *scroll_pos = scroll_pos.add(scroll_amt).into();
-        } else {
-            info!("adding a message");
-
-            let nt = commands
-                .spawn_scene(bsn! {
-                    Node
-                    pcsr_font(12)
-                    Text::new("and away we go")
-                    TextColor(colors::KENNEY_OFF_WHITE)
-                })
-                .id();
-
-            commands.entity(log_nt).add_child(nt);
-
-            let scroll_amt = Vec2 { x: 0., y: 12. };
-            *scroll_pos = scroll_pos.add(scroll_amt).into();
-        }
+        commands.spawn_scene(bsn! {
+            Node
+            pcsr_font(12)
+            Text::new(out_txt)
+            TextColor(out_color)
+            ChildOf(log_nt)
+        });
     }
 }
 
@@ -96,23 +88,14 @@ fn log_bundle() -> impl Scene {
             flex_direction: FlexDirection::Column,
             overflow: Overflow::scroll_y(),
         }
+        ScrollPosition(Vec2 { x: 0., y: f32::MAX })
         Children [
-                (
-                    Node
-                    Text::new("welcome to wanderrust.") pcsr_font(12)
-                ),
-
-                (
-                    Node
-                    Text::new("stay a while.") pcsr_font(12)
-                ),
-
-                (
-                    Node
-                    Text::new("stay forever!") pcsr_font(12)
-                ),
+            Node
+            Text::new("welcome to wanderrust.") pcsr_font(12),
+            Node
+            Text::new("stay a while.") pcsr_font(12),
+            Node
+            Text::new("stay forever!") pcsr_font(12),
         ]
-
-
     }
 }

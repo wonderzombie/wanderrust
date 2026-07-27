@@ -4,10 +4,11 @@ use bevy::prelude::*;
 use bevy::remote::RemotePlugin;
 use bevy::remote::http::RemoteHttpPlugin;
 
+use crate::colors;
+use crate::message_log::LogEvent;
 use crate::{
     actors::{Player, PlayerStats},
     cell::Cell,
-    event_log,
     gamestate::{GameState, Screen},
     tilemap::{ActiveLevel, Level, WorldSpawn},
 };
@@ -105,7 +106,7 @@ pub fn on_toggle_debug(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<DebugState>>,
     mut next_state: ResMut<NextState<DebugState>>,
-    mut log: ResMut<event_log::MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     if input.just_pressed(KeyCode::Backspace)
         && input.any_pressed([KeyCode::ShiftRight, KeyCode::ShiftLeft])
@@ -114,10 +115,29 @@ pub fn on_toggle_debug(
             DebugState::Enabled => DebugState::Disabled,
             DebugState::Disabled => DebugState::Enabled,
         };
-        log.add(format!("! editor: {:?} !", next), Color::WHITE);
+        log.write((format!("! editor: {:?} !", next).as_str(), Color::WHITE).into());
         info!("📝 ! editor: {:?} !", next);
         next_state.set(next);
     }
+}
+
+pub fn on_log_message(input: Res<ButtonInput<KeyCode>>, mut log_events: MessageWriter<LogEvent>) {
+    if !input.is_changed() || !input.just_pressed(KeyCode::F8) {
+        return;
+    }
+
+    let out = if input.pressed(KeyCode::SuperLeft) {
+        "ABCDEFGHIJLKMNOPQRSTUVWXYZ01234567890"
+    } else if input.pressed(KeyCode::ShiftLeft) {
+        "ABCDEFGHIJLKMNOPQRSTUVWXYZ"
+    } else {
+        "Jubilant griffons vexed the wizard king’s phlegmatic quest."
+    };
+
+    log_events.write(LogEvent {
+        txt: out.into(),
+        color: Some(colors::KENNEY_GOLD),
+    });
 }
 
 pub struct DebugPlugin;
@@ -129,7 +149,6 @@ impl Plugin for DebugPlugin {
                 Update,
                 (
                     (
-                        // This should run in case any map tiles have been added/removed.
                         on_button_input,
                         on_zoom_button_input,
                         on_toggle_visibilities,
