@@ -1,24 +1,25 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
-use crate::{
-    gamestate::{GameState, Screen},
-    typewriter::Typewriter,
-};
+use crate::{gamestate::Screen, typewriter::Typewriter};
 
 pub struct TitleScreenPlugin;
 
 impl Plugin for TitleScreenPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(Screen::Title)
-            .add_systems(OnEnter(Screen::Title), setup)
-            .add_systems(OnExit(Screen::Title), discard)
+            .add_systems(Startup, setup)
+            .add_systems(OnEnter(Screen::Title), show)
+            .add_systems(OnExit(Screen::Title), hide)
             .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
     }
 }
 
 #[derive(Component, Clone, Default, Debug)]
 pub struct TitleScreen;
+
+#[derive(Component, Reflect, Debug)]
+struct TitleText;
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands) {
@@ -93,25 +94,45 @@ fn interaction_system(
             continue;
         }
 
-        go_play |= matches!(button_ty, ButtonTy::Start);
+        let quick_skip =
+            input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
-        match button_ty {
-            ButtonTy::Start => {
-                go_play = true;
-            }
-            _ => (),
-        }
+        if quick_skip || matches!(button_ty, ButtonTy::Start) {
+            commands.set_state_if_neq(Screen::Playing);
+        } else if matches!(button_ty, ButtonTy::Intro) {
+            commands.set_state_if_neq(Screen::Intro);
+        };
     }
-
-    go_play |= input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
     if go_play {
         commands.set_state_if_neq(Screen::Playing);
-        commands.set_state_if_neq(GameState::AwaitingInput);
     }
 }
 
-/// Despawn the title screen.
-pub fn discard(entity: Single<Entity, With<TitleScreen>>, mut commands: Commands) {
-    commands.entity(*entity).despawn();
+fn show(
+    screen: Single<Entity, With<TitleScreen>>,
+    title: Single<Entity, With<TitleText>>,
+    mut commands: Commands,
+) {
+    info!("showing title screen {:?} {:?}", *screen, *title);
+    commands.entity(*screen).insert(Visibility::Inherited);
+    commands.entity(*title).insert(Typewriter {
+        tint: Color::WHITE,
+        per_char: Duration::from_millis(100),
+        txt: String::from("ADVENTUREGAME"),
+    });
+}
+
+fn hide(
+    screen: Single<Entity, With<TitleScreen>>,
+    title: Single<Entity, With<TitleText>>,
+    mut commands: Commands,
+) {
+    info!("hiding title screen {:?} {:?}", *screen, *title);
+    commands.entity(*screen).insert(Visibility::Hidden);
+
+    commands
+        .entity(*title)
+        .despawn_children()
+        .remove::<Typewriter>();
 }

@@ -14,6 +14,7 @@ mod fov;
 pub mod gamestate;
 mod grid;
 mod interactions;
+mod intro_screen;
 mod inventory;
 mod inventory_subscreen;
 mod items;
@@ -120,6 +121,7 @@ pub fn run() {
     })
     .insert_state(GameState::Starting)
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
+    .add_plugins(typewriter::plugin)
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
@@ -129,6 +131,7 @@ pub fn run() {
     .add_plugins(mobs::plugin)
     .add_plugins(message_log::MessageLogPlugin)
     .add_plugins(typewriter::plugin)
+    .add_plugins(intro_screen::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
