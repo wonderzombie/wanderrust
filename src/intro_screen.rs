@@ -4,8 +4,7 @@ use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::{
     gamestate::{GameState, Screen},
-    tiles::Revealed,
-    typewriter::{FinishNow, Revealing, Typewriter},
+    typewriter::{FinishNow, Finished, Typewriter, Writing},
 };
 
 pub fn plugin(app: &mut App) {
@@ -49,7 +48,7 @@ fn hide(
     commands.entity(*screen).insert(Visibility::Hidden);
     commands
         .entity(*intro)
-        .remove::<(Typewriter, Revealing)>()
+        .remove::<Writing>()
         .despawn_children();
 }
 
@@ -94,7 +93,7 @@ fn intro_text() -> String {
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    typewriter: Query<(Entity, Has<Revealed>), With<Typewriter>>,
+    typewriter: Query<(Entity, Has<Finished>), (With<Typewriter>, With<IntroText>)>,
 ) {
     if !input.any_just_pressed([KeyCode::Escape]) {
         return;

@@ -5,7 +5,7 @@ use crate::{
     colors,
     debug::DebugState,
     gamestate::Screen,
-    typewriter::{Revealing, Typewriter},
+    typewriter::{Typewriter, Writing},
 };
 
 pub struct TitleScreenPlugin;
@@ -58,6 +58,7 @@ pub fn screen_bundle() -> impl Scene {
             justify_content: JustifyContent::Center,
         }
         Children [
+            TitleText
             pcsr_font(54)
             Text("")
             TextLayout::justify(Justify::Center)
@@ -83,14 +84,18 @@ pub fn screen_bundle() -> impl Scene {
             Text("[ INTRO ]")
             pcsr_font(33),
 
+            ColorTest
+            Text("")
+            pcsr_font(33),
+
         ]
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 struct ColorTest;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 struct TextTest;
 
 fn interaction_system(
@@ -137,6 +142,26 @@ fn interaction_system(
             .collect::<Vec<_>>();
 
         commands.spawn_batch(bundles);
+    } else if input.all_just_pressed([KeyCode::KeyR, KeyCode::AltRight]) {
+        info!("spawning color test");
+        let bundles = colors::Ramp::fade_out()
+            .iter()
+            .map(|&c| {
+                (
+                    TextTest,
+                    Text("[COLOR]".into()),
+                    TextFont {
+                        font: FontSource::Handle(font.clone()),
+                        ..default()
+                    },
+                    Visibility::Inherited,
+                    TextColor(c),
+                    ChildOf(*ct),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        commands.spawn_batch(bundles);
     }
 }
 
@@ -164,6 +189,6 @@ fn hide(
 
     commands
         .entity(*title)
-        .remove::<(Typewriter, Revealing)>()
+        .remove::<Writing>()
         .despawn_children();
 }

@@ -28,14 +28,14 @@ macro_rules! define_colors {
 pub struct Ramp(Vec<Color>);
 
 impl Ramp {
-    pub(crate) fn fade_out() -> Self {
-        Self(vec![
+    pub(crate) fn fade_out() -> Vec<Color> {
+        vec![
             BRIGHT_OFF_WHITE, // brightness 100%
             OFF_WHITE,        // 81%
             MEDIUM_OFF_WHITE, // 50%
             DARK_OFF_WHITE,   // 19%
             Color::NONE,
-        ])
+        ]
     }
 
     pub(crate) fn kenney_test() -> Vec<Color> {

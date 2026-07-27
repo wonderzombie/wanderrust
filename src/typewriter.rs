@@ -20,13 +20,13 @@ pub struct Typewriter {
 }
 
 #[derive(Component, Debug)]
-pub(crate) struct Revealing {
+pub(crate) struct Writing {
     revealed_idx: usize,
     timer: Timer,
 }
 
 #[derive(Component, Debug, Clone, Default, Copy)]
-pub(crate) struct Revealed;
+pub(crate) struct Finished;
 
 #[derive(EntityEvent)]
 pub(crate) struct FinishNow(pub Entity);
@@ -49,7 +49,7 @@ fn build_typewriter(
             })
             .collect::<Vec<_>>();
 
-        commands.entity(nt).insert(Revealing {
+        commands.entity(nt).insert(Writing {
             revealed_idx: 0,
             timer: Timer::new(tw.per_char, TimerMode::Repeating),
         });
@@ -64,7 +64,7 @@ fn build_typewriter(
 fn advance_typewriter(
     mut commands: Commands,
     time: Res<Time>,
-    mut revealing: Query<(Entity, &Children, &Typewriter, &mut Revealing)>,
+    mut revealing: Query<(Entity, &Children, &Typewriter, &mut Writing)>,
     mut colors: Query<&mut TextColor, With<TextSpan>>,
 ) {
     for (nt, children, tw, mut rev) in revealing.iter_mut() {
@@ -77,8 +77,8 @@ fn advance_typewriter(
             // If children are no longer inserted instantly and therefore in
             // deterministic order, this logic breaks down.
             let Some(&next_nt) = children.get(rev.revealed_idx) else {
-                trace!("nt done revealing {:?}", nt);
-                commands.entity(nt).remove::<Revealing>().insert(Revealed);
+                info!("nt done revealing {:?}", nt);
+                commands.entity(nt).remove::<Writing>().insert(Finished);
                 break;
             };
 
@@ -100,10 +100,12 @@ fn finish_now(
     typewriters: Query<(&Children, &Typewriter)>,
     mut colors: Query<&mut TextColor, With<TextSpan>>,
 ) {
-    debug!("asked to finish now");
+    info!("asked to finish now {:?}", on.0);
     let Ok((children, tw)) = typewriters.get(on.0) else {
+        info!("no typewriter found");
         return;
     };
+    info!("finishing {tw:?}");
 
     for child in children.iter() {
         if let Ok(mut color) = colors.get_mut(child) {
@@ -111,5 +113,6 @@ fn finish_now(
         }
     }
 
-    commands.entity(on.0).remove::<Revealing>().insert(Revealed);
+    info!("{:?} now revealed", on.0);
+    commands.entity(on.0).insert(Finished).remove::<Writing>();
 }
