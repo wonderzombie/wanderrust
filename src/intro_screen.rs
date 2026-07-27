@@ -74,16 +74,19 @@ fn screen_bundle() -> impl Scene {
             flex_direction: FlexDirection::Row,
         }
         Children [
+            Node {
+                margin: UiRect::all(px(100))
+            }
             IntroText
-            pcsr_font(10)
+            pcsr_font(20)
             Text("")
-            TextLayout::justify(Justify::Center)
+            TextLayout::justify(Justify::Start)
         ]
     }
 }
 
 fn intro_text() -> String {
-    String::from("you don't belong here\nand you can't leave")
+    String::from("you don't belong here     \n\n\nand you can't leave").to_ascii_uppercase()
 }
 
 fn interaction_system(
