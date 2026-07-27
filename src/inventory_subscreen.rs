@@ -2,9 +2,9 @@ use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::{
     colors,
-    event_log::MessageLog,
     gamestate::Screen,
     inventory::{Inventory, ItemEntry},
+    message_log::LogEvent,
 };
 
 pub struct InventorySubscreenPlugin;
@@ -204,7 +204,7 @@ fn interaction_system(
     selected_nt: Single<Entity, With<Selection>>,
     menu: Single<(Entity, &Children), With<ItemList>>,
     itam_texts: Query<&Text, With<ItemRow>>,
-    mut log: ResMut<MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     if !input.is_changed() {
         return;
@@ -216,7 +216,7 @@ fn interaction_system(
     if matches!(action, MenuInput::Interact) {
         match itam_texts.get(*selected_nt) {
             Ok(txt) => {
-                log.add(txt.to_string(), colors::KENNEY_GREEN);
+                log.write((txt.to_string().as_str(), colors::KENNEY_GREEN).into());
             }
             Err(e) => {
                 error!(

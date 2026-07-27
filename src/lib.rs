@@ -10,7 +10,6 @@ pub mod debug;
 mod diagnostics;
 mod effects;
 mod equipment;
-mod event_log;
 mod fov;
 pub mod gamestate;
 mod grid;
@@ -23,6 +22,7 @@ pub mod light;
 mod loot;
 mod macros;
 mod map;
+mod message_log;
 mod mobs;
 mod parameters;
 mod procgen;
@@ -46,15 +46,15 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Recovery, Screen, TurnDelay, WorldClock},
+    gamestate::{GameState, Recovery, TurnDelay, WorldClock},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
+    message_log::LogEvent,
     parameters::{Health, Parameters},
     tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
     tiles::TileIdx,
 };
-use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
 /// The clear color for the window.
@@ -117,9 +117,7 @@ pub fn run() {
         picking_mode: SpritePickingMode::BoundingBox,
         ..Default::default()
     })
-    .insert_resource(event_log::MessageLog::new(10))
     .insert_state(GameState::Starting)
-    .add_plugins(EguiPlugin::default())
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
@@ -128,6 +126,7 @@ pub fn run() {
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
+    .add_plugins(message_log::MessageLogPlugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -176,10 +175,6 @@ pub fn run() {
         (actors::setup_player, interactions::spawn_interxs),
     )
     .add_systems(
-        EguiPrimaryContextPass,
-        event_log::draw_ui.run_if(in_state(Screen::Playing)),
-    )
-    .add_systems(
         Update,
         (
             actors::handle_player_input
@@ -196,7 +191,6 @@ pub fn run() {
                 .chain()
                 .after(PathingSet)
                 .in_set(GameSystem::Ramifications),
-            event_log::setup_fonts.run_if(not(resource_exists::<event_log::EguiFontsLoaded>)),
             combat::animate_floating_text,
             combat::animate_icons,
             ldtk_loader::generate_ldtk_world.run_if(resource_added::<LdtkProject>),
@@ -310,7 +304,7 @@ fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
 fn click_observer(
     on: On<Pointer<Click>>,
     tile_cells: Query<(&TileIdx, &Cell, Option<&Name>)>,
-    mut log: ResMut<event_log::MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     match tile_cells.get(on.event_target()) {
         Ok((tile_idx, &cell, name_opt)) => {
@@ -318,7 +312,7 @@ fn click_observer(
                 let name = name_opt
                     .map(|it| it.to_string())
                     .unwrap_or(format!("{tile_idx}"));
-                log.add(format!("{cell} = {name}"), Color::WHITE);
+                log.write((format!("{cell} = {name}").as_str(), Color::WHITE).into());
             }
         }
         Err(err) => {

@@ -6,9 +6,9 @@ use crate::{
     atlas::SpriteAtlas,
     bestiary::Bestiary,
     colors,
-    event_log::MessageLog,
     gamestate::{Turn, WorldClock},
     interactions::Interactable,
+    message_log::LogEvent,
     parameters::*,
     tiles::TileIdx,
 };
@@ -120,7 +120,7 @@ pub fn process_attacks(
     mut commands: Commands,
     mut combatants: Query<(Entity, &Name, &Parameters, &mut Health)>,
     mut attacks: MessageReader<Attack>,
-    mut log: ResMut<MessageLog>,
+    mut log: MessageWriter<LogEvent>,
     asset_server: Res<AssetServer>,
     clock: Res<WorldClock>,
 ) {
@@ -148,24 +148,27 @@ pub fn process_attacks(
             .insert(clock.recovery_after(atk_params.attack_speed));
 
         if defender.is_dead {
-            log.add(
-                format!("{defender_name} is already dead"),
-                colors::KENNEY_GOLD,
-            );
+            log.write(LogEvent {
+                txt: format!("{defender_name} is already dead"),
+                color: Some(colors::KENNEY_GOLD),
+            });
             continue;
         }
         let damage = atk_params.attack - def_params.defense;
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);
             defender.hp = defender.hp.saturating_sub(damage);
-            log.add(
-                format!("{attacker_name} hits {defender_name}!"),
-                colors::KENNEY_GOLD,
-            );
+            log.write(LogEvent {
+                txt: format!("{attacker_name} hits {defender_name}!"),
+                color: Some(colors::KENNEY_GOLD),
+            });
 
             if defender.hp <= 0 {
                 defender.is_dead = true;
-                log.add(format!("{defender_name} is dead"), colors::KENNEY_RED);
+                log.write(LogEvent {
+                    txt: format!("{defender_name} is dead"),
+                    color: Some(colors::KENNEY_RED),
+                });
                 spawn_floating_text(
                     &mut commands,
                     colors::KENNEY_RED,
@@ -186,10 +189,10 @@ pub fn process_attacks(
                 commands.trigger(Attacked(defender_id))
             }
         } else {
-            log.add(
-                format!("{attacker_name} does no damage"),
-                colors::KENNEY_GOLD,
-            )
+            log.write(LogEvent {
+                txt: format!("{attacker_name} does no damage"),
+                color: Some(colors::KENNEY_GOLD),
+            });
         }
     }
 }

@@ -5,10 +5,10 @@ use crate::{
     actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     colors, combat,
-    event_log::MessageLog,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
+    message_log::LogEvent,
     sounds,
     tilemap::{Level, WorldSpec},
     tiles::TileIdx,
@@ -152,7 +152,7 @@ pub fn process_interactions(
     mut speech: MessageWriter<Listen>,
     player_inv: Res<Inventory>,
     player_nt: Single<Entity, With<Player>>,
-    mut log: ResMut<MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     for attempt in attempts.read() {
         let Ok((entity, mut tile_idx, mut interactable, name_opt)) =
@@ -183,18 +183,21 @@ pub fn process_interactions(
                         let reqd_itam = required_item.def();
                         if !player_inv.has_item(required_item) {
                             info!("Player lacks required item: {reqd_itam}");
-                            log.add("Locked.", colors::KENNEY_BLUE);
+                            log.write(("Locked.", colors::KENNEY_BLUE).into());
                             continue;
                         } else {
                             info!("Player opens the door with {reqd_itam}.");
-                            log.add(
-                                format!("Opened door with {reqd_itam}."),
-                                colors::KENNEY_BLUE,
+                            log.write(
+                                (
+                                    format!("Opened door with {reqd_itam}.").as_str(),
+                                    colors::KENNEY_BLUE,
+                                )
+                                    .into(),
                             );
                         }
                     } else {
                         info!("Player opens the door.");
-                        log.add("Opened door.", colors::KENNEY_BLUE);
+                        log.write(("Opened door.", colors::KENNEY_BLUE).into());
                     }
                     *is_open = true;
                     trace!(
@@ -216,12 +219,14 @@ pub fn process_interactions(
                     *is_open = true;
                     tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
                     info!("Player opens chest: {contents:?}");
-                    log.add("Opened chest.", colors::KENNEY_BLUE);
+                    log.write(("Opened chest.", colors::KENNEY_BLUE).into());
                     commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
                         inv_changes
                             .write_batch(InventoryChange::acquire(*player_nt, contents.clone()));
-                        log.add_all(contents.summarized("got").as_ref(), colors::KENNEY_GREEN);
+                        contents.summarized("got").iter().for_each(|it| {
+                            log.write((it.as_str(), colors::KENNEY_GREEN).into());
+                        });
                     }
                 }
             }
@@ -264,7 +269,7 @@ impl Dialogue {
 /// Processes the dialogue of an NPC when the player listens to it.
 pub fn process_dialogue(
     mut speech: MessageReader<Listen>,
-    mut log: ResMut<MessageLog>,
+    mut log: MessageWriter<LogEvent>,
     mut dialogues: Query<&mut Dialogue>,
 ) {
     for attempt in speech.read() {
@@ -272,7 +277,7 @@ pub fn process_dialogue(
             continue;
         };
 
-        log.add(dialogue.advance(), colors::KENNEY_BLUE);
+        log.write((dialogue.advance(), colors::KENNEY_BLUE).into());
     }
 }
 

@@ -8,11 +8,11 @@ use crate::{
     colors,
     combat::CombatantBundle,
     equipment::EquippedBy,
-    event_log::MessageLog,
     inventory::{Inventory, InventoryChange},
     inventory_subscreen::ToggleUi,
     items::ItemId,
     light::{Emitter, LightLevel},
+    message_log::LogEvent,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
@@ -132,14 +132,14 @@ pub fn on_player_added(
     mut commands: Commands,
     player: Single<Entity, Added<Player>>,
     mut inv_changes: MessageWriter<InventoryChange>,
-    mut log: ResMut<MessageLog>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     let parent = *player;
     for itam in STARTING_EQUIPMENT.iter() {
         info!("equipping {} {itam:?}", itam.def());
         // TODO: use Slots.
         commands.spawn((EquippedBy(parent), **itam));
-        log.add(format!("equipped {}", itam.def()), colors::KENNEY_GREEN);
+        log.write((format!("equipped {}", itam.def()).as_str(), colors::KENNEY_GREEN).into());
     }
 
     // add starting items as well
