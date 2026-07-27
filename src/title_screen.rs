@@ -1,7 +1,10 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
-use crate::{gamestate::Screen, typewriter::Typewriter};
+use crate::{
+    gamestate::Screen,
+    typewriter::{Revealing, Typewriter},
+};
 
 pub struct TitleScreenPlugin;
 
@@ -129,6 +132,6 @@ fn hide(
 
     commands
         .entity(*title)
-        .despawn_children()
-        .remove::<Typewriter>();
+        .remove::<(Typewriter, Revealing)>()
+        .despawn_children();
 }

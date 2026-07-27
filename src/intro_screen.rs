@@ -4,6 +4,7 @@ use bevy::{prelude::*, text::FontSourceTemplate};
 
 use crate::{
     gamestate::{GameState, Screen},
+    tiles::Revealed,
     typewriter::{FinishNow, Revealing, Typewriter},
 };
 
@@ -48,7 +49,7 @@ fn hide(
     commands.entity(*screen).insert(Visibility::Hidden);
     commands
         .entity(*intro)
-        .remove::<Typewriter>()
+        .remove::<(Typewriter, Revealing)>()
         .despawn_children();
 }
 
@@ -86,28 +87,27 @@ fn screen_bundle() -> impl Scene {
 }
 
 fn intro_text() -> String {
+    // The whitespace here is deliberate, creating a natural pause.
     String::from("you don't belong here     \n\n\nand you can't leave").to_ascii_uppercase()
 }
 
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    mut typewriter: Query<Option<&mut Revealing>, With<Typewriter>>,
+    typewriter: Query<(Entity, Has<Revealed>), With<Typewriter>>,
 ) {
-    if input.any_just_pressed([KeyCode::Escape]) {
-        let rev_opt = typewriter.single_mut();
-        match rev_opt {
-            Ok(None) => {
-                debug!("leaving intro screen");
-                commands.set_state_if_neq(GameState::AwaitingInput);
-                commands.set_state_if_neq(Screen::Title);
-            }
-            Ok(Some(_)) => {
-                commands.trigger(FinishNow);
-            }
-            Err(e) => {
-                error!("intro_screen: error: {e}");
-            }
-        }
+    if !input.any_just_pressed([KeyCode::Escape]) {
+        return;
+    }
+
+    let Ok((nt, revealed)) = typewriter.single() else {
+        return;
+    };
+
+    if revealed {
+        commands.set_state_if_neq(GameState::AwaitingInput);
+        commands.set_state_if_neq(Screen::Title);
+    } else {
+        commands.trigger(FinishNow(nt));
     }
 }

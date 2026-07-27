@@ -5,6 +5,7 @@ use bevy::prelude::*;
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
+        // `after()` ensures that ApplyDeferred occurs between building and starting.
         (build_typewriter, advance_typewriter.after(build_typewriter)),
     )
     .add_observer(finish_now);
@@ -24,8 +25,11 @@ pub(crate) struct Revealing {
     timer: Timer,
 }
 
-#[derive(Event)]
-pub(crate) struct FinishNow;
+#[derive(Component, Debug, Clone, Default, Copy)]
+pub(crate) struct Revealed;
+
+#[derive(EntityEvent)]
+pub(crate) struct FinishNow(pub Entity);
 
 fn build_typewriter(
     mut commands: Commands,
@@ -50,6 +54,9 @@ fn build_typewriter(
             timer: Timer::new(tw.per_char, TimerMode::Repeating),
         });
         debug!("{:?}: typewriter built with {} items", nt, bundles.len());
+        // Ordering is VERY important — rely on the fact that these bundles
+        // will be inserted in the same order *and* that the Relationship
+        // mechanisms will ensure that `Children` exist in that order.
         commands.spawn_batch(bundles);
     }
 }
@@ -67,9 +74,11 @@ fn advance_typewriter(
         let times_finished = rev.timer.times_finished_this_tick();
 
         for _ in 0..times_finished {
+            // If children are no longer inserted instantly and therefore in
+            // deterministic order, this logic breaks down.
             let Some(&next_nt) = children.get(rev.revealed_idx) else {
                 trace!("nt done revealing {:?}", nt);
-                commands.entity(nt).remove::<Revealing>();
+                commands.entity(nt).remove::<Revealing>().insert(Revealed);
                 break;
             };
 
@@ -86,17 +95,21 @@ fn advance_typewriter(
 }
 
 fn finish_now(
-    _on: On<FinishNow>,
+    on: On<FinishNow>,
     mut commands: Commands,
-    revealing: Single<(Entity, &Children, &Typewriter)>,
-    colors: Query<Entity, (With<TextSpan>, With<TextColor>)>,
+    typewriters: Query<(&Children, &Typewriter)>,
+    mut colors: Query<&mut TextColor, With<TextSpan>>,
 ) {
     debug!("asked to finish now");
-    let (parent, children, tw) = *revealing;
+    let Ok((children, tw)) = typewriters.get(on.0) else {
+        return;
+    };
 
-    for child_nt in colors.iter_many(children) {
-        commands.entity(child_nt).insert(TextColor(tw.tint));
+    for child in children.iter() {
+        if let Ok(mut color) = colors.get_mut(child) {
+            color.set_if_neq(TextColor(tw.tint));
+        }
     }
 
-    commands.entity(parent).remove::<Revealing>();
+    commands.entity(on.0).remove::<Revealing>().insert(Revealed);
 }
