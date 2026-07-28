@@ -1,14 +1,7 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
-use bevy::prelude::*;
-
-use crate::{
-    colors,
-    debug::DebugState,
-    gamestate::Screen,
-    typewriter::{Typewriter, Writing},
-};
+use crate::{colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter};
 
 pub struct TitleScreenPlugin;
 
@@ -24,7 +17,7 @@ impl Plugin for TitleScreenPlugin {
 #[derive(Component, Clone, Default, Debug)]
 pub struct TitleScreen;
 
-#[derive(Component, Reflect, Debug)]
+#[derive(Component, Clone, Reflect, Debug, Default)]
 struct TitleText;
 
 /// Set up and show the title screen using Bevy's UI APIs.
@@ -98,10 +91,10 @@ pub fn screen_bundle() -> impl Scene {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Default)]
 struct ColorTest;
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Default)]
 struct TextTest;
 
 fn interaction_system(
@@ -111,7 +104,7 @@ fn interaction_system(
     ct: Single<Entity, With<ColorTest>>,
     debug_mode: Res<State<DebugState>>,
 ) {
-    for (interaction, button_ty) in interactions.iter() {
+    for (_, button_ty) in interactions.iter() {
         let quick_skip =
             input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
@@ -130,43 +123,35 @@ fn interaction_system(
 
     if input.all_just_pressed([KeyCode::KeyC, KeyCode::AltRight]) {
         info!("spawning color test");
-        let bundles = colors::Ramp::kenney_test()
+        let scenes = colors::Ramp::kenney_test()
             .iter()
             .map(|&c| {
-                (
-                    TextTest,
-                    Text("[COLOR]".into()),
-                    TextFont {
-                        font: FontSource::Handle(font.clone()),
-                        ..default()
-                    },
-                    Visibility::Inherited,
-                    TextColor(c),
-                    ChildOf(*ct),
-                )
+                bsn! {
+                        TextTest
+                        Text("[COLOR]")
+                        pcsr_font(33)
+                        TextColor(c)
+                        ChildOf({ *ct })
+                }
             })
             .collect::<Vec<_>>();
 
-        commands.spawn_batch(bundles);
+        commands.spawn_scene_list(scenes);
     } else if input.all_just_pressed([KeyCode::KeyR, KeyCode::AltRight]) {
         info!("spawning color test");
         let bundles = colors::Ramp::fade_out()
             .iter()
             .map(|&c| {
-                (
-                    TextTest,
-                    Text("[COLOR]".into()),
-                    TextFont {
-                        font: FontSource::Handle(font.clone()),
-                        ..default()
-                    },
-                    Visibility::Inherited,
-                    TextColor(c),
-                    ChildOf(*ct),
-                )
+                bsn! {
+                        TextTest
+                        Text("[COLOR]")
+                        pcsr_font(33)
+                        TextColor(c)
+                        ChildOf({ *ct })
+                }
             })
             .collect::<Vec<_>>();
 
-        commands.spawn_batch(bundles);
+        commands.spawn_scene_list(bundles);
     }
 }
