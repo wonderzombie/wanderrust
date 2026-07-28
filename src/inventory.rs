@@ -122,6 +122,12 @@ impl Inventory {
         self.0.iter()
     }
 
+    pub fn as_labels(&self) -> Vec<String> {
+        self.iter_items()
+            .map(|ItemEntry(id, q)| format!("{} {q}", id.def()))
+            .collect::<Vec<_>>()
+    }
+
     pub fn item_quantity(&self, itam: &ItemId) -> Option<Quantity> {
         self.0
             .iter()
