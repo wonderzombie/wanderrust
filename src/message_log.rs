@@ -1,6 +1,6 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors::Palette, gamestate::Screen};
+use crate::{colors, gamestate::Screen};
 
 pub struct MessageLogPlugin;
 
@@ -55,7 +55,7 @@ fn update_log(
         let options = textwrap::Options::new(WRAP_CHARS).initial_indent(INIT_INDENT);
 
         let out_txt = textwrap::fill(txt.to_ascii_uppercase().as_str(), options);
-        let out_color = color.unwrap_or_else(|| Palette::KenneyOffWhite.srgb());
+        let out_color = color.unwrap_or_else(|| colors::KENNEY_OFF_WHITE);
         let log_nt = *log_entity;
 
         commands.spawn_scene(bsn! {

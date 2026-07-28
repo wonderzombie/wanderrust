@@ -3,12 +3,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::{
-    colors,
-    debug::DebugState,
-    gamestate::Screen,
-    typewriter::{Typewriter, Writing},
-};
+use crate::{colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter};
 
 pub struct TitleScreenPlugin;
 
@@ -24,7 +19,7 @@ impl Plugin for TitleScreenPlugin {
 #[derive(Component, Clone, Default, Debug)]
 pub struct TitleScreen;
 
-#[derive(Component, Reflect, Debug)]
+#[derive(Component, Reflect, Debug, Default, Clone)]
 struct TitleText;
 
 /// Set up and show the title screen using Bevy's UI APIs.
@@ -98,10 +93,10 @@ pub fn screen_bundle() -> impl Scene {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Default)]
 struct ColorTest;
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Default)]
 struct TextTest;
 
 fn interaction_system(
@@ -111,7 +106,7 @@ fn interaction_system(
     ct: Single<Entity, With<ColorTest>>,
     debug_mode: Res<State<DebugState>>,
 ) {
-    for (interaction, button_ty) in interactions.iter() {
+    for (_, button_ty) in interactions.iter() {
         let quick_skip =
             input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
 
@@ -136,10 +131,6 @@ fn interaction_system(
                 (
                     TextTest,
                     Text("[COLOR]".into()),
-                    TextFont {
-                        font: FontSource::Handle(font.clone()),
-                        ..default()
-                    },
                     Visibility::Inherited,
                     TextColor(c),
                     ChildOf(*ct),
@@ -156,10 +147,6 @@ fn interaction_system(
                 (
                     TextTest,
                     Text("[COLOR]".into()),
-                    TextFont {
-                        font: FontSource::Handle(font.clone()),
-                        ..default()
-                    },
                     Visibility::Inherited,
                     TextColor(c),
                     ChildOf(*ct),

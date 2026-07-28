@@ -11,7 +11,8 @@ pub struct InventorySubscreenPlugin;
 
 impl Plugin for InventorySubscreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup)
+        app.add_systems(OnEnter(Screen::Inventory), setup)
+            .add_systems(OnExit(Screen::Inventory), discard)
             .add_systems(
                 Update,
                 (
@@ -19,7 +20,7 @@ impl Plugin for InventorySubscreenPlugin {
                     update_highlighted.run_if(in_state(Screen::Inventory)),
                 ),
             )
-            .add_systems(OnEnter(Screen::Inventory), update_item_list);
+            .add_observer(toggle_inventory);
     }
 }
 
@@ -33,6 +34,10 @@ pub struct ToggleUi;
 pub fn setup(mut commands: Commands) {
     commands.spawn_scene(screen_bundle());
     commands.add_observer(toggle_inventory);
+}
+
+pub fn discard(mut commands: Commands, screen: Single<Entity, With<InventorySubscreen>>) {
+    commands.entity(*screen).despawn();
 }
 
 #[derive(Component, Clone, Default)]
@@ -106,7 +111,6 @@ pub fn screen_bundle() -> impl Scene {
     bsn! {
         InventorySubscreen
         BackgroundColor(Color::BLACK)
-        Visibility::Hidden
         Node {
             min_width: px(196),
             min_height: px(180),
@@ -143,27 +147,14 @@ pub fn screen_bundle() -> impl Scene {
 
 pub fn toggle_inventory(
     _event: On<ToggleUi>,
-    mut commands: Commands,
-    screen: Single<(Entity, &Visibility), With<InventorySubscreen>>,
-    mut ns: ResMut<NextState<Screen>>,
+    nt_opt: Option<Single<Entity, With<InventorySubscreen>>>,
+    mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    info!("toggle_inventory called");
-    let (nt, vis) = *screen;
-
-    let new_vis = match vis {
-        Visibility::Hidden => {
-            ns.set(Screen::Inventory);
-            Visibility::Inherited
-        }
-        Visibility::Inherited | Visibility::Visible => {
-            ns.set(Screen::Playing);
-            Visibility::Hidden
-        }
-    };
-
-    debug!("toggle_inventory: {vis:?} -> {new_vis:?}");
-
-    commands.entity(nt).insert(new_vis);
+    if let Some(_) = nt_opt {
+        next_screen.set(Screen::Playing);
+    } else {
+        next_screen.set(Screen::Inventory);
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
