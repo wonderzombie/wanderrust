@@ -1,9 +1,6 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{
-    colors::{self, KENNEY_OFF_WHITE},
-    gamestate::Screen,
-};
+use crate::{colors, gamestate::Screen};
 
 pub struct MessageLogPlugin;
 
@@ -14,9 +11,6 @@ impl Plugin for MessageLogPlugin {
             .add_systems(Update, update_log);
     }
 }
-
-const WRAP_CHARS: usize = 26;
-const INIT_INDENT: &str = "> ";
 
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct MessageLog;
@@ -62,9 +56,7 @@ fn update_log(
     log_entity: Single<Entity, With<MessageLog>>,
 ) {
     for LogEvent { txt, color } in log_events.read() {
-        let options = textwrap::Options::new(WRAP_CHARS).initial_indent(INIT_INDENT);
-
-        let out_txt = textwrap::fill(txt.to_ascii_uppercase().as_str(), options);
+        let out_txt = format!("> {}", txt.to_ascii_uppercase());
         let out_color = color.unwrap_or_else(|| colors::KENNEY_OFF_WHITE);
         let log_nt = *log_entity;
 
@@ -92,6 +84,7 @@ fn log_bundle() -> impl Scene {
     bsn! {
         MessageLog
         Visibility::Inherited
+        GlobalZIndex(1)
         Node {
             width: px(480),
             height: px(180),

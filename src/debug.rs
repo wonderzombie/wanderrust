@@ -173,6 +173,7 @@ impl Plugin for DebugPlugin {
                     on_button_input,
                     on_zoom_button_input,
                     on_toggle_visibilities,
+                    on_log_message,
                 )
                     .chain()
                     .run_if(in_state(DebugState::Enabled)),
