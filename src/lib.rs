@@ -48,7 +48,7 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Recovery, TurnDelay, WorldClock},
+    gamestate::{GameState, Recovery, Screen, TurnDelay, WorldClock},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
@@ -292,9 +292,13 @@ fn finalize_starting(
     }
 }
 
-fn finalize_loading(mut next: ResMut<NextState<GameState>>) {
+fn finalize_loading(
+    mut next: ResMut<NextState<GameState>>,
+    mut next_screen: ResMut<NextState<Screen>>,
+) {
     info!("✅ done [LOADING]");
     next.set(GameState::AwaitingInput);
+    next_screen.set(Screen::Title);
 }
 
 fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {

@@ -104,17 +104,25 @@ fn interaction_system(
     ct: Single<Entity, With<ColorTest>>,
     debug_mode: Res<State<DebugState>>,
 ) {
-    for (_, button_ty) in interactions.iter() {
-        let quick_skip =
-            input.is_changed() && input.any_just_released([KeyCode::Space, KeyCode::Enter]);
+    for (interaction, button_ty) in interactions.iter() {
+        match interaction {
+            Interaction::Pressed => match button_ty {
+                Buttons::Start => {
+                    commands.set_state_if_neq(Screen::Playing);
+                    return;
+                }
+                Buttons::Intro => {
+                    commands.set_state_if_neq(Screen::Intro);
+                    return;
+                }
+            },
+            _ => (),
+        }
 
-        if quick_skip || matches!(button_ty, Buttons::Start) {
+        if input.is_changed() && input.any_just_pressed([KeyCode::Space, KeyCode::Enter]) {
             commands.set_state_if_neq(Screen::Playing);
             return;
-        } else if matches!(button_ty, Buttons::Intro) {
-            commands.set_state_if_neq(Screen::Intro);
-            return;
-        };
+        }
     }
 
     if matches!(**debug_mode, DebugState::Disabled) {
