@@ -1,6 +1,9 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 
-use crate::{colors, gamestate::Screen};
+use crate::{
+    colors::{self, KENNEY_OFF_WHITE},
+    gamestate::Screen,
+};
 
 pub struct MessageLogPlugin;
 
@@ -8,12 +11,12 @@ impl Plugin for MessageLogPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<LogEvent>()
             .add_systems(OnEnter(Screen::Playing), setup.run_if(run_once))
-            .add_systems(Update, update_log.run_if(in_state(Screen::Playing)));
+            .add_systems(Update, update_log);
     }
 }
 
 const WRAP_CHARS: usize = 26;
-const INIT_INDENT: &str = "• ";
+const INIT_INDENT: &str = "> ";
 
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct MessageLog;
@@ -42,8 +45,15 @@ impl From<(&str, Color)> for LogEvent {
     }
 }
 
-fn setup(mut commands: Commands) {
+impl From<&str> for LogEvent {
+    fn from(value: &str) -> Self {
+        Self::from_txt(value)
+    }
+}
+
+fn setup(mut commands: Commands, mut writer: MessageWriter<LogEvent>) {
     commands.spawn_scene(log_bundle());
+    writer.write("welcome to wanderrust".into());
 }
 
 fn update_log(
@@ -59,11 +69,14 @@ fn update_log(
         let log_nt = *log_entity;
 
         commands.spawn_scene(bsn! {
-            Node
+            Node {
+                width: percent(100),
+            }
             pcsr_font(12)
             Text::new(out_txt)
             TextColor(out_color)
             ChildOf(log_nt)
+
         });
     }
 }
@@ -80,22 +93,19 @@ fn log_bundle() -> impl Scene {
         MessageLog
         Visibility::Inherited
         Node {
-            width: px(384),
-            height: px(160),
+            width: px(480),
+            height: px(180),
             top: percent(70),
             right: percent(100),
-            left: percent(60),
+            left: percent(40),
             flex_direction: FlexDirection::Column,
             overflow: Overflow::scroll_y(),
+            padding: UiRect::all(px(8)),
+            border: UiRect::all(px(4)),
+            border_radius: BorderRadius::all(px(8)),
         }
+        BackgroundColor(colors::KENNEY_BG)
+        BorderColor::all(colors::KENNEY_OFF_WHITE)
         ScrollPosition(Vec2 { x: 0., y: f32::MAX })
-        Children [
-            Node
-            Text::new("welcome to wanderrust.") pcsr_font(12),
-            Node
-            Text::new("stay a while.") pcsr_font(12),
-            Node
-            Text::new("stay forever!") pcsr_font(12),
-        ]
     }
 }
