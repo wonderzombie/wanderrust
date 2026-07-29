@@ -1,8 +1,6 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
 use std::time::Duration;
 
-use bevy::prelude::*;
-
 use crate::{colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter};
 
 pub struct TitleScreenPlugin;
@@ -19,7 +17,7 @@ impl Plugin for TitleScreenPlugin {
 #[derive(Component, Clone, Default, Debug)]
 pub struct TitleScreen;
 
-#[derive(Component, Reflect, Debug, Default, Clone)]
+#[derive(Component, Clone, Reflect, Debug, Default)]
 struct TitleText;
 
 /// Set up and show the title screen using Bevy's UI APIs.
@@ -125,35 +123,35 @@ fn interaction_system(
 
     if input.all_just_pressed([KeyCode::KeyC, KeyCode::AltRight]) {
         info!("spawning color test");
-        let bundles = colors::Ramp::kenney_test()
+        let scenes = colors::Ramp::kenney_test()
             .iter()
             .map(|&c| {
-                (
-                    TextTest,
-                    Text("[COLOR]".into()),
-                    Visibility::Inherited,
-                    TextColor(c),
-                    ChildOf(*ct),
-                )
+                bsn! {
+                        TextTest
+                        Text("[COLOR]")
+                        pcsr_font(33)
+                        TextColor(c)
+                        ChildOf({ *ct })
+                }
             })
             .collect::<Vec<_>>();
 
-        commands.spawn_batch(bundles);
+        commands.spawn_scene_list(scenes);
     } else if input.all_just_pressed([KeyCode::KeyR, KeyCode::AltRight]) {
         info!("spawning color test");
         let bundles = colors::Ramp::fade_out()
             .iter()
             .map(|&c| {
-                (
-                    TextTest,
-                    Text("[COLOR]".into()),
-                    Visibility::Inherited,
-                    TextColor(c),
-                    ChildOf(*ct),
-                )
+                bsn! {
+                        TextTest
+                        Text("[COLOR]")
+                        pcsr_font(33)
+                        TextColor(c)
+                        ChildOf({ *ct })
+                }
             })
             .collect::<Vec<_>>();
 
-        commands.spawn_batch(bundles);
+        commands.spawn_scene_list(bundles);
     }
 }

@@ -3,26 +3,6 @@
 
 use bevy::{color::Color, ecs::component::Component, reflect::Reflect};
 
-macro_rules! define_colors {
-    ( $( $id:ident => $color:expr , )* ) => {
-
-        pub(super) enum Palette {
-            $( $id, )*
-        }
-
-        impl Palette {
-            pub fn srgb(&self) -> Color {
-                use Palette::*;
-                match &self {
-                    $( $id => $color, )*
-                }
-            }
-        }
-
-
-    };
-}
-
 #[derive(Component, Reflect, Debug)]
 pub struct Ramp(Vec<Color>);
 

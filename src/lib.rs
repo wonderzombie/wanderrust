@@ -130,7 +130,6 @@ pub fn run() {
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
     .add_plugins(message_log::MessageLogPlugin)
-    .add_plugins(typewriter::plugin)
     .add_plugins(intro_screen::plugin)
     .add_systems(
         Startup,

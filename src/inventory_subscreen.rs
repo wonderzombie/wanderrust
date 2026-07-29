@@ -1,9 +1,12 @@
 use bevy::{prelude::*, text::FontSourceTemplate};
+use itertools::Itertools;
 
 use crate::{
+    actors::Player,
     colors,
     gamestate::Screen,
-    inventory::{Inventory, ItemEntry},
+    inventory::{CarriedBy, Carrying},
+    items::{ItemId, Quantity},
     message_log::LogEvent,
 };
 
@@ -11,7 +14,7 @@ pub struct InventorySubscreenPlugin;
 
 impl Plugin for InventorySubscreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Screen::Inventory), setup)
+        app.add_systems(OnEnter(Screen::Inventory), (setup, populate).chain())
             .add_systems(OnExit(Screen::Inventory), discard)
             .add_systems(
                 Update,
@@ -20,6 +23,7 @@ impl Plugin for InventorySubscreenPlugin {
                     update_highlighted.run_if(in_state(Screen::Inventory)),
                 ),
             )
+            .init_resource::<PrevSelection>()
             .add_observer(toggle_inventory);
     }
 }
@@ -27,23 +31,36 @@ impl Plugin for InventorySubscreenPlugin {
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct InventorySubscreen;
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 pub struct ToggleUi;
+
+#[derive(Resource, Default, Debug)]
+struct PrevSelection(usize);
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands) {
     commands.spawn_scene(screen_bundle());
-    commands.add_observer(toggle_inventory);
 }
 
-pub fn discard(mut commands: Commands, screen: Single<Entity, With<InventorySubscreen>>) {
+fn discard(
+    mut commands: Commands,
+    screen: Single<Entity, With<InventorySubscreen>>,
+    curr_selection: Single<(&Menu, &Children)>,
+    mut prev_selection: ResMut<PrevSelection>,
+) {
+    let (menu, children) = *curr_selection;
+
+    if let Some(idx) = children.iter().position(|e| menu.0 == e) {
+        prev_selection.0 = idx;
+    }
+
     commands.entity(*screen).despawn();
 }
 
 #[derive(Component, Clone, Default)]
 pub struct ItemList;
 
-#[derive(Component, Clone, Default)]
+#[derive(Component, Clone)]
 pub struct ItemRow;
 
 fn pcsr_font(font_size: i32) -> impl Scene {
@@ -53,61 +70,44 @@ fn pcsr_font(font_size: i32) -> impl Scene {
     }
 }
 
-fn update_item_list(
+fn populate(
     mut commands: Commands,
-    menu: Single<(Entity, &Children), With<ItemList>>,
-    mut item_rows: Query<&mut Text, With<ItemRow>>,
-    player_inv: Res<Inventory>,
+    inv_list_items: Single<(Entity, &TextFont), With<ItemList>>,
+    inventory: Single<&Carrying, With<Player>>,
+    all_itam: Query<(&ItemId, &Quantity), With<CarriedBy>>,
+    prev_selection: Res<PrevSelection>,
 ) {
-    let mut inventory = player_inv.iter_items();
-    let (menu_nt, menu_items) = *menu;
+    let (list_nt, font) = *inv_list_items;
 
-    info!(
-        "updating inventory rows (children {}) (rows {})",
-        menu_items.iter().count(),
-        item_rows.count()
-    );
-
-    // The item list drives iteration as it limits the display count.
-    for &item_nt in menu_items.into_iter() {
-        if let Ok(mut row) = item_rows.get_mut(item_nt) {
-            // Try to read an item from the player's inventory.
-            // An empty iterator means this `item_nt` becomes "blank."
-            if let Some(ItemEntry(itam, qty)) = inventory.next() {
-                commands.entity(item_nt).insert(*itam);
-                let label = itam.def();
-                if qty.0 > 1 {
-                    row.0 = format!("{label} ({qty})").to_uppercase();
-                } else {
-                    row.0 = format!("{label}").to_uppercase();
-                }
+    let rows: Vec<Entity> = all_itam
+        .iter_many(inventory.iter())
+        .map(|(itam, qty)| {
+            let label = if qty.0 > 1 {
+                format! {"{} ({})", itam.def(), qty}
             } else {
-                // We must have run out of inventory, so initialize this to empty.
-                row.0 = format!("--");
-            }
-        }
-    }
+                itam.def().to_string()
+            };
 
-    if let Some(first_nt) = menu_items.iter().next() {
-        commands.entity(first_nt).insert(Selection(menu_nt));
-    } else {
-        error!("unable to determine first list item");
-    }
-}
+            commands
+                .spawn((
+                    Node::default(),
+                    Text::new(label.to_uppercase()),
+                    font.clone(),
+                    TextColor(colors::KENNEY_OFF_WHITE),
+                    ItemRow,
+                    *itam,
+                    ChildOf(list_nt),
+                ))
+                .id()
+        })
+        .collect_vec();
 
-fn item_row() -> impl Scene {
-    bsn! {
-        Node
-        pcsr_font(14)
-        TextColor(colors::KENNEY_OFF_WHITE)
-        Text
-        ItemRow
+    if let Some(row_nt) = rows.get(prev_selection.0.clamp(0, rows.len() - 1)) {
+        commands.entity(*row_nt).insert(Selection(list_nt));
     }
 }
 
 pub fn screen_bundle() -> impl Scene {
-    let items = (1..5usize).map(|_| item_row()).collect::<Vec<_>>();
-
     bsn! {
         InventorySubscreen
         BackgroundColor(Color::BLACK)
@@ -135,11 +135,7 @@ pub fn screen_bundle() -> impl Scene {
                     justify_content: JustifyContent::SpaceBetween,
                 }
                 ItemList
-                Children [
-                        item_row()
-                        Selection(#ListMenu),
-                        {items}
-                ]
+                pcsr_font(14)
             )
         ]
     }
@@ -229,7 +225,7 @@ fn interaction_system(
         .unwrap_or_default();
 
     let next_idx = match action {
-        MenuInput::Down => idx.saturating_add(1).min(itam_texts.count() - 1),
+        MenuInput::Down => idx.saturating_add(1).min(menu_items.len() - 1),
         MenuInput::Up => idx.saturating_sub(1),
         _ => {
             warn!("unsupported MenuInput; ignoring {action:?}");
