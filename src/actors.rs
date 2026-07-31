@@ -142,7 +142,13 @@ pub fn on_player_added(
         info!("equipping {} {itam:?}", itam.def());
         // TODO: use Slots.
         commands.spawn((EquippedBy(parent), **itam));
-        log.write((format!("equipped {}", itam.def()).as_str(), colors::KENNEY_GREEN).into());
+        log.write(
+            (
+                format!("equipped {}", itam.def()).as_str(),
+                colors::KENNEY_GREEN,
+            )
+                .into(),
+        );
     }
 
     // add starting items as well
