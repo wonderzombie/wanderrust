@@ -17,15 +17,18 @@ use crate::{
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Dead;
 
 /// A marker component for entities that perform actions in the world, such as
 /// the player or NPCs.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct Actor;
 
 #[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Player;
 
 /// A bundle for map pieces that includes a sprite, cell position, transform,
@@ -164,7 +167,8 @@ pub fn update_transforms(
 
 /// A message representing an attempt by an actor to interact with a cell in the
 /// world, such as moving into it or interacting with an object on it.
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct Action {
     pub entity: Entity,
     pub origin_cell: Cell,
@@ -190,14 +194,16 @@ impl Display for Action {
     }
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Component)]
 pub enum Act {
     Direction(IVec2),
     Pass,
     Flask,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Flasks(pub i32);
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.

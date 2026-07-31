@@ -12,7 +12,8 @@ impl Plugin for MessageLogPlugin {
     }
 }
 
-#[derive(Component, Copy, Clone, Debug, Default)]
+#[derive(Component, Copy, Clone, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct MessageLog;
 
 #[derive(Message, Clone, Debug, Default)]

@@ -4,10 +4,12 @@ use crate::parameters::Parameters;
 
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = HasEquipped)]
+#[reflect(Component)]
 pub struct EquippedBy(pub Entity);
 
 #[derive(Component, Reflect, Debug)]
 #[relationship_target(relationship = EquippedBy, linked_spawn)]
+#[reflect(Component)]
 pub struct HasEquipped(Vec<Entity>);
 
 impl IntoIterator for HasEquipped {

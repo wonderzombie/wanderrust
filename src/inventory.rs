@@ -174,10 +174,12 @@ impl Inventory {
 
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = Carrying)]
+#[reflect(Component)]
 pub(super) struct CarriedBy(pub Entity);
 
 #[derive(Component, Reflect, Debug, Serialize, Deserialize, Default)]
 #[relationship_target(relationship = CarriedBy)]
+#[reflect(Component)]
 pub(super) struct Carrying(Vec<Entity>);
 
 impl IntoIterator for Carrying {
