@@ -65,8 +65,7 @@ impl From<Vec<(&ItemId, &Quantity)>> for Inventory {
 
 impl Extend<(ItemId, Quantity)> for Inventory {
     fn extend<I: IntoIterator<Item = (ItemId, Quantity)>>(&mut self, iter: I) {
-        self.0
-            .extend(iter.into_iter().map(ItemEntry::from));
+        self.0.extend(iter.into_iter().map(ItemEntry::from));
     }
 }
 
@@ -140,7 +139,13 @@ impl Inventory {
     pub fn summarized(&self, prefix: &str) -> Vec<String> {
         self.0
             .iter()
-            .map(|ItemEntry(k, v)| format!("{} {} {}", prefix, v, k.def()))
+            .map(|ItemEntry(k, v)| {
+                if v.0 > 1 {
+                    format!("{prefix} {v} {k}")
+                } else {
+                    format!("{prefix} {k}")
+                }
+            })
             .collect::<Vec<_>>()
     }
 
