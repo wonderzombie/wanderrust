@@ -95,11 +95,10 @@ pub fn ramifying(
 
     if *turn_timer == Timer::default() {
         info!("setting turn timer to {delay}");
-        *turn_timer = Timer::from_seconds(delay, TimerMode::Repeating);
+        *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
     }
 
     if !turn_timer.tick(time.delta()).just_finished() {
-        info!("waiting {turn_timer:?}");
         return;
     }
 
@@ -113,21 +112,20 @@ pub fn ramifying(
         return;
     };
 
-    info!("next in schedule: {entities:?} after recovery {tick}");
+    trace!("schedule: {entities:?}");
 
     world_clock.advance_to(tick);
 
     if entities.into_iter().any(|(_, _, is_player)| *is_player) {
-        info!("player turn");
         ns.set(GameState::AwaitingInput);
-        *turn_timer = Timer::from_seconds(delay, TimerMode::Repeating);
+        *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
         return;
     } else {
-        *turn_timer = Timer::from_seconds(delay * 3., TimerMode::Repeating);
+        *turn_timer = Timer::from_seconds(delay * 3., TimerMode::Once);
     }
 
     let next_entity = entities.first().unwrap();
 
-    info!("next entity: {:?}", next_entity.0);
+    info!("next entity: {}", next_entity.0);
     commands.insert_resource(NextTurn(next_entity.0.entity));
 }
