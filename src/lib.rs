@@ -258,7 +258,7 @@ pub fn run() {
             exited: GameState::Defeat,
             entered: GameState::AwaitingInput,
         },
-        gamestate::respawn,
+        gamestate::respawn_player,
     )
     .add_systems(
         Last,

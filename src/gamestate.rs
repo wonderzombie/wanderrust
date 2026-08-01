@@ -156,7 +156,7 @@ pub fn ramify(
     commands.insert_resource(NextTurn(name_or_nt.entity));
 }
 
-pub fn respawn(
+pub fn respawn_player(
     mut commands: Commands,
     respawn_point: Single<&WorldSpawn>,
     player: Single<Entity, With<Player>>,
