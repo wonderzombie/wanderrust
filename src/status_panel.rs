@@ -6,7 +6,7 @@ use crate::{
     colors,
     gamestate::{Screen, WorldClock},
     parameters::Health,
-    ui::theme::pcsr_font,
+    ui::theme,
 };
 
 pub struct StatusPanelPlugin;
@@ -75,40 +75,23 @@ fn panel_bundle() -> impl Scene {
         BackgroundColor(colors::KENNEY_BG)
         BorderColor::all(colors::KENNEY_OFF_WHITE)
         Children [
-            (
                 Node
                 Text::new("WANDERRUST")
-                pcsr_font(16)
+                theme::pcsr_font(16)
                 TextColor(colors::KENNEY_OFF_WHITE)
-            ),
-            (
-                Node
-                Text::new("HP: ??")
-                Label::Hp
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            ),
-            (
-                Node
+            ,
+                Label::Hp,
+                theme::label_row("HP: ??")
+            ,
                 Label::Flasks
-                Text::new("FR: ??")
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            ),
-            (
-                Node
+                theme::label_row("FR: ??")
+            ,
                 Label::Ticks
-                Text::new("T: ??")
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            ),
-            (
-                Node
+                theme::label_row("T: ??")
+            ,
                 Label::Cell
-                Text::new("C: ??")
-                pcsr_font(12)
-                TextColor(colors::KENNEY_OFF_WHITE)
-            ),
+                theme::label_row("C: ??")
+            ,
         ]
     }
 }
