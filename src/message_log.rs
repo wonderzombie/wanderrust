@@ -58,7 +58,7 @@ fn update_log(
 ) {
     for LogEvent { txt, color } in log_events.read() {
         let out_txt = format!("> {}", txt.to_ascii_uppercase());
-        let out_color = color.unwrap_or_else(|| colors::KENNEY_OFF_WHITE);
+        let out_color = color.unwrap_or(colors::KENNEY_OFF_WHITE);
         let log_nt = *log_entity;
 
         commands.spawn_scene(bsn! {
