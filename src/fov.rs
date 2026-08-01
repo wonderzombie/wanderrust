@@ -3,8 +3,9 @@ use bevy::prelude::*;
 use mrpas::Mrpas;
 
 use crate::{
-    actors::{Player, PlayerStats},
+    actors::Player,
     cell::Cell,
+    parameters::{Parameters, Vision},
     tilemap::{Dimensions, Level},
     tiles::{MapTile, Opaque, Revealed, TileIdx},
 };
@@ -85,20 +86,22 @@ pub fn update_fov_model(
 
 /// Updates the [Revealed] status of [MapTile]s based on the player's [Fov].
 /// Uses the [View] type to avoid mutating `Res<Fov>`.
+/// Uses Option<&Vision> to allow overrides for player vision (debugging, utility).
 pub fn update_fov_markers(
     all_fov: Query<(&Children, &Fov)>,
-    player_query: Single<(&Cell, &ChildOf), With<Player>>,
-    player_stats: Res<PlayerStats>,
+    player_query: Single<(&Cell, &ChildOf, &Parameters, Option<&Vision>), With<Player>>,
     mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
 ) {
-    let (cell, &ChildOf(parent_level)) = *player_query;
+    let (cell, &ChildOf(parent_level), params, vis_opt) = *player_query;
 
     let Some((child_tiles, player_fov)) = all_fov.get(parent_level).ok() else {
         error!("no Fov found for player's level: {parent_level:?}");
         return;
     };
 
-    let view = player_fov.from(cell.into(), player_stats.vision_range);
+    let vis = vis_opt.unwrap_or(&params.vision);
+
+    let view = player_fov.from(cell.into(), vis.range());
 
     // Since we got these tiles as children of `all_fov`, aka Level we can look
     // up each in `tiles`, which is constrained to `MapTile`.

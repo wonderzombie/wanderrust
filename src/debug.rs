@@ -9,8 +9,9 @@ use crate::equipment::{EquippedBy, HasEquipped};
 use crate::inventory::{CarriedBy, Inventory};
 use crate::items::{ItemId, Quantity};
 use crate::message_log::LogEvent;
+use crate::parameters::Vision;
 use crate::{
-    actors::{Player, PlayerStats},
+    actors::Player,
     cell::Cell,
     gamestate::{GameState, Screen},
     tilemap::{ActiveLevel, Level, WorldSpawn},
@@ -97,14 +98,18 @@ pub fn on_toggle_visibilities(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     levels: Query<(&Level, Option<&ActiveLevel>)>,
-    player: Single<(Entity, &Cell), With<Player>>,
-    mut stats: ResMut<PlayerStats>,
+    player: Single<(Entity, &Cell, Option<&Vision>), With<Player>>,
 ) {
     if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
-        if stats.is_default() {
-            stats.set_vision_range(25);
-        } else {
-            stats.reset_vision_range();
+        let (nt, _, vis_opt) = *player;
+
+        match vis_opt {
+            Some(_) => {
+                commands.entity(nt).remove::<Vision>();
+            }
+            None => {
+                commands.entity(nt).insert(Vision(25));
+            }
         }
     } else if input.just_pressed(KeyCode::KeyV)
         && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
@@ -117,8 +122,8 @@ pub fn on_toggle_visibilities(
             } else {
                 info!("{ent} is hidden; showing");
                 commands.entity(*ent).insert(ActiveLevel);
-                let (p, c) = *player;
-                commands.entity(p).insert((*c, ChildOf(*ent)));
+                let (nt, c, _) = *player;
+                commands.entity(nt).insert((*c, ChildOf(*ent)));
             }
         }
     }

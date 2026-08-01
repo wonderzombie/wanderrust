@@ -108,7 +108,6 @@ pub fn run() {
             }),
     )
     .add_message::<combat::Attack>()
-    .init_resource::<actors::PlayerStats>()
     .init_resource::<atlas::SpriteAtlas>()
     .init_resource::<gamestate::WorldClock>()
     .init_resource::<sounds::Sounds>()
