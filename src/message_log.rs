@@ -74,7 +74,6 @@ pub(crate) fn scene() -> impl Scene {
     bsn! {
         MessageLog
         Visibility::Inherited
-        GlobalZIndex(1)
         Node {
             flex_direction: FlexDirection::Column,
             overflow: Overflow::scroll_y(),
