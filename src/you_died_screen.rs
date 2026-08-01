@@ -36,6 +36,7 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             flex_direction: FlexDirection::Column,
             ..default()
         },
+        BackgroundColor(Color::BLACK),
         children![
             (
                 Text::new("YOU DIED"),

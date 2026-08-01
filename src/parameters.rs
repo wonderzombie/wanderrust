@@ -9,6 +9,15 @@ pub struct Health {
     pub is_dead: bool,
 }
 
+impl Health {
+    pub fn new(hp: i32) -> Self {
+        Self {
+            hp,
+            is_dead: false,
+        }
+    }
+}
+
 #[derive(Component, Hash, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq, Eq)]
 #[reflect(Component)]
 pub struct Vision(pub u32);

@@ -6,7 +6,7 @@ use crate::{
     atlas::SpriteAtlas,
     bestiary::Bestiary,
     colors,
-    gamestate::{GameState, Turn, WorldClock},
+    gamestate::{GameState, Screen, Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
@@ -187,6 +187,7 @@ pub fn process_attacks(
                     .remove::<(Awareness, Turn)>();
                 if is_player {
                     commands.set_state_if_neq(GameState::Defeat);
+                    commands.set_state_if_neq(Screen::YouDied);
                 }
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);

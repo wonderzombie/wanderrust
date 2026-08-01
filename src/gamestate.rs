@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use itertools::Itertools;
 use std::{collections::BTreeMap, fmt::Display};
 
-use crate::{actors::Player, tilemap::{ActiveLevel, WorldSpawn}, tiles::Revealed};
+use crate::{
+    actors::{Flasks, Player}, bestiary::Bestiary, parameters::Health, tilemap::{ActiveLevel, WorldSpawn}, tiles::Revealed
+};
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct WorldClock(usize);
@@ -163,8 +165,13 @@ pub fn respawn_player(
 ) {
     let WorldSpawn { level_entity, cell } = *respawn_point;
 
+    let params = Bestiary::Player.params();
+    let health = Health::new(params.max_hp as i32);
+    let flasks = Flasks::default();
+
     commands
         .entity(*player)
+        .insert((params, health, flasks))
         .insert((*cell, ChildOf(*level_entity)));
     commands.entity(*level_entity).insert(ActiveLevel);
 }

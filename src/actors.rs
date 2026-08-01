@@ -181,6 +181,12 @@ pub enum Act {
 #[reflect(Component)]
 pub struct Flasks(pub i32);
 
+impl Default for Flasks {
+    fn default() -> Self {
+        Self(3)
+    }
+}
+
 /// Handles player input and sends an [ActionAttempt] message derived from player input.
 pub fn handle_player_input(
     mut commands: Commands,
