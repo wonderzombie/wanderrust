@@ -35,21 +35,24 @@ fn setup(mut commands: Commands) {
 }
 
 fn update_labels(
-    status: Single<(&Health, &Flasks), With<Player>>,
+    status: Single<(&Cell, &Health, &Flasks), With<Player>>,
     mut labels: Query<(&mut Text, &Label)>,
     clock: Res<WorldClock>,
-    cell: Single<&Cell, With<Player>>,
 ) {
-    let (health, flasks) = *status;
+    let (cell, health, flasks) = *status;
 
     for (mut text, label) in labels.iter_mut() {
-        match label {
-            Label::Hp => text.0 = format!("HP: {}", health.hp),
-            Label::Flasks => text.0 = format!("FR: {}", flasks.0),
-            Label::Ticks => text.0 = format!("T:  {}", *clock),
-            Label::Cell => text.0 = format!("C:  {}", *cell),
-            _ => error!("found invalid label: {:?} {:?}", text, label),
-        }
+        let new_text = match label {
+            Label::Hp => format!("HP: {}", health.hp),
+            Label::Flasks => format!("FR: {}", flasks.0),
+            Label::Ticks => format!("T:  {}", *clock),
+            Label::Cell => format!("C:  {}", *cell),
+            _ => {
+                error!("found invalid label: {:?} {:?}", text, label);
+                return;
+            }
+        };
+        text.set_if_neq(Text::new(new_text));
     }
 }
 
