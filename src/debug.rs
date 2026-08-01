@@ -100,7 +100,7 @@ pub fn on_toggle_visibilities(
     levels: Query<(&Level, Option<&ActiveLevel>)>,
     player: Single<(Entity, &Cell, Option<&Vision>), With<Player>>,
 ) {
-    if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::ShiftLeft) {
+    if input.just_pressed(KeyCode::KeyF) && input.pressed(KeyCode::SuperLeft) {
         let (nt, _, vis_opt) = *player;
 
         match vis_opt {
