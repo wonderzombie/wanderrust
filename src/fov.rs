@@ -12,10 +12,25 @@ use crate::{
 
 /// Newtype for field of view model that's a Resource and which tracks which
 /// cells are transparent for visibility calculations.
+///
+/// Instead of mutating a shared MRPAS model, we change this model only when the
+/// environment changes. In order to compute a specific field of view, we
+/// first create a snapshot and return that.
+///
+/// Rationale: the MRPAS API is ported from GDScript is highly stateful: it
+/// maintains both the model (i.e. map of opaque/transparent positions for the
+/// currently modeled environment) *and* the currently computed (active) field
+/// of view based on the that model. `clear_field_of_view()` is required before
+/// `compute_field_of_view()` and mutate the "active" field of view.
 #[derive(Component, Debug, Deref, DerefMut)]
 pub struct Fov(Mrpas);
 
 impl Fov {
+    /// Creates a View from origin, max distance, and the current MRPAS model.
+    /// The view-related computation happens once, here, and may be used to check
+    /// a specific origin/distance combination many times. Note that this is
+    /// merely a snapshot, so any changes to the model occurring subsequently
+    /// (such as a door opened in the next frame) will not be represented here.
     pub fn from(&self, origin: (i32, i32), max_distance: u32) -> View {
         let mut model = self.0.clone();
         model.clear_field_of_view();
@@ -24,13 +39,11 @@ impl Fov {
     }
 }
 
-/// Newtype for a read-only clone of an existing Mrpas model configured for one
-/// viewer's origin and max_distance.
-///
-/// The MRPAS API is ported from GDScript is highly stateful: it maintains both
-/// the model (i.e. map of opaque/transparent positions) *and* the currently
-/// computed (active) field of view. `clear_field_of_view()` is required before
-/// `compute_field_of_view()`, and they both mutate the model.
+/// Newtype for a read-only snapshot (clone) of an existing Mrpas model
+/// configured for one viewer's origin and max_distance. Therefore it is not
+/// recommended to store this in a persistent way; it is only a snapshot of the
+/// current MRPAS model at a given point in time, useful for checking visibility
+/// of multiple points in the model.
 #[derive(Resource, Debug, Deref, DerefMut)]
 pub struct View(Mrpas);
 
@@ -43,7 +56,8 @@ impl View {
 }
 
 /// Internalizes the field of view model by marking tiles as transparent or not.
-/// The field of view defaults to entirely opaque.
+/// The field of view defaults to entirely opaque, so we carve out viewable
+/// points based on `Without<Opaque>`.
 pub fn setup_fov(
     mut commands: Commands,
     level_children: Query<(&Level, &Dimensions, &Children)>,
@@ -63,7 +77,7 @@ pub fn setup_fov(
             transparent_count += 1;
         }
 
-        fov.clear_field_of_view(); // initializes current FOV to "zero"
+        // Initializes the FOV to "none". See [`fov::View`].
         commands.entity(*level_entity).insert(fov);
 
         info!(
