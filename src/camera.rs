@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{actors::Player, cell::Cell, debug::DesiredZoom, tilemap::TilemapLayer, tiles};
+use crate::{
+    actors::Player, cell::Cell, debug::DesiredZoom, tilemap::TilemapLayer, tiles, ui::SIDEBAR_W,
+};
 
 const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
@@ -8,6 +10,7 @@ pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
+            viewport_origin: Vec2::new(0.5 - SIDEBAR_W / (2.0 * 800.0), 0.5),
             scale: 0.5,
             ..OrthographicProjection::default_2d()
         }),

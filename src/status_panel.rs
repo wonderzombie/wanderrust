@@ -13,8 +13,10 @@ pub struct StatusPanelPlugin;
 
 impl Plugin for StatusPanelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Screen::Playing), setup.run_if(run_once))
-            .add_systems(PostUpdate, update_labels.run_if(in_state(Screen::Playing)));
+        app
+            // .add_systems(OnEnter(Screen::Playing), setup)
+            // .add_systems(OnExit(Screen::Playing), discard)
+            .add_systems(Update, update_labels.run_if(in_state(Screen::Playing)));
     }
 }
 
@@ -28,10 +30,6 @@ pub enum Label {
     Flasks,
     Ticks,
     Cell,
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn_scene(panel_bundle());
 }
 
 fn update_labels(
@@ -52,20 +50,13 @@ fn update_labels(
     }
 }
 
-fn panel_bundle() -> impl Scene {
+pub(crate) fn scene() -> impl Scene {
     bsn! {
         StatusPanel
         Visibility::Inherited
         Node {
-            width: px(196),
-            height: px(600),
             flex_direction: FlexDirection::Column,
-            position_type: PositionType::Absolute,
-            right: px(800),
-            left: px(800 - 196),
             padding: UiRect::all(px(8)),
-            // border: UiRect::all(px(4)),
-            // border_radius: BorderRadius::all(px(8)),
         }
         BackgroundColor(colors::KENNEY_BG)
         BorderColor::all(colors::KENNEY_OFF_WHITE)
@@ -75,17 +66,17 @@ fn panel_bundle() -> impl Scene {
                 theme::pcsr_font(16)
                 TextColor(colors::KENNEY_OFF_WHITE)
             ,
-                Label::Hp,
                 theme::label_row("HP: ??")
+                Label::Hp
             ,
-                Label::Flasks
                 theme::label_row("FR: ??")
+                Label::Flasks
             ,
-                Label::Ticks
                 theme::label_row("T: ??")
+                Label::Ticks
             ,
-                Label::Cell
                 theme::label_row("C: ??")
+                Label::Cell
             ,
         ]
     }

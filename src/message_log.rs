@@ -7,7 +7,8 @@ pub struct MessageLogPlugin;
 impl Plugin for MessageLogPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<LogEvent>()
-            .add_systems(OnEnter(Screen::Playing), setup.run_if(run_once))
+            // .add_systems(OnEnter(Screen::Playing), setup)
+            // .add_systems(OnExit(Screen::Playing), discard)
             .add_systems(Update, update_log);
     }
 }
@@ -46,18 +47,13 @@ impl From<&str> for LogEvent {
     }
 }
 
-fn setup(mut commands: Commands, mut writer: MessageWriter<LogEvent>) {
-    commands.spawn_scene(log_bundle());
-    writer.write("welcome to wanderrust".into());
-}
-
 fn update_log(
     mut commands: Commands,
     mut log_events: MessageReader<LogEvent>,
     log_entity: Single<Entity, With<MessageLog>>,
 ) {
     for LogEvent { txt, color } in log_events.read() {
-        let out_txt = format!("> {}", txt.to_ascii_uppercase());
+        let out_txt = format!("{}", txt.to_ascii_uppercase());
         let out_color = color.unwrap_or(colors::KENNEY_OFF_WHITE);
         let log_nt = *log_entity;
 
@@ -74,25 +70,17 @@ fn update_log(
     }
 }
 
-fn log_bundle() -> impl Scene {
+pub(crate) fn scene() -> impl Scene {
     bsn! {
         MessageLog
         Visibility::Inherited
         GlobalZIndex(1)
         Node {
-            width: px(480),
-            height: px(180),
-            top: percent(70),
-            right: percent(100),
-            left: percent(40),
             flex_direction: FlexDirection::Column,
             overflow: Overflow::scroll_y(),
             padding: UiRect::all(px(8)),
-            // border: UiRect::all(px(4)),
-            // border_radius: BorderRadius::all(px(8)),
         }
         BackgroundColor(colors::KENNEY_BG)
-        BorderColor::all(colors::KENNEY_OFF_WHITE)
         ScrollPosition(Vec2 { x: 0., y: f32::MAX })
     }
 }
