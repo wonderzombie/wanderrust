@@ -95,8 +95,8 @@ fn log_bundle() -> impl Scene {
             flex_direction: FlexDirection::Column,
             overflow: Overflow::scroll_y(),
             padding: UiRect::all(px(8)),
-            border: UiRect::all(px(4)),
-            border_radius: BorderRadius::all(px(8)),
+            // border: UiRect::all(px(4)),
+            // border_radius: BorderRadius::all(px(8)),
         }
         BackgroundColor(colors::KENNEY_BG)
         BorderColor::all(colors::KENNEY_OFF_WHITE)

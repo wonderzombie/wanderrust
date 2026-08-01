@@ -72,8 +72,8 @@ fn panel_bundle() -> impl Scene {
             right: px(800),
             left: px(800 - 196),
             padding: UiRect::all(px(8)),
-            border: UiRect::all(px(4)),
-            border_radius: BorderRadius::all(px(8)),
+            // border: UiRect::all(px(4)),
+            // border_radius: BorderRadius::all(px(8)),
         }
         BackgroundColor(colors::KENNEY_BG)
         BorderColor::all(colors::KENNEY_OFF_WHITE)
