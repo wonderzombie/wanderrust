@@ -68,7 +68,7 @@ impl Interactable {
                 tile_idx: _,
             } => Self::Door {
                 is_open: *is_open,
-                requires: requires.clone(),
+                requires: *requires,
                 tile_idx,
             },
             Self::Belligerent { name, tile_idx: _ } => Self::Belligerent {

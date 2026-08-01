@@ -116,7 +116,7 @@ pub fn ramifying(
 
     world_clock.advance_to(tick);
 
-    if entities.into_iter().any(|(_, _, is_player)| *is_player) {
+    if entities.iter().any(|(_, _, is_player)| *is_player) {
         ns.set(GameState::AwaitingInput);
         *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
         return;

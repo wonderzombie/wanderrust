@@ -146,7 +146,7 @@ pub fn toggle_inventory(
     nt_opt: Option<Single<Entity, With<InventorySubscreen>>>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    if let Some(_) = nt_opt {
+    if nt_opt.is_some() {
         next_screen.set(Screen::Playing);
     } else {
         next_screen.set(Screen::Inventory);

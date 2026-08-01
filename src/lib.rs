@@ -406,7 +406,7 @@ fn process_actions(
         Act::Pass => (),
         Act::Flask => {
             health.hp += 8;
-            flasks.0 = flasks.0 - 1;
+            flasks.0 -= 1;
         }
     }
 

@@ -66,7 +66,7 @@ impl From<Vec<(&ItemId, &Quantity)>> for Inventory {
 impl Extend<(ItemId, Quantity)> for Inventory {
     fn extend<I: IntoIterator<Item = (ItemId, Quantity)>>(&mut self, iter: I) {
         self.0
-            .extend(iter.into_iter().map(|it| ItemEntry::from(it)));
+            .extend(iter.into_iter().map(ItemEntry::from));
     }
 }
 
@@ -229,7 +229,7 @@ impl InventoryChange {
         inv.into_iter()
             .map(|entry| InventoryChange {
                 entity,
-                typ: typ,
+                typ,
                 item_id: entry.0,
                 delta: entry.1,
             })

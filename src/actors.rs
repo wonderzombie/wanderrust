@@ -54,7 +54,7 @@ const STARTING_EQUIPMENT: &[&ItemId] = &[&ItemId::Rags, &ItemId::Stick];
 
 pub fn starting_items() -> Inventory {
     Inventory::from_str_array(["gold:2", "strange key", "glowing tome", "red salve:3"])
-        .unwrap_or_else(|| Inventory::empty())
+        .unwrap_or_else(Inventory::empty)
 }
 
 /// Spawns the player entity at the start position of the tilemap on the
@@ -210,7 +210,7 @@ pub fn handle_player_input(
 }
 
 fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
-    if let Some(dir) = get_direction(&input) {
+    if let Some(dir) = get_direction(input) {
         return Some(Act::Direction(dir));
     } else if input.any_just_pressed([KeyCode::KeyP, KeyCode::Space]) {
         return Some(Act::Pass);

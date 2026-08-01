@@ -23,7 +23,7 @@ impl LootTable {
         match self.entries.choose(&mut rand::rng()) {
             Some((item, min, max)) => {
                 let qty = rand::rng().random_range(*min..=*max);
-                inventory::Inventory::with_item(item.clone(), Quantity(qty))
+                inventory::Inventory::with_item(*item, Quantity(qty))
             }
             None => inventory::Inventory::empty(),
         }
