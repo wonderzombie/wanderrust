@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{colors, gamestate::Screen, ui::theme::pcsr_font};
+use crate::{colors, ui::theme::pcsr_font};
 
 pub struct MessageLogPlugin;
 
@@ -53,7 +53,7 @@ fn update_log(
     log_entity: Single<Entity, With<MessageLog>>,
 ) {
     for LogEvent { txt, color } in log_events.read() {
-        let out_txt = format!("{}", txt.to_ascii_uppercase());
+        let out_txt = txt.to_ascii_uppercase().to_string();
         let out_color = color.unwrap_or(colors::KENNEY_OFF_WHITE);
         let log_nt = *log_entity;
 
