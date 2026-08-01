@@ -2,15 +2,9 @@ use bevy::prelude::*;
 
 use crate::{colors, ui::theme::pcsr_font};
 
-pub struct MessageLogPlugin;
-
-impl Plugin for MessageLogPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_message::<LogEvent>()
-            // .add_systems(OnEnter(Screen::Playing), setup)
-            // .add_systems(OnExit(Screen::Playing), discard)
-            .add_systems(Update, update_log);
-    }
+pub(crate) fn plugin(app: &mut App) {
+    app.add_message::<LogEvent>()
+        .add_systems(Update, update_log);
 }
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
@@ -65,7 +59,6 @@ fn update_log(
             Text::new(out_txt)
             TextColor(out_color)
             ChildOf(log_nt)
-
         });
     }
 }

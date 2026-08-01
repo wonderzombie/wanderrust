@@ -9,15 +9,8 @@ use crate::{
     ui::theme,
 };
 
-pub struct StatusPanelPlugin;
-
-impl Plugin for StatusPanelPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            // .add_systems(OnEnter(Screen::Playing), setup)
-            // .add_systems(OnExit(Screen::Playing), discard)
-            .add_systems(Update, update_labels.run_if(in_state(Screen::Playing)));
-    }
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(Update, update_labels.run_if(in_state(Screen::Playing)));
 }
 
 #[derive(Component, Copy, Clone, Debug, Default)]

@@ -125,11 +125,11 @@ pub fn run() {
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
-    .add_plugins(status_panel::StatusPanelPlugin)
+    .add_plugins(status_panel::plugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)
-    .add_plugins(message_log::MessageLogPlugin)
+    .add_plugins(message_log::plugin)
     .add_plugins(intro_screen::plugin)
     .add_plugins(ui::plugin)
     .add_systems(
