@@ -24,7 +24,6 @@ pub struct StatusPanel;
 #[derive(Component, Copy, Clone, Debug, FromTemplate)]
 pub enum Label {
     #[default]
-    None,
     Hp,
     Flasks,
     Ticks,
@@ -48,10 +47,6 @@ fn update_labels(
             Label::Flasks => format!("FR: {}", flasks.0),
             Label::Ticks => format!("T:  {}", *clock),
             Label::Cell => format!("C:  {}", *cell),
-            _ => {
-                error!("found invalid label: {:?} {:?}", text, label);
-                return;
-            }
         };
         text.set_if_neq(Text::new(new_text));
     }
