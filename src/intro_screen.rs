@@ -1,10 +1,11 @@
 use std::time::Duration;
 
-use bevy::{prelude::*, text::FontSourceTemplate};
+use bevy::prelude::*;
 
 use crate::{
     gamestate::{GameState, Screen},
     typewriter::{FinishNow, Finished, Typewriter},
+    ui::theme::pcsr_font,
 };
 
 pub fn plugin(app: &mut App) {
@@ -27,17 +28,6 @@ fn setup(mut commands: Commands) {
 fn discard(mut commands: Commands, screen: Single<Entity, With<IntroScreen>>) {
     info!("discard");
     commands.entity(*screen).despawn();
-}
-
-fn pcsr_font(font_size: i32) -> impl Scene {
-    let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
-    bsn! {
-        TextFont {
-            font,
-            font_size: px(font_size),
-            font_smoothing: FontSmoothing::None
-        }
-    }
 }
 
 fn screen_bundle() -> impl Scene {

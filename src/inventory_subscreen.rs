@@ -1,4 +1,4 @@
-use bevy::{prelude::*, text::FontSourceTemplate};
+use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
@@ -8,6 +8,7 @@ use crate::{
     inventory::{CarriedBy, Carrying},
     items::{ItemId, Quantity},
     message_log::LogEvent,
+    ui::theme::pcsr_font,
 };
 
 pub struct InventorySubscreenPlugin;
@@ -62,13 +63,6 @@ pub struct ItemList;
 
 #[derive(Component, Clone)]
 pub struct ItemRow;
-
-fn pcsr_font(font_size: i32) -> impl Scene {
-    let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
-    bsn! {
-        TextFont { font, font_size: px(font_size) }
-    }
-}
 
 fn populate(
     mut commands: Commands,

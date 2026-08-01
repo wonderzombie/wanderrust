@@ -1,7 +1,9 @@
-use bevy::{prelude::*, text::FontSourceTemplate};
+use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::{colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter};
+use crate::{
+    colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter, ui::theme::pcsr_font,
+};
 
 pub struct TitleScreenPlugin;
 
@@ -19,14 +21,6 @@ pub struct TitleScreen;
 
 #[derive(Component, Clone, Reflect, Debug, Default)]
 struct TitleText;
-
-/// Set up and show the title screen using Bevy's UI APIs.
-fn pcsr_font(font_size: i32) -> impl Scene {
-    let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
-    bsn! {
-        TextFont { font, font_size: px(font_size), font_smoothing: FontSmoothing::None }
-    }
-}
 
 pub fn setup(mut commands: Commands) {
     commands.spawn_scene(screen_bundle());

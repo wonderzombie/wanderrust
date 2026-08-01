@@ -1,4 +1,4 @@
-use bevy::{prelude::*, text::FontSourceTemplate};
+use bevy::prelude::*;
 
 use crate::{
     actors::{Flasks, Player},
@@ -6,6 +6,7 @@ use crate::{
     colors,
     gamestate::{Screen, WorldClock},
     parameters::Health,
+    ui::theme::pcsr_font,
 };
 
 pub struct StatusPanelPlugin;
@@ -53,13 +54,6 @@ fn update_labels(
             }
         };
         text.set_if_neq(Text::new(new_text));
-    }
-}
-
-fn pcsr_font(font_size: i32) -> impl Scene {
-    let font = FontSourceTemplate::Handle("fonts/pcsenior.ttf".into());
-    bsn! {
-        TextFont { font, font_size: px(font_size) }
     }
 }
 

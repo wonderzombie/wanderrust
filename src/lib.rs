@@ -35,6 +35,7 @@ pub mod tiles;
 mod title_screen;
 mod tooltip;
 mod typewriter;
+mod ui;
 
 use bevy::{
     asset::io::web::WebAssetPlugin,
