@@ -85,7 +85,7 @@ pub struct LdtkEntity {
     pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.
     #[serde(rename = "__tile", default)]
-    pub tile: LdtkPxTile,
+    pub tile: Option<LdtkPxTile>,
     pub field_instances: Vec<LdtkField>,
 }
 
@@ -143,7 +143,7 @@ impl LdtkEntity {
     }
 
     pub fn get_tile(&self) -> TileIdx {
-        self.tile.into()
+        self.tile.unwrap_or_default().into()
     }
 }
 
@@ -174,6 +174,7 @@ impl From<TileIdx> for LdtkGridTile {
     }
 }
 
+/// Describes a tile's coordinates in the LDtk atlas.
 #[derive(Debug, Deserialize, Default, Copy, Clone)]
 pub struct LdtkPxTile {
     #[serde(rename = "x")]
@@ -248,12 +249,19 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
             };
 
             if layer.layer_type.eq_ignore_ascii_case("tiles") {
-                info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
-                spec.tiles.extend(get_grid_tiles(
-                    &layer.grid_tiles,
-                    level.px_hei,
-                    level.world_depth,
-                ));
+                if layer.grid_tiles.is_empty() {
+                    warn!(
+                        "level {} ({}) layer {} has no tiles; for levels with only auto tiles, this is ok",
+                        level.identifier, level_id, layer.layer_type
+                    );
+                } else {
+                    info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
+                    spec.tiles.extend(get_grid_tiles(
+                        &layer.grid_tiles,
+                        level.px_hei,
+                        level.world_depth,
+                    ));
+                }
             }
 
             if layer.layer_type.eq_ignore_ascii_case("entities") {
@@ -262,7 +270,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                     let cell = actor.ldtk_cell.to_wandrs(layer.c_height, spec.depth);
 
                     if actor.get_tile() == TileIdx::default() {
-                        warn!("actor has default tile: {:?}", actor);
+                        warn!("LDtk entity has default or empty tile: {:?}", actor);
                     }
 
                     match ParsedActor::from_ldtk(actor) {
@@ -306,14 +314,16 @@ fn get_grid_tiles(
         }
         new_tiles.push((tile_idx, cell));
     }
-    if blank == grid_tiles.len() {
-        error!("🧰 {blank} out of {} tiles were blank", grid_tiles.len());
-    }
-    if nzero == grid_tiles.len() {
-        error!(
-            "🧰 {nzero} out of {} tiles were at (0, 0)",
-            grid_tiles.len()
-        );
+    if grid_tiles.len() > 0 {
+        if blank == grid_tiles.len() {
+            error!("🧰 {blank} out of {} tiles were blank", grid_tiles.len());
+        }
+        if nzero == grid_tiles.len() {
+            error!(
+                "🧰 {nzero} out of {} tiles were at (0, 0)",
+                grid_tiles.len()
+            );
+        }
     }
     new_tiles
 }
@@ -404,10 +414,7 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
             LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
             LdtkActor::Spawn => Some(Self::Spawn),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
-            LdtkActor::Unset => {
-                warn!("unknown LdtkEntity type: {entity:#?}");
-                None
-            }
+            LdtkActor::Unset => None,
         }
     }
 }
