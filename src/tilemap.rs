@@ -161,7 +161,8 @@ impl Dimensions {
 
     #[inline]
     fn cell_to_idx(&self, cell: &Cell) -> usize {
-        (cell.y * self.width as i32 + cell.x) as usize
+        (cell.y.abs().saturating_mul(self.width as i32) as i32).saturating_add(cell.x) as usize
+        // (cell.y * self.width as i32 + cell.x) as usize
     }
 }
 
