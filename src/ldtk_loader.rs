@@ -58,6 +58,7 @@ pub struct LdtkLayer {
     #[serde(rename = "__type")]
     pub layer_type: String,
     pub grid_tiles: Vec<LdtkGridTile>,
+    pub auto_layer_tiles: Vec<LdtkGridTile>,
     #[serde(rename = "entityInstances", default)]
     pub entities: Vec<LdtkEntity>,
     #[serde(rename = "__cWid")]
@@ -248,21 +249,14 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                 ..default()
             };
 
-            if layer.layer_type.eq_ignore_ascii_case("tiles") {
-                if layer.grid_tiles.is_empty() {
-                    warn!(
-                        "level {} ({}) layer {} has no tiles; for levels with only auto tiles, this is ok",
-                        level.identifier, level_id, layer.layer_type
-                    );
-                } else {
-                    info!("🧰 loading {} grid tiles", layer.grid_tiles.len());
-                    spec.tiles.extend(get_grid_tiles(
-                        &layer.grid_tiles,
-                        level.px_hei,
-                        level.world_depth,
-                    ));
-                }
-            }
+            let tiles = match layer.layer_type.to_lowercase().as_ref() {
+                "autolayer" => &layer.auto_layer_tiles,
+                "tiles" => &layer.grid_tiles,
+                _ => &vec![],
+            };
+
+            spec.tiles
+                .extend(get_grid_tiles(tiles, level.px_hei, level.world_depth));
 
             if layer.layer_type.eq_ignore_ascii_case("entities") {
                 info!("🧰 loading {} entities", layer.entities.len());
