@@ -479,7 +479,7 @@ pub fn initialize_tile_storage(
             num_cells += 1;
         }
         info!(
-            "- 📍 level {level_id}: set {num_cells}/{} tile entities ({zero_cells} zero cells)",
+            "- 📍 tile_storage: {level_id}: set {num_cells}/{} tile entities ({zero_cells} empty cells)",
             storage.len(),
         );
         commands.entity(*level_entity).insert(storage);

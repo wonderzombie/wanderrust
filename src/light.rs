@@ -272,7 +272,7 @@ pub fn spawn(
     info!("🔥 spawning emitters for {} levels", levels.count());
     for (level_id, spec) in spec.maps.iter() {
         let emitters = &spec.emitters;
-        info!("🔥 level {level_id:?} has {:?} emitters", emitters.len());
+        info!("🔥 {level_id:?} has {:?} emitters", emitters.len());
         let Some(Level(level_entity, _)) = levels.iter().find(|Level(_, id)| id == level_id) else {
             warn!("🔥 unable to find level with id {level_id:?}");
             continue;
@@ -281,7 +281,7 @@ pub fn spawn(
         let mut count = 0;
         for (emitter, cell) in emitters.iter() {
             count += 1;
-            trace!("🔥 spawning {emitter:?} at {cell:?}");
+            info!("🔥 {level_id:?}: {} at {cell}", emitter.tile_idx);
             commands.spawn((
                 *emitter,
                 emitter.tile_idx,
@@ -294,7 +294,10 @@ pub fn spawn(
             ));
         }
         if count > 0 {
-            info!("🔥 spawned {count} emitters");
+            info!(
+                "🔥 {level_id:?}: spawned {count}/{} emitters",
+                emitters.len()
+            );
         }
     }
 }
@@ -310,7 +313,7 @@ pub fn setup(
     storage: Query<Entity, With<TileStorage>>,
     world_spec: Res<WorldSpec>,
 ) {
-    for (_, spec) in world_spec.maps.iter() {
+    for (level_id, spec) in world_spec.maps.iter() {
         let mut count = 0;
         for (entity, tile_idx) in emitter_tiles {
             let Some(emitter) = Emitter::from_tile(tile_idx) else {
@@ -320,7 +323,7 @@ pub fn setup(
             count += 1;
         }
         if count > 0 {
-            info!("🔥 set up {count} emitter tiles");
+            info!("🔥 {level_id:?}: created {count} emitters from tiles");
         }
 
         count = 0;
@@ -332,7 +335,7 @@ pub fn setup(
             count += 1;
         }
         if count > 0 {
-            info!("🔥 set up {count} level light maps");
+            info!("🔥 {level_id:?}: set up {count} emitter light maps");
         }
     }
 }

@@ -10,6 +10,8 @@ use crate::{
     tiles::{MapTile, Opaque, Revealed, TileIdx},
 };
 
+const EMOJI: &str = "🔦";
+
 /// Newtype for field of view model that's a Resource and which tracks which
 /// cells are transparent for visibility calculations.
 ///
@@ -65,7 +67,7 @@ pub fn setup_fov(
 ) {
     for (Level(level_entity, level_id), dimensions, children) in level_children {
         info!(
-            "👀 {level_id:?} checking {} children",
+            "{EMOJI} {level_id:?} checking {} children",
             children.collection().len()
         );
         let tiles_count = dimensions.ntiles();
@@ -81,7 +83,7 @@ pub fn setup_fov(
         commands.entity(*level_entity).insert(fov);
 
         info!(
-            "👀 {level_id:?}: initialized FOV model with {tiles_count} tiles, {transparent_count} transparent.",
+            "{EMOJI} {level_id:?}: initialized FOV model with {tiles_count} tiles, {transparent_count} transparent.",
         )
     }
 }
@@ -109,7 +111,7 @@ pub fn update_fov_markers(
     let (cell, &ChildOf(parent_level), params, vis_opt) = *player_query;
 
     let Some((child_tiles, player_fov)) = all_fov.get(parent_level).ok() else {
-        error!("no Fov found for player's level: {parent_level:?}");
+        error!("{EMOJI} no Fov found for player's level: {parent_level:?}");
         return;
     };
 
