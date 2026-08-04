@@ -158,6 +158,7 @@ pub fn run() {
             (
                 // tilemap::spawn_tilemap,
                 tilemap::spawn_worldmap,
+                map::sync_tiles,
                 tilemap::initialize_tile_storage,
                 tilemap::setup_portals,
             )
