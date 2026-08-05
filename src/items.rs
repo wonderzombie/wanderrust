@@ -38,7 +38,7 @@ macro_rules! define_items {
             label: $label:literal,
             desc: $desc:literal,
             kind: $kind:ident // trailing comma only if there's another line
-            $(, equip: [$($slot:ident),+], mods: $mods:expr )?
+            $(, equip: [$($slot:ident),+], mods: $mods:expr, rating: $rating:expr )?
             $(,)?
         } ),* $(,)?
     ) => {
@@ -57,9 +57,13 @@ macro_rules! define_items {
                         label: $label,
                         desc: $desc,
                         kind: Kind::$kind,
-                        equip: define_items!(@equip $( [$($slot),+], $mods)? ),
+                        equip: define_items!(@equip $( [$($slot),+], $mods, $rating )? ),
                     }, )*
                 }
+            }
+
+            pub fn equip(&self) -> Option<EquipDef> {
+                self.def().equip
             }
 
             // Derives [`ItemId`] from CamelCase string matching [`ItemId`].
@@ -80,8 +84,8 @@ macro_rules! define_items {
             }
         }
     };
-    (@equip [$($slot:ident),+], $mods:expr) => {
-        Some(EquipDef{ slots: &[ $(Slot::$slot, )+ ], mods: $mods })
+    (@equip [$($slot:ident),+], $mods:expr, $rating:expr ) => {
+        Some(EquipDef{ slots: &[ $(Slot::$slot, )+ ], mods: $mods, rating: $rating })
     };
     (@equip) => { None };
 }
@@ -104,11 +108,13 @@ impl ItemId {
             (item.unwrap(), Quantity(1))
         }
     }
-}
 
-impl Display for ItemDef {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.label)
+    pub fn kind(&self) -> Kind {
+        self.def().kind
+    }
+
+    pub fn is_kind(&self, other: Kind) -> bool {
+        self.kind() == other
     }
 }
 
@@ -137,7 +143,13 @@ pub struct ItemDef {
     pub equip: Option<EquipDef>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+impl Display for ItemDef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.label)
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
 pub enum Slot {
     Armor,
     MainHand,
@@ -145,10 +157,20 @@ pub enum Slot {
     Trinket,
 }
 
+#[derive(
+    Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, Ord, PartialOrd,
+)]
+pub enum Rating {
+    C,
+    B,
+    A,
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct EquipDef {
     pub slots: &'static [Slot],
     pub mods: Modifiers,
+    pub rating: Rating,
 }
 
 define_items!(
@@ -193,6 +215,7 @@ define_items!(
         kind: Equipment,
         equip: [MainHand],
         mods: modifiers!(attack: 1),
+        rating: Rating::C,
     },
     Rags => {
         label: "rags",
@@ -200,6 +223,7 @@ define_items!(
         kind: Equipment,
         equip: [Armor],
         mods: modifiers!(defense: 1),
+        rating: Rating::C,
     },
     Sword => {
         label: "sword",
@@ -207,6 +231,7 @@ define_items!(
         kind: Equipment,
         equip: [MainHand],
         mods: modifiers!(attack: 3),
+        rating: Rating::B,
     },
     Leather => {
         label: "leather",
@@ -214,6 +239,7 @@ define_items!(
         kind: Equipment,
         equip: [Armor],
         mods: modifiers!(defense: 3),
+        rating: Rating::B,
     },
     Chainmail => {
         label: "chainmail",
@@ -221,6 +247,7 @@ define_items!(
         kind: Equipment,
         equip: [Armor],
         mods: modifiers!(defense: 5),
+        rating: Rating::A,
     },
     Shield => {
         label: "shield",
@@ -228,5 +255,6 @@ define_items!(
         kind: Equipment,
         equip: [OffHand],
         mods: modifiers!(defense: 2),
+        rating: Rating::B,
     }
 );
