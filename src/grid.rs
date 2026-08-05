@@ -11,6 +11,10 @@ use crate::{
     tiles::{TileIdx, Walkable},
 };
 
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(PostUpdate, sync_agent_pos.before(PathingSet));
+}
+
 /// A spatial index that tracks which cells are occupied by non-walkable
 /// entities in the world.
 #[derive(Component, Default, Debug, PartialEq, Eq, Reflect)]
@@ -91,7 +95,7 @@ pub fn update_grid(
 ) {
     let mut grid_changed = false;
     for (cell, is_walkable) in changed_tiles {
-        if !nav_grid.in_bounds(cell.as_vec3()) {
+        if !nav_grid.in_bounds(cell.as_uvec3()) {
             error!(
                 "Skipping attempt to update grid at out-of-bounds position {cell}; grid is {} x {}",
                 nav_grid.width(),
@@ -138,15 +142,23 @@ pub fn init_agents(
 pub fn pathfind(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
-    query: Populated<(Entity, &Awareness, Option<&Pathfind>), Without<Player>>,
+    query: Populated<
+        (
+            Entity,
+            &Awareness,
+            Option<&Pathfind>,
+            Has<PathfindingFailed>,
+        ),
+        Without<Player>,
+    >,
 ) {
     let player_cell: Cell = *player_cell.into_inner();
-    for (entity, awareness, pathfind) in &query {
+    for (entity, awareness, pathfind, failed_pathfind) in &query {
         if *awareness != Awareness::Alerted {
             continue;
         }
 
-        if pathfind.is_none_or(|pf| pf.goal.ne(&player_cell.into())) {
+        if failed_pathfind || pathfind.is_none_or(|pf| pf.goal.ne(&player_cell.into())) {
             commands
                 .entity(entity)
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
@@ -180,7 +192,7 @@ pub fn move_agents(
 
     // Since the player is non-Blocking, the path is allowed to land on the Player.
     // We process this as an attack and no movement occurs.
-    if target == player_cell.as_vec3() {
+    if target == player_cell.as_uvec3() {
         commands
             .entity(name.entity)
             .insert(clock.recovery_after(params.attack_speed));
@@ -215,4 +227,10 @@ pub fn move_agents(
         .remove::<NextPos>()
         .insert(clock.recovery_after(params.move_speed))
         .insert(Cell::at_grid_coords(agent_pos.as_ref()));
+}
+
+pub(crate) fn sync_agent_pos(agents: Populated<(&Cell, &mut AgentPos), Changed<Cell>>) {
+    for (cell, mut pos) in agents {
+        pos.set_if_neq(AgentPos(cell.into()));
+    }
 }

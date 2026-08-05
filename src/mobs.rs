@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::query::QueryData, prelude::*};
 use bevy_northstar::prelude::*;
 
 use crate::{
@@ -6,8 +6,9 @@ use crate::{
     atlas::{self, SpriteAtlas},
     cell::Cell,
     colors,
+    combat::Attack,
     fov::Fov,
-    gamestate::{GameState, Turn, WorldClock},
+    gamestate::{GameState, NextTurn, Turn, WorldClock},
     interactions::Interactable,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
@@ -39,6 +40,78 @@ pub fn check_fov(
                 .insert(Awareness::Alerted)
                 .insert_if_new(Turn)
                 .insert_if_new(clock.recovery_now());
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Behavior;
+
+#[derive(QueryData)]
+pub struct MobView {
+    name_or_nt: NameOrEntity,
+    params: &'static Parameters,
+    cell: &'static Cell,
+    agent_pos: &'static AgentPos,
+    next_pos_opt: Option<&'static NextPos>,
+    path_failed_opt: Option<&'static PathfindingFailed>,
+}
+
+impl<'w, 's> MobViewItem<'w, 's> {
+    fn decide(&self, player_nt: Entity, player_cell: &Cell, blocking: &BlockingMap) -> MobAction {
+        if self.cell.is_adjacent(player_cell) {
+            return MobAction::Attack(player_nt);
+        }
+
+        match (self.next_pos_opt, self.path_failed_opt) {
+            // No route possible
+            (_, Some(_)) => MobAction::Pass,
+            (Some(NextPos(next)), None) if blocking.0.contains_key(next) => todo!(),
+            (Some(NextPos(next)), None) => MobAction::Move(Cell::from(*next)),
+            (None, None) => MobAction::Pass,
+        }
+    }
+}
+
+enum MobAction {
+    Attack(Entity),
+    Move(Cell),
+    Pass,
+}
+
+pub fn consume_turn(
+    mut commands: Commands,
+    next_turn: If<Res<NextTurn>>,
+    mobs: Query<MobView, With<Behavior>>,
+    player: Single<(Entity, &Cell), With<Player>>,
+    mut attacks: MessageWriter<Attack>,
+    clock: Res<WorldClock>,
+    blocking: Res<BlockingMap>,
+) {
+    let NextTurn(next_nt) = **next_turn;
+    commands.remove_resource::<NextTurn>();
+
+    let Ok(mob_view) = mobs.get(next_nt) else {
+        warn!("consume_turn: {next_nt:?} not found among mobs; skipping turn");
+        return;
+    };
+
+    let (player_nt, player_cell) = *player;
+    let mut mob = commands.entity(next_nt);
+    mob.remove::<NextPos>();
+
+    match mob_view.decide(player_nt, player_cell, blocking.as_ref()) {
+        MobAction::Attack(target) => {
+            attacks.write(Attack {
+                attacker: next_nt,
+                target,
+            });
+        }
+        MobAction::Move(cell) => {
+            mob.insert((cell, clock.recovery_after(mob_view.params.move_speed)));
+        }
+        MobAction::Pass => {
+            mob.insert(clock.recovery_after(mob_view.params.move_speed));
         }
     }
 }

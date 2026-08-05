@@ -132,6 +132,7 @@ pub fn run() {
     .add_plugins(message_log::plugin)
     .add_plugins(intro_screen::plugin)
     .add_plugins(ui::plugin)
+    .add_plugins(grid::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -376,7 +377,7 @@ fn process_actions(
     let (params, mut health, mut flasks) = player.into_inner();
 
     match action.act {
-        Act::Direction(_) => {
+        Act::Move(_) => {
             let adjusted_cell = action.adjusted_cell();
 
             match spatial_index.get(adjusted_cell) {
@@ -406,7 +407,7 @@ fn process_actions(
                 }
             }
         }
-        Act::Pass => (),
+        Act::Pass | Act::Attack(_) => (),
         Act::Flask => {
             health.hp += 8;
             flasks.0 -= 1;

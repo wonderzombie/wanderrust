@@ -43,6 +43,14 @@ impl Cell {
         Cell { x, y, z: 0 }
     }
 
+    pub fn abs(self) -> Self {
+        Cell {
+            x: self.x.abs(),
+            y: self.y.abs(),
+            z: self.z.abs(),
+        }
+    }
+
     /// Creates a cell from an index and a width, converting them to i32.
     pub fn from_idx(width: u32, idx: usize) -> Cell {
         Self::from_idx_depth(width, idx, default())
@@ -64,7 +72,7 @@ impl Cell {
         }
     }
 
-    pub fn as_vec(&self) -> Vec2 {
+    pub fn as_vec2(&self) -> Vec2 {
         Vec2::new(self.x as f32, self.y as f32)
     }
 
@@ -80,8 +88,12 @@ impl Cell {
         self.x >= 0 && self.x < width as i32 && self.y >= 0 && self.y < height as i32
     }
 
-    pub fn as_vec3(&self) -> UVec3 {
-        UVec3::new(self.x as u32, self.y as u32, self.z as u32)
+    pub fn as_uvec3(&self) -> UVec3 {
+        self.into()
+    }
+
+    pub fn as_ivec3(self) -> IVec3 {
+        IVec3::new(self.x, self.y, self.z)
     }
 
     pub fn at_depth(x: i32, y: i32, z: i32) -> Self {
@@ -89,11 +101,12 @@ impl Cell {
     }
 
     pub fn at_grid_coords(agent_pos: &AgentPos) -> Self {
-        Self {
-            x: agent_pos.0.x as i32,
-            y: agent_pos.0.y as i32,
-            z: agent_pos.0.z as i32,
-        }
+        Cell::from(agent_pos.0)
+    }
+
+    pub fn is_adjacent(&self, other: &Cell) -> bool {
+        let delta: IVec3 = (other.as_ivec3().sub(self.as_ivec3())).abs();
+        delta.z == 0 && (delta.x + delta.y) == 1
     }
 }
 
@@ -117,13 +130,33 @@ impl From<&Cell> for (i32, i32) {
 
 impl From<Cell> for UVec3 {
     fn from(value: Cell) -> Self {
-        value.as_vec3()
+        UVec3 {
+            x: value.x as u32,
+            y: value.y as u32,
+            z: value.z as u32,
+        }
+    }
+}
+
+impl From<UVec3> for Cell {
+    fn from(value: UVec3) -> Self {
+        Cell {
+            x: value.x as i32,
+            y: value.y as i32,
+            z: value.z as i32,
+        }
     }
 }
 
 impl From<&Cell> for UVec3 {
     fn from(value: &Cell) -> Self {
         (*value).into()
+    }
+}
+
+impl From<Cell> for IVec3 {
+    fn from(value: Cell) -> Self {
+        value.as_ivec3()
     }
 }
 

@@ -147,7 +147,7 @@ impl Emitter {
         for dx in -outer_radius..=outer_radius {
             for dy in -outer_radius..=outer_radius {
                 let cell = Cell::new(origin.x + dx, origin.y + dy);
-                let dist = cell.as_vec().distance(origin.as_vec());
+                let dist = cell.as_vec2().distance(origin.as_vec2());
                 if dist <= outer_radius as f32 {
                     let level = if dist <= self.inner.thickness as f32 {
                         self.inner.level
@@ -490,7 +490,7 @@ mod tests {
         let lit = e.light_cells(&origin);
 
         for (cell, level) in lit.0 {
-            let dist = cell.as_vec().distance(origin.as_vec());
+            let dist = cell.as_vec2().distance(origin.as_vec2());
             let expected = if dist <= 1.0 { Bright } else { Dim };
             assert_eq!(
                 level, expected,
@@ -516,7 +516,7 @@ mod tests {
         let origin = Cell::new(0, 0);
         let lit = e.light_cells(&origin);
         for (cell, _) in lit.0 {
-            let dist = cell.as_vec().distance(origin.as_vec());
+            let dist = cell.as_vec2().distance(origin.as_vec2());
             assert!(
                 dist <= e.total_radius() as f32,
                 "cell {:?} at dist {:.2} exceeds total radius",

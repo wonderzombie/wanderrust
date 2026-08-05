@@ -154,7 +154,7 @@ pub struct Action {
 
 impl Action {
     pub fn adjusted_cell(&self) -> Cell {
-        if let Act::Direction(dir) = self.act {
+        if let Act::Move(dir) = self.act {
             return self.origin_cell + dir;
         }
         self.origin_cell
@@ -174,9 +174,10 @@ impl Display for Action {
 #[derive(Resource, Debug, Reflect)]
 #[reflect(Component)]
 pub enum Act {
-    Direction(IVec2),
+    Move(IVec2),
     Pass,
     Flask,
+    Attack((Entity, Entity)),
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -211,7 +212,7 @@ pub fn handle_player_input(
 
 fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
     if let Some(dir) = get_direction(input) {
-        return Some(Act::Direction(dir));
+        return Some(Act::Move(dir));
     } else if input.any_just_pressed([KeyCode::KeyP, KeyCode::Space]) {
         return Some(Act::Pass);
     } else if input.any_just_released([KeyCode::KeyF])
