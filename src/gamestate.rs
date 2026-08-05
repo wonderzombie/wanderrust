@@ -45,7 +45,6 @@ pub enum Screen {
     Title,
     Intro,
     Playing,
-    Modal,
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]

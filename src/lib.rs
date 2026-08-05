@@ -10,6 +10,7 @@ pub mod debug;
 mod diagnostics;
 mod effects;
 mod equipment;
+mod equipment_menu;
 mod fov;
 pub mod gamestate;
 mod grid;
@@ -126,6 +127,7 @@ pub fn run() {
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_menu::InventoryMenuPlugin)
+    .add_plugins(equipment_menu::EquipmentMenuPlugin)
     .add_plugins(status_panel::plugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)

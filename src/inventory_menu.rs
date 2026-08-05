@@ -6,7 +6,7 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors,
-    gamestate::{MenuSelection, Modal, Screen, SelectedItem},
+    gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::{ItemId, Quantity},
     message_log::LogEvent,
@@ -79,7 +79,7 @@ fn populate(
         .iter_many(inventory.iter())
         .map(|(itam, qty)| {
             let label = if qty.0 > 1 {
-                format! {"{} ({})", itam.def(), qty}
+                format!("{} ({})", itam.def(), qty)
             } else {
                 itam.def().to_string()
             };
@@ -140,14 +140,11 @@ pub fn scene() -> impl Scene {
 pub fn toggle_inventory(
     _event: On<ToggleUi>,
     nt_opt: Option<Single<Entity, With<InventoryMenu>>>,
-    mut next_screen: ResMut<NextState<Screen>>,
     mut next_modal: ResMut<NextState<Modal>>,
 ) {
     if nt_opt.is_some() {
-        next_screen.set(Screen::Playing);
         next_modal.set(Modal::None);
     } else {
-        next_screen.set(Screen::Modal);
         next_modal.set(Modal::Inventory);
     }
 }
