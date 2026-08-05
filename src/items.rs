@@ -184,9 +184,16 @@ define_items!(
         equip: [Armor],
         mods: modifiers!(defense: 1),
     },
+    Sword => {
+        label: "sword",
+        desc: "better than a stick.",
+        kind: Equipment,
+        equip: [MainHand],
+        mods: modifiers!(attack: 3),
+    },
     Leather => {
         label: "leather",
-        desc: "boiled leather.",
+        desc: "stiff boiled leather.",
         kind: Equipment,
         equip: [Armor],
         mods: modifiers!(defense: 3),

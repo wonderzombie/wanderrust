@@ -4332,10 +4332,13 @@
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:10"], "__tile": null, "defUid": 10, "realEditorValues": [{
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": [ "gold:15", "leather" ], "__tile": null, "defUid": 10, "realEditorValues": [ {
 									"id": "V_String",
-									"params": ["gold:10"]
-								}] },
+									"params": ["gold:15"]
+								}, {
+									"id": "V_String",
+									"params": ["leather"]
+								} ] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 23, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "defUid": 62, "realEditorValues": [] },
 								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "defUid": 61, "realEditorValues": [] }
@@ -4373,7 +4376,7 @@
 						},
 						{
 							"__identifier": "DoorBrown4",
-							"__grid": [9,5],
+							"__grid": [3,6],
 							"__pivot": [0,0],
 							"__tags": ["door"],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 },
@@ -4382,7 +4385,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 32,
-							"px": [144,80],
+							"px": [48,96],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [{
 									"id": "V_String",
@@ -4393,8 +4396,8 @@
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "defUid": 66, "realEditorValues": [] },
 								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "defUid": 51, "realEditorValues": [] }
 							],
-							"__worldX": 144,
-							"__worldY": 80
+							"__worldX": 48,
+							"__worldY": 96
 						},
 						{
 							"__identifier": "Pot",
@@ -4413,7 +4416,10 @@
 									"id": "V_String",
 									"params": ["Chest"]
 								}] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:12"], "__tile": null, "defUid": 70, "realEditorValues": [null] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:6"], "__tile": null, "defUid": 70, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["gold:6"]
+								}] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 71, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "defUid": 73, "realEditorValues": [] }
 							],
@@ -4515,7 +4521,7 @@
 						},
 						{
 							"__identifier": "Candle",
-							"__grid": [4,3],
+							"__grid": [1,5],
 							"__pivot": [0,0],
 							"__tags": ["emitter"],
 							"__tile": { "tilesetUid": 2, "x": 48, "y": 240, "w": 16, "h": 16 },
@@ -4524,13 +4530,13 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 21,
-							"px": [64,48],
+							"px": [16,80],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Emitter", "__tile": null, "defUid": 87, "realEditorValues": [] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 48, "y": 240, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 48, "y": 240, "w": 16, "h": 16 }, "defUid": 47, "realEditorValues": [] }
 							],
-							"__worldX": 64,
-							"__worldY": 48
+							"__worldX": 16,
+							"__worldY": 80
 						},
 						{
 							"__identifier": "Candle",
@@ -4685,7 +4691,10 @@
 							"px": [128,224],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 70, "realEditorValues": [] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:2"], "__tile": null, "defUid": 70, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["gold:2"]
+								}] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 71, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "defUid": 73, "realEditorValues": [] }
 							],
@@ -4706,7 +4715,10 @@
 							"px": [192,144],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 70, "realEditorValues": [] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:6"], "__tile": null, "defUid": 70, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["gold:6"]
+								}] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 71, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "defUid": 73, "realEditorValues": [] }
 							],
@@ -4727,7 +4739,10 @@
 							"px": [16,16],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:12"], "__tile": null, "defUid": 70, "realEditorValues": [null] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:12"], "__tile": null, "defUid": 70, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["gold:12"]
+								}] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 71, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "defUid": 73, "realEditorValues": [] }
 							],
@@ -4752,6 +4767,53 @@
 								{ "__identifier": "inventory", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 125, "realEditorValues": [] }
 							],
 							"__worldX": 32,
+							"__worldY": 16
+						},
+						{
+							"__identifier": "DoorBrown4",
+							"__grid": [9,5],
+							"__pivot": [0,0],
+							"__tags": ["door"],
+							"__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 },
+							"__smartColor": "#FEE761",
+							"iid": "86f1fe70-6fc0-11f1-b888-f94f26ade4bb",
+							"width": 16,
+							"height": 16,
+							"defUid": 32,
+							"px": [144,80],
+							"fieldInstances": [
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Door", "__tile": null, "defUid": 44, "realEditorValues": [] },
+								{ "__identifier": "requires", "__type": "String", "__value": null, "__tile": null, "defUid": 33, "realEditorValues": [] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 34, "realEditorValues": [] },
+								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 144, "w": 16, "h": 16 }, "defUid": 66, "realEditorValues": [] },
+								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 144, "w": 16, "h": 16 }, "defUid": 51, "realEditorValues": [] }
+							],
+							"__worldX": 144,
+							"__worldY": 80
+						},
+						{
+							"__identifier": "ChestBrown",
+							"__grid": [14,1],
+							"__pivot": [0,0],
+							"__tags": ["chest"],
+							"__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 },
+							"__smartColor": "#FEAE34",
+							"iid": "dbc11d50-6fc0-11f1-b888-85c1310ec138",
+							"width": 16,
+							"height": 16,
+							"defUid": 4,
+							"px": [224,16],
+							"fieldInstances": [
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["sword"], "__tile": null, "defUid": 10, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sword"]
+								}] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 23, "realEditorValues": [] },
+								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "defUid": 62, "realEditorValues": [] },
+								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "defUid": 61, "realEditorValues": [] }
+							],
+							"__worldX": 224,
 							"__worldY": 16
 						}
 					]
