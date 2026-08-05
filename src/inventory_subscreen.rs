@@ -17,13 +17,13 @@ pub struct InventorySubscreenPlugin;
 
 impl Plugin for InventorySubscreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Screen::Inventory), (setup, populate).chain())
-            .add_systems(OnExit(Screen::Inventory), discard)
+        app.add_systems(OnEnter(Modal::Inventory), (setup, populate).chain())
+            .add_systems(OnExit(Modal::Inventory), discard)
             .add_systems(
                 Update,
                 (
-                    interaction_system.run_if(in_state(Screen::Inventory)),
-                    update_highlighted.run_if(in_state(Screen::Inventory)),
+                    interaction_system.run_if(in_state(Modal::Inventory)),
+                    update_highlighted.run_if(in_state(Modal::Inventory)),
                 ),
             )
             .init_resource::<PrevSelection>()
@@ -141,11 +141,14 @@ pub fn toggle_inventory(
     _event: On<ToggleUi>,
     nt_opt: Option<Single<Entity, With<InventorySubscreen>>>,
     mut next_screen: ResMut<NextState<Screen>>,
+    mut next_modal: ResMut<NextState<Modal>>,
 ) {
     if nt_opt.is_some() {
         next_screen.set(Screen::Playing);
+        next_modal.set(Modal::None);
     } else {
-        next_screen.set(Screen::Inventory);
+        next_screen.set(Screen::Modal);
+        next_modal.set(Modal::Inventory);
     }
 }
 
