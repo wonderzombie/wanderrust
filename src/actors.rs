@@ -9,7 +9,7 @@ use crate::{
     combat::CombatantBundle,
     equipment::EquippedBy,
     inventory::{Inventory, InventoryChange},
-    inventory_subscreen::ToggleUi,
+    inventory_menu::ToggleUi,
     items::ItemId,
     light::{Emitter, LightLevel},
     message_log::LogEvent,

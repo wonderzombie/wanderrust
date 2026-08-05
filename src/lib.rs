@@ -16,7 +16,7 @@ mod grid;
 mod interactions;
 mod intro_screen;
 mod inventory;
-mod inventory_subscreen;
+mod inventory_menu;
 mod items;
 mod ldtk_loader;
 pub mod light;
@@ -49,7 +49,7 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Recovery, Screen, TurnDelay, WorldClock},
+    gamestate::{GameState, Modal, Recovery, Screen, TurnDelay, WorldClock},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
@@ -120,11 +120,12 @@ pub fn run() {
         ..Default::default()
     })
     .insert_state(GameState::Starting)
+    .insert_state(Modal::None)
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(typewriter::plugin)
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
-    .add_plugins(inventory_subscreen::InventorySubscreenPlugin)
+    .add_plugins(inventory_menu::InventoryMenuPlugin)
     .add_plugins(status_panel::plugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)

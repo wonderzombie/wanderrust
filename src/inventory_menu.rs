@@ -13,9 +13,9 @@ use crate::{
     ui::theme::pcsr_font,
 };
 
-pub struct InventorySubscreenPlugin;
+pub struct InventoryMenuPlugin;
 
-impl Plugin for InventorySubscreenPlugin {
+impl Plugin for InventoryMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(Modal::Inventory), (setup, populate).chain())
             .add_systems(OnExit(Modal::Inventory), discard)
@@ -32,7 +32,7 @@ impl Plugin for InventorySubscreenPlugin {
 }
 
 #[derive(Component, Copy, Clone, Debug, Default)]
-pub struct InventorySubscreen;
+pub struct InventoryMenu;
 
 #[derive(Event, Debug)]
 pub struct ToggleUi;
@@ -47,7 +47,7 @@ pub fn setup(mut commands: Commands) {
 
 fn discard(
     mut commands: Commands,
-    screen: Single<Entity, With<InventorySubscreen>>,
+    screen: Single<Entity, With<InventoryMenu>>,
     curr_selection: Single<(&MenuSelection, &Children)>,
     mut prev_selection: ResMut<PrevSelection>,
 ) {
@@ -105,7 +105,7 @@ fn populate(
 
 pub fn screen_bundle() -> impl Scene {
     bsn! {
-        InventorySubscreen
+        InventoryMenu
         BackgroundColor(Color::BLACK)
         Node {
             min_width: px(196),
@@ -139,7 +139,7 @@ pub fn screen_bundle() -> impl Scene {
 
 pub fn toggle_inventory(
     _event: On<ToggleUi>,
-    nt_opt: Option<Single<Entity, With<InventorySubscreen>>>,
+    nt_opt: Option<Single<Entity, With<InventoryMenu>>>,
     mut next_screen: ResMut<NextState<Screen>>,
     mut next_modal: ResMut<NextState<Modal>>,
 ) {
