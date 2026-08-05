@@ -1,3 +1,17 @@
+/// inventory is an interface to inventory and equipment systems.
+/// If you want to read items, the [`Inventory`] resource is a snapshot.
+/// Use [`InventoryChange`] to add or remove items from the player's inventory.
+/// Messages ensure that the order of acquisition or loss is preserved.
+///
+/// [`ItemId`] and [`Quantity`] from `crate::items` are marker components. Every
+/// item has a `def()`. Only equipment has `equip()`. See [`ItemId`] for details.
+///
+///
+///
+/// When an receives an item, the item is created if it doesn't exist; the item
+/// receives [`CarriedBy`]; and the player recieves an addendum to [`Carrying`].
+///
+/// The [`Inventory`] resource is a convenient snapshot.
 use bevy::{
     ecs::message::{Message, MessageReader},
     log::info,
