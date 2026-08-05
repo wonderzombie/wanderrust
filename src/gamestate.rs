@@ -45,7 +45,15 @@ pub enum Screen {
     Title,
     Intro,
     Playing,
+    Modal,
+}
+
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Modal {
+    #[default]
+    None,
     Inventory,
+    Equipment,
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
