@@ -71,6 +71,17 @@ pub enum GameState {
     Menu,
 }
 
+// Menu doesn't have but one possible reference, so this makes Selection a
+// singleton *for a specific Menu* due to the Bevy relationship system.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
+#[relationship(relationship_target = MenuSelection)]
+pub struct SelectedItem(pub Entity);
+
+// Each Menu entity can have a single Selection.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate, Deref)]
+#[relationship_target(relationship = SelectedItem)]
+pub struct MenuSelection(Entity);
+
 /// Represents the current turn state of an actor.
 #[derive(Component, Debug, Default, PartialEq, Eq, Reflect)]
 pub struct Turn;

@@ -1,10 +1,12 @@
+use std::ops::Deref;
+
 use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
     actors::Player,
     colors,
-    gamestate::Screen,
+    gamestate::{MenuSelection, Modal, Screen, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::{ItemId, Quantity},
     message_log::LogEvent,
@@ -46,12 +48,12 @@ pub fn setup(mut commands: Commands) {
 fn discard(
     mut commands: Commands,
     screen: Single<Entity, With<InventorySubscreen>>,
-    curr_selection: Single<(&Menu, &Children)>,
+    curr_selection: Single<(&MenuSelection, &Children)>,
     mut prev_selection: ResMut<PrevSelection>,
 ) {
     let (menu, children) = *curr_selection;
 
-    if let Some(idx) = children.iter().position(|e| menu.0 == e) {
+    if let Some(idx) = children.iter().position(|e| *menu.deref() == e) {
         prev_selection.0 = idx;
     }
 
@@ -97,7 +99,7 @@ fn populate(
         .collect_vec();
 
     if let Some(row_nt) = rows.get(prev_selection.0.clamp(0, rows.len() - 1)) {
-        commands.entity(*row_nt).insert(Selection(list_nt));
+        commands.entity(*row_nt).insert(SelectedItem(list_nt));
     }
 }
 
@@ -168,21 +170,10 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     }
 }
 
-// Menu doesn't have but one possible reference, so this makes Selection a
-// singleton *for a specific Menu* due to the Bevy relationship system.
-#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
-#[relationship(relationship_target = Menu)]
-pub struct Selection(pub Entity);
-
-// Each Menu entity can have a single Selection.
-#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
-#[relationship_target(relationship = Selection)]
-pub struct Menu(Entity);
-
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    selected_nt: Single<Entity, With<Selection>>,
+    selected_nt: Single<Entity, With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<ItemList>>,
     itam_texts: Query<&Text, With<ItemRow>>,
     mut log: MessageWriter<LogEvent>,
@@ -230,7 +221,7 @@ fn interaction_system(
     // As the Menu component can only contain a single entity,
     // there's only ever one ItemRow with Selection.
     if let Some(nt) = menu_items.iter().nth(next_idx) {
-        commands.entity(nt).insert(Selection(menu_nt));
+        commands.entity(nt).insert(SelectedItem(menu_nt));
     } else {
         error!("unable to change selection from {} to {}", idx, next_idx);
     }
@@ -238,7 +229,7 @@ fn interaction_system(
 
 fn update_highlighted(
     mut commands: Commands,
-    highlighted: Single<Entity, Added<Selection>>,
+    highlighted: Single<Entity, Added<SelectedItem>>,
     menu: Single<&Children, With<ItemList>>,
 ) {
     for &text_nt in menu.into_iter() {
