@@ -42,12 +42,12 @@ struct PrevSelection(usize);
 
 /// Set up and show the title screen using Bevy's UI APIs.
 pub fn setup(mut commands: Commands) {
-    commands.spawn_scene(screen_bundle());
+    commands.spawn_scene(scene());
 }
 
 fn discard(
     mut commands: Commands,
-    screen: Single<Entity, With<InventoryMenu>>,
+    scene: Single<Entity, With<InventoryMenu>>,
     curr_selection: Single<(&MenuSelection, &Children)>,
     mut prev_selection: ResMut<PrevSelection>,
 ) {
@@ -57,7 +57,7 @@ fn discard(
         prev_selection.0 = idx;
     }
 
-    commands.entity(*screen).despawn();
+    commands.entity(*scene).despawn();
 }
 
 #[derive(Component, Clone, Default)]
@@ -103,7 +103,7 @@ fn populate(
     }
 }
 
-pub fn screen_bundle() -> impl Scene {
+pub fn scene() -> impl Scene {
     bsn! {
         InventoryMenu
         BackgroundColor(Color::BLACK)
