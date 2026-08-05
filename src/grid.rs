@@ -166,69 +166,6 @@ pub fn pathfind(
     }
 }
 
-pub fn move_agents(
-    mut query: Populated<(NameOrEntity, &mut AgentPos, &NextPos, &Parameters), With<Turn>>,
-    player: Single<(Entity, &Cell), With<Player>>,
-    mut attacks: MessageWriter<combat::Attack>,
-    blocking: Res<BlockingMap>,
-    mut commands: Commands,
-    next_turn: If<Res<NextTurn>>,
-    clock: Res<WorldClock>,
-) {
-    let (player, player_cell) = *player;
-
-    let NextTurn(entity) = **next_turn;
-    // Consume the current turn regardless.
-    commands.remove_resource::<NextTurn>();
-
-    let Ok((name, mut agent_pos, next_pos, params)) = query.get_mut(entity) else {
-        error!("next turn is assigned to an entity that doesn't exist; skipping");
-        return;
-    };
-
-    let target = next_pos.0;
-
-    trace!("🧭 entity {name} {entity:?}: from {agent_pos:?} to {next_pos:?}",);
-
-    // Since the player is non-Blocking, the path is allowed to land on the Player.
-    // We process this as an attack and no movement occurs.
-    if target == player_cell.as_uvec3() {
-        commands
-            .entity(name.entity)
-            .insert(clock.recovery_after(params.attack_speed));
-        attacks.write(combat::Attack {
-            attacker: entity,
-            target: player,
-        });
-        return;
-    }
-
-    if blocking.0.get(&target).is_some() {
-        // Skip movement for this turn. The pathfinding pipeline will have
-        // the opportunity to recompute the next step in case that's needed.
-        // This avoids a stale NextPos that may no longer be valid the next
-        // time this system runs. A full move_speed recovery cost is charged
-        // so the clock still advances and the scheduler isn't monopolized.
-        commands
-            .entity(entity)
-            .remove::<NextPos>()
-            .insert(clock.recovery_after(params.move_speed));
-        return;
-    }
-
-    // The target position is not blocked by another non-player agent.
-    // Set the AgentPos (the grid's model of occupancy) to the new position.
-    agent_pos.0 = target;
-    // Remove `NextPos` and update the Cell using the new AgentPos, thus
-    // syncing the bevy_northstar grid with the wanderrust grid, thus
-    // actuating the move from wanderrust's perspective.
-    commands
-        .entity(entity)
-        .remove::<NextPos>()
-        .insert(clock.recovery_after(params.move_speed))
-        .insert(Cell::at_grid_coords(agent_pos.as_ref()));
-}
-
 pub(crate) fn sync_agent_pos(agents: Populated<(&Cell, &mut AgentPos), Changed<Cell>>) {
     for (cell, mut pos) in agents {
         pos.set_if_neq(AgentPos(cell.into()));

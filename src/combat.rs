@@ -9,6 +9,7 @@ use crate::{
     gamestate::{Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
+    mobs::Behavior,
     parameters::*,
     tiles::TileIdx,
 };
@@ -30,9 +31,11 @@ pub fn detect_belligerents(
 ) {
     for (entity, interx) in interxs {
         if let Interactable::Belligerent { name, .. } = interx {
-            commands
-                .entity(entity)
-                .insert((CombatantBundle::default(), Name::new(name.clone())));
+            commands.entity(entity).insert((
+                Behavior::default(),
+                CombatantBundle::default(),
+                Name::new(name.clone()),
+            ));
         }
     }
 }

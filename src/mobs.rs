@@ -1,5 +1,6 @@
 use bevy::{ecs::query::QueryData, prelude::*};
 use bevy_northstar::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::{Dead, Player},
@@ -44,12 +45,18 @@ pub fn check_fov(
     }
 }
 
-#[derive(Component)]
-pub struct Behavior;
+#[derive(
+    Component, Debug, Clone, Copy, Default, PartialEq, Eq, Reflect, Serialize, Deserialize,
+)]
+pub enum Behavior {
+    #[default]
+    Melee,
+}
 
-#[derive(QueryData)]
+#[derive(QueryData, Debug)]
+#[query_data(derive(Debug))]
 pub struct MobView {
-    name_or_nt: NameOrEntity,
+    entity: Entity,
     params: &'static Parameters,
     cell: &'static Cell,
     agent_pos: &'static AgentPos,
@@ -64,11 +71,26 @@ impl<'w, 's> MobViewItem<'w, 's> {
         }
 
         match (self.next_pos_opt, self.path_failed_opt) {
-            // No route possible
-            (_, Some(_)) => MobAction::Pass,
-            (Some(NextPos(next)), None) if blocking.0.contains_key(next) => todo!(),
-            (Some(NextPos(next)), None) => MobAction::Move(Cell::from(*next)),
-            (None, None) => MobAction::Pass,
+            // No route possible.
+            (_, Some(_)) => {
+                info!("no route\n{self:?}");
+                MobAction::Pass
+            }
+            // Something is blocking the way.
+            (Some(NextPos(next)), None) if blocking.0.contains_key(next) => {
+                info!("something blocks {next:?}\n{self:?}");
+                MobAction::Pass
+            }
+            // The next position is open.
+            (Some(NextPos(next)), None) => {
+                info!("moving towards {next:?}\n{self:?}");
+                MobAction::Move(Cell::from(*next))
+            }
+            // We're not pathing if there's no failure and no next position.
+            (None, None) => {
+                info!("no route and no failure\n{self:?}");
+                MobAction::Pass
+            }
         }
     }
 }
@@ -102,15 +124,18 @@ pub fn consume_turn(
 
     match mob_view.decide(player_nt, player_cell, blocking.as_ref()) {
         MobAction::Attack(target) => {
+            info!("{next_nt}: attack {target}");
             attacks.write(Attack {
                 attacker: next_nt,
                 target,
             });
         }
         MobAction::Move(cell) => {
+            info!("{next_nt}: move {cell}");
             mob.insert((cell, clock.recovery_after(mob_view.params.move_speed)));
         }
         MobAction::Pass => {
+            info!("{next_nt}: wait");
             mob.insert(clock.recovery_after(mob_view.params.move_speed));
         }
     }

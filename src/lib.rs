@@ -230,8 +230,7 @@ pub fn run() {
                 .chain()
                 .in_set(GameSystem::Light)
                 .after(GameSystem::Fov),
-            // TODO: consider if check_fov should be in fov
-            (mobs::check_fov, grid::pathfind, grid::move_agents)
+            (mobs::check_fov, grid::pathfind, mobs::consume_turn)
                 .chain()
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::Fov)
@@ -407,11 +406,19 @@ fn process_actions(
                 }
             }
         }
-        Act::Pass | Act::Attack(_) => (),
+        Act::Pass => {
+            commands
+                .entity(action.entity)
+                .insert(clock.recovery_after(params.move_speed));
+        }
         Act::Flask => {
             health.hp += 8;
             flasks.0 -= 1;
+            commands
+                .entity(action.entity)
+                .insert(clock.recovery_after(params.move_speed));
         }
+        Act::Attack(_) => todo!(),
     }
 
     trace!("ramifying actions");

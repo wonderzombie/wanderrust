@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 use std::{collections::BTreeMap, fmt::Display};
 
-use crate::actors::Player;
+use crate::{actors::Player, tiles::Revealed};
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct WorldClock(usize);
@@ -80,7 +80,7 @@ pub fn ramifying(
     mut commands: Commands,
     mut turn_timer: Local<Timer>,
     time: Res<Time>,
-    actors: Query<(NameOrEntity, &Recovery, Has<Player>), With<Turn>>,
+    actors: Query<(NameOrEntity, &Recovery, Has<Player>, Has<Revealed>), With<Turn>>,
     mut ns: ResMut<NextState<GameState>>,
     mut world_clock: ResMut<WorldClock>,
     next_turn: Option<Res<NextTurn>>,
@@ -112,11 +112,12 @@ pub fn ramifying(
         return;
     };
 
-    trace!("schedule: {entities:?}");
+    info!("schedule: {entities:?}");
 
     world_clock.advance_to(tick);
 
-    if entities.iter().any(|(_, _, is_player)| *is_player) {
+    if entities.iter().any(|(_, _, is_player, _)| *is_player) {
+        info!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
         *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
         return;
