@@ -12,7 +12,7 @@ use crate::{
     gamestate::Modal,
     inventory::{Inventory, InventoryChange},
     inventory_menu,
-    items::ItemId,
+    items::{ItemId, Quantity},
     light::{Emitter, LightLevel},
     message_log::LogEvent,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
@@ -112,9 +112,9 @@ pub fn on_player_added(
 ) {
     let parent = *player;
     for itam in STARTING_EQUIPMENT.iter() {
-        info!("equipping {} {itam:?}", itam.def());
+        info!("equipping {} {itam:?} {:?}", itam.def(), itam.def().equip);
         // TODO: use Slots.
-        commands.spawn((EquippedBy(parent), **itam));
+        commands.spawn((EquippedBy(parent), **itam, Quantity(1)));
         log.write(
             (
                 format!("equipped {}", itam.def()).as_str(),
@@ -202,10 +202,12 @@ pub fn handle_player_input(
     match get_menu_input(&input) {
         Some(menu_act) => match menu_act {
             MenuAct::Inventory => {
+                info!("inventory");
                 commands.trigger(inventory_menu::ToggleUi);
                 return;
             }
             MenuAct::Equipment => {
+                info!("equipment");
                 commands.trigger(equipment_menu::ToggleUi);
                 return;
             }
@@ -235,7 +237,7 @@ fn get_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuAct> {
     {
         info!("handle_player_input: toggle inventory");
         return Some(MenuAct::Inventory);
-    } else if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
+    } else if (input.just_released(KeyCode::KeyO) && input.pressed(KeyCode::ShiftLeft))
         || input.just_released(KeyCode::Backslash)
     {
         return Some(MenuAct::Equipment);
