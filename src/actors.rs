@@ -8,8 +8,10 @@ use crate::{
     colors,
     combat::CombatantBundle,
     equipment::EquippedBy,
+    equipment_menu,
+    gamestate::Modal,
     inventory::{Inventory, InventoryChange},
-    inventory_menu::ToggleUi,
+    inventory_menu,
     items::ItemId,
     light::{Emitter, LightLevel},
     message_log::LogEvent,
@@ -189,6 +191,7 @@ pub fn handle_player_input(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     player_query: Single<(Entity, &Cell), With<Player>>,
+    modal: Res<State<Modal>>,
 ) {
     if !input.is_changed() {
         return;
@@ -196,18 +199,49 @@ pub fn handle_player_input(
 
     let (entity, &origin_cell) = *player_query;
 
-    if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
-        || input.just_released(KeyCode::Tab)
+    match get_menu_input(&input) {
+        Some(menu_act) => match menu_act {
+            MenuAct::Inventory => {
+                commands.trigger(inventory_menu::ToggleUi);
+                return;
+            }
+            MenuAct::Equipment => {
+                commands.trigger(equipment_menu::ToggleUi);
+                return;
+            }
+        },
+        None => (),
+    }
+
+    if matches!(**modal, Modal::None)
+        && let Some(act) = get_action(&input)
     {
-        info!("handle_player_input: toggle inventory");
-        commands.trigger(ToggleUi);
-    } else if let Some(act) = get_action(&input) {
         commands.insert_resource(Action {
             entity,
             origin_cell,
             act,
         });
     }
+}
+
+pub enum MenuAct {
+    Inventory,
+    Equipment,
+}
+
+fn get_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuAct> {
+    if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
+        || input.just_released(KeyCode::Tab)
+    {
+        info!("handle_player_input: toggle inventory");
+        return Some(MenuAct::Inventory);
+    } else if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
+        || input.just_released(KeyCode::Backslash)
+    {
+        return Some(MenuAct::Equipment);
+    }
+
+    None
 }
 
 fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
