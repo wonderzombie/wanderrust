@@ -10,6 +10,7 @@ use crate::{
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::{ItemId, Quantity},
+    message_log::LogEvent,
     ui::theme::pcsr_font,
 };
 
@@ -19,6 +20,13 @@ impl Plugin for EquipmentMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(Modal::Equipment), (setup, populate).chain())
             .add_systems(OnExit(Modal::Equipment), discard)
+            .add_systems(
+                Update,
+                (
+                    interaction_system.run_if(in_state(Modal::Equipment)),
+                    update_highlighted.run_if(in_state(Modal::Equipment)),
+                ),
+            )
             .init_resource::<PrevSelection>()
             .add_observer(toggle_equipment);
     }
@@ -34,6 +42,7 @@ pub(crate) struct ToggleUi;
 struct PrevSelection(usize);
 
 fn setup(mut commands: Commands) {
+    info!("setup");
     commands.spawn_scene(scene());
 }
 
@@ -43,6 +52,7 @@ fn discard(
     curr_selection: Single<(&MenuSelection, &Children)>,
     mut prev_selection: ResMut<PrevSelection>,
 ) {
+    info!("discard");
     let (menu, children) = *curr_selection;
 
     if let Some(idx) = children.iter().position(|e| *menu.deref() == e) {
@@ -61,22 +71,82 @@ pub struct EquipmentRow;
 fn populate(
     mut commands: Commands,
     eq_list_items: Single<(Entity, &TextFont), With<EquipmentList>>,
-    player_items: Single<&Carrying, With<Player>>,
-    all_equipment: Query<(&ItemId, &Quantity), With<CarriedBy>>,
+    player_items: Single<AnyOf<(&Carrying, &HasEquipped)>, With<Player>>,
+    all_itam: Query<(&ItemId, &Quantity), Or<(With<CarriedBy>, With<EquippedBy>)>>,
     prev_selection: Res<PrevSelection>,
 ) {
+    let (list_nt, font) = *eq_list_items;
+    let (carrying_opt, equipped_opt) = *player_items;
+
+    info!("{carrying_opt:#?}");
+    info!("{equipped_opt:#?}");
+
+    let player_equipped = match equipped_opt {
+        Some(eq) => eq
+            .collection()
+            .iter()
+            .copied()
+            .flat_map(|e| all_itam.get(e))
+            .map(|e| (e, true))
+            .collect_vec(),
+        None => vec![],
+    };
+
+    info!("player has {} items equipped", player_equipped.len());
+
+    let player_carrying = match carrying_opt {
+        Some(inv) => inv
+            .collection()
+            .iter()
+            .copied()
+            .flat_map(|i| all_itam.get(i))
+            .filter(|i| i.0.equip().is_some())
+            .map(|i| (i, false))
+            .collect_vec(),
+        None => vec![],
+    };
+
+    info!("player carries {} items", player_carrying.len());
+
+    let all = player_equipped.iter().chain(player_carrying.iter());
+
+    let rows = all
+        .map(|((itam, qty), equipped)| {
+            let tag = if *equipped { "[E]" } else { "[ ]" };
+            let label = if qty.0 > 1 {
+                format!("{tag} {} ({qty})", itam.def())
+            } else {
+                format!("{tag} {}", itam.def().to_string())
+            };
+
+            commands
+                .spawn((
+                    Node::default(),
+                    Text::new(label.to_uppercase()),
+                    font.clone(),
+                    TextColor(colors::KENNEY_OFF_WHITE),
+                    EquipmentRow,
+                    **itam,
+                    ChildOf(list_nt),
+                ))
+                .id()
+        })
+        .collect_vec();
+
+    if let Some(row_nt) = rows.get(prev_selection.0.clamp(0, rows.len().saturating_sub(1))) {
+        commands.entity(*row_nt).insert(SelectedItem(list_nt));
+    }
 }
 
 fn toggle_equipment(
     _event: On<ToggleUi>,
     nt_opt: Option<Single<Entity, With<EquipmentMenu>>>,
-    mut next_screen: ResMut<NextState<Screen>>,
     mut next_modal: ResMut<NextState<Modal>>,
 ) {
     if nt_opt.is_some() {
         next_modal.set(Modal::None);
     } else {
-        next_modal.set(Modal::Inventory);
+        next_modal.set(Modal::Equipment);
     }
 }
 
@@ -101,7 +171,63 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     }
 }
 
-fn interaction_system() {}
+fn interaction_system(
+    mut commands: Commands,
+    input: Res<ButtonInput<KeyCode>>,
+    selected_nt: Single<Entity, With<SelectedItem>>,
+    menu: Single<(Entity, &Children), With<EquipmentList>>,
+    eq_texts: Query<&Text, With<EquipmentRow>>,
+    mut log: MessageWriter<LogEvent>,
+) {
+    if !input.is_changed() {
+        return;
+    }
+
+    let Some(action) = read_menu_input(&input) else {
+        return;
+    };
+
+    if matches!(action, MenuInput::Interact) {
+        match eq_texts.get(*selected_nt) {
+            Ok(txt) => {
+                log.write((txt.to_string().as_str(), colors::KENNEY_GREEN).into());
+            }
+            Err(e) => {
+                error!(
+                    "selected menu item does not appear to have text: {:?}; error {e}",
+                    *selected_nt
+                );
+            }
+        }
+        return;
+    }
+
+    let (menu_nt, menu_items) = *menu;
+
+    // From here, the scenario is exclusively MenuInput{Up,Down}. We find the
+    // position of the selected entity, if any, and default to the zeroth.
+    let idx = menu_items
+        .iter()
+        .position(|e| e == *selected_nt)
+        .unwrap_or_default();
+
+    let next_idx = match action {
+        MenuInput::Down => idx.saturating_add(1).min(menu_items.len() - 1),
+        MenuInput::Up => idx.saturating_sub(1),
+        _ => {
+            warn!("unsupported MenuInput; ignoring {action:?}");
+            return;
+        }
+    };
+
+    // As the Menu component can only contain a single entity,
+    // there's only ever one ItemRow with Selection.
+    if let Some(nt) = menu_items.iter().nth(next_idx) {
+        commands.entity(nt).insert(SelectedItem(menu_nt));
+    } else {
+        error!("unable to change selection from {} to {}", idx, next_idx);
+    }
+}
 
 fn scene() -> impl Scene {
     bsn! {
