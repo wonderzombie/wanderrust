@@ -128,6 +128,7 @@ pub fn run() {
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_menu::InventoryMenuPlugin)
     .add_plugins(equipment_menu::EquipmentMenuPlugin)
+    .add_plugins(equipment::plugin)
     .add_plugins(status_panel::plugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)

@@ -43,6 +43,7 @@ macro_rules! define_items {
         } ),* $(,)?
     ) => {
         #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+        #[reflect(Component)]
         pub enum ItemId {
             $( $name, )*
         }

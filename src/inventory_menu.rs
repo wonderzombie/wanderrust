@@ -27,7 +27,7 @@ impl Plugin for InventoryMenuPlugin {
                 ),
             )
             .init_resource::<PrevSelection>()
-            .add_observer(toggle_inventory);
+            .add_observer(toggle_menu);
     }
 }
 
@@ -64,20 +64,20 @@ fn discard(
 pub struct ItemList;
 
 #[derive(Component, Clone)]
-pub struct ItemRow;
+pub struct ItemRow(pub Entity);
 
 fn populate(
     mut commands: Commands,
     inv_list_items: Single<(Entity, &TextFont), With<ItemList>>,
     inventory: Single<&Carrying, With<Player>>,
-    all_itam: Query<(&ItemId, &Quantity), With<CarriedBy>>,
+    all_itam: Query<(Entity, &ItemId, &Quantity), With<CarriedBy>>,
     prev_selection: Res<PrevSelection>,
 ) {
     let (list_nt, font) = *inv_list_items;
 
     let rows: Vec<Entity> = all_itam
         .iter_many(inventory.iter())
-        .map(|(itam, qty)| {
+        .map(|(nt, itam, qty)| {
             let label = if qty.0 > 1 {
                 format!("{} ({})", itam.def(), qty)
             } else {
@@ -90,7 +90,7 @@ fn populate(
                     Text::new(label.to_uppercase()),
                     font.clone(),
                     TextColor(colors::KENNEY_OFF_WHITE),
-                    ItemRow,
+                    ItemRow(nt),
                     *itam,
                     ChildOf(list_nt),
                 ))
@@ -137,7 +137,7 @@ pub fn scene() -> impl Scene {
     }
 }
 
-pub fn toggle_inventory(
+pub fn toggle_menu(
     _event: On<ToggleUi>,
     nt_opt: Option<Single<Entity, With<InventoryMenu>>>,
     mut next_modal: ResMut<NextState<Modal>>,
@@ -173,7 +173,7 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    selected_nt: Single<Entity, With<SelectedItem>>,
+    curr_selected_nt: Single<(Entity, &ItemRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<ItemList>>,
     itam_texts: Query<&Text, With<ItemRow>>,
     mut log: MessageWriter<LogEvent>,
@@ -185,15 +185,17 @@ fn interaction_system(
         return;
     };
 
+    let (row_nt, ItemRow(item_nt)) = *curr_selected_nt;
     if matches!(action, MenuInput::Interact) {
-        match itam_texts.get(*selected_nt) {
+        match itam_texts.get(row_nt) {
             Ok(txt) => {
                 log.write((txt.to_string().as_str(), colors::KENNEY_GREEN).into());
+                info!("Interacted with item {item_nt}");
             }
             Err(e) => {
                 error!(
                     "selected menu item does not appear to have text: {:?}; error {e}",
-                    *selected_nt
+                    row_nt
                 );
             }
         }
@@ -206,7 +208,7 @@ fn interaction_system(
     // position of the selected entity, if any, and default to the zeroth.
     let idx = menu_items
         .iter()
-        .position(|e| e == *selected_nt)
+        .position(|e| e == row_nt)
         .unwrap_or_default();
 
     let next_idx = match action {
@@ -220,8 +222,10 @@ fn interaction_system(
 
     // As the Menu component can only contain a single entity,
     // there's only ever one ItemRow with Selection.
-    if let Some(nt) = menu_items.iter().nth(next_idx) {
-        commands.entity(nt).insert(SelectedItem(menu_nt));
+    if let Some(next_selected_nt) = menu_items.iter().nth(next_idx) {
+        commands
+            .entity(next_selected_nt)
+            .insert(SelectedItem(menu_nt));
     } else {
         error!("unable to change selection from {} to {}", idx, next_idx);
     }

@@ -6,7 +6,7 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors::{self},
-    equipment::{EquippedBy, HasEquipped},
+    equipment::{EquippedBy, HasEquipped, ToggleEquip},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::{ItemId, Quantity},
@@ -28,7 +28,7 @@ impl Plugin for EquipmentMenuPlugin {
                 ),
             )
             .init_resource::<PrevSelection>()
-            .add_observer(toggle_equipment);
+            .add_observer(toggle_menu);
     }
 }
 
@@ -65,14 +65,14 @@ fn discard(
 #[derive(Component, Clone, Default)]
 pub struct EquipmentList;
 
-#[derive(Component, Clone, Default)]
-pub struct EquipmentRow;
+#[derive(Component, Clone)]
+pub struct EquipmentRow(pub Entity);
 
 fn populate(
     mut commands: Commands,
     eq_list_items: Single<(Entity, &TextFont), With<EquipmentList>>,
     player_items: Single<AnyOf<(&Carrying, &HasEquipped)>, With<Player>>,
-    all_itam: Query<(&ItemId, &Quantity), Or<(With<CarriedBy>, With<EquippedBy>)>>,
+    all_itam: Query<(Entity, &ItemId, &Quantity), Or<(With<CarriedBy>, With<EquippedBy>)>>,
     prev_selection: Res<PrevSelection>,
 ) {
     let (list_nt, font) = *eq_list_items;
@@ -100,7 +100,7 @@ fn populate(
             .iter()
             .copied()
             .flat_map(|i| all_itam.get(i))
-            .filter(|i| i.0.equip().is_some())
+            .filter(|i| i.1.equip().is_some())
             .map(|i| (i, false))
             .collect_vec(),
         None => vec![],
@@ -111,7 +111,7 @@ fn populate(
     let all = player_equipped.iter().chain(player_carrying.iter());
 
     let rows = all
-        .map(|((itam, qty), equipped)| {
+        .map(|((nt, itam, qty), equipped)| {
             let tag = if *equipped { "[E]" } else { "[ ]" };
             let label = if qty.0 > 1 {
                 format!("{tag} {} ({qty})", itam.def())
@@ -125,7 +125,7 @@ fn populate(
                     Text::new(label.to_uppercase()),
                     font.clone(),
                     TextColor(colors::KENNEY_OFF_WHITE),
-                    EquipmentRow,
+                    EquipmentRow(*nt),
                     **itam,
                     ChildOf(list_nt),
                 ))
@@ -138,7 +138,7 @@ fn populate(
     }
 }
 
-fn toggle_equipment(
+fn toggle_menu(
     _event: On<ToggleUi>,
     nt_opt: Option<Single<Entity, With<EquipmentMenu>>>,
     mut next_modal: ResMut<NextState<Modal>>,
@@ -173,10 +173,12 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
 
 fn interaction_system(
     mut commands: Commands,
+    player: Single<Entity, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    selected_nt: Single<Entity, With<SelectedItem>>,
+    selected_nt: Single<(Entity, &EquipmentRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<EquipmentList>>,
     eq_texts: Query<&Text, With<EquipmentRow>>,
+    mut toggle_equip: MessageWriter<ToggleEquip>,
     mut log: MessageWriter<LogEvent>,
 ) {
     if !input.is_changed() {
@@ -187,15 +189,22 @@ fn interaction_system(
         return;
     };
 
+    let (row_nt, EquipmentRow(item_nt)) = *selected_nt;
+
     if matches!(action, MenuInput::Interact) {
-        match eq_texts.get(*selected_nt) {
+        match eq_texts.get(row_nt) {
             Ok(txt) => {
                 log.write((txt.to_string().as_str(), colors::KENNEY_GREEN).into());
+                toggle_equip.write(ToggleEquip {
+                    target: *player,
+                    equipment: *item_nt,
+                });
+                info!("Interacted with item {item_nt}");
             }
             Err(e) => {
                 error!(
                     "selected menu item does not appear to have text: {:?}; error {e}",
-                    *selected_nt
+                    row_nt
                 );
             }
         }
@@ -208,7 +217,7 @@ fn interaction_system(
     // position of the selected entity, if any, and default to the zeroth.
     let idx = menu_items
         .iter()
-        .position(|e| e == *selected_nt)
+        .position(|e| e == row_nt)
         .unwrap_or_default();
 
     let next_idx = match action {

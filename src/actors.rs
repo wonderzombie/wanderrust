@@ -5,16 +5,14 @@ use bevy::prelude::*;
 use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    colors,
     combat::CombatantBundle,
-    equipment::EquippedBy,
+    equipment::ToggleEquip,
     equipment_menu,
     gamestate::Modal,
-    inventory::{Inventory, InventoryChange},
+    inventory::{CarriedBy, Inventory, InventoryChange},
     inventory_menu,
     items::{ItemId, Quantity},
     light::{Emitter, LightLevel},
-    message_log::LogEvent,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
@@ -108,20 +106,17 @@ pub fn on_player_added(
     mut commands: Commands,
     player: Single<Entity, Added<Player>>,
     mut inv_changes: MessageWriter<InventoryChange>,
-    mut log: MessageWriter<LogEvent>,
+    mut equip_changes: MessageWriter<ToggleEquip>,
 ) {
     let parent = *player;
     for itam in STARTING_EQUIPMENT.iter() {
-        info!("equipping {} {itam:?} {:?}", itam.def(), itam.def().equip);
-        // TODO: use Slots.
-        commands.spawn((EquippedBy(parent), **itam, Quantity(1)));
-        log.write(
-            (
-                format!("equipped {}", itam.def()).as_str(),
-                colors::KENNEY_GREEN,
-            )
-                .into(),
-        );
+        let id = commands
+            .spawn((CarriedBy(parent), **itam, Quantity(1)))
+            .id();
+        equip_changes.write(ToggleEquip {
+            target: parent,
+            equipment: id,
+        });
     }
 
     // add starting items as well
