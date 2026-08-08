@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use itertools::Itertools;
 
 use crate::{
@@ -71,65 +71,54 @@ pub struct EquipmentRow(pub Entity);
 fn populate(
     mut commands: Commands,
     eq_list_items: Single<(Entity, &TextFont), With<EquipmentList>>,
-    player_items: Single<AnyOf<(&Carrying, &HasEquipped)>, With<Player>>,
+    all_player_items: Single<AnyOf<(&Carrying, &HasEquipped)>, With<Player>>,
     all_itam: Query<(Entity, &ItemId, &Quantity), Or<(With<CarriedBy>, With<EquippedBy>)>>,
     prev_selection: Res<PrevSelection>,
 ) {
     let (list_nt, font) = *eq_list_items;
-    let (carrying_opt, equipped_opt) = *player_items;
+    let (carried_items_opt, equipped_items_opt) = *all_player_items;
 
-    info!("{carrying_opt:#?}");
-    info!("{equipped_opt:#?}");
+    info!("{carried_items_opt:#?}");
+    info!("{equipped_items_opt:#?}");
 
-    let player_equipped = match equipped_opt {
-        Some(eq) => eq
-            .collection()
-            .iter()
-            .copied()
-            .flat_map(|e| all_itam.get(e))
-            .map(|e| (e, true))
-            .collect_vec(),
-        None => vec![],
-    };
+    // gather up all the unique entities, then do the lookups
+    let carrying = carried_items_opt
+        .map(|coll| coll.iter().collect::<HashSet<_>>())
+        .unwrap_or_default();
+    let equipped = equipped_items_opt
+        .map(|coll| coll.iter().collect::<HashSet<_>>())
+        .unwrap_or_default();
 
-    info!("player has {} items equipped", player_equipped.len());
+    info!("player has {} items carried", carrying.len());
+    info!("player has {} items equipped", equipped.len());
 
-    let player_carrying = match carrying_opt {
-        Some(inv) => inv
-            .collection()
-            .iter()
-            .copied()
-            .flat_map(|i| all_itam.get(i))
-            .filter(|i| i.1.equip_def().is_some())
-            .map(|i| (i, false))
-            .collect_vec(),
-        None => vec![],
-    };
-
-    info!("player carries {} items", player_carrying.len());
-
-    let all = player_equipped.iter().chain(player_carrying.iter());
+    let all = equipped.union(&carrying);
 
     let rows = all
-        .map(|((nt, itam, qty), equipped)| {
-            let tag = if *equipped { "[E]" } else { "[ ]" };
+        .flat_map(|nt| {
+            let (nt, itam, qty) = all_itam.get(*nt).ok()?;
+            itam.equip_def()?;
+
+            let tag = if equipped.contains(&nt) { "[E]" } else { "[ ]" };
             let label = if qty.0 > 1 {
                 format!("{tag} {} ({qty})", itam.def())
             } else {
                 format!("{tag} {}", itam.def().to_string())
             };
 
-            commands
-                .spawn((
-                    Node::default(),
-                    Text::new(label.to_uppercase()),
-                    font.clone(),
-                    TextColor(colors::KENNEY_OFF_WHITE),
-                    EquipmentRow(*nt),
-                    **itam,
-                    ChildOf(list_nt),
-                ))
-                .id()
+            Some(
+                commands
+                    .spawn((
+                        Node::default(),
+                        Text::new(label.to_uppercase()),
+                        font.clone(),
+                        TextColor(colors::KENNEY_OFF_WHITE),
+                        EquipmentRow(nt),
+                        *itam,
+                        ChildOf(list_nt),
+                    ))
+                    .id(),
+            )
         })
         .collect_vec();
 
@@ -171,43 +160,45 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     }
 }
 
+fn item_text(equipped: bool, itam: &ItemId, qty: &Quantity) -> String {
+    let tag = if equipped { "[E]" } else { "[ ]" };
+    let out = if qty.0 > 1 {
+        format!("{tag} {} ({qty})", itam.def())
+    } else {
+        format!("{tag} {}", itam.def().to_string())
+    };
+    out.to_uppercase()
+}
+
 fn interaction_system(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    selected_nt: Single<(Entity, &EquipmentRow), With<SelectedItem>>,
+    mut selected_nt: Single<(Entity, &mut Text, &EquipmentRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<EquipmentList>>,
-    eq_texts: Query<&Text, With<EquipmentRow>>,
+    items: Query<(&ItemId, &Quantity, Has<EquippedBy>)>,
     mut toggle_equip: MessageWriter<ToggleEquip>,
-    mut log: MessageWriter<LogEvent>,
 ) {
-    if !input.is_changed() {
-        return;
-    }
-
     let Some(action) = read_menu_input(&input) else {
         return;
     };
 
-    let (row_nt, EquipmentRow(item_nt)) = *selected_nt;
+    let (row_nt, _, EquipmentRow(item_nt)) = *selected_nt;
+    let mut text_label = selected_nt.1.reborrow();
+
+    let Ok((itam, qty, was_equipped)) = items.get(*item_nt) else {
+        info!(
+            "unable to find selected equipment row ({row_nt:?}) item ({item_nt:?}) labeled {text_label:?}"
+        );
+        return;
+    };
 
     if matches!(action, MenuInput::Interact) {
-        match eq_texts.get(row_nt) {
-            Ok(txt) => {
-                log.write((txt.to_string().as_str(), colors::KENNEY_GREEN).into());
-                toggle_equip.write(ToggleEquip {
-                    target: *player,
-                    equipment: *item_nt,
-                });
-                info!("Interacted with item {item_nt}");
-            }
-            Err(e) => {
-                error!(
-                    "selected menu item does not appear to have text: {:?}; error {e}",
-                    row_nt
-                );
-            }
-        }
+        text_label.0 = item_text(!was_equipped, itam, qty);
+        toggle_equip.write(ToggleEquip {
+            target: *player,
+            equipment: *item_nt,
+        });
         return;
     }
 

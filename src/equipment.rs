@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
+    colors,
     items::{EquipDef, ItemId, Slot},
+    message_log::LogEvent,
     parameters::Parameters,
 };
 
@@ -63,52 +65,65 @@ pub(crate) struct ToggleEquip {
     pub(crate) equipment: Entity,
 }
 
-fn in_slot(equipped: &HasEquipped, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
+fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
     equipped
-        .iter()
+        .into_iter()
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
 }
 
-fn equip_def(item: Entity, all_items: &Query<&ItemId>) -> Option<EquipDef> {
-    all_items.get(item).ok().and_then(|it| it.equip_def())
+fn list_collection<T: Component + RelationshipTarget>(
+    collections: &Query<Option<&T>>,
+    target_collection: Entity,
+) -> Vec<Entity> {
+    match collections.get(target_collection) {
+        Ok(Some(found_coll)) => found_coll.iter().collect(),
+        _ => vec![],
+    }
 }
 
 pub(crate) fn handle_toggle_equip(
     mut commands: Commands,
     mut toggle_equip: PopulatedMessageReader<ToggleEquip>,
-    all_equipment_sets: Query<&HasEquipped>,
+    all_equipment_sets: Query<Option<&HasEquipped>>,
     all_equipped_items: Query<&EquippedBy>,
     all_items: Query<&ItemId>,
+    mut log: MessageWriter<LogEvent>,
 ) {
     for event in toggle_equip.read() {
         let ToggleEquip { target, equipment } = *event;
 
-        let Ok(target_equipment_set) = all_equipment_sets.get(target) else {
-            error!("unable to find target equipper {target:?} as specified by {event:#?}");
+        let Ok(item_id) = all_items.get(equipment) else {
+            error!("no such item {equipment}");
             continue;
         };
 
-        let Some(target_equipment) = equip_def(equipment, &all_items) else {
+        let Some(target_equipment_def) = item_id.equip_def() else {
             error!("unable to find target item {equipment:?} as specified by {event:#?}");
             continue;
         };
 
-        match in_slot(
-            target_equipment_set,
-            &all_equipped_items,
-            target_equipment.slot,
-        ) {
-            Some(nt) => {
-                info!("unequipping {:?}", target_equipment);
-                commands.entity(nt).remove::<EquippedBy>();
+        let eq_list = list_collection(&all_equipment_sets, target);
+
+        if let Some(nt) = in_slot(eq_list, &all_equipped_items, target_equipment_def.slot) {
+            info!("unequipping {:?}", nt);
+            commands.entity(nt).remove::<EquippedBy>();
+            // If this item entity was the target of this operation, we're done.
+            if nt == equipment {
+                info!("only unequipping {nt:?} because target was {equipment:?}");
+                return;
             }
-            None => (),
+        } else {
+            info!("no previous item in {:?}", target_equipment_def.slot);
         }
 
-        info!("equipping {:?}", target_equipment);
+        info!("equipping {:?}", target_equipment_def);
         commands.entity(equipment).insert(EquippedBy {
             entity: target,
-            slot: target_equipment.slot,
+            slot: target_equipment_def.slot,
+        });
+        log.write(LogEvent {
+            txt: format!("equipped {}", item_id.def()),
+            color: Some(colors::KENNEY_GREEN),
         });
     }
 }
