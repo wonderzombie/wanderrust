@@ -42,7 +42,7 @@ macro_rules! define_items {
             $(,)?
         } ),* $(,)?
     ) => {
-        #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+        #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, PartialOrd)]
         #[reflect(Component)]
         pub enum ItemId {
             $( $name, )*
@@ -63,7 +63,7 @@ macro_rules! define_items {
                 }
             }
 
-            pub fn equip(&self) -> Option<EquipDef> {
+            pub fn equip_def(&self) -> Option<EquipDef> {
                 self.def().equip
             }
 
@@ -150,8 +150,10 @@ impl Display for ItemDef {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
 pub enum Slot {
+    #[default]
+    Default,
     Armor,
     MainHand,
     OffHand,

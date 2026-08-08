@@ -1,13 +1,7 @@
-use bevy::{
-    ecs::query::{QueryData, QueryFilter},
-    platform::collections::HashMap,
-    prelude::*,
-};
+use bevy::prelude::*;
 
 use crate::{
-    actors::Player,
-    inventory::CarriedBy,
-    items::{ItemId, Quantity, Slot},
+    items::{EquipDef, ItemId, Slot},
     parameters::Parameters,
 };
 
@@ -19,7 +13,15 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = HasEquipped)]
 #[reflect(Component)]
-pub struct EquippedBy(pub Entity);
+pub struct EquippedBy {
+    #[relationship]
+    pub entity: Entity,
+    pub slot: Slot,
+}
+
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+pub struct Slots(pub Vec<[Slot; 4]>);
 
 #[derive(Component, Reflect, Debug)]
 #[relationship_target(relationship = EquippedBy, linked_spawn)]
@@ -61,80 +63,52 @@ pub(crate) struct ToggleEquip {
     pub(crate) equipment: Entity,
 }
 
-#[derive(QueryFilter)]
-pub(crate) struct WithOwnedItam {
-    or: Or<(With<CarriedBy>, With<HasEquipped>)>,
+fn in_slot(equipped: &HasEquipped, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
+    equipped
+        .iter()
+        .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
 }
 
-#[derive(QueryData)]
-#[query_data(derive(Debug))]
-pub(crate) struct Itam {
-    entity: Entity,
-    item_id: &'static ItemId,
-    quantity: Option<&'static Quantity>,
-    ownership: Ownership,
-}
-
-impl<'w, 's> ItamItem<'w, 's> {
-    pub(crate) fn slot(&self) -> Option<Slot> {
-        self.item_id.equip().map(|it| it.slot)
-    }
-
-    pub(crate) fn uses_slot(&self, slot: Slot) -> bool {
-        self.slot() == Some(slot)
-    }
-}
-
-#[derive(QueryData)]
-#[query_data(derive(Debug))]
-pub(crate) struct Ownership {
-    carrier_opt: Option<&'static CarriedBy>,
-    equipper_opt: Option<&'static EquippedBy>,
-}
-
-impl<'w, 's> OwnershipItem<'w, 's> {
-    // pub(crate) fn carried_by(&self) -> Option<Entity> {
-    //     self.carrier_opt.map(|it| it.0)
-    // }
-
-    pub(crate) fn equipped_by(&self) -> Option<Entity> {
-        self.equipper_opt.map(|it| it.0)
-    }
-
-    pub(crate) fn is_equipped_by(&self, entity: Entity) -> bool {
-        self.equipped_by()
-            .map(|it| it == entity)
-            .unwrap_or_default()
-    }
-
-    // pub(crate) fn is_carried_by(&self, entity: Entity) -> bool {
-    //     self.carried_by().map(|it| it == entity).unwrap_or_default()
-    // }
+fn equip_def(item: Entity, all_items: &Query<&ItemId>) -> Option<EquipDef> {
+    all_items.get(item).ok().and_then(|it| it.equip_def())
 }
 
 pub(crate) fn handle_toggle_equip(
-    mut toggle_equip: MessageReader<ToggleEquip>,
     mut commands: Commands,
-    obtained_items: Query<Itam, WithOwnedItam>,
-    equipped_items: Single<Option<&HasEquipped>, With<Player>>,
+    mut toggle_equip: PopulatedMessageReader<ToggleEquip>,
+    all_equipment_sets: Query<&HasEquipped>,
+    all_equipped_items: Query<&EquippedBy>,
+    all_items: Query<&ItemId>,
 ) {
     for event in toggle_equip.read() {
         let ToggleEquip { target, equipment } = *event;
 
-        let Ok(to_equip) = obtained_items.get(equipment) else {
-            error!("entity is carrying no items, has nothing equipped; can't (un)equip");
-            return;
+        let Ok(target_equipment_set) = all_equipment_sets.get(target) else {
+            error!("unable to find target equipper {target:?} as specified by {event:#?}");
+            continue;
         };
 
-        info!(
-            "equipping {}  {:?}",
-            to_equip.item_id.def(),
-            to_equip.item_id.equip()
-        );
+        let Some(target_equipment) = equip_def(equipment, &all_items) else {
+            error!("unable to find target item {equipment:?} as specified by {event:#?}");
+            continue;
+        };
 
-        let equipped_itam =
-            obtained_items.iter_many(equipped_items.map(|it| it.iter()).unwrap_or_default());
+        match in_slot(
+            target_equipment_set,
+            &all_equipped_items,
+            target_equipment.slot,
+        ) {
+            Some(nt) => {
+                info!("unequipping {:?}", target_equipment);
+                commands.entity(nt).remove::<EquippedBy>();
+            }
+            None => (),
+        }
 
-        commands.entity(to_equip.entity).insert(EquippedBy(target));
+        info!("equipping {:?}", target_equipment);
+        commands.entity(equipment).insert(EquippedBy {
+            entity: target,
+            slot: target_equipment.slot,
+        });
     }
 }

@@ -18,7 +18,7 @@ pub fn apply_params_modifiers(
 
         let modified: Parameters = equipment
             .iter_many(has_equipped.iter())
-            .flat_map(|it| it.def().equip)
+            .flat_map(|it| it.equip_def())
             .fold(params, |acc, eq| eq.mods.modify(acc));
 
         trace!("modified params for {tile_idx}: {modified:?}");

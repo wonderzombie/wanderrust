@@ -100,7 +100,7 @@ fn populate(
             .iter()
             .copied()
             .flat_map(|i| all_itam.get(i))
-            .filter(|i| i.1.equip().is_some())
+            .filter(|i| i.1.equip_def().is_some())
             .map(|i| (i, false))
             .collect_vec(),
         None => vec![],
@@ -229,8 +229,8 @@ fn interaction_system(
         }
     };
 
-    // As the Menu component can only contain a single entity,
-    // there's only ever one ItemRow with Selection.
+    // As the [`MenuSelection`] component (relationship target) can only contain a
+    // single entity, there's only ever one [`ItemRow`] with [`SelectedItem`].
     if let Some(nt) = menu_items.iter().nth(next_idx) {
         commands.entity(nt).insert(SelectedItem(menu_nt));
     } else {

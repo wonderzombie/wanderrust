@@ -211,6 +211,23 @@ impl IntoIterator for Carrying {
     }
 }
 
+pub fn carried_items<'a>(
+    target: Entity,
+    carrying: &Query<&'a Carrying>,
+    all_items: &'a Query<&'a ItemId>,
+) -> Vec<&'a ItemId> {
+    carrying
+        .get(target)
+        .ok()
+        .map(|coll| {
+            coll.collection()
+                .iter()
+                .flat_map(|it| all_items.get(*it).ok())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default()
+}
+
 impl From<&[ItemId]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
     fn from(items: &[ItemId]) -> Self {
