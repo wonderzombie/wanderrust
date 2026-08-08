@@ -76,19 +76,12 @@ pub(crate) struct Itam {
 }
 
 impl<'w, 's> ItamItem<'w, 's> {
-    pub(crate) fn slots(&self) -> Option<&[Slot]> {
-        self.item_id.equip().map(|it| it.slots)
+    pub(crate) fn slot(&self) -> Option<Slot> {
+        self.item_id.equip().map(|it| it.slot)
     }
 
-    // pub(crate) fn first_slot(&self) -> Option<Slot> {
-    //     self.item_id.equip().and_then(|it| it.slots.get(0)).copied()
-    // }
-
     pub(crate) fn uses_slot(&self, slot: Slot) -> bool {
-        self.item_id
-            .equip()
-            .map(|it| it.slots.contains(&slot))
-            .unwrap_or_default()
+        self.slot() == Some(slot)
     }
 }
 

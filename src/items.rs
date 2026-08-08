@@ -8,7 +8,7 @@
 ///
 /// [`Kind`] categorizes items by type. Presently that's all it does.
 ///
-/// [`EquipDef`] describes what [`Slot`]s each item occupies and the
+/// [`EquipDef`] describes which [`Slot`] an item occupies and the
 /// [`parameters::Parameters`] it confers on whoever has it equipped.
 ///
 /// See also [`crate::inventory::Inventory`] for convenient read access.
@@ -38,7 +38,7 @@ macro_rules! define_items {
             label: $label:literal,
             desc: $desc:literal,
             kind: $kind:ident // trailing comma only if there's another line
-            $(, equip: [$($slot:ident),+], mods: $mods:expr, rating: $rating:expr )?
+            $(, equip: $slot:ident, mods: $mods:expr, rating: $rating:expr )?
             $(,)?
         } ),* $(,)?
     ) => {
@@ -58,7 +58,7 @@ macro_rules! define_items {
                         label: $label,
                         desc: $desc,
                         kind: Kind::$kind,
-                        equip: define_items!(@equip $( [$($slot),+], $mods, $rating )? ),
+                        equip: define_items!(@equip $( $slot, $mods, $rating )? ),
                     }, )*
                 }
             }
@@ -85,8 +85,8 @@ macro_rules! define_items {
             }
         }
     };
-    (@equip [$($slot:ident),+], $mods:expr, $rating:expr ) => {
-        Some(EquipDef{ slots: &[ $(Slot::$slot, )+ ], mods: $mods, rating: $rating })
+    (@equip $slot:ident, $mods:expr, $rating:expr ) => {
+        Some(EquipDef{ slot: Slot::$slot, mods: $mods, rating: $rating })
     };
     (@equip) => { None };
 }
@@ -169,7 +169,7 @@ pub enum Rating {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct EquipDef {
-    pub slots: &'static [Slot],
+    pub slot: Slot,
     pub mods: Modifiers,
     pub rating: Rating,
 }
@@ -214,7 +214,7 @@ define_items!(
         label: "stick",
         desc: "a sturdy, dirty stick.",
         kind: Equipment,
-        equip: [MainHand],
+        equip: MainHand,
         mods: modifiers!(attack: 1),
         rating: Rating::C,
     },
@@ -222,7 +222,7 @@ define_items!(
         label: "rags",
         desc: "tattered rags.",
         kind: Equipment,
-        equip: [Armor],
+        equip: Armor,
         mods: modifiers!(defense: 1),
         rating: Rating::C,
     },
@@ -230,7 +230,7 @@ define_items!(
         label: "sword",
         desc: "better than a stick.",
         kind: Equipment,
-        equip: [MainHand],
+        equip: MainHand,
         mods: modifiers!(attack: 3),
         rating: Rating::B,
     },
@@ -238,7 +238,7 @@ define_items!(
         label: "leather",
         desc: "stiff boiled leather.",
         kind: Equipment,
-        equip: [Armor],
+        equip: Armor,
         mods: modifiers!(defense: 3),
         rating: Rating::B,
     },
@@ -246,7 +246,7 @@ define_items!(
         label: "chainmail",
         desc: "a chainmail shirt.",
         kind: Equipment,
-        equip: [Armor],
+        equip: Armor,
         mods: modifiers!(defense: 5),
         rating: Rating::A,
     },
@@ -254,7 +254,7 @@ define_items!(
         label: "shield",
         desc: "a basic metal shield.",
         kind: Equipment,
-        equip: [OffHand],
+        equip: OffHand,
         mods: modifiers!(defense: 2),
         rating: Rating::B,
     }
