@@ -66,11 +66,17 @@ impl Parameters {
 impl Default for Parameters {
     fn default() -> Self {
         Self {
+            // Higher is better.
             attack: 0,
+            // Lower is better.
             attack_speed: 0,
+            // Higher is better.
             defense: 0,
+            // Lower is better.
             move_speed: 0,
+            // Higher = more health.
             max_hp: 0,
+            // Higher = farther vision.
             vision: Vision(0),
         }
     }
