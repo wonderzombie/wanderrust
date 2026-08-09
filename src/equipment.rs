@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     colors,
-    items::{EquipDef, ItemId, Slot},
+    items::{ItemId, Slot},
     message_log::LogEvent,
     parameters::Parameters,
 };
@@ -71,14 +71,14 @@ fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
 }
 
-fn list_collection<T: Component + RelationshipTarget>(
-    collections: &Query<Option<&T>>,
-    target_collection: Entity,
-) -> Vec<Entity> {
-    match collections.get(target_collection) {
-        Ok(Some(found_coll)) => found_coll.iter().collect(),
-        _ => vec![],
-    }
+pub fn unwrap_collection<T, O>(collection: Option<&T>) -> O
+where
+    T: Component + RelationshipTarget,
+    O: FromIterator<Entity> + Default,
+{
+    collection
+        .map(|coll| coll.iter().collect::<O>())
+        .unwrap_or_default()
 }
 
 pub(crate) fn handle_toggle_equip(
@@ -102,7 +102,10 @@ pub(crate) fn handle_toggle_equip(
             continue;
         };
 
-        let eq_list = list_collection(&all_equipment_sets, target);
+        let eq_list = match all_equipment_sets.get(target) {
+            Ok(found_coll) => unwrap_collection(found_coll),
+            _ => vec![],
+        };
 
         if let Some(nt) = in_slot(eq_list, &all_equipped_items, target_equipment_def.slot) {
             info!("unequipping {:?}", nt);

@@ -6,11 +6,10 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors::{self},
-    equipment::{EquippedBy, HasEquipped, ToggleEquip},
+    equipment::{EquippedBy, HasEquipped, ToggleEquip, unwrap_collection},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
-    items::{ItemId, Quantity},
-    message_log::LogEvent,
+    items::ItemId,
     ui::theme::pcsr_font,
 };
 
@@ -25,6 +24,7 @@ impl Plugin for EquipmentMenuPlugin {
                 (
                     interaction_system.run_if(in_state(Modal::Equipment)),
                     update_highlighted.run_if(in_state(Modal::Equipment)),
+                    refresh_labels.run_if(on_message::<ToggleEquip>),
                 ),
             )
             .init_resource::<PrevSelection>()
@@ -72,39 +72,23 @@ fn populate(
     mut commands: Commands,
     eq_list_items: Single<(Entity, &TextFont), With<EquipmentList>>,
     all_player_items: Single<AnyOf<(&Carrying, &HasEquipped)>, With<Player>>,
-    all_itam: Query<(Entity, &ItemId, &Quantity), Or<(With<CarriedBy>, With<EquippedBy>)>>,
+    all_itam: Query<(Entity, &ItemId, Has<EquippedBy>), Or<(With<CarriedBy>, With<EquippedBy>)>>,
     prev_selection: Res<PrevSelection>,
 ) {
     let (list_nt, font) = *eq_list_items;
     let (carried_items_opt, equipped_items_opt) = *all_player_items;
 
-    info!("{carried_items_opt:#?}");
-    info!("{equipped_items_opt:#?}");
-
-    // gather up all the unique entities, then do the lookups
-    let carrying = carried_items_opt
-        .map(|coll| coll.iter().collect::<HashSet<_>>())
-        .unwrap_or_default();
-    let equipped = equipped_items_opt
-        .map(|coll| coll.iter().collect::<HashSet<_>>())
-        .unwrap_or_default();
-
+    let equipped = unwrap_collection::<HasEquipped, HashSet<_>>(equipped_items_opt);
+    let carrying = unwrap_collection::<Carrying, HashSet<_>>(carried_items_opt);
     info!("player has {} items carried", carrying.len());
     info!("player has {} items equipped", equipped.len());
 
-    let all = equipped.union(&carrying);
-
-    let rows = all
+    let rows = equipped
+        .union(&carrying)
         .flat_map(|nt| {
-            let (nt, itam, qty) = all_itam.get(*nt).ok()?;
+            let (nt, itam, is_equipped) = all_itam.get(*nt).ok()?;
             itam.equip_def()?;
-
-            let tag = if equipped.contains(&nt) { "[E]" } else { "[ ]" };
-            let label = if qty.0 > 1 {
-                format!("{tag} {} ({qty})", itam.def())
-            } else {
-                format!("{tag} {}", itam.def().to_string())
-            };
+            let label = eq_item_label(itam, is_equipped);
 
             Some(
                 commands
@@ -125,6 +109,25 @@ fn populate(
     if let Some(row_nt) = rows.get(prev_selection.0.clamp(0, rows.len().saturating_sub(1))) {
         commands.entity(*row_nt).insert(SelectedItem(list_nt));
     }
+}
+
+fn refresh_labels(
+    mut eq_item_rows: Query<(&mut Text, &EquipmentRow)>,
+    all_items: Query<(&ItemId, Has<EquippedBy>)>,
+) {
+    for (mut text, EquipmentRow(eq_item_id)) in eq_item_rows.iter_mut() {
+        let Ok((item_id, is_equipped)) = all_items.get(*eq_item_id) else {
+            warn!("can't find item {eq_item_id:?} among equipment rows");
+            continue;
+        };
+        text.0 = eq_item_label(item_id, is_equipped);
+    }
+}
+
+fn eq_item_label(item_id: &ItemId, is_equipped: bool) -> String {
+    let tag = if is_equipped { "[E]" } else { "[ ]" };
+    let item = item_id.def();
+    format!("{tag} {item}").to_uppercase()
 }
 
 fn toggle_menu(
@@ -160,16 +163,6 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     }
 }
 
-fn item_text(equipped: bool, itam: &ItemId, qty: &Quantity) -> String {
-    let tag = if equipped { "[E]" } else { "[ ]" };
-    let out = if qty.0 > 1 {
-        format!("{tag} {} ({qty})", itam.def())
-    } else {
-        format!("{tag} {}", itam.def().to_string())
-    };
-    out.to_uppercase()
-}
-
 fn interaction_system(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
@@ -185,7 +178,6 @@ fn interaction_system(
     let (row_nt, EquipmentRow(item_nt)) = *selected_nt;
 
     if matches!(action, MenuInput::Interact) {
-        text_label.0 = item_text(!was_equipped, itam, qty);
         toggle_equip.write(ToggleEquip {
             target: *player,
             equipment: *item_nt,
