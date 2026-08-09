@@ -174,24 +174,15 @@ fn interaction_system(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    mut selected_nt: Single<(Entity, &mut Text, &EquipmentRow), With<SelectedItem>>,
+    selected_nt: Single<(Entity, &EquipmentRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<EquipmentList>>,
-    items: Query<(&ItemId, &Quantity, Has<EquippedBy>)>,
     mut toggle_equip: MessageWriter<ToggleEquip>,
 ) {
     let Some(action) = read_menu_input(&input) else {
         return;
     };
 
-    let (row_nt, _, EquipmentRow(item_nt)) = *selected_nt;
-    let mut text_label = selected_nt.1.reborrow();
-
-    let Ok((itam, qty, was_equipped)) = items.get(*item_nt) else {
-        info!(
-            "unable to find selected equipment row ({row_nt:?}) item ({item_nt:?}) labeled {text_label:?}"
-        );
-        return;
-    };
+    let (row_nt, EquipmentRow(item_nt)) = *selected_nt;
 
     if matches!(action, MenuInput::Interact) {
         text_label.0 = item_text(!was_equipped, itam, qty);
