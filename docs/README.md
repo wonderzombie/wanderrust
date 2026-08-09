@@ -30,6 +30,7 @@ argument is usually below it.
 | [Respawning monsters](respawning_monsters.md) | proposed | Resetting monster status |
 | [Respawning](respawning.md) | abandoned | Respawning monsters; shrines |
 | [You Died screen](you_died_screen.md) | building | Defeat interstitial and reset scenario |
+| [Equipment Redux](equipment_redux.md) | draft | Add mini-UIs and improve APIs for items & equipment |
 
 <!--
 The vocabulary is: draft | proposed | building | done | superseded | abandoned
