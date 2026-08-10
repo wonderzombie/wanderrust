@@ -283,7 +283,7 @@ fn get_direction(input: &ButtonInput<KeyCode>) -> Option<IVec2> {
 /// transparent sprites.
 pub fn sync_occupied_tiles(
     mut commands: Commands,
-    actors: Query<(&Cell, &PreviousCell, &ChildOf), (Without<MapTile>, Changed<Cell>)>,
+    actors: Query<(&Cell, &PreviousCell, &ChildOf), Without<MapTile>>,
     storages: Query<&TileStorage>,
 ) {
     for (curr_cell, prev_cell, child_of) in actors.iter() {

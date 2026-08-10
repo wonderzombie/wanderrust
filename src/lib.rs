@@ -250,8 +250,7 @@ pub fn run() {
         Update,
         gamestate::ramifying.run_if(in_state(GameState::Ramifying)),
     )
-    .add_systems(PreUpdate, tilemap::snapshot_denizens)
-    .add_systems(OnExit(GameState::AwaitingInput), snapshot_cells)
+    .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Last,
         (
@@ -307,10 +306,14 @@ fn finalize_loading(
     next_screen.set(Screen::Title);
 }
 
-fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell)>) {
-    for (curr, mut prev) in query.iter_mut() {
+fn snapshot_cells(mut query: Query<(Entity, Ref<Cell>, Option<&mut PreviousCell>)>, mut commands: Commands) {
+    for (entity, curr, prev) in query.iter_mut() {
+        let new_prev = PreviousCell(*curr);
         if curr.is_changed() {
-            *prev = PreviousCell(*curr);
+            match prev {
+                Some(mut prev) => *prev = new_prev,
+                None => { commands.entity(entity).insert(new_prev); }
+            }
         }
     }
 }
