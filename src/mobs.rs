@@ -15,7 +15,7 @@ use crate::{
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
     tilemap::{ActiveLevel, Zone},
-    tiles::TileIdx,
+    tiles::{TILE_SIZE_PX, TileIdx},
 };
 
 /// Checks each mob's status and alerts mobs when the player enters their FOV.
@@ -149,15 +149,18 @@ pub fn init_indicators(
     asset_server: Res<AssetServer>,
     atlas: Res<SpriteAtlas>,
     query: Populated<(Entity, &Interactable), Added<Interactable>>,
+    player: Single<Entity, Added<Player>>,
 ) {
     let image: Handle<Image> = asset_server.load(atlas::TRANSPARENT_SHEET);
-    let sprite = Sprite::from_atlas_image(
+    let mut sprite = Sprite::from_atlas_image(
         image,
         TextureAtlas {
             layout: atlas.layout.clone(),
             index: TileIdx::Corners.into(),
         },
     );
+
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE_PX * 1.5));
 
     let xform = Transform::from_xyz(0., 0., 1.);
     for (nt, interx) in query {
@@ -176,6 +179,36 @@ pub fn init_indicators(
             _ => continue,
         }
     }
+
+
+    let mut sprite = sprite.clone();
+    sprite.color = colors::KENNEY_GREEN;
+
+    commands.spawn((
+        Indicator,
+        xform,
+        ChildOf(*player),
+        TileIdx::Corners,
+        sprite.clone(),
+        Visibility::Inherited,
+    ));
+}
+
+pub fn player_indicator(player: Single<Entity, With<Player>>, mut sprites: Query<(&ChildOf, &mut Sprite), With<Indicator>>, gamestate: Res<State<GameState>>) {
+    if !gamestate.is_changed() {
+        return;
+    }
+    info!("update player indicator");
+
+    let Some(mut player_sprite) = sprites.iter_mut().find(|(ChildOf(parent), _)| *parent == *player).map(|it| it.1) else {
+        warn!("couldn't find player indicator");
+        return;
+    };
+
+    match **gamestate {
+        GameState::AwaitingInput => player_sprite.color = colors::KENNEY_GREEN,
+        _ => player_sprite.color = Color::NONE,
+    }
 }
 
 pub fn update_mob_indicators(
@@ -183,9 +216,13 @@ pub fn update_mob_indicators(
     zone: Single<&Zone, With<ActiveLevel>>,
     mobs: Populated<(&Awareness, Has<Dead>)>,
     indicators: Query<(Entity, &ChildOf, &mut Sprite), With<Indicator>>,
+    player: Single<Entity, With<Player>>,
 ) {
     let mob_nts = zone.collection();
     for (indicator_nt, ChildOf(parent), mut sprite) in indicators {
+        if *parent == *player {
+            continue;
+        }
         // TODO: verify that we don't need to hide the indicator explicitly
         // since the parent of the indicator should be hidden along with its
         // parent, the mob entity.
@@ -230,5 +267,6 @@ pub fn handle_dead(
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, init_indicators)
         .add_systems(OnEnter(GameState::AwaitingInput), update_mob_indicators)
+        .add_systems(PreUpdate, player_indicator.run_if(state_exists::<GameState>))
         .add_systems(Last, handle_dead);
 }

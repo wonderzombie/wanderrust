@@ -98,7 +98,7 @@ pub fn ramifying(
     mut commands: Commands,
     mut turn_timer: Local<Timer>,
     time: Res<Time>,
-    actors: Query<(NameOrEntity, &Recovery, Has<Player>, Has<Revealed>), With<Turn>>,
+    actors: Query<(NameOrEntity, &Recovery, Has<Player>, &Revealed), With<Turn>>,
     mut ns: ResMut<NextState<GameState>>,
     mut world_clock: ResMut<WorldClock>,
     next_turn: Option<Res<NextTurn>>,
@@ -112,7 +112,7 @@ pub fn ramifying(
     let TurnDelay(delay) = *turn_delay;
 
     if *turn_timer == Timer::default() {
-        info!("setting turn timer to {delay}");
+        trace!("setting turn timer to {delay}");
         *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
     }
 
@@ -130,21 +130,25 @@ pub fn ramifying(
         return;
     };
 
-    info!("schedule: {entities:?}");
+    trace!("schedule: {entities:?}");
 
     world_clock.advance_to(tick);
+
+    let (name_or_nt, _, _, Revealed(revealed)) = entities.first().unwrap();
 
     if entities.iter().any(|(_, _, is_player, _)| *is_player) {
         info!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
-        *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
+        *turn_timer = Timer::from_seconds(delay * 0.75, TimerMode::Once);
         return;
+    } else if *revealed {
+        trace!("{name_or_nt} is revealed; longer delay");
+        *turn_timer = Timer::from_seconds(delay * 1.75, TimerMode::Once);
     } else {
-        *turn_timer = Timer::from_seconds(delay * 3., TimerMode::Once);
+        trace!("{name_or_nt} is not revealed; shorter delay");
+        *turn_timer = Timer::from_seconds(0.1, TimerMode::Repeating);
     }
 
-    let next_entity = entities.first().unwrap();
-
-    info!("next entity: {}", next_entity.0);
-    commands.insert_resource(NextTurn(next_entity.0.entity));
+    info!("next entity: {}", name_or_nt);
+    commands.insert_resource(NextTurn(name_or_nt.entity));
 }
