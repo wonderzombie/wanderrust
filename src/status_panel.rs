@@ -5,18 +5,21 @@ use crate::{
     cell::Cell,
     colors,
     gamestate::{Screen, WorldClock},
-    parameters::Health,
+    parameters::{Health, Parameters},
     ui::theme,
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Update, update_labels.run_if(in_state(Screen::Playing)));
+    app.add_systems(
+        Update,
+        (update_labels, update_health_color).run_if(in_state(Screen::Playing)),
+    );
 }
 
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct StatusPanel;
 
-#[derive(Component, Copy, Clone, Debug, FromTemplate)]
+#[derive(Component, Copy, Clone, Debug, FromTemplate, PartialEq)]
 pub enum Label {
     #[default]
     Hp,
@@ -41,6 +44,29 @@ fn update_labels(
         };
         text.set_if_neq(Text::new(new_text));
     }
+}
+
+fn update_health_color(
+    mut commands: Commands,
+    health: Single<(&Parameters, Ref<Health>), With<Player>>,
+    labels: Query<(Entity, &Label)>,
+) {
+    let Some((entity, _)) = labels.iter().find(|(_, label)| **label == Label::Hp) else {
+        warn!("unable to find health label");
+        return;
+    };
+
+    let (params, health) = *health;
+
+    let pct = health.hp as f32 / params.max_hp as f32;
+
+    let color = if pct < 0.5 {
+        colors::KENNEY_RED
+    } else {
+        colors::KENNEY_OFF_WHITE
+    };
+
+    commands.entity(entity).insert(TextColor(color));
 }
 
 pub(crate) fn scene() -> impl Scene {
