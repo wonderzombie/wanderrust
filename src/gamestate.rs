@@ -3,7 +3,12 @@ use itertools::Itertools;
 use std::{collections::BTreeMap, fmt::Display};
 
 use crate::{
-    actors::{Flasks, Player}, bestiary::Bestiary, parameters::Health, tilemap::{ActiveLevel, WorldSpawn}, tiles::Revealed
+    actors::{Flasks, Player},
+    bestiary::Bestiary,
+    combat::{NeedsRespawn, RespawnPoint},
+    parameters::Health,
+    tilemap::{ActiveLevel, WorldSpawn},
+    tiles::{Revealed, TileIdx},
 };
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -174,4 +179,14 @@ pub fn respawn_player(
         .insert((params, health, flasks))
         .insert((*cell, ChildOf(*level_entity)));
     commands.entity(*level_entity).insert(ActiveLevel);
+}
+
+pub fn reset_combatants(
+    mut commands: Commands,
+    monsters: Query<(Entity, &TileIdx), With<RespawnPoint>>,
+) {
+    for (entity, tile_idx) in monsters.iter() {
+        info!("{tile_idx} marked for respawn");
+        commands.entity(entity).insert(NeedsRespawn);
+    }
 }

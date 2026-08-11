@@ -1,10 +1,11 @@
 use bevy::{prelude::*, sprite::Text2dShadow};
-use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking};
+use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, NextPos, Pathfind};
 
 use crate::{
     actors::{Dead, Player},
     atlas::SpriteAtlas,
     bestiary::Bestiary,
+    cell::Cell,
     colors,
     gamestate::{GameState, Screen, Turn, WorldClock},
     interactions::Interactable,
@@ -27,14 +28,15 @@ pub(crate) struct Died(pub Entity);
 /// Adds Combatant and Name components.
 pub fn detect_belligerents(
     mut commands: Commands,
-    interxs: Populated<(Entity, &Interactable), Added<Interactable>>,
+    interxs: Populated<(Entity, &Interactable, &Cell), Added<Interactable>>,
 ) {
-    for (entity, interx) in interxs {
+    for (entity, interx, cell) in interxs {
         if let Interactable::Belligerent { name, .. } = interx {
             commands.entity(entity).insert((
                 Behavior::default(),
                 CombatantBundle::default(),
                 Name::new(name.clone()),
+                RespawnPoint(*cell),
             ));
         }
     }
@@ -75,9 +77,19 @@ pub(crate) fn animate_icons(
 /// They will only receive Parameters if they don't have any, but they always receive health.
 pub fn init_combatants(
     mut commands: Commands,
-    combatants: Populated<(Entity, &TileIdx, &Name, Option<&Parameters>), Added<Combatant>>,
+    combatants: Populated<
+        (
+            Entity,
+            &TileIdx,
+            &Name,
+            Has<NeedsRespawn>,
+            Option<&Parameters>,
+            Option<&RespawnPoint>,
+        ),
+        Or<(Added<Combatant>, Added<NeedsRespawn>)>,
+    >,
 ) {
-    for (entity, tile_idx, name, params_opt) in combatants.into_iter() {
+    for (entity, tile_idx, name, respawning, params_opt, respawn_opt) in combatants.into_iter() {
         let params = params_opt
             .copied()
             .or_else(|| Bestiary::from_tile(tile_idx))
@@ -93,18 +105,32 @@ pub fn init_combatants(
             is_dead: false,
         };
 
-        info!("initialized combatant {entity:?}: {params:?} and {health:?}");
+        info!("initializing combatant {entity:?}: {params:?} and {health:?}");
 
-        commands
-            .entity(entity)
-            .insert_if_new(params)
-            .insert(health)
-            .observe(on_attacked);
+        let mut ecmd = commands.entity(entity);
+
+        ecmd.insert(health);
+
+        if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
+            ecmd.remove::<(Pathfind, NextPos)>()
+                .insert(Cell::from(respawn))
+                .insert(AgentPos(respawn));
+        } else {
+            ecmd.insert_if_new(params)
+                .insert(health)
+                .observe(on_attacked);
+        }
     }
 }
 
 #[derive(Component, Default, Reflect)]
 pub struct Combatant;
+
+#[derive(Component, Default, Reflect)]
+pub struct RespawnPoint(pub Cell);
+
+#[derive(Component, Default, Reflect)]
+pub struct NeedsRespawn;
 
 #[derive(Bundle, Default)]
 pub struct CombatantBundle {
