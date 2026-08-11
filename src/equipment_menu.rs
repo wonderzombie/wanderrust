@@ -93,6 +93,7 @@ fn populate(
             Some(
                 commands
                     .spawn((
+                        Name::new("equipment menu"),
                         Node::default(),
                         Text::new(label.to_uppercase()),
                         font.clone(),
@@ -214,6 +215,7 @@ fn interaction_system(
 
 fn scene() -> impl Scene {
     bsn! {
+        #EquipmentScene
         EquipmentMenu
         BackgroundColor(Color::BLACK)
         Node {

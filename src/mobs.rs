@@ -168,6 +168,7 @@ pub fn init_indicators(
             Interactable::Belligerent { .. } | Interactable::Speaker { .. } => {
                 info!("initialized indicator for {nt:?}");
                 commands.spawn((
+                    Name::new(format!("indicator {} {interx:?} {nt}", interx.tile())),
                     Indicator,
                     xform,
                     ChildOf(nt),

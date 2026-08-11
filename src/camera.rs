@@ -8,6 +8,7 @@ const CAMERA_LAYER: TilemapLayer = TilemapLayer(0.);
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
+        Name::new("camera2d"),
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
             viewport_origin: Vec2::new(0.5 - SIDEBAR_W / (2.0 * 800.0), 0.5),

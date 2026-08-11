@@ -86,6 +86,7 @@ fn populate(
 
             commands
                 .spawn((
+                    Name::new("inventory menu"),
                     Node::default(),
                     Text::new(label.to_uppercase()),
                     font.clone(),

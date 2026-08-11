@@ -65,6 +65,7 @@ fn update_log(
 
 pub(crate) fn scene() -> impl Scene {
     bsn! {
+        #MessageLog
         MessageLog
         Visibility::Inherited
         Node {
@@ -74,5 +75,9 @@ pub(crate) fn scene() -> impl Scene {
         }
         BackgroundColor(colors::KENNEY_BG)
         ScrollPosition(Vec2 { x: 0., y: f32::MAX })
+        Pickable {
+            is_hoverable: false,
+            should_block_lower: false,
+        }
     }
 }

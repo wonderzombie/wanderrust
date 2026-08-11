@@ -312,7 +312,7 @@ pub fn spawn_worldmap(
     info!("📍 initializing worldmap");
 
     let world_entity = commands
-        .spawn((Visibility::Inherited, Transform::default()))
+        .spawn((Name::new("world entity"), Visibility::Inherited, Transform::from_xyz(0.0, 0.0, -10.0)))
         .id();
     let world_id = WorldId(world_entity);
     world_spec.id.replace(world_id);
@@ -324,14 +324,16 @@ pub fn spawn_worldmap(
     for (level_id, level_spec) in world_spec.maps.iter_mut() {
         let layer = level_spec.depth.neg() as f32 + *MAP_LAYER;
         let level_entity = commands
-            .spawn(LevelBundle {
+            .spawn((
+                Name::new(format!("level {level_id} {layer}")),
+                LevelBundle {
                 transform: Transform::from_xyz(
                     level_spec.world_pos.x,
                     level_spec.world_pos.y,
                     layer,
                 ),
                 ..default()
-            })
+            }))
             .id();
         let level = Level(level_entity, *level_id);
         level_spec.id.replace(level);
@@ -496,6 +498,7 @@ pub fn setup_portals(
         if let Some(spec) = world.maps.get(id) {
             for (portal, cell) in spec.portals.iter() {
                 commands.spawn((
+                    Name::new(format!("{portal:?} {cell}")),
                     Actor,
                     portal.clone(),
                     portal.tile_idx,

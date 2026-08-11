@@ -111,7 +111,7 @@ pub fn on_player_added(
     let parent = *player;
     for itam in STARTING_EQUIPMENT.iter() {
         let id = commands
-            .spawn((CarriedBy(parent), **itam, Quantity(1)))
+            .spawn((Name::new(format!("player item {}", **itam)), CarriedBy(parent), **itam, Quantity(1)))
             .id();
         equip_changes.write(ToggleEquip {
             target: parent,

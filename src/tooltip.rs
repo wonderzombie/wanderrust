@@ -20,6 +20,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>, atlas: Res<
     sprite.color = Color::BLACK;
 
     commands.spawn((
+        Name::new("tooltip"),
         sprite,
         Tooltip,
         TextFont {

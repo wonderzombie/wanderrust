@@ -45,6 +45,7 @@ fn update_labels(
 
 pub(crate) fn scene() -> impl Scene {
     bsn! {
+        #StatusPanel
         StatusPanel
         Visibility::Inherited
         Node {
