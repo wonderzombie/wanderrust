@@ -65,25 +65,25 @@ pub(super) fn on_button_input(
         return;
     }
 
-    if input.any_pressed([KeyCode::SuperLeft, KeyCode::SuperRight])
+    if input.pressed(KeyCode::ShiftLeft)
         && input.just_released(KeyCode::Digit5)
     {
         info!("game state is: {game_state:?} {:?}", game_state.get());
         info!("game state is: {screen_state:?} {:?}", screen_state.get());
         input.reset_all();
-    } else if input.just_released(KeyCode::F1) {
+    } else if input.just_released(KeyCode::Digit1) && input.pressed(KeyCode::ShiftLeft) {
         info!("relocating player to world spawn");
         let WorldSpawn { cell, .. } = *world_spawn;
         commands.entity(*player).insert(*cell);
-    } else if input.just_released(KeyCode::F6) {
+    } else if input.just_released(KeyCode::Digit6) {
         if input.pressed(KeyCode::ShiftLeft) {
             info!("dumping all carried items; player id is {:?}", *player);
             dbg!(all_items.iter().collect::<Vec<_>>());
-        } else {
+        } else if input.pressed(KeyCode::ShiftLeft) && input.pressed(KeyCode::ControlLeft) {
             info!("dumping player inventory");
             dbg!(inventory);
         }
-    } else if input.just_released(KeyCode::F7) {
+    } else if input.just_released(KeyCode::Digit7) && input.pressed(KeyCode::ShiftLeft) {
         info!("dumping player equipment");
         let equipped = all_equipment
             .iter_many(player_equipped.iter())
@@ -133,6 +133,7 @@ pub fn on_toggle_debug(
     input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<DebugState>>,
     mut next_state: ResMut<NextState<DebugState>>,
+    mut debug_picking_mode: ResMut<DebugPickingMode>,
     mut log: MessageWriter<LogEvent>,
 ) {
     if input.just_pressed(KeyCode::Backspace)
@@ -145,6 +146,14 @@ pub fn on_toggle_debug(
         log.write((format!("! debug: {:?} !", next).as_str(), Color::WHITE).into());
         info!("📝 ! debug: {:?} !", next);
         next_state.set(next);
+
+        let next_mode = match *debug_picking_mode {
+            DebugPickingMode::Normal => DebugPickingMode::Disabled,
+            DebugPickingMode::Disabled => DebugPickingMode::Normal,
+            _ => DebugPickingMode::Disabled,
+        };
+
+        debug_picking_mode.set_if_neq(next_mode);
     }
 }
 
@@ -189,6 +198,12 @@ impl Plugin for DebugPlugin {
         .add_plugins(RemotePlugin::default())
         .add_plugins(RemoteHttpPlugin::default())
         .add_plugins(DebugPickingPlugin)
-        .insert_resource(DebugPickingMode::Disabled);
+        .insert_resource(DebugPickingMode::Normal)
+        .add_observer(|on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
+            if s.get() == &DebugState::Enabled {
+                info!("clicked: {on:?}");
+                commands.entity(on.entity).log_components();
+            }
+        });
     }
 }
