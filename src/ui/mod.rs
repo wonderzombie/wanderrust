@@ -27,14 +27,16 @@ fn discard(mut commands: Commands, hud_nt: Single<Entity, With<HudRoot>>) {
 
 fn hud() -> impl Scene {
     bsn! {
+        #HudRoot
         HudRoot
         Node {
             width: percent(100),
             height: percent(100),
             flex_direction: FlexDirection::Row,
         }
+        Pickable::IGNORE
         Children [
-            (PlayField Node { flex_grow: 1.0 }),
+            (PlayField Node { flex_grow: 1.0 } Pickable::IGNORE ),
             (
                 Node {
                     width: px(SIDEBAR_W),
