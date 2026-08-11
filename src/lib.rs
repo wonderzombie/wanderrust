@@ -57,7 +57,7 @@ use crate::{
     message_log::LogEvent,
     parameters::{Health, Parameters},
     tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
-    tiles::TileIdx,
+    tiles::{MapTile, TileIdx},
 };
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
@@ -306,15 +306,9 @@ fn finalize_loading(
     next_screen.set(Screen::Title);
 }
 
-fn snapshot_cells(mut query: Query<(Entity, Ref<Cell>, Option<&mut PreviousCell>)>, mut commands: Commands) {
-    for (entity, curr, prev) in query.iter_mut() {
-        let new_prev = PreviousCell(*curr);
-        if curr.is_changed() {
-            match prev {
-                Some(mut prev) => *prev = new_prev,
-                None => { commands.entity(entity).insert(new_prev); }
-            }
-        }
+fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell), Without<MapTile>>) {
+    for (curr, mut prev) in query.iter_mut() {
+        *prev = PreviousCell(*curr);
     }
 }
 
