@@ -28,6 +28,11 @@ pub fn discard(entity: Single<Entity, With<YouDiedScreen>>, mut commands: Comman
 
 pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
     let font: Handle<Font> = asset_server.load("fonts/pcsenior.ttf");
+    let pcsr = |size: f32| TextFont {
+        font: FontSource::Handle(font.clone()),
+        font_size: FontSize::Px(size),
+        ..default()
+    };
     (
         YouDiedScreen,
         Node {
@@ -35,35 +40,24 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
             height: percent(100),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
             ..default()
         },
-        BackgroundColor(Color::BLACK),
-        children![
-            (
-                Text::new("YOU DIED"),
-                TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(54.0),
-                    ..default()
-                },
-                TextLayout::justify(Justify::Center),
-            ),
+        children![(
             Node {
-                min_height: Val::Px(32.),
+                width: percent(100),
+                height: vh(33.),
+                row_gap: px(32.),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
-            (
-                Button,
-                Text::new("RESPAWN"),
-                TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(33.),
-                    ..default()
-                },
-                TextLayout::justify(Justify::Center),
-            )
-        ],
+            BackgroundColor(Color::BLACK),
+            children![
+                (Text::new("YOU DIED"), pcsr(54.),),
+                (Button, Text::new("RESPAWN"), pcsr(33.),)
+            ]
+        )],
     )
 }
 
