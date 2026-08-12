@@ -218,7 +218,7 @@ pub fn process_attacks(
                     colors::KENNEY_RED,
                     &font,
                     defender_id,
-                    "dead",
+                    "*DEAD*",
                 );
                 commands
                     .entity(defender_id)
