@@ -19,7 +19,7 @@ pub(crate) fn plugin(app: &mut App) {
 pub struct EquipmentChanged;
 
 #[derive(Component, Reflect, Debug)]
-#[component(on_add = notify, on_insert = notify, on_discard = notify, on_remove = notify)]
+#[component(on_insert = notify, on_discard = notify)]
 #[relationship(relationship_target = HasEquipped)]
 #[reflect(Component)]
 #[component(immutable)]
