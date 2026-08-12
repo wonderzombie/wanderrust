@@ -42,8 +42,13 @@ pub fn detect_belligerents(
                     Behavior::default(),
                     CombatantBundle::default(),
                     Name::new(name.clone()),
-                    RespawnPoint(*cell),
                 ))
+                // Only insert the respawn point if it doesn't have one. This allows a mob to
+                // respawn where it originated, either because it started somewhere, or some other
+                // process set it already..
+                .insert_if_new(RespawnPoint(*cell))
+                // Recovery indicates active participation in combat. We want to clear this
+                // in case this is a respawning situation.
                 .remove::<Recovery>();
         }
     }
