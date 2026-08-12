@@ -6,7 +6,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
-    equipment::ToggleEquip,
+    equipment::{Slots, ToggleEquip},
     equipment_menu,
     gamestate::Modal,
     inventory::{CarriedBy, Inventory, InventoryChange},
@@ -89,8 +89,8 @@ pub fn spawn_player(
                 (LightLevel::Bright, 2),
                 (LightLevel::Light, 1),
             ),
-            Flasks(3),
-            // from crate::combat, crate::fov
+            Flasks::default(),
+            Slots::standard(),
             CombatantBundle::default(),
             PieceBundle {
                 sprite: atlas.sprite(),
