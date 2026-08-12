@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::gamestate::{GameState, Screen};
+use crate::gamestate::{GameState, ResetScenario, Screen};
 
 pub struct YouDiedScreenPlugin;
 
@@ -17,10 +17,12 @@ impl Plugin for YouDiedScreenPlugin {
 pub struct YouDiedScreen;
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    info!("setup");
     commands.spawn(screen_bundle(asset_server));
 }
 
 pub fn discard(entity: Single<Entity, With<YouDiedScreen>>, mut commands: Commands) {
+    info!("discard");
     commands.entity(*entity).despawn();
 }
 
@@ -68,11 +70,15 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
 pub fn interaction_system(
     mut commands: Commands,
     interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
+    mut next_gamestate: ResMut<NextState<GameState>>,
+    mut next_screen: ResMut<NextState<Screen>>,
 ) {
     for (_, interaction) in interactions.iter() {
         if interaction == &Interaction::Pressed {
-            commands.set_state_if_neq(Screen::Playing);
-            commands.set_state_if_neq(GameState::AwaitingInput);
+            info!("interaction");
+            commands.write_message(ResetScenario);
+            next_gamestate.set(GameState::AwaitingInput);
+            next_screen.set(Screen::Playing);
         }
     }
 }

@@ -11,6 +11,11 @@ use crate::{
     tiles::{Revealed, TileIdx},
 };
 
+pub(super) fn plugin(app: &mut App) {
+    app.add_message::<ResetScenario>()
+        .init_resource::<WorldClock>();
+}
+
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct WorldClock(usize);
 
@@ -163,11 +168,25 @@ pub fn ramify(
     commands.insert_resource(NextTurn(name_or_nt.entity));
 }
 
+#[derive(Event, Debug)]
+pub struct PlayerDied;
+
+#[derive(Message, Debug)]
+pub struct ResetScenario;
+
+pub fn player_died(_on: On<PlayerDied>, mut commands: Commands) {
+    commands.set_state_if_neq(GameState::Defeat);
+    commands.set_state_if_neq(Screen::YouDied);
+}
+
 pub fn respawn_player(
+    mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
     respawn_point: Single<&WorldSpawn>,
     player: Single<Entity, With<Player>>,
 ) {
+    let _ = reader.read().collect::<Vec<_>>();
+
     let WorldSpawn { level_entity, cell } = *respawn_point;
 
     let params = Bestiary::Player.params();
@@ -179,14 +198,20 @@ pub fn respawn_player(
         .insert((params, health, flasks))
         .insert((*cell, ChildOf(*level_entity)));
     commands.entity(*level_entity).insert(ActiveLevel);
+
+    info!("respawned player");
 }
 
-pub fn reset_combatants(
+pub fn respawn_combatants(
+    mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
     monsters: Query<(Entity, &TileIdx), With<RespawnPoint>>,
 ) {
+    let _ = reader.read().collect::<Vec<_>>();
+
     for (entity, tile_idx) in monsters.iter() {
         info!("{tile_idx} marked for respawn");
         commands.entity(entity).insert(NeedsRespawn);
     }
+    info!("respawned monsters");
 }

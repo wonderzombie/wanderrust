@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     cell::Cell,
     colors,
-    gamestate::{GameState, Screen, Turn, WorldClock},
+    gamestate::{PlayerDied, Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
@@ -113,6 +113,7 @@ pub fn init_combatants(
 
         if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
             ecmd.remove::<(Pathfind, NextPos)>()
+                .insert(CombatantBundle::default())
                 .insert(Cell::from(respawn))
                 .insert(AgentPos(respawn));
         } else {
@@ -211,9 +212,9 @@ pub fn process_attacks(
                     .trigger(Died)
                     .remove::<(AgentOfGrid, AgentPos, Blocking)>()
                     .remove::<(Awareness, Turn)>();
+
                 if is_player {
-                    commands.set_state_if_neq(GameState::Defeat);
-                    commands.set_state_if_neq(Screen::YouDied);
+                    commands.trigger(PlayerDied);
                 }
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);

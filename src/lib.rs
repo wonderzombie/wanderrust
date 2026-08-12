@@ -112,7 +112,6 @@ pub fn run() {
     )
     .add_message::<combat::Attack>()
     .init_resource::<atlas::SpriteAtlas>()
-    .init_resource::<gamestate::WorldClock>()
     .init_resource::<sounds::Sounds>()
     .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
@@ -123,6 +122,7 @@ pub fn run() {
     })
     .insert_state(GameState::Starting)
     .insert_state(Modal::None)
+    .add_plugins(gamestate::plugin)
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(typewriter::plugin)
     .add_plugins(debug::DebugPlugin)
@@ -254,20 +254,20 @@ pub fn run() {
     )
     .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
-        OnTransition::<GameState> {
-            exited: GameState::Defeat,
-            entered: GameState::AwaitingInput,
-        },
-        (gamestate::respawn_player, gamestate::reset_combatants),
+        Last,
+        (gamestate::respawn_player, gamestate::respawn_combatants),
     )
     .add_systems(
         Last,
         (
             map::update_level_visuals,
             map::update_tile_visuals.after(update_level_visuals),
+            gamestate::respawn_player,
+            gamestate::respawn_combatants,
         ),
     )
-    .add_observer(click_observer);
+    .add_observer(click_observer)
+    .add_observer(gamestate::player_died);
 
     if query_filter_panes {
         insert_fq_plugins(&mut app);
