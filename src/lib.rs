@@ -139,6 +139,7 @@ pub fn run() {
     .add_plugins(intro_screen::plugin)
     .add_plugins(ui::plugin)
     .add_plugins(grid::plugin)
+    .add_plugins(effects::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -245,7 +246,6 @@ pub fn run() {
             combat::init_combatants,
             grid::init_agents,
             actors::on_player_added,
-            effects::apply_params_modifiers,
         ),
     )
     .add_systems(
