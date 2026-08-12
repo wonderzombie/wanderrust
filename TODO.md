@@ -1,36 +1,6 @@
 # THINGS TO DO SOON-ISH
 
-## ITEMS & EQUIPMENT
-
-- Re-introduce an `Equipped` message and use it in `on_player_added()`.
-
-- Update inventory subscreen to use ItemId & output `desc` when an item is selected
-
-- Show equipment in subscreen
-- Formatting for equipment modifiers; implement something like `Display` for `Modifiers` or `Parameters`
-
-- Use `Slot` for `EquipDef` for real
-- Formalize something like a "body plan" component, like `HashMap<Slot, ItemId>`. 
-
-*Most* items will fit into exactly one slot. 
-
-- For filtering semantics (like equipment menu -> trinket slot -> show a list of trinkets in inventory): `pub fn equips_to(&self, slot: Slot) -> bool`.
-- Consider putting `slots()` on `ItemId`, returning something like `Option<&'static [&Slot]>` -- this could be used for displaying equipment info.
-  - But it's just for display purposes, `slots()` might better return `String` instead.  
-
-- Equipment subscreen
-
-## YOU DIED SUBSCREEN
-
-I shelved this. There are actually two or three components to this change.
-
-- Showing the death screen (detecting death; showing screen; state changes)
-- Respawning the player (v0.0.1: at world spawn)
-  - Respawning the player (v0.1.0: at the last visited shrine XOR world spawn) incl setting spawn at shrines
-  - Ensuring player is reinitialized
-- Respawning enemies (in original position; proposal is to put a Spawn on enemies and reinit each when the player respawns; unify init and reinit)
-  - Possibly making use of the distinction between `interactions::Interactable::Belligerent` (might have spawn info) and `combat::Combatant`.
-  - Respawn dead combatants the same way they're initialized to avoid dealing with cleanup of missing or extra components
+Finished the items that were here before.
 
 # THINGS TO DO SOMEDAY/MAYBE
 
@@ -81,8 +51,6 @@ Like if you're about to spend your last bit of stamina, instead of `hvy attack` 
 The math should be pretty simple. I am not against using a low N like 5 or even 3 for a starting character's stamina. Let's try 5. 
 
 You can queue actions. The number of queued actions depends on Acumen. Alternatively, maybe Acumen gives you half of what you spend, rounded down, when you cancel a move. Alacrity makes you go sooner. Grit gives you more stamina.
-
-
 
 # MAYBE NEXT
 
