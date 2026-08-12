@@ -6,6 +6,7 @@ use crate::{
     actors::{Flasks, Player},
     bestiary::Bestiary,
     combat::{NeedsRespawn, RespawnPoint},
+    equipment::EquipmentChanged,
     parameters::Health,
     tilemap::WorldSpawn,
     tiles::TileIdx,
@@ -212,6 +213,8 @@ pub fn respawn_player(
             .insert(Turn)
             .insert((params, health, flasks))
             .insert((*cell, ChildOf(*level_entity)));
+
+        commands.write_message(EquipmentChanged);
 
         trace!("! {m:?} {id:?} respawned player");
     }

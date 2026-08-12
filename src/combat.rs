@@ -125,9 +125,9 @@ pub fn init_combatants(
         ecmd.insert(health);
 
         if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
-            ecmd.remove::<(NeedsRespawn, Recovery, Pathfind)>()
-                .insert(CombatantBundle::default())
-                .insert(Cell::from(respawn));
+            let cell = Cell::from(respawn);
+            ecmd.remove::<(NeedsRespawn, Pathfind)>()
+                .insert((params, health, cell));
             trace!("respawning {name}");
         } else {
             ecmd.insert_if_new(params)

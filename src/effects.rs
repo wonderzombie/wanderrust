@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     bestiary::Bestiary,
-    equipment::{EquipmentChanged, HasEquipped, ToggleEquip},
+    equipment::{EquipmentChanged, HasEquipped, Slots, ToggleEquip},
     gamestate::PlayerSpawned,
     items::ItemId,
     parameters::Parameters,
@@ -20,7 +20,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub fn apply_params_modifiers(
-    curr_equip: Query<(Entity, &TileIdx, Option<&HasEquipped>, &mut Parameters)>,
+    curr_equip: Query<(Entity, &TileIdx, Option<&HasEquipped>, &mut Parameters), With<Slots>>,
     equipment: Query<&ItemId>,
 ) {
     for (nt, tile_idx, has_equipped_opt, mut extant_params) in curr_equip {
@@ -30,7 +30,10 @@ pub fn apply_params_modifiers(
         }
         trace!("params for {tile_idx}: {params:?}");
 
-        let has_equipped = has_equipped_opt.map(|it| it.iter()).unwrap_or_default();
+        let has_equipped = has_equipped_opt
+            .map(|it| it.iter())
+            .unwrap_or_default()
+            .collect::<Vec<Entity>>();
 
         let modified: Parameters = equipment
             .iter_many(has_equipped)
