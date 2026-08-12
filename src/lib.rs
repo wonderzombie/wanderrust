@@ -255,10 +255,6 @@ pub fn run() {
     .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Last,
-        (gamestate::respawn_player, gamestate::respawn_combatants),
-    )
-    .add_systems(
-        Last,
         (
             map::update_level_visuals,
             map::update_tile_visuals.after(update_level_visuals),
@@ -402,7 +398,9 @@ fn process_actions(
                     let portal = portals.get(target).unwrap();
                     info!("process_actions: portal");
                     // TODO: extract to constant.
-                    commands.entity(action.entity).insert(Recovery(1));
+                    commands
+                        .entity(action.entity)
+                        .insert(clock.recovery_after(1));
                     commands.insert_resource(PendingTransition {
                         arrive_at: portal.arrive_at.clone(),
                     });

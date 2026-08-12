@@ -1,5 +1,5 @@
 use bevy::{prelude::*, sprite::Text2dShadow};
-use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, NextPos, Pathfind};
+use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, Pathfind};
 
 use crate::{
     actors::{Dead, Player},
@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     cell::Cell,
     colors,
-    gamestate::{PlayerDied, Turn, WorldClock},
+    gamestate::{PlayerDied, Recovery, Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
@@ -28,16 +28,23 @@ pub(crate) struct Died(pub Entity);
 /// Adds Combatant and Name components.
 pub fn detect_belligerents(
     mut commands: Commands,
-    interxs: Populated<(Entity, &Interactable, &Cell), Added<Interactable>>,
+    interxs: Populated<
+        (Entity, &Interactable, &Cell),
+        Or<(Added<Interactable>, Added<NeedsRespawn>)>,
+    >,
 ) {
     for (entity, interx, cell) in interxs {
         if let Interactable::Belligerent { name, .. } = interx {
-            commands.entity(entity).insert((
-                Behavior::default(),
-                CombatantBundle::default(),
-                Name::new(name.clone()),
-                RespawnPoint(*cell),
-            ));
+            trace!("detected {entity} {name}");
+            commands
+                .entity(entity)
+                .insert((
+                    Behavior::default(),
+                    CombatantBundle::default(),
+                    Name::new(name.clone()),
+                    RespawnPoint(*cell),
+                ))
+                .remove::<Recovery>();
         }
     }
 }
@@ -90,6 +97,7 @@ pub fn init_combatants(
     >,
 ) {
     for (entity, tile_idx, name, respawning, params_opt, respawn_opt) in combatants.into_iter() {
+        trace!("init combatant {entity} {tile_idx} {name} (respawn? {respawning})");
         let params = params_opt
             .copied()
             .or_else(|| Bestiary::from_tile(tile_idx))
@@ -105,21 +113,22 @@ pub fn init_combatants(
             is_dead: false,
         };
 
-        info!("initializing combatant {entity:?}: {params:?} and {health:?}");
+        info!("{tile_idx} {name} {entity}: {params:?} and {health:?}");
 
         let mut ecmd = commands.entity(entity);
 
         ecmd.insert(health);
 
         if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
-            ecmd.remove::<(Pathfind, NextPos)>()
+            ecmd.remove::<(NeedsRespawn, Recovery, Pathfind)>()
                 .insert(CombatantBundle::default())
-                .insert(Cell::from(respawn))
-                .insert(AgentPos(respawn));
+                .insert(Cell::from(respawn));
+            trace!("respawning {name}");
         } else {
             ecmd.insert_if_new(params)
                 .insert(health)
                 .observe(on_attacked);
+            trace!("first spawn for {name}");
         }
     }
 }
@@ -157,7 +166,7 @@ pub fn process_attacks(
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
     for attack in attacks.read() {
-        info!("{attack:?}");
+        trace!("{attack:?}");
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
             warn!(

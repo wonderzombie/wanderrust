@@ -7,8 +7,8 @@ use crate::{
     bestiary::Bestiary,
     combat::{NeedsRespawn, RespawnPoint},
     parameters::Health,
-    tilemap::{ActiveLevel, WorldSpawn},
-    tiles::{Revealed, TileIdx},
+    tilemap::WorldSpawn,
+    tiles::TileIdx,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -103,7 +103,8 @@ pub struct Turn;
 #[derive(Resource, Debug, Reflect)]
 pub struct TurnDelay(pub f32);
 
-#[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord, Debug)]
+#[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
+#[require(Turn)]
 pub struct Recovery(pub usize);
 
 #[derive(Resource, Debug, Reflect)]
@@ -113,17 +114,16 @@ pub fn ramify(
     mut commands: Commands,
     mut turn_timer: Local<Timer>,
     time: Res<Time>,
-    actors: Query<(NameOrEntity, &Recovery, Has<Player>, &Revealed), With<Turn>>,
+    actors: Query<(Entity, Option<NameOrEntity>, Option<&Recovery>, Has<Player>), With<Turn>>,
     mut ns: ResMut<NextState<GameState>>,
     mut world_clock: ResMut<WorldClock>,
     next_turn: Option<Res<NextTurn>>,
     turn_delay: Res<TurnDelay>,
 ) {
     if next_turn.is_some() {
-        info!("current actor still needs to take turn: {next_turn:?}");
+        trace!("current actor still needs to take turn: {next_turn:?}");
         return;
     }
-
     let TurnDelay(delay) = *turn_delay;
 
     if *turn_timer == Timer::default() {
@@ -135,37 +135,45 @@ pub fn ramify(
         return;
     }
 
+    if actors.is_empty() {
+        panic!("no eligible actors to take turns?!");
+    } else {
+        trace!("actors: found {}", actors.count());
+    }
+
+    for (entity, name_or_entity_item_opt, recovery_opt, is_player) in actors.iter() {
+        trace!("actors: {entity} {name_or_entity_item_opt:?} {recovery_opt:?} {is_player}");
+    }
+
     let schedule: BTreeMap<usize, Vec<_>> = actors
         .iter()
-        .into_group_map_by(|it| it.1.0)
+        .filter(|(_, _, r_opt, _)| r_opt.is_some())
+        .into_group_map_by(|it| it.2.map(|it| it.0).unwrap_or_default())
         .into_iter()
         .collect();
 
+    trace!("WHOLE SCHEDULE: {schedule:?}");
+
     let Some((&tick, entities)) = schedule.first_key_value() else {
-        return;
+        panic!("schedule is empty? {schedule:?}");
     };
-
-    trace!("schedule: {entities:?}");
-
     world_clock.advance_to(tick);
 
-    let (name_or_nt, _, _, Revealed(revealed)) = entities.first().unwrap();
+    trace!("NEXT ENTITIES: {entities:?}");
 
-    if entities.iter().any(|(_, _, is_player, _)| *is_player) {
+    let (nt, name_or_nt_opt, _, _) = entities.first().unwrap();
+
+    if entities.iter().any(|(_, _, _, is_player)| *is_player) {
         info!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
-        *turn_timer = Timer::from_seconds(delay * 0.75, TimerMode::Once);
+        *turn_timer = Timer::from_seconds(delay * 0.75, TimerMode::Repeating);
         return;
-    } else if *revealed {
-        trace!("{name_or_nt} is revealed; longer delay");
-        *turn_timer = Timer::from_seconds(delay * 1.75, TimerMode::Once);
     } else {
-        trace!("{name_or_nt} is not revealed; shorter delay");
-        *turn_timer = Timer::from_seconds(0.1, TimerMode::Repeating);
+        *turn_timer = Timer::from_seconds(delay * 1.0, TimerMode::Repeating);
     }
 
-    info!("next entity: {}", name_or_nt);
-    commands.insert_resource(NextTurn(name_or_nt.entity));
+    info!("next entity: {nt} {:?}", name_or_nt_opt);
+    commands.insert_resource(NextTurn(*nt));
 }
 
 #[derive(Event, Debug)]
@@ -184,34 +192,38 @@ pub fn respawn_player(
     mut commands: Commands,
     respawn_point: Single<&WorldSpawn>,
     player: Single<Entity, With<Player>>,
+    clock: Res<WorldClock>,
 ) {
-    let _ = reader.read().collect::<Vec<_>>();
+    for (m, id) in reader.read_with_id() {
+        let WorldSpawn { level_entity, cell } = *respawn_point;
 
-    let WorldSpawn { level_entity, cell } = *respawn_point;
+        let params = Bestiary::Player.params();
+        let health = Health::new(params.max_hp as i32);
+        let flasks = Flasks::default();
 
-    let params = Bestiary::Player.params();
-    let health = Health::new(params.max_hp as i32);
-    let flasks = Flasks::default();
+        commands
+            .entity(*player)
+            .insert(clock.recovery_now())
+            .insert(Turn)
+            .insert((params, health, flasks))
+            .insert((*cell, ChildOf(*level_entity)));
 
-    commands
-        .entity(*player)
-        .insert((params, health, flasks))
-        .insert((*cell, ChildOf(*level_entity)));
-    commands.entity(*level_entity).insert(ActiveLevel);
-
-    info!("respawned player");
+        trace!("! {m:?} {id:?} respawned player");
+    }
 }
 
 pub fn respawn_combatants(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
-    monsters: Query<(Entity, &TileIdx), With<RespawnPoint>>,
+    monsters: Query<(Entity, &TileIdx), (With<RespawnPoint>, Without<NeedsRespawn>)>,
 ) {
-    let _ = reader.read().collect::<Vec<_>>();
-
-    for (entity, tile_idx) in monsters.iter() {
-        info!("{tile_idx} marked for respawn");
-        commands.entity(entity).insert(NeedsRespawn);
+    for (m, id) in reader.read_with_id() {
+        let mut count = 0;
+        for (entity, tile_idx) in monsters.iter() {
+            count += 1;
+            trace!("{tile_idx} marked for respawn");
+            commands.entity(entity).insert(NeedsRespawn);
+        }
+        trace!("! {m:?} {id:?} respawned combatants: {count}");
     }
-    info!("respawned monsters");
 }
