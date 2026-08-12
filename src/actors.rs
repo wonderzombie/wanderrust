@@ -59,7 +59,7 @@ pub fn starting_items() -> Inventory {
 
 /// Spawns the player entity at the start position of the tilemap on the
 /// player's layer.
-pub fn setup_player(
+pub fn spawn_player(
     mut commands: Commands,
     spawn: Single<&WorldSpawn>,
     atlas: Res<SpriteAtlas>,

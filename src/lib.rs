@@ -185,7 +185,7 @@ pub fn run() {
     )
     .add_systems(
         OnExit(GameState::Loading),
-        (actors::setup_player, interactions::spawn_interxs),
+        (actors::spawn_player, interactions::spawn_interxs),
     )
     .add_systems(
         Update,
