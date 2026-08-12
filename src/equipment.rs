@@ -132,7 +132,7 @@ pub(crate) fn handle_toggle_equip(
             // If this item entity was the target of this operation, we're done.
             if nt == equipment {
                 info!("only unequipping {nt:?} because target was {equipment:?}");
-                return;
+                continue;
             }
         } else {
             info!("no previous item in {:?}", target_equipment_def.slot);

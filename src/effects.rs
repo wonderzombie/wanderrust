@@ -20,18 +20,20 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub fn apply_params_modifiers(
-    curr_equip: Query<(Entity, &TileIdx, &HasEquipped, &mut Parameters)>,
+    curr_equip: Query<(Entity, &TileIdx, Option<&HasEquipped>, &mut Parameters)>,
     equipment: Query<&ItemId>,
 ) {
-    for (nt, tile_idx, has_equipped, mut extant_params) in curr_equip {
+    for (nt, tile_idx, has_equipped_opt, mut extant_params) in curr_equip {
         let params = Bestiary::from_tile(tile_idx).unwrap_or_default();
         if params.is_default() {
             warn!("{nt:?}: no stats found for {tile_idx}; using defaults {params:?}",);
         }
         trace!("params for {tile_idx}: {params:?}");
 
+        let has_equipped = has_equipped_opt.map(|it| it.iter()).unwrap_or_default();
+
         let modified: Parameters = equipment
-            .iter_many(has_equipped.iter())
+            .iter_many(has_equipped)
             .flat_map(|it| it.equip_def())
             .fold(params, |acc, eq| eq.mods.modify(acc));
 
