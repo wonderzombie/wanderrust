@@ -36,11 +36,16 @@ fn notify(mut w: DeferredWorld, _c: HookContext) {
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-pub struct Slots(pub [Slot; 4]);
+pub struct Slots(pub Vec<Slot>);
 
 impl Slots {
     pub fn standard() -> Self {
-        Self([Slot::Armor, Slot::MainHand, Slot::OffHand, Slot::Trinket])
+        Self(vec![
+            Slot::Armor,
+            Slot::MainHand,
+            Slot::OffHand,
+            Slot::Trinket,
+        ])
     }
 }
 
