@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    bestiary::Bestiary, equipment::HasEquipped, items::ItemId, parameters::Parameters,
+    bestiary::Bestiary,
+    equipment::{HasEquipped, ToggleEquip},
+    gamestate::PlayerSpawn,
+    items::ItemId,
+    parameters::Parameters,
     tiles::TileIdx,
 };
 
