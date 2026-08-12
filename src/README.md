@@ -44,17 +44,17 @@
 - [ ] respawning
   - [ ] player respawns at shrines
   - [ ] players respawn -> enemies respawn
-- [ ] equipment UI
-  - [ ] equip/un-equip
+- [x] equipment UI
+  - [x] equip/un-equip
   - [ ] show equipment stats
 - [ ] distinct weapon qualities
   - [x] stick
-  - [ ] sword
+  - [x] sword
   - [ ] axe
   - [ ] spear
 - [ ] distinct armor qualities
   - [x] rags
-  - [ ] leather
+  - [x] leather
   - [ ] chain
 - [ ] distinct trinkets
   - [ ] dragon scale
@@ -86,7 +86,6 @@
     - [ ] chalk
   - [ ] tools
     - [ ] clock
-    - [ ] 
 - [ ] stores
 - [ ] light-related gameplay
   - [ ] modal player light

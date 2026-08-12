@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use mrpas::Mrpas;
 
 use crate::{
-    actors::Player,
+    actors::{Actor, Player},
     cell::Cell,
     parameters::{Parameters, Vision},
     tilemap::{Dimensions, Level},
@@ -106,7 +106,7 @@ pub fn update_fov_model(
 pub fn update_fov_markers(
     all_fov: Query<(&Children, &Fov)>,
     player_query: Single<(&Cell, &ChildOf, &Parameters, Option<&Vision>), With<Player>>,
-    mut tiles: Query<(&Cell, &mut Revealed), With<MapTile>>,
+    mut tiles: Query<(&Cell, &mut Revealed), Or<(With<MapTile>, With<Actor>)>>,
 ) {
     let (cell, &ChildOf(parent_level), params, vis_opt) = *player_query;
 
