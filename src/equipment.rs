@@ -36,7 +36,13 @@ fn notify(mut w: DeferredWorld, _c: HookContext) {
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-pub struct Slots(pub Vec<[Slot; 4]>);
+pub struct Slots(pub [Slot; 4]);
+
+impl Slots {
+    pub fn standard() -> Self {
+        Self([Slot::Armor, Slot::MainHand, Slot::OffHand, Slot::Trinket])
+    }
+}
 
 #[derive(Component, Reflect, Debug)]
 #[relationship_target(relationship = EquippedBy, linked_spawn)]
