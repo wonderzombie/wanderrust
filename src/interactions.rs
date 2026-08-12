@@ -307,7 +307,7 @@ pub fn spawn_interxs(
             .iter()
             .map(|(interx, cell)| {
                 (
-                    Name::new(format!("interactable {interx:?} {cell}")),
+                    Name::new(format!("{} {}", interx.tile(), *cell)),
                     InterxBundle {
                         interx: interx.clone(),
                         tile_idx: interx.tile(),
