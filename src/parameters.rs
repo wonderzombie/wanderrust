@@ -11,10 +11,7 @@ pub struct Health {
 
 impl Health {
     pub fn new(hp: i32) -> Self {
-        Self {
-            hp,
-            is_dead: false,
-        }
+        Self { hp, is_dead: false }
     }
 }
 
