@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
+    prelude::*,
+};
 
 use crate::{
     colors,
@@ -12,13 +15,23 @@ pub(crate) fn plugin(app: &mut App) {
         .add_message::<ToggleEquip>();
 }
 
+#[derive(Message, Debug, Default)]
+pub struct EquipmentChanged;
+
 #[derive(Component, Reflect, Debug)]
+#[component(on_add = notify, on_insert = notify, on_discard = notify, on_remove = notify)]
 #[relationship(relationship_target = HasEquipped)]
 #[reflect(Component)]
+#[component(immutable)]
 pub struct EquippedBy {
     #[relationship]
     pub entity: Entity,
     pub slot: Slot,
+}
+
+fn notify(mut w: DeferredWorld, _c: HookContext) {
+    info!("equipment changed");
+    w.write_message_default::<EquipmentChanged>();
 }
 
 #[derive(Component, Reflect, Debug)]
@@ -84,7 +97,7 @@ where
 pub(crate) fn handle_toggle_equip(
     mut commands: Commands,
     mut toggle_equip: PopulatedMessageReader<ToggleEquip>,
-    all_equipment_sets: Query<Option<&HasEquipped>>,
+    all_equipment_sets: Query<Option<&HasEquipped>, With<Slots>>,
     all_equipped_items: Query<&EquippedBy>,
     all_items: Query<&ItemId>,
     mut log: MessageWriter<LogEvent>,

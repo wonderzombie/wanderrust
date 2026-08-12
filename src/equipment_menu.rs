@@ -6,7 +6,7 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors::{self},
-    equipment::{EquippedBy, HasEquipped, ToggleEquip, unwrap_collection},
+    equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquip, unwrap_collection},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::ItemId,
@@ -24,7 +24,9 @@ impl Plugin for EquipmentMenuPlugin {
                 (
                     interaction_system.run_if(in_state(Modal::Equipment)),
                     update_highlighted.run_if(in_state(Modal::Equipment)),
-                    refresh_labels.run_if(on_message::<ToggleEquip>),
+                    refresh_labels
+                        .run_if(in_state(Modal::Equipment))
+                        .run_if(on_message::<ToggleEquip>.or_eager(on_message::<EquipmentChanged>)),
                 ),
             )
             .init_resource::<PrevSelection>()

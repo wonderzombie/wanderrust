@@ -179,6 +179,10 @@ pub fn ramify(
 #[derive(Event, Debug)]
 pub struct PlayerDied;
 
+/// An event indiciating the player spawned. If bool is true, it is a respawn.
+#[derive(Event, Debug, Default)]
+pub struct PlayerSpawned(pub bool);
+
 #[derive(Message, Debug)]
 pub struct ResetScenario;
 

@@ -2,30 +2,27 @@ use bevy::prelude::*;
 
 use crate::{
     bestiary::Bestiary,
-    equipment::{HasEquipped, ToggleEquip},
-    gamestate::PlayerSpawn,
+    equipment::{EquipmentChanged, HasEquipped, ToggleEquip},
+    gamestate::PlayerSpawned,
     items::ItemId,
     parameters::Parameters,
     tiles::TileIdx,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, detect_refresh)
-        .add_systems(PostUpdate, apply_params_modifiers)
-        .add_message::<RefreshModifiers>()
-        .add_observer(detect_spawn);
+    app.add_systems(
+        PostUpdate,
+        apply_params_modifiers
+            .run_if(on_message::<EquipmentChanged>.or_else(on_message::<ToggleEquip>)),
+    )
+    .add_message::<EquipmentChanged>()
+    .add_observer(detect_spawn);
 }
 
-#[derive(Message, Debug, Default)]
-pub struct RefreshModifiers;
-
 pub fn apply_params_modifiers(
-    mut refresh_mods: PopulatedMessageReader<RefreshModifiers>,
     curr_equip: Query<(Entity, &TileIdx, &HasEquipped, &mut Parameters)>,
     equipment: Query<&ItemId>,
 ) {
-    for _ in refresh_mods.read() {}
-
     for (nt, tile_idx, has_equipped, mut extant_params) in curr_equip {
         let params = Bestiary::from_tile(tile_idx).unwrap_or_default();
         if params.is_default() {
@@ -43,11 +40,6 @@ pub fn apply_params_modifiers(
     }
 }
 
-pub fn detect_refresh(
-    mut toggle: PopulatedMessageReader<ToggleEquip>,
-    mut refresh: MessageWriter<RefreshModifiers>,
-) {
-    for _ in toggle.read() {}
+pub fn detect_spawn(_event: On<PlayerSpawned>, mut refresh: MessageWriter<EquipmentChanged>) {
     refresh.write_default();
 }
-
