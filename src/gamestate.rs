@@ -29,6 +29,7 @@ impl WorldClock {
         while self.0 < tick {
             self.tick();
         }
+        trace!("ticked from {} to {}", self.now() - tick, self.now());
         self
     }
 
