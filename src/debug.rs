@@ -65,9 +65,7 @@ pub(super) fn on_button_input(
         return;
     }
 
-    if input.pressed(KeyCode::ShiftLeft)
-        && input.just_released(KeyCode::Digit5)
-    {
+    if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::Digit5) {
         info!("game state is: {game_state:?} {:?}", game_state.get());
         info!("game state is: {screen_state:?} {:?}", screen_state.get());
         input.reset_all();
@@ -199,11 +197,13 @@ impl Plugin for DebugPlugin {
         .add_plugins(RemoteHttpPlugin::default())
         .add_plugins(DebugPickingPlugin)
         .insert_resource(DebugPickingMode::Normal)
-        .add_observer(|on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
-            if s.get() == &DebugState::Enabled {
-                info!("clicked: {on:?}");
-                commands.entity(on.entity).log_components();
-            }
-        });
+        .add_observer(
+            |on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
+                if s.get() == &DebugState::Enabled {
+                    info!("clicked: {on:?}");
+                    commands.entity(on.entity).log_components();
+                }
+            },
+        );
     }
 }

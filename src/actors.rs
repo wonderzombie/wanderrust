@@ -78,7 +78,6 @@ pub fn spawn_player(
 
         commands.spawn((
             ChildOf(*active),
-            // from ecs
             Name::new("Player"),
             Actor,
             Player,

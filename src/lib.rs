@@ -51,7 +51,7 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Modal, Recovery, Screen, TurnDelay, WorldClock},
+    gamestate::{GameState, Modal, Screen, TurnDelay, WorldClock},
     interactions::Interactable,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
