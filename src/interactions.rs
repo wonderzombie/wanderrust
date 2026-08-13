@@ -1,16 +1,18 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
+    cell::Cell,
     colors, combat,
+    gamestate::PlayerRested,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     message_log::LogEvent,
     sounds,
-    tilemap::{Level, WorldSpec},
+    tilemap::{ActiveLevel, Level, WorldSpec},
     tiles::TileIdx,
 };
 
@@ -38,6 +40,9 @@ pub enum Interactable {
     Belligerent {
         name: String,
         tile_idx: TileIdx,
+    },
+    Shrine {
+        id: String,
     },
 }
 
@@ -122,6 +127,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     tile_idx,
                 })
             }
+            LdtkActor::Shrine => Some(Self::Shrine { id: name }),
             _ => None,
         }
     }
@@ -145,15 +151,18 @@ pub struct Listen {
 /// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
     mut commands: Commands,
+    active_level: Single<Entity, With<ActiveLevel>>,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
     mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
     player_inv: Res<Inventory>,
-    player_nt: Single<Entity, With<Player>>,
+    player_nt: Single<(Entity, &Cell), With<Player>>,
+    mut shrines_visited: ResMut<ShrinesVisited>,
     mut log: MessageWriter<LogEvent>,
 ) {
+    let (player_nt, player_cell) = *player_nt;
     for attempt in attempts.read() {
         let Ok((entity, mut tile_idx, mut interactable, name_opt)) =
             interactables.get_mut(attempt.target)
@@ -223,7 +232,7 @@ pub fn process_interactions(
                     commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
                         inv_changes
-                            .write_batch(InventoryChange::acquire(*player_nt, contents.clone()));
+                            .write_batch(InventoryChange::acquire(player_nt, contents.clone()));
                         contents.summarized("got").iter().for_each(|it| {
                             log.write((it.as_str(), colors::KENNEY_GREEN).into());
                         });
@@ -244,9 +253,32 @@ pub fn process_interactions(
                     target: entity,
                 });
             }
+            Interactable::Shrine { id, .. } => {
+                info!("Player interacts with {id}.");
+                if shrines_visited.0.contains(&entity) {
+                    log.write(LogEvent {
+                        txt: format!("rested at shrine {id}"),
+                        color: Some(colors::KENNEY_GOLD),
+                    });
+                    commands.insert_resource(LastRespawnPoint(*player_cell, *active_level));
+                    commands.trigger(PlayerRested);
+                } else {
+                    shrines_visited.0.insert(entity);
+                    log.write(LogEvent {
+                        txt: "lit shrine {id}".into(),
+                        color: Some(colors::KENNEY_BLUE),
+                    });
+                }
+            }
         }
     }
 }
+
+#[derive(Resource, Debug)]
+pub struct ShrinesVisited(pub HashSet<Entity>);
+
+#[derive(Resource, Debug)]
+pub struct LastRespawnPoint(pub Cell, pub Entity);
 
 /// A component representing the dialogue of an NPC.
 ///

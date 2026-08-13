@@ -7,8 +7,8 @@ use crate::{
     bestiary::Bestiary,
     combat::{NeedsRespawn, RespawnPoint},
     equipment::EquipmentChanged,
+    interactions::LastRespawnPoint,
     parameters::Health,
-    tilemap::WorldSpawn,
     tiles::TileIdx,
 };
 
@@ -178,8 +178,12 @@ pub fn ramify(
     commands.insert_resource(NextTurn(*nt));
 }
 
+// TODO: consider an enum for these three.
 #[derive(Event, Debug)]
 pub struct PlayerDied;
+
+#[derive(Event, Debug)]
+pub struct PlayerRested;
 
 /// An event indiciating the player spawned. If bool is true, it is a respawn.
 #[derive(Event, Debug, Default)]
@@ -193,20 +197,25 @@ pub fn player_died(_on: On<PlayerDied>, mut commands: Commands) {
     commands.set_state_if_neq(Screen::YouDied);
 }
 
+pub fn player_rested(_on: On<PlayerRested>, mut commands: Commands) {
+    commands.write_message(ResetScenario);
+}
+
 pub fn respawn_player(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
-    respawn_point: Single<&WorldSpawn>,
+    last_respawn_pt: Single<&LastRespawnPoint>,
     player: Single<Entity, With<Player>>,
     clock: Res<WorldClock>,
 ) {
-    for (m, id) in reader.read_with_id() {
-        let WorldSpawn { level_entity, cell } = *respawn_point;
+    let LastRespawnPoint(cell, level_entity) = *last_respawn_pt;
 
+    for (m, id) in reader.read_with_id() {
         let params = Bestiary::Player.params();
         let health = Health::new(params.max_hp as i32);
         let flasks = Flasks::default();
 
+        // TODO: consider cloning with opt in/out.
         commands
             .entity(*player)
             .insert(clock.recovery_now())

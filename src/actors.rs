@@ -9,6 +9,7 @@ use crate::{
     equipment::{Slots, ToggleEquip},
     equipment_menu,
     gamestate::Modal,
+    interactions::LastRespawnPoint,
     inventory::{CarriedBy, Inventory, InventoryChange},
     inventory_menu,
     items::{ItemId, Quantity},
@@ -90,6 +91,7 @@ pub fn spawn_player(
             ),
             Flasks::default(),
             Slots::standard(),
+            LastRespawnPoint(*cell, *active),
             CombatantBundle::default(),
             PieceBundle {
                 sprite: atlas.sprite(),
