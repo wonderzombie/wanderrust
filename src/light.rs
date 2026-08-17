@@ -283,7 +283,7 @@ pub fn spawn(
             count += 1;
             info!("🔥 {level_id:?}: {} at {cell}", emitter.tile_idx);
             commands.spawn((
-                Name::new("{level_id:?}: {tile_idx} #{count} {cell}"),
+                Name::new(format!("{tile_idx}: #{count} {cell}")),
                 *emitter,
                 emitter.tile_idx,
                 ChildOf(*level_entity),
