@@ -84,7 +84,7 @@ fn over_observer(
     } else if portal_opt.is_some() {
         " exit ".to_string()
     } else if let Some(name) = tile.label() {
-        make_label(format!("{name}"), interact_opt))
+        make_label(format!("{name}"), interact_opt)
     } else {
         let ty = name_opt.map_or_else(|| format!("{tile}"), |n| n.into());
         make_label(ty, interact_opt)
