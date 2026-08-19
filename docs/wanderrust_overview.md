@@ -213,6 +213,10 @@ In terms of how UIs with lists are structured, such as inventory, we use a commo
 
 For menu interaction we reuse the pattern of mapping actions only to valid user input, represented by an `enum` suitable for `match`, so largely we have "up" "down" and "interact." When we need to resolve the menu item to an entity representing some in-game concept, we destructure `FooItem` on an entity marked as `Selection` and use the entity obtained in this way to get what we need. For `Inventory`, right now, it just means "examine": we print out the `ItemId` description for that entity.
 
+#### TYPEWRITER EFFECT
+
+For the title and intro screens, we have a sort of typewriter effect. As we aren't using that many characters, it's as simple as creating a text span perh character and revealing each according to a timer's cadence. It's also possible to press a button to immediately complete the "typing."
+
 ### PARAMETERS
 
 Per the old school-esque interface of Dark Souls, we call our statistics "parameters." While we've designed a number of other statistics for eventual implementation, at the moment we have simply named five or six of the most important values rather than deriving them from any sort of base stats:
@@ -674,7 +678,16 @@ When it is a mob's turn, `ramify()` inserts `NextTurn` as a sentinel of sorts, i
 
 `decide()` on `MobView` returns a decision based on what's in the view: `Attack`, `Move`, or `Pass` which `consume_turn()` actuates via `Commands`, inserting the correct components, such as the cell it's moved to or writing the `Attack` message, and inserting `Recovery` for actions like `Move` and `Pass`.
 
+### COMBAT
 
+A player or mob can attack simply by "moving" into the target space. When an attack connects and deals damage, damage numbers float up out of the attacked party. 
 
+When an enemy is defeated, it acquires the `Dead` component, and this prompts the loot system to engage. Wanderrust supports both a loot table as well as fixed loot, such as an important quest item obtained by defeating an enemy.
 
+### DIALOGUE
 
+Dialogue is Dark Souls style. That's why the action described in code is `Listen`: the player listens to what the NPC says, and each time they interact they get to the next dialogue item. This is as simple as it sounds for the time being.
+
+Most likely we will avoid implementing anything like sophisticated quest progressions. When we study the design used in games like Dark Souls, we observe that inventory is a perfectly adequate way to enable and/or track the player's progress. Think of keys: tokens that attest the player's progress in the obtaining and in the access granted. Quite often we defeat an enemy and obtain an item directly from them, and since inventory space is not limited in such games, the given item is practically a flag, particulary in the case where it is impossible to throw away certain items.
+
+In wanderrust, the item category `Integral` plays that role. Checking whether the player has an item or not is smoothed out a bit by the presence of the `Inventory` resource, a snapshot read-only view of the player's inventory. 
