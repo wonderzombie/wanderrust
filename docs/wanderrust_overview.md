@@ -24,6 +24,16 @@ That said, have I asked it to write unit tests after I've gotten something worki
 
 My approach for a professional gig would be different since the priorities are different, but in general the same values apply. Sending huge patches for review by an agent to people who will also use agents to review my changes does not _seem_ like a great use of time and expertise even in the medium term. 
 
+## BACKGROUND: SOME TERMINOLOGY
+
+Tile, map tile = a piece of scenery. May or may not be walkable or opaque to player character vision.
+
+Actor = an entity in the game that changes in some way, as opposed to map tile. This includes the player, doors, chests, combatants, and more.
+
+Mob = mobile object, a term from back in the [MUD](https://en.wikipedia.org/wiki/Multi-user_dungeon) days. It refers to any "game object" that moves or acts independently. All mobs are actors but not all actors are mobs.
+
+Entity = context dependent; LDtk uses it to describe anything that's not part of the map. I use it interchangeably with actor. Also refers to an ID of an item in an ECS world.
+
 ## BACKGROUND: A CRASH-COURSE IN BEVY ECS
 
 There are alternatives which you might prefer to read instead or in addition:
@@ -169,9 +179,9 @@ NB that `trigger()` is still a `Command` so although it doesn't run immediately 
 
 ## DESIGN
 
-To understand how and when wanderrust systems run, it's important to understand states: many of the most effect-ful systems will only run under certain conditions, typically when a state is entered, exited, or active.
+To understand how and when wanderrust systems run, it's important to understand states: many of the most effect-ful systems will only run under certain conditions, typically when a state is entered, exited, or active. This is how we preserve ordering and keep systems constrained to the proper conditions.
 
-There are three main `State` types are `gamestate::GameState`, `gamestate::Screen`, and `gamestate::Modal`.
+There are three main `State` types currently: `gamestate::GameState`, `gamestate::Screen`, and `gamestate::Modal`.
 
 - `GameState` describes what the engine is doing at a high level, such as `Loading`, `AwaitingInput`, and `Ramifying`.
 - `Screen` describes the present screen (or perhaps activity), like `Title`, `Playing`, or `YouDied`.
@@ -179,31 +189,29 @@ There are three main `State` types are `gamestate::GameState`, `gamestate::Scree
 
 ### HANDLING PLAYER INPUT
 
-Most of the time the game is switching between `AwaitingInput` and `Ramifying`. Most commonly, the input is some form of "move" (`WASD`) in a direction. If the destination is occupied, what happens depends on what occupies it. An empty, walkable cell at the destination means the move is allowed. A wall means nothing happens.
+Most of the time the game is switching between `AwaitingInput` and `Ramifying`. Most commonly, the input is some form of "move" (`WASD`) in a direction. If the destination is occupied, what happens depends on what occupies it. An empty, walkable cell at the destination means the move is allowed. A wall means nothing happens. An interactive entity is "examined."
 
-In this, `handle_player_input()` is the front-line. Only keypresses that correspond to valid inputs are passed on as an `Action` (a Bevy `Resource`). `process_actions()` consumes the action, for instance translating a `Move` into player movement or interaction. Since `process_actions()` only runs when the input was valid, the next state becomes `Ramifying`.
+In this, `handle_player_input()` is the front-line. Only keypresses that correspond to valid inputs are passed on as an `Action` (a Bevy `Resource`). `process_actions()` consumes the action, for instance translating a `Move` into player movement or interaction. Since `process_actions()` only runs when the input was valid, the next state always becomes `Ramifying`.
 
-Although we're executing `commands.insert(adjusted_cell)`, these changes are not applied to the engine until the system is complete. The command to enter state `Ramifying` happens last, after all of the other commands run, but before any of the other systems-in-a-Bevy-sense run.
+Although we're executing `commands.insert(adjusted_cell)` on such as the player, remember that these changes are not applied to the engine until the system is complete. The command to enter state `Ramifying` happens last, after all of the other commands run, but before any of the other systems-in-a-Bevy-sense run. 
 
 When the engine enters `Ramifying`, systems grouped under `Ramifications` _may_ run — quite often these run only when there's a specific `Resource` or a `Message` that needs handling. If there's no `PendingTransition`, `handle_pending_transition` doesn't need to run.
 
-The most interesting cases are inputs that result in interactions. The interaction-related systems engage when `process_actions()` sends an `Examine` message containing the ID of the interactor and the target each.
+The most interesting cases are inputs that result in interactions. The interaction-related systems engage when `process_actions()` sends an `Examine` message containing the ID (entity) of the interactor and the target each.
 
 ### INTERACTIONS
 
-Interactions determine what to do based on the type of the target indicated by the `Interactable` `Component`, itself an enum consisting of `Door`, `Chest`, `Speaker`, or `Belligerent`. `Examine` is the most generic way to describe any of these interactions.
+Interactions determine what to do based on the type of the target indicated by the `Interactable`, which is a component. `Interactable` is an enum consisting of such as `Door`, `Chest`, `Speaker`, or `Belligerent`. `Examine` is the most generic way to describe any of these interactions, used very much in the Soulsborne Ring sense.
 
-`Door` and `Chest` resolve similarly, typically resolved on the spot. `Speaker` and `Belligerent` each have separate flows, each resolving to a `Message`, either `Listen` or `Attack` respectively. Both are simple messages, although the effects of `Attack` are more complex.
+`Door` and `Chest` resolve similarly, typically resolved on the spot through direct mutation (i.e. opening it). `Speaker` and `Belligerent` have separate flows, each resolving to a `Message`, either `Listen` or `Attack` respectively. Both are simple messages with just entity IDs, although the effects of `Attack` are more complex.
 
 ### SCREENS, MENUS, ETC
 
-These are typically driven using state changes. `OnEnter(Screen::Title)` or `OnExit(Screen::Title)` will cause `title_screen.rs` to spawn/despawn the title screen. `interaction_system.run_if(in_state(Screen::Title))` ensures that the screen is only interactive while the state continues. In this way another system can initiate a state change into a screen and the logic for setup/teardown remains with the screen.
+These are typically driven using state changes. `OnEnter(Screen::Title)` or `OnExit(Screen::Title)` will cause `title_screen.rs` to spawn/despawn the title screen. `interaction_system.run_if(in_state(Screen::Title))` ensures that the screen is only interactive while the state continues. In this way another system can fire an event that initiates a state change into a screen and the logic for setup/teardown remains with the screen. In some casese it *is* simplest to observe an event `ToggleWhatever` and initiate the state change based on what state is active. When the inventory menu observes `inventory_menu::ToggleUi`, it can show/hide itself based on `Modal::None` or `Modal::Inventory`.
 
-In some casese it's simplest to observe an event `ToggleWhatever` and initiate the state change based on what state is active. When the inventory menu observes `inventory_menu::ToggleUi`, it can show/hide itself based on `Modal::None` or `Modal::Inventory`.
+In terms of how UIs with lists are structured, such as inventory, we use a common pattern of `FooList` and `FooRow`. The `FooList` goes on the parent node of the `FooItem`, and the `FooRow` itself may be a tuple struct which references an `Entity` it's displaying information for. We can iterate through `FooRow` using `Single<(Entity, &Children)>, With<FooList>>`, using `Query<&Text, With<FooRow>>` to limit iteration to `FooRow`-children-of-`FooList`. The `&Text` item in this case corresponds to the `ItemDef` `label` (see `ItemId` below).
 
-In terms of how UIs with lists are structured, such as inventory, we use a common pattern of `FooList` and `FooRow`. The `FooList` goes on the parent node of the `FooItem`, and the `FooRow` itself may be a tuple struct which references an `Entity` it's displaying information for. We can iterate through `FooRow` using `Single<(Entity, &Children)>, With<FooList>>`, using `Query<&Text, With<FooRow>>` to limit iteration to `FooRow`-children-of-`FooList`.
-
-For interaction we reuse the pattern of mapping actions only to valid user input, represented by an `enum` suitable for `match`. When we need to resolve the menu item to an entity representing some in-game concept, we destructure `FooItem` and use it as an index into the relevant query.
+For menu interaction we reuse the pattern of mapping actions only to valid user input, represented by an `enum` suitable for `match`, so largely we have "up" "down" and "interact." When we need to resolve the menu item to an entity representing some in-game concept, we destructure `FooItem` on an entity marked as `Selection` and use the entity obtained in this way to get what we need. For `Inventory`, right now, it just means "examine": we print out the `ItemId` description for that entity.
 
 ### PARAMETERS
 
@@ -238,7 +246,7 @@ Equipment also comes with `Modifiers`, which is a newtype (tuple struct) over `P
 
 ### ITEMS AND EQUIPMENT
 
-We define game items in `items.rs` and use a macro `define_items!`. Here are some example definitions:
+We define game items in `items.rs` and use a macro `define_items!` to do so. Here are some example definitions:
 
 ```rust
     GlowingTome => {
@@ -269,25 +277,27 @@ We define game items in `items.rs` and use a macro `define_items!`. Here are som
     },
 ```
 
-Each of these is an `ItemId` (an enum) which maps to an `ItemDef`. An `ItemDef` may also have an `EquipDef`, as you can see with `Stick` and `Rags` above, and it defines a `Slot` into which an item goes, such as `MainHand`, `Armor`, or `Trinket`. Creatures that can equip things have a component `Slots` describing what slots they have available, as well. 
+Each of these is an `ItemId` (itself an enum) which maps to an `ItemDef`. An `ItemDef` may also have an `EquipDef`, as you can see with `Stick` and `Rags` above, and it defines a `Slot` into which an item goes, such as `MainHand`, `Armor`, or `Trinket`. Creatures that can equip things have a component `Slots` describing what slots they have available, as well. 
 
-Whether it's equipment or not, `ItemId` is indeed a Component, and it's typically be accompanied by either `CarriedBy` or `EquippedBy` to indicate whether a creature is, well, carrying it or has it equipped. (`rating` is a nascent system for indicating relative worth and rarity of an item.) Items in chests, notably, are strings like `gold:3` which are then parsed into `(ItemId, Quantity)` by `ItemId::from_spec()`. 
+Whether it's equipment or not, `ItemId` is a Component on an entity, and it's typically be accompanied by either `CarriedBy` or `EquippedBy` to indicate whether a creature is, well, carrying it or has it equipped. (`rating` is a nascent system for indicating relative worth and rarity of an item.) Items in chests, notably, are strings like `gold:3` which are then parsed into `(ItemId, Quantity)` by `ItemId::from_spec()`. They become real entities when the chest is opened and the item is assigned to the player.
 
 All items have a `label` which is used as its display name.
 
-`modifiers!` is a wee macro which makes generating equipment `Modifiers` simpler: you don't need to specify every field in `Parameters` and instead just the ones that the equipment modifies. So, per the above, the stick adds `1` to `attack`. 
+`modifiers!` is a wee macro which makes generating equipment `Modifiers` simpler: you don't need to specify every field in `Parameters` and instead just the ones that the equipment modifies. So, per the above, the stick adds `1` to `attack` and that's that.
 
 ### CARRIED & EQUIPPED ITEMS
 
-These use `Relationship`, a Bevy concept that is best described by example. There is a Relationship called `ChildOf(pub Entity)` and a RelationshipTarget called `Children(Vec<Entity>)`. To use it, we need two IDs, the parent and the child, but we need only insert `ChildOf`:
+These use `Relationship`, a Bevy concept that is best described by example using the most commonly encountered of its kind. 
+
+There is a Relationship called `ChildOf(pub Entity)` and a RelationshipTarget called `Children(Vec<Entity>)`. To use it, we need two IDs, the parent and the child, but we need only insert `ChildOf`:
 
 ```rust
 commands.entity(child_nt).insert(ChildOf(parent_nt));
 ```
 
-`parent_nt` will receive a `Children(Vec<Entity>)` component which lists all of the entities which have a `ChildOf` component referencing `parent_nt`. `ChildOf` is a special relationship in Bevy since it is used for visibility/transform purposes.
+When this `insert()` command is applied, `child_nt` will receive the component as usual. What's new: `parent_nt` will also receive a component: `Children(Vec<Entity>)`. `Children` lists all of the entities which have a `ChildOf` component referencing `parent_nt`. `ChildOf` is a special relationship in Bevy since it is used for visibility/transform purposes. If the parent has `Visibility::Hidden`, then a child with `Visibility::Inherited` will be `Hidden`. If a child has `Visibility::Hidden`, it will be hidden regardless, and so on. 
 
-We have defined our own relationships for our own purposes. `CarriedBy(pub Entity)` and `Carrying(Vec<Entity>))` are simplest to describe. An item carried by an entity has three components: `ItemId` (a definition of the item), `Quantity` (the number of it), and `CarriedBy`.
+`Relationship` as it happens is an API, so we have defined our own relationships. `CarriedBy(pub Entity)` and `Carrying(Vec<Entity>))` are simplest to describe. An item carried by an entity has three components: `ItemId` (a definition of the item), `Quantity` (the number of it), and `CarriedBy`.
 
 ```rust
 commands.entity(item_nt).insert(CarriedBy(player_nt));
@@ -313,18 +323,70 @@ Queries allow us to iterate over their results in many ways, and one such is `it
         .into();
 ```
 
-`player_carrying` is a narrow query we use to define what _entities_ we want to use.
-`all_items` is an expansive query we use to define what _components_ we want to use. `all_items.iter_many(player_carrying.iter())` becomes "the subset of all `(&ItemId, &Quantity)` carried by the player."
+`player_carrying` is a narrow query we use to define what _entities_ we want to use. `all_items` is an expansive query we use to define what _components_ we want to use. `all_items.iter_many(player_carrying.iter())` becomes "the subset of all `(&ItemId, &Quantity)` carried by the player."
+
+There's one more interesting Relationship to describe:
+
+```rust
+// Menu doesn't have but one possible reference, so this makes Selection a
+// singleton *for a specific Menu* due to the Bevy relationship system.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate)]
+#[relationship(relationship_target = MenuSelection)]
+pub struct SelectedItem(pub Entity);
+
+// Each Menu entity can have a single Selection.
+#[derive(Component, Clone, Reflect, Debug, FromTemplate, Deref)]
+#[relationship_target(relationship = SelectedItem)]
+pub struct MenuSelection(Entity);
+```
+
+This is a one-to-one relationship. If we have (say) an `ItemRow` and `ItemList`, we would insert this Relationship component like so:
+
+```rust
+commands.entity(item_row_entity).insert(SelectedItem(item_list_entity));
+```
+
+When we write our queries, we have `Single<(&MenuSelection, &Children)>`. Since `Deref` is implemented on `MenuSelection` and since `Children` has an order, we can use `children.position()` to figure out the index of the currently selected entity. We use this to react to prev/next/interact inputs.
+
 
 ### TILES
 
-To keep things simple, we define all of our tiles in one file. All of their characteristics are maintained in `TileIdx` (tile index) and realized in the engine by various corresponding marker structs. We use a custom macro for this purpose.
+To keep things simple, we define all of our tiles in one file. All told there are 1078 tiles `(49, 22)` and we will use nowhere near all of them in any case. Each of their characteristics are maintained in `TileIdx` (tile index) and realized in the engine by various corresponding marker structs. We use a custom macro for this purpose, just to associate an enum with an index in the sprite sheet (numbered from left to right, top to bottom).
 
-`Opaque` and `Walkable`, for instance, are markers which determine whether the player can see through a tile and whether they can walk to or stand on that tile.
+We have a number of lists that look like this:
 
-A window or a treasure chest is not `Opaque` (you can see through it) and it is not `Walkable`. A smoke cloud is `Opaque` and `Walkable`. A closed door is `Opaque` and not `Walkable`. An open door is not `Opaque` and it is `Walkable`.
+```rust
+    const WALKABLE: &'static [TileIdx] = &[
+        Blank,
+        GrassBrown,
+        Gravel,
+        Grass,
+        // ...
+    ];
+    
+    const OPAQUE: &'static [TileIdx] = &[
+        // Walls without windows are opaque and solid.
+        StoneWall,
+        StoneWallSmooth,
+        // ...
+    ];
+```
 
-In general, the `TileIdx` determines the role of the tile, so the vast majority of the time, a wall tile is a wall that functions as a wall.
+And a few methods like:
+
+```rust
+    pub fn is_walkable(&self) -> bool {
+        Self::WALKABLE.contains(self)
+    }
+```    
+
+`Opaque` and `Walkable`, for instance, correspond to markers defined in the same file. Other systems use these determine whether the player can see through a tile and whether they can walk to or stand on that tile. On any given tile we can say `tile_idx.is_walkable()` and suchlike.
+
+As for what these mean semantically: a window or a treasure chest is not `Opaque` (you can see through it) and it is not `Walkable`. A smoke cloud is `Opaque` and `Walkable`. A closed door is `Opaque` and not `Walkable`. An open door is not `Opaque` and it is `Walkable`. 
+
+In general, the `TileIdx` determines the role of the tile, so the vast majority of the time, a wall tile functions as a wall. 
+
+*[alt_tiles.md](./alt_tiles.md) and [flip_tiles.md](./flip_tiles.md) each refer to ways we can mix up tiles for variety.*
 
 ### FOV
 
@@ -334,7 +396,7 @@ This version of the algorithm uses a stateful method to compute field of view, w
 
 To get around this, we use a `View` type bound to a copy of the current `MRPAS` model. Before passing it to the caller, we compute the field of view for the given origin and view distance. The caller can use `has()` to determine whether that view has a particular position.
 
-Tiles that are within the player's field of view are marked as `Revealed(true)`. This tells the engine to show only tiles that are revealed. `Revealed` is not a persistent state, so when the player walks away, it will no longer be revealed at all.
+Tiles that are within the player's field of view are marked as `Revealed(true)`. This tells the engine to show only tiles that are *presently* revealed — `Revealed` is not a persistent state, so when the player walks away, the tile will no longer be revealed at all. This is unlike games where the terrain remains revealed even if the player can't see whether or not any mobs are there. The player does not gradually build a map of the place.
 
 ### LIGHTING
 
