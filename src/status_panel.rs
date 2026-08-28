@@ -4,12 +4,13 @@ use crate::{
     actors::{Flasks, Player},
     cell::Cell,
     colors,
-    equipment::{EquippedBy, HasEquipped, unwrap_collection},
+    equipment::{EquippedBy, HasEquipped},
     gamestate::{Screen, WorldClock},
     inventory::Inventory,
     items::{ItemId, Slot},
     parameters::{Health, Parameters},
     ui::theme,
+    unwrap_collection,
 };
 
 pub(crate) fn plugin(app: &mut App) {

@@ -8,6 +8,7 @@ use crate::{
     items::{ItemId, Slot},
     message_log::LogEvent,
     parameters::Parameters,
+    unwrap_collection,
 };
 
 pub(crate) fn plugin(app: &mut App) {
@@ -93,16 +94,6 @@ fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<
     equipped
         .into_iter()
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
-}
-
-pub fn unwrap_collection<T, O>(collection: Option<&T>) -> O
-where
-    T: Component + RelationshipTarget,
-    O: FromIterator<Entity> + Default,
-{
-    collection
-        .map(|coll| coll.iter().collect::<O>())
-        .unwrap_or_default()
 }
 
 pub(crate) fn handle_toggle_equip(

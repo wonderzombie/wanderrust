@@ -6,11 +6,12 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors::{self},
-    equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquip, unwrap_collection},
+    equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquip},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::ItemId,
     ui::theme::pcsr_font,
+    unwrap_collection,
 };
 
 pub struct EquipmentMenuPlugin;
