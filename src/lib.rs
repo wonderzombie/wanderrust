@@ -476,3 +476,13 @@ fn handle_pending_transition(
 
     commands.remove_resource::<PendingTransition>();
 }
+
+pub fn unwrap_collection<T, O>(collection: Option<&T>) -> O
+where
+    T: Component + RelationshipTarget,
+    O: FromIterator<Entity> + Default,
+{
+    collection
+        .map(|coll| coll.iter().collect::<O>())
+        .unwrap_or_default()
+}
