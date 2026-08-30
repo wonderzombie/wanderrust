@@ -90,14 +90,10 @@ impl LdtkEntityExt<Interactable> for Interactable {
             return None;
         };
 
+        let name = entity
+            .display_name()
+            .unwrap_or_else(|| String::from("MISSINGNAME"));
         let tile_idx = entity.get_tile();
-        let name = if let Some(name) = entity.get_string("name") {
-            name
-        } else if !entity.identifier.is_empty() {
-            entity.identifier.clone()
-        } else {
-            String::from("MISSINGNAME")
-        };
 
         match ty {
             LdtkActor::Combatant => Some(Self::Belligerent { name, tile_idx }),

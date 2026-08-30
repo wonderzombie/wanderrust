@@ -146,6 +146,17 @@ impl LdtkEntity {
     pub fn get_tile(&self) -> TileIdx {
         self.tile.unwrap_or_default().into()
     }
+
+    pub fn display_name(&self) -> Option<String> {
+        [
+            self.get_string("name"),
+            Some(self.identifier.clone()),
+            Some(self.get_tile().to_string()),
+        ]
+        .into_iter()
+        .flatten()
+        .find(|s| !s.is_empty())
+    }
 }
 
 #[derive(Debug, Deserialize, Default, Clone, Copy)]
