@@ -155,3 +155,7 @@ Of course we want to add more to `wanderrust`, so apropos of game states, I am c
 - speech (text from NPCs w/ or w/o menus)
 - new game (character creation)
 - introductory exposition (i.e. text reveals like The Legend of Blacksilver)
+
+## OUTCOME
+
+**Largely implemented and carried forward.**
