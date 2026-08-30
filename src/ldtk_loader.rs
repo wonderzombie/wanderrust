@@ -136,6 +136,8 @@ impl LdtkEntity {
     //     }
     // }
 
+    /// Gets a tile field from this entity. An entity can have
+    /// zero or more of these.
     pub fn get_tile_field(&self, key: &str) -> Option<TileIdx> {
         match self.field_val(key) {
             Some(ParsedValue::PxTile(t)) => Some(t),
@@ -143,6 +145,8 @@ impl LdtkEntity {
         }
     }
 
+    /// Gets the primary tile from this entity. The LDtk editor UI
+    /// and wanderrust use this tile first and most often.
     pub fn get_tile(&self) -> TileIdx {
         self.tile.unwrap_or_default().into()
     }
