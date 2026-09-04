@@ -216,8 +216,10 @@ pub fn run() {
         (
             // Runs when there's been a change to an tile and updates sprite &
             // gameplay properties.
-            map::sync_tiles,
-            (actors::update_transforms, actors::sync_occupied_tiles).in_set(GameSystem::ActorSync),
+            map::sync_tiles.in_set(GameSystem::SyncTiles),
+            (actors::update_transforms, actors::sync_occupied_tiles)
+                .in_set(GameSystem::ActorSync)
+                .after(GameSystem::SyncTiles),
             camera::update.after(GameSystem::ActorSync),
             // Changes to tiles mean updates to pathing and "collision."
             (grid::update_spatial_index, grid::update_grid)
@@ -278,6 +280,7 @@ pub enum GameSystem {
     SetupTiles,
     SetupGrid,
     SpawnTestEntities,
+    SyncTiles,
     Ramifications,
     ActorSync,
     Fov,
