@@ -104,6 +104,14 @@ impl Cell {
         Cell::from(agent_pos.0)
     }
 
+    pub fn nav_pos(&self) -> UVec3 {
+        uvec3(self.x as u32, self.y as u32, 0)
+    }
+
+    pub fn at_nav_pos(pos: UVec3, depth: i32) -> Self {
+        Self::at_depth(pos.x as i32, pos.y as i32, depth)
+    }
+
     pub fn is_adjacent(&self, other: &Cell) -> bool {
         let delta: IVec3 = (other.as_ivec3().sub(self.as_ivec3())).abs();
         delta.z == 0 && (delta.x + delta.y) == 1
