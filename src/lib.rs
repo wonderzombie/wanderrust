@@ -165,7 +165,6 @@ pub fn run() {
         OnEnter(GameState::Loading),
         (
             (
-                // tilemap::spawn_tilemap,
                 tilemap::spawn_worldmap,
                 map::sync_tiles,
                 tilemap::initialize_tile_storage,
