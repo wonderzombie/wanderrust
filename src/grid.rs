@@ -89,7 +89,7 @@ pub fn spawn_grid(
 
 pub fn update_grid(
     mut nav_grid: Single<&mut CardinalGrid>,
-    changed_tiles: Populated<(&Cell, Has<Walkable>), Changed<TileIdx>>,
+    changed_tiles: Populated<(&Cell, Has<Walkable>), (Changed<TileIdx>, Changed<Walkable>)>,
 ) {
     let mut grid_changed = false;
     for (cell, is_walkable) in changed_tiles {
