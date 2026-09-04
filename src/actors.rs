@@ -105,7 +105,6 @@ pub fn on_player_added(
     mut commands: Commands,
     player: Single<Entity, Added<Player>>,
     mut inv_changes: MessageWriter<InventoryChange>,
-    mut equip_changes: MessageWriter<ToggleEquip>,
 ) {
     let parent = *player;
     for itam in STARTING_EQUIPMENT.iter() {
@@ -117,7 +116,7 @@ pub fn on_player_added(
                 Quantity(1),
             ))
             .id();
-        equip_changes.write(ToggleEquip {
+        commands.write_message(ToggleEquip {
             target: parent,
             equipment: id,
         });
