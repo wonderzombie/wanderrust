@@ -221,7 +221,7 @@ pub fn run() {
                 .after(GameSystem::SyncTiles),
             camera::update.after(GameSystem::ActorSync),
             // Changes to tiles mean updates to pathing and "collision."
-            (grid::update_spatial_index, grid::update_grid)
+            (grid::update_spatial_index, grid::rebuild_grid)
                 .chain()
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::ActorSync),

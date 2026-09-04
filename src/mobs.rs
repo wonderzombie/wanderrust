@@ -84,7 +84,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
             // The next position is open.
             (Some(NextPos(next)), None) => {
                 info!("moving towards {next:?}\n{self:?}");
-                MobAction::Move(Cell::from(*next))
+                MobAction::Move(Cell::at_nav_pos(*next, self.cell.z))
             }
             // We're not pathing if there's no failure and no next position.
             (None, None) => {
@@ -181,7 +181,6 @@ pub fn init_indicators(
         }
     }
 
-
     let mut sprite = sprite.clone();
     sprite.color = colors::KENNEY_GREEN;
 
@@ -195,13 +194,21 @@ pub fn init_indicators(
     ));
 }
 
-pub fn player_indicator(player: Single<Entity, With<Player>>, mut sprites: Query<(&ChildOf, &mut Sprite), With<Indicator>>, gamestate: Res<State<GameState>>) {
+pub fn player_indicator(
+    player: Single<Entity, With<Player>>,
+    mut sprites: Query<(&ChildOf, &mut Sprite), With<Indicator>>,
+    gamestate: Res<State<GameState>>,
+) {
     if !gamestate.is_changed() {
         return;
     }
     info!("update player indicator");
 
-    let Some(mut player_sprite) = sprites.iter_mut().find(|(ChildOf(parent), _)| *parent == *player).map(|it| it.1) else {
+    let Some(mut player_sprite) = sprites
+        .iter_mut()
+        .find(|(ChildOf(parent), _)| *parent == *player)
+        .map(|it| it.1)
+    else {
         warn!("couldn't find player indicator");
         return;
     };
@@ -268,6 +275,9 @@ pub fn handle_dead(
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, init_indicators)
         .add_systems(OnEnter(GameState::AwaitingInput), update_mob_indicators)
-        .add_systems(PreUpdate, player_indicator.run_if(state_exists::<GameState>))
+        .add_systems(
+            PreUpdate,
+            player_indicator.run_if(state_exists::<GameState>),
+        )
         .add_systems(Last, handle_dead);
 }

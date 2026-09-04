@@ -5,8 +5,8 @@ use crate::{
     actors::{Dead, Player},
     cell::Cell,
     parameters::Awareness,
-    tilemap::{Depth, Level, WorldId, WorldSpec},
-    tiles::{TileIdx, Walkable},
+    tilemap::{ActiveLevel, Level, WorldId, WorldSpec},
+    tiles::{MapTile, TileIdx, Walkable},
 };
 
 pub(crate) fn plugin(app: &mut App) {
@@ -68,32 +68,54 @@ pub(crate) fn setup_spatial_indices(
 pub fn spawn_grid(
     mut commands: Commands,
     world_spec: Res<WorldSpec>,
-    world_entity: Single<(&WorldId, &Children)>,
+    world_entity: Single<&WorldId>,
 ) {
-    let (WorldId(nt), _) = *world_entity;
-    let Depth(max_depth) = world_spec.max_depth;
-    let world_height: u32 = max_depth.cast_unsigned();
+    let WorldId(nt) = *world_entity;
 
     commands.entity(*nt).insert(CardinalGrid::new(
-        &GridSettingsBuilder::new_3d(
-            world_spec.grid_width,
-            world_spec.grid_height,
-            world_height + 1,
-        )
-        .chunk_size(8)
-        .chunk_depth(1)
-        .default_impassable()
-        .build(),
+        &GridSettingsBuilder::new_2d(world_spec.grid_width, world_spec.grid_height)
+            .chunk_size(8)
+            .default_impassable()
+            .build(),
     ));
 }
 
-pub fn update_grid(
+pub fn rebuild_grid(
     mut nav_grid: Single<&mut CardinalGrid>,
-    changed_tiles: Populated<(&Cell, Has<Walkable>), (Changed<TileIdx>, Changed<Walkable>)>,
+    active_level: Single<(Ref<ActiveLevel>, &Children)>,
+    map_tiles: Query<(&Cell, Has<Walkable>), With<MapTile>>,
+    blockers: Query<
+        &Cell,
+        (
+            With<TileIdx>,
+            Without<MapTile>,
+            Without<Awareness>,
+            Without<Walkable>,
+            Without<Dead>,
+        ),
+    >,
+    changed_tiles: Query<(), (Changed<TileIdx>, Without<Awareness>)>,
 ) {
-    let mut grid_changed = false;
-    for (cell, is_walkable) in changed_tiles {
-        if !nav_grid.in_bounds(cell.as_uvec3()) {
+    let (active, children) = *active_level;
+
+    if changed_tiles.is_empty() || !active.is_changed() {
+        return;
+    }
+
+    for y in 0..nav_grid.height() {
+        for x in 0..nav_grid.width() {
+            nav_grid.set_nav(uvec3(x, y, 0), Nav::Impassable);
+        }
+    }
+
+    let mut passable = 0;
+    for (cell, is_walkable) in map_tiles.iter_many(children) {
+        if !is_walkable {
+            continue;
+        }
+
+        let nav_pos = cell.nav_pos();
+        if !nav_grid.in_bounds(nav_pos) {
             error!(
                 "Skipping attempt to update grid at out-of-bounds position {cell}; grid is {} x {}",
                 nav_grid.width(),
@@ -102,24 +124,21 @@ pub fn update_grid(
             error_once!("grid dumped: {:?}", nav_grid.view());
             continue;
         }
+        nav_grid.set_nav(nav_pos, Nav::Passable(1));
+        passable += 1;
+    }
 
-        let prev_nav = nav_grid.nav(cell.into());
-        let next_nav = if is_walkable {
-            Nav::Passable(1)
-        } else {
-            Nav::Impassable
-        };
-
-        if prev_nav != Some(next_nav) {
-            grid_changed = true;
-            nav_grid.set_nav(cell.into(), next_nav);
+    let mut blocked = 0;
+    for cell in blockers.iter_many(children) {
+        let nav_pos = cell.nav_pos();
+        if nav_grid.in_bounds(nav_pos) {
+            nav_grid.set_nav(nav_pos, Nav::Impassable);
+            blocked += 1;
         }
     }
 
-    if grid_changed {
-        info!("updated world grid");
-        nav_grid.build();
-    }
+    nav_grid.build();
+    info!("rebuild_grid: passable/blocked {passable}/{blocked}");
 }
 
 pub fn init_agents(
@@ -130,7 +149,7 @@ pub fn init_agents(
     let grid_nt = grid.into_inner();
     for (entity, cell, is_player) in query {
         let mut e = commands.entity(entity);
-        e.insert((AgentPos(cell.into()), AgentOfGrid(grid_nt)));
+        e.insert((AgentPos(cell.nav_pos()), AgentOfGrid(grid_nt)));
         if !is_player {
             e.insert(Blocking);
         }
@@ -156,7 +175,7 @@ pub fn pathfind(
             continue;
         }
 
-        if failed_pathfind || pathfind.is_none_or(|pf| pf.goal.ne(&player_cell.into())) {
+        if failed_pathfind || pathfind.is_none_or(|pf| pf.goal.ne(&player_cell.nav_pos())) {
             commands
                 .entity(entity)
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
@@ -166,6 +185,6 @@ pub fn pathfind(
 
 pub(crate) fn sync_agent_pos(agents: Populated<(&Cell, &mut AgentPos), Changed<Cell>>) {
     for (cell, mut pos) in agents {
-        pos.set_if_neq(AgentPos(cell.into()));
+        pos.set_if_neq(AgentPos(cell.nav_pos()));
     }
 }
