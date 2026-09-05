@@ -62,6 +62,8 @@ use crate::{
 };
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
+use clap::Parser;
+
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
@@ -72,17 +74,25 @@ fn insert_fq_plugins(app: &mut App) {
         .add_plugins(FilterQueryInspectorPlugin::<With<TileStorage>>::default());
 }
 
-pub fn run() {
-    let args = std::env::args().collect::<Vec<_>>();
-    let str_map = args.iter().any(|it| it == "-s");
-    let query_filter_panes = args.iter().any(|it| it == "-i");
-    let proc_map = args.iter().any(|it| it == "-p");
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(short, long)]
+    use_str_map: bool,
 
+    #[arg(short, long)]
+    inspector: bool,
+
+    #[arg(short, long)]
+    procedural_map: bool,
+}
+
+pub fn run() {
+    let args = Args::parse();
     let mut app = App::new();
 
-    if str_map {
+    if args.use_str_map {
         app.insert_resource(WorldSpec::from(AsciiMapSpec::from_str(ascii_map::MAP_ZERO)));
-    } else if proc_map {
+    } else if args.procedural_map {
         app.insert_resource(WorldSpec::from(AsciiMapSpec::with_ptable(
             procgen::biome_ptable(),
             procgen::tile_idx_for_cell,
@@ -267,7 +277,7 @@ pub fn run() {
     .add_observer(click_observer)
     .add_observer(gamestate::player_died);
 
-    if query_filter_panes {
+    if args.inspector {
         insert_fq_plugins(&mut app);
     }
 
