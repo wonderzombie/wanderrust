@@ -6,10 +6,10 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
-    equipment::{Slots, ToggleEquip},
+    equipment::{EquippedBy, Slots},
     equipment_menu,
     gamestate::Modal,
-    inventory::{CarriedBy, Inventory, InventoryChange},
+    inventory::{Inventory, InventoryChange},
     inventory_menu,
     items::{ItemId, Quantity},
     light::{Emitter, LightLevel},
@@ -101,29 +101,26 @@ pub fn spawn_player(
     }
 }
 
-pub fn on_player_added(
-    mut commands: Commands,
-    player: Single<Entity, Added<Player>>,
-    mut inv_changes: MessageWriter<InventoryChange>,
-) {
-    let parent = *player;
-    for itam in STARTING_EQUIPMENT.iter() {
-        let id = commands
-            .spawn((
-                Name::new(format!("player item {}", **itam)),
-                CarriedBy(parent),
-                **itam,
-                Quantity(1),
-            ))
-            .id();
-        commands.write_message(ToggleEquip {
-            target: parent,
-            equipment: id,
-        });
+pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Player>>) {
+    let entity = *player;
+
+    for message in InventoryChange::acquire(entity, starting_items()) {
+        commands.write_message(message);
     }
 
-    // add starting items as well
-    inv_changes.write_batch(InventoryChange::acquire(parent, starting_items()));
+    for itam in STARTING_EQUIPMENT.iter() {
+        let Some(slot) = itam.equip_def().map(|it| it.slot) else {
+            error!("not equippable: {itam:#?}");
+            continue;
+        };
+
+        commands.spawn((
+            Name::new(format!("{itam}")),
+            EquippedBy { entity, slot },
+            **itam,
+            Quantity(1),
+        ));
+    }
 }
 
 /// Updates the [Transform] of pieces based on their [Cell] coordinates when the
