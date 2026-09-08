@@ -80,65 +80,57 @@ pub fn spawn_grid(
     ));
 }
 
+/// The issue with just requesting every single cell is that we have MapTiles that are walkable with
+/// the same Cell as Actors who aren't walkable. The Actor should win, always.
+///
+/// The request we're making needs to account for the presence of cells-over-cells.
 pub fn rebuild_grid(
-    mut nav_grid: Single<&mut CardinalGrid>,
-    active_level: Single<(Ref<ActiveLevel>, &Children)>,
-    map_tiles: Query<(&Cell, Has<Walkable>), With<MapTile>>,
-    blockers: Query<
+    active: Single<(Ref<ActiveLevel>, &Children)>,
+    mut grid: Single<&mut CardinalGrid>,
+    walkable_cells: Query<&Cell, (With<MapTile>, With<Walkable>)>,
+    unwalkable_cells: Query<
         &Cell,
         (
-            With<TileIdx>,
             Without<MapTile>,
-            Without<Awareness>,
-            Without<Walkable>,
             Without<Dead>,
+            Without<Walkable>,
+            Without<Awareness>,
         ),
     >,
     changed_tiles: Query<(), (Changed<TileIdx>, Without<Awareness>)>,
 ) {
-    let (active, children) = *active_level;
+    let (active_level, children) = *active;
 
-    if changed_tiles.is_empty() || !active.is_changed() {
+    if changed_tiles.is_empty() && !active_level.is_changed() {
         return;
     }
 
-    for y in 0..nav_grid.height() {
-        for x in 0..nav_grid.width() {
-            nav_grid.set_nav(uvec3(x, y, 0), Nav::Impassable);
-        }
-    }
+    let nav_pos_count = grid.height() * grid.width();
+    let mut nav_vec = vec![Nav::Impassable; nav_pos_count as usize];
 
     let mut passable = 0;
-    for (cell, is_walkable) in map_tiles.iter_many(children) {
-        if !is_walkable {
-            continue;
-        }
-
-        let nav_pos = cell.nav_pos();
-        if !nav_grid.in_bounds(nav_pos) {
-            error!(
-                "Skipping attempt to update grid at out-of-bounds position {cell}; grid is {} x {}",
-                nav_grid.width(),
-                nav_grid.height(),
-            );
-            error_once!("grid dumped: {:?}", nav_grid.view());
-            continue;
-        }
-        nav_grid.set_nav(nav_pos, Nav::Passable(1));
+    for cell in walkable_cells.iter_many(children.iter()) {
+        let i = cell.to_idx(grid.width());
+        nav_vec[i] = Nav::Passable(1);
         passable += 1;
     }
 
     let mut blocked = 0;
-    for cell in blockers.iter_many(children) {
-        let nav_pos = cell.nav_pos();
-        if nav_grid.in_bounds(nav_pos) {
-            nav_grid.set_nav(nav_pos, Nav::Impassable);
-            blocked += 1;
+    for cell in unwalkable_cells.iter_many(children.iter()) {
+        let i = cell.to_idx(grid.width());
+        nav_vec[i] = Nav::Impassable;
+        blocked += 1;
+    }
+
+    for (i, &nav) in nav_vec.iter().enumerate() {
+        let nav_pos = Cell::from_idx(grid.width(), i).nav_pos();
+        if grid.in_bounds(nav_pos) {
+            grid.set_nav(nav_pos, nav);
         }
     }
 
-    nav_grid.build();
-    info!("rebuild_grid: passable/blocked {passable}/{blocked}");
+    grid.build();
+    info!("rebuilt grid: {passable} walkable, {blocked} blocked");
 }
 
 pub fn init_agents(
