@@ -272,6 +272,7 @@ pub fn run() {
             map::update_tile_visuals.after(update_level_visuals),
             gamestate::respawn_player,
             gamestate::respawn_combatants,
+            gamestate::reset_doors,
         ),
     )
     .add_observer(click_observer)
