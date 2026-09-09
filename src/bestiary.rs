@@ -42,17 +42,6 @@ macro_rules! define_bestiary {
                 }
             }
 
-            pub fn params_from_name(name: impl AsRef<str>) -> Option<Parameters> {
-                Bestiary::from_name(name).map(|it| it.params())
-            }
-
-            pub fn params_from_tile(tile_idx: &TileIdx) -> Option<Parameters> {
-                match tile_idx {
-                    $( $tile => Some((Bestiary::$name).params()), )*
-                    _ => None,
-                }
-            }
-
             pub fn from_name(name: impl AsRef<str>) -> Option<Bestiary> {
                 match name.as_ref() {
                     $( stringify!($name) => Some((Bestiary::$name)), )*
