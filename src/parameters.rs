@@ -112,4 +112,14 @@ impl BaseParameters {
     pub fn new(p: Parameters) -> Self {
         Self(p)
     }
+
+    pub fn health(&self) -> Health {
+        Health::new(self.0.max_hp as i32)
+    }
+}
+
+impl From<Parameters> for BaseParameters {
+    fn from(value: Parameters) -> Self {
+        BaseParameters::new(value)
+    }
 }
