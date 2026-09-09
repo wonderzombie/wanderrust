@@ -24,7 +24,7 @@ pub fn apply_params_modifiers(
     equipment: Query<&ItemId>,
 ) {
     for (nt, tile_idx, has_equipped_opt, mut extant_params) in curr_equip {
-        let params = Bestiary::from_tile(tile_idx).unwrap_or_default();
+        let params = Bestiary::params_from_tile(tile_idx).unwrap_or_default();
         if params.is_default() {
             warn!("{nt:?}: no stats found for {tile_idx}; using defaults {params:?}",);
         }
