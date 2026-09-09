@@ -7,7 +7,7 @@ use crate::{
     atlas::{self, SpriteAtlas},
     cell::Cell,
     colors,
-    combat::Attack,
+    combat::{Attack, Combatant},
     fov::Fov,
     gamestate::{GameState, NextTurn, Turn, WorldClock},
     interactions::Interactable,
@@ -221,28 +221,27 @@ pub fn player_indicator(
 pub fn update_mob_indicators(
     mut commands: Commands,
     zone: Single<&Zone, With<ActiveLevel>>,
-    mobs: Populated<(&Awareness, Has<Dead>)>,
+    mobs: Populated<(Option<&Awareness>, Has<Dead>), With<Combatant>>,
     indicators: Query<(Entity, &ChildOf, &mut Sprite), With<Indicator>>,
     player: Single<Entity, With<Player>>,
 ) {
-    let mob_nts = zone.collection();
     for (indicator_nt, ChildOf(parent), mut sprite) in indicators {
-        if *parent == *player {
+        if *parent == *player || !zone.collection().contains(parent) {
+            info!("{parent} isn't in the active level; skipping");
             continue;
         }
-        // TODO: verify that we don't need to hide the indicator explicitly
-        // since the parent of the indicator should be hidden along with its
-        // parent, the mob entity.
-        if let Ok((awareness, is_dead)) = mobs.get(*parent)
-            && mob_nts.contains(parent)
-        {
-            if is_dead {
-                commands.entity(indicator_nt).despawn();
-            } else {
-                match awareness {
-                    Awareness::Idling => sprite.color = colors::KENNEY_OFF_WHITE,
-                    Awareness::Alerted => sprite.color = colors::KENNEY_RED,
-                }
+
+        let Ok((awareness, is_dead)) = mobs.get(*parent) else {
+            info!("{parent} is not a combatant; skipping");
+            continue;
+        };
+
+        if is_dead || awareness.is_none() {
+            commands.entity(indicator_nt).despawn();
+        } else if let Some(awareness) = awareness {
+            match awareness {
+                Awareness::Idling => sprite.color = colors::KENNEY_OFF_WHITE,
+                Awareness::Alerted => sprite.color = colors::KENNEY_RED,
             }
         }
     }
