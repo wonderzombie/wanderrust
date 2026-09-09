@@ -1,4 +1,7 @@
-use crate::{parameters::Parameters, parameters::Vision, tiles::TileIdx};
+use crate::{
+    parameters::{BaseParameters, Parameters, Vision},
+    tiles::TileIdx,
+};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
@@ -71,5 +74,9 @@ pub fn spec_combatant(mut w: DeferredWorld, ctx: HookContext) {
 
     info!("spec_combatant: {species:#?} {ctx:#?}");
     let params = species.params();
-    w.commands().entity(ctx.entity).insert(params);
+    let base: BaseParameters = params.into();
+    let health = base.health();
+    w.commands()
+        .entity(ctx.entity)
+        .insert((params, base, health));
 }
