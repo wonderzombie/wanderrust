@@ -123,6 +123,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     tile_idx,
                 })
             }
+            LdtkActor::Shrine => Some(Self::Shrine { id: name }),
             _ => None,
         }
     }
