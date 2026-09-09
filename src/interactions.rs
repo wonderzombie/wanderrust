@@ -1,16 +1,18 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
+    cell::Cell,
     colors, combat,
+    gamestate::PlayerRested,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     message_log::LogEvent,
     sounds,
-    tilemap::{Level, WorldSpec},
+    tilemap::{ActiveLevel, Level, WorldSpec},
     tiles::TileIdx,
 };
 
@@ -38,6 +40,9 @@ pub enum Interactable {
     Belligerent {
         name: String,
         tile_idx: TileIdx,
+    },
+    Shrine {
+        id: String,
     },
 }
 
@@ -123,6 +128,14 @@ impl LdtkEntityExt<Interactable> for Interactable {
     }
 }
 
+/// ShrinesVisited tracks all the shrine entities which the player has visited.
+#[derive(Resource, Debug, Default)]
+pub struct ShrinesVisited(pub HashSet<Entity>);
+
+/// LastRespawnPoint specifies the level and cell of the most recently set respawn point.
+#[derive(Resource, Debug)]
+pub struct LastRespawnPoint(pub Cell, pub Entity);
+
 /// Examine is a general word for interactions.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Examine {
@@ -141,15 +154,18 @@ pub struct Listen {
 /// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
     mut commands: Commands,
+    active_level: Single<Entity, With<ActiveLevel>>,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
     mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
     mut speech: MessageWriter<Listen>,
     player_inv: Res<Inventory>,
-    player_nt: Single<Entity, With<Player>>,
+    player: Single<(Entity, &Cell), With<Player>>,
     mut log: MessageWriter<LogEvent>,
+    mut shrines_visited: ResMut<ShrinesVisited>,
 ) {
+    let (player_nt, player_cell) = *player;
     for attempt in attempts.read() {
         let Ok((entity, mut tile_idx, mut interactable, name_opt)) =
             interactables.get_mut(attempt.target)
@@ -219,7 +235,7 @@ pub fn process_interactions(
                     commands.trigger(sounds::Opened);
                     if let Some(contents) = contents {
                         inv_changes
-                            .write_batch(InventoryChange::acquire(*player_nt, contents.clone()));
+                            .write_batch(InventoryChange::acquire(player_nt, contents.clone()));
                         contents.summarized("got").iter().for_each(|it| {
                             log.write((it.as_str(), colors::KENNEY_GREEN).into());
                         });
@@ -239,6 +255,23 @@ pub fn process_interactions(
                     attacker: attempt.interactor,
                     target: entity,
                 });
+            }
+            Interactable::Shrine { id } => {
+                info!("Player interacts with {id}.");
+                if shrines_visited.0.contains(&entity) {
+                    log.write(LogEvent {
+                        txt: format!("rested at shrine {id}"),
+                        color: Some(colors::KENNEY_GOLD),
+                    });
+                    commands.insert_resource(LastRespawnPoint(*player_cell, *active_level));
+                    commands.trigger(PlayerRested);
+                } else {
+                    shrines_visited.0.insert(entity);
+                    log.write(LogEvent {
+                        txt: "lit shrine {id}".into(),
+                        color: Some(colors::KENNEY_BLUE),
+                    });
+                }
             }
         }
     }
@@ -328,5 +361,7 @@ pub fn spawn_interxs(
 }
 
 pub fn plugin(app: &mut App) {
-    app.add_message::<Listen>().add_message::<Examine>();
+    app.add_message::<Listen>()
+        .add_message::<Examine>()
+        .init_resource::<ShrinesVisited>();
 }

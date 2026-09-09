@@ -185,6 +185,9 @@ pub struct PlayerDied;
 #[derive(Event, Debug, Default)]
 pub struct PlayerSpawned(pub bool);
 
+#[derive(Event, Debug)]
+pub struct PlayerRested;
+
 #[derive(Message, Debug)]
 pub struct ResetScenario;
 
