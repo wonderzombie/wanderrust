@@ -13,7 +13,6 @@ pub(super) fn plugin(app: &mut App) {
         apply_params_modifiers
             .run_if(on_message::<EquipmentChanged>.or_else(on_message::<ToggleEquip>)),
     )
-    .add_message::<EquipmentChanged>()
     .add_observer(detect_spawn);
 }
 

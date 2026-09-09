@@ -14,6 +14,7 @@ use crate::{
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(PostUpdate, handle_toggle_equip)
+        .add_message::<EquipmentChanged>()
         .add_message::<ToggleEquip>();
 }
 
