@@ -433,11 +433,18 @@ fn process_actions(
                 .insert(clock.recovery_after(params.move_speed));
         }
         Act::Flask => {
-            health.hp += 8;
-            flasks.0 -= 1;
-            commands
-                .entity(action.entity)
-                .insert(clock.recovery_after(params.move_speed));
+            if flasks.0 > 0 {
+                health.hp = params.max_hp.cast_signed().min(health.hp + 8);
+                flasks.0 -= 1;
+                commands
+                    .entity(action.entity)
+                    .insert(clock.recovery_after(params.move_speed));
+            } else {
+                commands.write_message(LogEvent {
+                    txt: "no more flasks.".into(),
+                    color: Some(colors::KENNEY_RED),
+                });
+            }
         }
         Act::Attack(_) => todo!(),
     }
