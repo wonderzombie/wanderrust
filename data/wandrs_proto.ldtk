@@ -11,7 +11,7 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 206,
+	"nextUid": 207,
 	"identifierStyle": "Free",
 	"toc": [
 		{
@@ -4134,6 +4134,41 @@
 			"pivotX": 0,
 			"pivotY": 0,
 			"fieldDefs": []
+		},
+		{
+			"identifier": "Shrine",
+			"uid": 206,
+			"tags": [],
+			"exportToToc": false,
+			"allowOutOfBounds": false,
+			"doc": null,
+			"width": 16,
+			"height": 16,
+			"resizableX": false,
+			"resizableY": false,
+			"minWidth": null,
+			"maxWidth": null,
+			"minHeight": null,
+			"maxHeight": null,
+			"keepAspectRatio": false,
+			"tileOpacity": 1,
+			"fillOpacity": 0.08,
+			"lineOpacity": 0,
+			"hollow": false,
+			"color": "#733E39",
+			"renderMode": "Tile",
+			"showName": true,
+			"tilesetId": 2,
+			"tileRenderMode": "FitInside",
+			"tileRect": { "tilesetUid": 2, "x": 368, "y": 176, "w": 16, "h": 16 },
+			"uiTileRect": null,
+			"nineSliceBorders": [],
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 0,
+			"fieldDefs": []
 		}
 	], "tilesets": [
 		{
@@ -4255,7 +4290,7 @@
 			{ "id": "Emitter", "tileRect": { "tilesetUid": 37, "x": 64, "y": 240, "w": 16, "h": 16 }, "color": 7552569 },
 			{ "id": "Portal", "tileRect": { "tilesetUid": 37, "x": 736, "y": 256, "w": 16, "h": 16 }, "color": 4073265 },
 			{ "id": "Spawn", "tileRect": { "tilesetUid": 37, "x": 752, "y": 256, "w": 16, "h": 16 }, "color": 16690740 },
-			{ "id": "Shrine", "tileRect": { "tilesetUid": 37, "x": 336, "y": 160, "w": 16, "h": 16 }, "color": 16705377 }
+			{ "id": "Shrine", "tileRect": { "tilesetUid": 37, "x": 368, "y": 176, "w": 16, "h": 16 }, "color": 16705377 }
 		], "iconTilesetUid": 37, "externalRelPath": null, "externalFileChecksum": null, "tags": ["actors"] },
 		{ "identifier": "LightLevel", "uid": 52, "values": [
 			{ "id": "Dark", "tileRect": null, "color": 12470831 },
