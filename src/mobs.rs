@@ -202,14 +202,13 @@ pub fn player_indicator(
     if !gamestate.is_changed() {
         return;
     }
-    info!("update player indicator");
 
     let Some(mut player_sprite) = sprites
         .iter_mut()
         .find(|(ChildOf(parent), _)| *parent == *player)
         .map(|it| it.1)
     else {
-        warn!("couldn't find player indicator");
+        warn!("couldn't find player indicator; will try again next state change");
         return;
     };
 
