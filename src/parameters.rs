@@ -102,3 +102,14 @@ impl Add<Parameters> for Parameters {
         }
     }
 }
+
+#[derive(Component, Debug, Reflect)]
+#[component(immutable)]
+#[reflect(Component)]
+pub struct BaseParameters(Parameters);
+
+impl BaseParameters {
+    pub fn new(p: Parameters) -> Self {
+        Self(p)
+    }
+}
