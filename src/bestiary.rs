@@ -1,5 +1,8 @@
 use crate::{parameters::Parameters, parameters::Vision, tiles::TileIdx};
-use bevy::prelude::*;
+use bevy::{
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
+    prelude::*,
+};
 
 macro_rules! define_bestiary {
     (
@@ -14,6 +17,8 @@ macro_rules! define_bestiary {
         ], )* $(,)?
     ) => {
         #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+        #[reflect(Component)]
+        #[component(immutable, on_insert = spec_combatant)]
         pub enum Bestiary {
             $( $name, )*
         }
@@ -57,3 +62,14 @@ define_bestiary!(
     Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4],
     Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2],
 );
+
+pub fn spec_combatant(mut w: DeferredWorld, ctx: HookContext) {
+    let Some(species) = w.entity(ctx.entity).get::<Bestiary>() else {
+        error!("unknown species: {ctx:#?}");
+        return;
+    };
+
+    info!("spec_combatant: {species:#?} {ctx:#?}");
+    let params = species.params();
+    w.commands().entity(ctx.entity).insert(params);
+}

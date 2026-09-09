@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     atlas::SpriteAtlas,
+    bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
     equipment::{EquippedBy, Slots},
@@ -82,6 +83,7 @@ pub fn spawn_player(
             Actor,
             Player,
             TileIdx::Player,
+            Bestiary::Player,
             // from crate::light
             Emitter::new(
                 TileIdx::Blank,
