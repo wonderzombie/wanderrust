@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    equipment::{EquipmentChanged, HasEquipped, Slots, ToggleEquip},
+    equipment::{EquipmentChanged, HasEquipped, Slots},
     gamestate::PlayerSpawned,
     items::ItemId,
     parameters::{BaseParameters, Parameters},
@@ -11,8 +11,7 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PostUpdate,
-        apply_params_modifiers
-            .run_if(on_message::<EquipmentChanged>.or_else(on_message::<ToggleEquip>)),
+        apply_params_modifiers.run_if(on_message::<EquipmentChanged>),
     )
     .add_observer(detect_spawn);
 }

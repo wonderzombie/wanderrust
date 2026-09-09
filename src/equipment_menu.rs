@@ -6,7 +6,7 @@ use itertools::Itertools;
 use crate::{
     actors::Player,
     colors::{self},
-    equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquip},
+    equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquipped},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
     items::ItemId,
@@ -27,7 +27,7 @@ impl Plugin for EquipmentMenuPlugin {
                     update_highlighted.run_if(in_state(Modal::Equipment)),
                     refresh_labels
                         .run_if(in_state(Modal::Equipment))
-                        .run_if(on_message::<ToggleEquip>.or_eager(on_message::<EquipmentChanged>)),
+                        .run_if(on_message::<EquipmentChanged>),
                 ),
             )
             .init_resource::<PrevSelection>()
@@ -173,7 +173,6 @@ fn interaction_system(
     input: Res<ButtonInput<KeyCode>>,
     selected_nt: Single<(Entity, &EquipmentRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<EquipmentList>>,
-    mut toggle_equip: MessageWriter<ToggleEquip>,
 ) {
     let Some(action) = read_menu_input(&input) else {
         return;
@@ -182,7 +181,7 @@ fn interaction_system(
     let (row_nt, EquipmentRow(item_nt)) = *selected_nt;
 
     if matches!(action, MenuInput::Interact) {
-        toggle_equip.write(ToggleEquip {
+        commands.trigger(ToggleEquipped {
             target: *player,
             equipment: *item_nt,
         });
