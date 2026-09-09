@@ -7,12 +7,14 @@ use crate::{
     bestiary::Bestiary,
     combat::{NeedsRespawn, RespawnPoint},
     equipment::EquipmentChanged,
-    interactions::LastRespawnPoint,
+    interactions::{Interactable, LastRespawnPoint},
     tiles::TileIdx,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_message::<ResetScenario>()
+        .add_observer(player_rested)
+        .add_observer(player_died)
         .init_resource::<WorldClock>();
 }
 
@@ -195,6 +197,10 @@ pub fn player_died(_on: On<PlayerDied>, mut commands: Commands) {
     commands.set_state_if_neq(Screen::YouDied);
 }
 
+pub fn player_rested(_on: On<PlayerRested>, mut commands: Commands) {
+    commands.write_message(ResetScenario);
+}
+
 pub fn respawn_player(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
@@ -232,5 +238,25 @@ pub fn respawn_combatants(
             commands.entity(entity).insert(NeedsRespawn);
         }
         trace!("! {m:?} {id:?} respawned combatants: {count}");
+    }
+}
+
+pub fn reset_doors(
+    mut commands: Commands,
+    mut reader: PopulatedMessageReader<ResetScenario>,
+    mut interactables: Query<(Entity, &mut Interactable)>,
+) {
+    reader.clear();
+
+    for (entity, mut interx) in interactables.iter_mut() {
+        match interx.as_mut() {
+            Interactable::Door {
+                is_open, tile_idx, ..
+            } => {
+                *is_open = false;
+                commands.entity(entity).insert(*tile_idx);
+            }
+            _ => continue,
+        }
     }
 }

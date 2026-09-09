@@ -113,11 +113,12 @@ pub fn init_combatants(
         ecmd.insert(health);
 
         if respawning && let Some(cell) = respawn_opt.map(|it| it.0) {
-            ecmd.remove::<(NeedsRespawn, Pathfind)>().insert(cell);
-            trace!("respawning {name} {entity}");
+            ecmd.remove::<(NeedsRespawn, Pathfind, Dead)>()
+                .insert((CombatantBundle::default(), cell));
+            info!("respawning {name} {entity}");
         } else {
             ecmd.observe(on_attacked);
-            trace!("first spawn for {name} {entity}");
+            info!("first spawn for {name} {entity}");
         }
     }
 }
