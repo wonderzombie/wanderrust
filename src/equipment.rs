@@ -5,6 +5,7 @@ use bevy::{
 
 use crate::{
     colors,
+    inventory::CarriedBy,
     items::{ItemId, Slot},
     message_log::LogEvent,
     parameters::Parameters,
@@ -124,7 +125,10 @@ pub(crate) fn handle_toggle_equip(
 
         if let Some(nt) = in_slot(eq_list, &all_equipped_items, target_equipment_def.slot) {
             info!("unequipping {:?}", nt);
-            commands.entity(nt).remove::<EquippedBy>();
+            commands
+                .entity(nt)
+                .remove::<EquippedBy>()
+                .insert(CarriedBy(target));
             // If this item entity was the target of this operation, we're done.
             if nt == equipment {
                 info!("only unequipping {nt:?} because target was {equipment:?}");
@@ -135,10 +139,13 @@ pub(crate) fn handle_toggle_equip(
         }
 
         info!("equipping {:?}", target_equipment_def);
-        commands.entity(equipment).insert(EquippedBy {
-            entity: target,
-            slot: target_equipment_def.slot,
-        });
+        commands
+            .entity(equipment)
+            .insert(EquippedBy {
+                entity: target,
+                slot: target_equipment_def.slot,
+            })
+            .remove::<CarriedBy>();
         log.write(LogEvent {
             txt: format!("equipped {}", item_id.def()),
             color: Some(colors::KENNEY_GREEN),
