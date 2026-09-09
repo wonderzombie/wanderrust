@@ -5,6 +5,7 @@ use crate::{
     gamestate::PlayerSpawned,
     items::ItemId,
     parameters::{BaseParameters, Parameters},
+    unwrap_collection,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -29,10 +30,7 @@ pub fn apply_params_modifiers(
     equipment: Query<&ItemId>,
 ) {
     for (entity, has_equipped_opt, base_params, mut extant_params) in curr_equip {
-        let has_equipped = has_equipped_opt
-            .map(|it| it.iter())
-            .unwrap_or_default()
-            .collect::<Vec<Entity>>();
+        let has_equipped: Vec<_> = unwrap_collection(has_equipped_opt);
 
         let modified: Parameters = equipment
             .iter_many(has_equipped)
