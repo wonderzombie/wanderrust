@@ -7,8 +7,7 @@ use crate::{
     bestiary::Bestiary,
     combat::{NeedsRespawn, RespawnPoint},
     equipment::EquipmentChanged,
-    parameters::Health,
-    tilemap::WorldSpawn,
+    interactions::LastRespawnPoint,
     tiles::TileIdx,
 };
 
@@ -199,27 +198,24 @@ pub fn player_died(_on: On<PlayerDied>, mut commands: Commands) {
 pub fn respawn_player(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
-    respawn_point: Single<&WorldSpawn>,
+    last_respawn_point: Res<LastRespawnPoint>,
     player: Single<Entity, With<Player>>,
     clock: Res<WorldClock>,
 ) {
-    for (m, id) in reader.read_with_id() {
-        let WorldSpawn { level_entity, cell } = *respawn_point;
+    let LastRespawnPoint(cell, level_entity) = *last_respawn_point;
 
-        let params = Bestiary::Player.params();
-        let health = Health::new(params.max_hp as i32);
+    for _ in reader.read() {
         let flasks = Flasks::default();
 
         commands
             .entity(*player)
+            .insert(Bestiary::Player)
             .insert(clock.recovery_now())
             .insert(Turn)
-            .insert((params, health, flasks))
-            .insert((*cell, ChildOf(*level_entity)));
+            .insert(flasks)
+            .insert((cell, ChildOf(level_entity)));
 
         commands.write_message(EquipmentChanged);
-
-        trace!("! {m:?} {id:?} respawned player");
     }
 }
 

@@ -10,6 +10,7 @@ use crate::{
     equipment::{EquippedBy, Slots},
     equipment_menu,
     gamestate::Modal,
+    interactions::LastRespawnPoint,
     inventory::{Inventory, InventoryChange},
     inventory_menu,
     items::{ItemId, Quantity},
@@ -64,43 +65,37 @@ pub fn spawn_player(
     mut commands: Commands,
     spawn: Single<&WorldSpawn>,
     atlas: Res<SpriteAtlas>,
-    player: Option<Single<Entity, With<Player>>>,
     active: Single<Entity, With<ActiveLevel>>,
 ) {
     let WorldSpawn { level_entity, cell } = *spawn;
-    if let Some(entity) = player {
-        info!("🕹️ respawning player");
-        commands
-            .entity(*entity)
-            .insert(ChildOf(*level_entity))
-            .insert(*cell);
-    } else {
-        info!("🕹️ spawning player at {cell} {level_entity:?}");
+    let last_spawn_point = LastRespawnPoint(*cell, *level_entity);
+    commands.insert_resource(last_spawn_point);
 
-        commands.spawn((
-            ChildOf(*active),
-            Name::new("Player"),
-            Actor,
-            Player,
-            TileIdx::Player,
-            Bestiary::Player,
-            // from crate::light
-            Emitter::new(
-                TileIdx::Blank,
-                (LightLevel::Bright, 2),
-                (LightLevel::Light, 1),
-            ),
-            Flasks::default(),
-            Slots::standard(),
-            CombatantBundle::default(),
-            PieceBundle {
-                sprite: atlas.sprite(),
-                cell: *cell,
-                transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
-                ..default()
-            },
-        ));
-    }
+    info!("🕹️ spawning player at {cell} {level_entity:?}");
+
+    commands.spawn((
+        ChildOf(*active),
+        Name::new("Player"),
+        Actor,
+        Player,
+        TileIdx::Player,
+        Bestiary::Player,
+        // from crate::light
+        Emitter::new(
+            TileIdx::Blank,
+            (LightLevel::Bright, 2),
+            (LightLevel::Light, 1),
+        ),
+        Flasks::default(),
+        Slots::standard(),
+        CombatantBundle::default(),
+        PieceBundle {
+            sprite: atlas.sprite(),
+            cell: *cell,
+            transform: Transform::from_xyz(0., 0., *tilemap::PLAYER_LAYER),
+            ..default()
+        },
+    ));
 }
 
 pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Player>>) {
