@@ -43,6 +43,7 @@ pub enum Interactable {
     },
     Shrine {
         id: String,
+        tile_idx: TileIdx,
     },
 }
 
@@ -51,7 +52,8 @@ impl Interactable {
         match self {
             Self::Chest { tile_idx, .. }
             | Self::Door { tile_idx, .. }
-            | Self::Belligerent { tile_idx, .. } => *tile_idx,
+            | Self::Belligerent { tile_idx, .. }
+            | Self::Shrine { tile_idx, .. } => *tile_idx,
             _ => TileIdx::GridSquare,
         }
     }
@@ -80,6 +82,10 @@ impl Interactable {
                 name: name.clone(),
                 tile_idx,
             },
+            Self::Shrine { .. } => {
+                warn!("set_tile not implemented for Shrine yet");
+                self.clone()
+            }
             _ => self.clone(),
         }
     }
@@ -123,7 +129,10 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     tile_idx,
                 })
             }
-            LdtkActor::Shrine => Some(Self::Shrine { id: name }),
+            LdtkActor::Shrine => {
+                let id = entity.get_string("id").unwrap_or_default();
+                Some(Self::Shrine { tile_idx, id })
+            }
             _ => None,
         }
     }
@@ -257,7 +266,7 @@ pub fn process_interactions(
                     target: entity,
                 });
             }
-            Interactable::Shrine { id } => {
+            Interactable::Shrine { id, .. } => {
                 info!("Player interacts with {id}.");
                 if shrines_visited.0.contains(&entity) {
                     log.write(LogEvent {
@@ -269,7 +278,7 @@ pub fn process_interactions(
                 } else {
                     shrines_visited.0.insert(entity);
                     log.write(LogEvent {
-                        txt: "lit shrine {id}".into(),
+                        txt: format!("lit shrine {id}"),
                         color: Some(colors::KENNEY_BLUE),
                     });
                 }
