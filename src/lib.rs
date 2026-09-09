@@ -52,12 +52,12 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     gamestate::{GameState, Modal, Screen, TurnDelay, WorldClock},
-    interactions::Interactable,
+    items::ItemId,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
     message_log::LogEvent,
     parameters::{Health, Parameters},
-    tilemap::{ActiveLevel, EntryId, Portal, TileStorage, WorldSpec},
+    tilemap::{ActiveLevel, EntryId, Level, Portal, WorldSpec},
     tiles::{MapTile, TileIdx},
 };
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
@@ -70,8 +70,8 @@ const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.
 fn insert_fq_plugins(app: &mut App) {
     app.add_plugins(EguiPlugin::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Interactable>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<TileStorage>>::default());
+        .add_plugins(FilterQueryInspectorPlugin::<With<ItemId>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Level>>::default());
 }
 
 #[derive(Parser, Debug)]
