@@ -112,8 +112,7 @@ pub fn init_combatants(
         let mut ecmd = commands.entity(entity);
         ecmd.insert(health);
 
-        if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
-            let cell = Cell::from(respawn);
+        if respawning && let Some(cell) = respawn_opt.map(|it| it.0) {
             ecmd.remove::<(NeedsRespawn, Pathfind)>().insert(cell);
             trace!("respawning {name} {entity}");
         } else {
