@@ -83,7 +83,7 @@ impl Interactable {
                 tile_idx,
             },
             Self::Shrine { .. } => {
-                warn!("set_tile not implemented for Shrine yet");
+                error!("set_tile not implemented for Shrine yet");
                 self.clone()
             }
             _ => self.clone(),
@@ -94,7 +94,7 @@ impl Interactable {
 impl LdtkEntityExt<Interactable> for Interactable {
     fn from_ldtk(entity: &LdtkEntity) -> Option<Interactable> {
         let Some(ty) = entity.ty() else {
-            warn!(
+            error!(
                 "📦 unknown interactable type: {:?} on LdtkEntity {entity:?}",
                 entity.ty(),
             );
@@ -139,11 +139,13 @@ impl LdtkEntityExt<Interactable> for Interactable {
 }
 
 /// ShrinesVisited tracks all the shrine entities which the player has visited.
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
 pub struct ShrinesVisited(pub HashSet<Entity>);
 
 /// LastRespawnPoint specifies the level and cell of the most recently set respawn point.
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct LastRespawnPoint(pub Cell, pub Entity);
 
 /// Examine is a general word for interactions.
