@@ -4,18 +4,15 @@ use bevy::{
 };
 
 use crate::{
-    colors,
     inventory::CarriedBy,
     items::{ItemId, Slot},
-    message_log::LogEvent,
     parameters::Parameters,
     unwrap_collection,
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(PostUpdate, handle_toggle_equip)
-        .add_message::<EquipmentChanged>()
-        .add_message::<ToggleEquip>();
+    app.add_observer(on_toggle_equipped)
+        .add_message::<EquipmentChanged>();
 }
 
 #[derive(Message, Debug, Default)]
@@ -86,12 +83,6 @@ macro_rules! modifiers {
 }
 pub(crate) use modifiers;
 
-#[derive(Message, Debug)]
-pub(crate) struct ToggleEquip {
-    pub(crate) target: Entity,
-    pub(crate) equipment: Entity,
-}
-
 #[derive(EntityEvent, Debug)]
 pub struct ToggleEquipped {
     #[event_target]
@@ -150,60 +141,4 @@ pub fn on_toggle_equipped(
             entity: target,
             slot: target_eq_slot,
         });
-}
-
-pub(crate) fn handle_toggle_equip(
-    mut commands: Commands,
-    mut toggle_equip: PopulatedMessageReader<ToggleEquip>,
-    all_equipment_sets: Query<Option<&HasEquipped>, With<Slots>>,
-    all_equipped_items: Query<&EquippedBy>,
-    all_items: Query<&ItemId>,
-    mut log: MessageWriter<LogEvent>,
-) {
-    for event in toggle_equip.read() {
-        let ToggleEquip { target, equipment } = *event;
-
-        let Ok(item_id) = all_items.get(equipment) else {
-            error!("no such item {equipment}");
-            continue;
-        };
-
-        let Some(target_equipment_def) = item_id.equip_def() else {
-            error!("unable to find target item {equipment:?} as specified by {event:#?}");
-            continue;
-        };
-
-        let eq_list = match all_equipment_sets.get(target) {
-            Ok(found_coll) => unwrap_collection(found_coll),
-            _ => vec![],
-        };
-
-        if let Some(nt) = in_slot(eq_list, &all_equipped_items, target_equipment_def.slot) {
-            info!("unequipping {:?}", nt);
-            commands
-                .entity(nt)
-                .remove::<EquippedBy>()
-                .insert(CarriedBy(target));
-            // If this item entity was the target of this operation, we're done.
-            if nt == equipment {
-                info!("only unequipping {nt:?} because target was {equipment:?}");
-                continue;
-            }
-        } else {
-            info!("no previous item in {:?}", target_equipment_def.slot);
-        }
-
-        info!("equipping {:?}", target_equipment_def);
-        commands
-            .entity(equipment)
-            .insert(EquippedBy {
-                entity: target,
-                slot: target_equipment_def.slot,
-            })
-            .remove::<CarriedBy>();
-        log.write(LogEvent {
-            txt: format!("equipped {}", item_id.def()),
-            color: Some(colors::KENNEY_GREEN),
-        });
-    }
 }
