@@ -35,15 +35,11 @@ pub fn detect_belligerents(
 ) {
     for (entity, interx, cell) in interxs {
         if let Interactable::Belligerent { name, tile_idx, .. } = interx {
-            info!("detected {name} {entity}");
-
             let Some(beast) = Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx))
             else {
                 error!("unable to determine beast from tile or name: {name} {tile_idx}");
                 continue;
             };
-
-            info!("{name} {entity} is a {beast:#?}");
 
             commands
                 .entity(entity)
@@ -102,48 +98,27 @@ pub fn init_combatants(
     combatants: Populated<
         (
             Entity,
-            &TileIdx,
             &Name,
             Has<NeedsRespawn>,
-            Option<&Parameters>,
+            &BaseParameters,
             Option<&RespawnPoint>,
         ),
         Or<(Added<Combatant>, Added<NeedsRespawn>)>,
     >,
 ) {
-    for (entity, tile_idx, name, respawning, params_opt, respawn_opt) in combatants.into_iter() {
-        trace!("init combatant {entity} {tile_idx} {name} (respawn? {respawning})");
-        let params = params_opt
-            .copied()
-            .or_else(|| Bestiary::params_from_tile(tile_idx))
-            .or_else(|| Bestiary::params_from_name(name))
-            .unwrap_or_default();
-
-        if params.is_default() {
-            warn!("{entity:?} {name} {tile_idx} uses default combat Parameters");
-        }
-
-        let health = Health {
-            hp: params.max_hp.cast_signed(),
-            is_dead: false,
-        };
-
-        info!("{tile_idx} {name} {entity}: {params:?} and {health:?}");
+    for (entity, name, respawning, base_params, respawn_opt) in combatants.into_iter() {
+        let health = base_params.health();
 
         let mut ecmd = commands.entity(entity);
-
         ecmd.insert(health);
 
         if respawning && let Some(respawn) = respawn_opt.map(|it| it.0.as_uvec3()) {
             let cell = Cell::from(respawn);
-            ecmd.remove::<(NeedsRespawn, Pathfind)>()
-                .insert((params, health, cell));
-            trace!("respawning {name}");
+            ecmd.remove::<(NeedsRespawn, Pathfind)>().insert(cell);
+            trace!("respawning {name} {entity}");
         } else {
-            ecmd.insert_if_new(params)
-                .insert(health)
-                .observe(on_attacked);
-            trace!("first spawn for {name}");
+            ecmd.observe(on_attacked);
+            trace!("first spawn for {name} {entity}");
         }
     }
 }
