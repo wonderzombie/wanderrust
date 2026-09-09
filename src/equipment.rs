@@ -92,10 +92,64 @@ pub(crate) struct ToggleEquip {
     pub(crate) equipment: Entity,
 }
 
+#[derive(EntityEvent, Debug)]
+pub struct ToggleEquipped {
+    #[event_target]
+    pub target: Entity,
+    pub equipment: Entity,
+}
+
 fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
     equipped
         .into_iter()
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
+}
+
+pub fn on_toggle_equipped(
+    event: On<ToggleEquipped>,
+    mut commands: Commands,
+    all_equipment_sets: Query<Option<&HasEquipped>, With<Slots>>,
+    all_equipped_itam: Query<&EquippedBy>,
+    all_itam: Query<&ItemId>,
+) {
+    let ToggleEquipped { target, equipment } = *event;
+
+    info!("toggle equipped: {target} {equipment}");
+
+    // Need `ItemId` to 1) see equipment def, and 2) log the change.
+    let Ok(item_id) = all_itam.get(equipment) else {
+        error!("no such item: {event:?}");
+        return;
+    };
+
+    let Some(target_eq_slot) = item_id.equip_def().map(|it| it.slot) else {
+        error!("unable to find target item {equipment:?} ({item_id}) as specified by {event:?}");
+        return;
+    };
+
+    let target_eq_list = match all_equipment_sets.get(target) {
+        Ok(has_equipped_opt) => unwrap_collection(has_equipped_opt),
+        _ => vec![],
+    };
+
+    if let Some(extant_eq) = in_slot(target_eq_list, &all_equipped_itam, target_eq_slot) {
+        commands
+            .entity(extant_eq)
+            .remove::<EquippedBy>()
+            .insert(CarriedBy(target));
+
+        if extant_eq == equipment {
+            return;
+        }
+    }
+
+    commands
+        .entity(equipment)
+        .remove::<CarriedBy>()
+        .insert(EquippedBy {
+            entity: target,
+            slot: target_eq_slot,
+        });
 }
 
 pub(crate) fn handle_toggle_equip(
