@@ -52,7 +52,9 @@ pub enum Awareness {
     // Hunting,
 }
 
-#[derive(Component, Debug, Hash, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq, Eq)]
+#[derive(
+    Component, Debug, Default, Hash, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq, Eq,
+)]
 #[reflect(Component)]
 pub struct Parameters {
     pub attack: i32,
@@ -61,31 +63,6 @@ pub struct Parameters {
     pub move_speed: usize,
     pub vision: Vision,
     pub max_hp: u32,
-}
-
-impl Parameters {
-    pub(crate) fn is_default(&self) -> bool {
-        *self == Self::default()
-    }
-}
-
-impl Default for Parameters {
-    fn default() -> Self {
-        Self {
-            // Higher is better.
-            attack: 0,
-            // Lower is better.
-            attack_speed: 0,
-            // Higher is better.
-            defense: 0,
-            // Lower is better.
-            move_speed: 0,
-            // Higher = more health.
-            max_hp: 0,
-            // Higher = farther vision.
-            vision: Vision(0),
-        }
-    }
 }
 
 impl Add<Parameters> for Parameters {
