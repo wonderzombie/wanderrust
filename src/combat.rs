@@ -37,8 +37,7 @@ pub fn detect_belligerents(
         if let Interactable::Belligerent { name, tile_idx, .. } = interx {
             info!("detected {name} {entity}");
 
-            let Some(beast) =
-                Bestiary::params_from_name(name).or_else(|| Bestiary::params_from_tile(tile_idx))
+            let Some(beast) = Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx))
             else {
                 error!("unable to determine beast from tile or name: {name} {tile_idx}");
                 continue;

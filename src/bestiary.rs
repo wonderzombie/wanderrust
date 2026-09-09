@@ -59,6 +59,13 @@ macro_rules! define_bestiary {
                     _ => None,
                 }
             }
+
+            pub fn from_tile(tile_idx: &TileIdx) -> Option<Bestiary> {
+                match tile_idx {
+                    $( $tile => Some((Bestiary::$name)), )*
+                    _ => None,
+                }
+            }
         }
     };
 }
@@ -75,7 +82,7 @@ pub fn spec_combatant(mut w: DeferredWorld, ctx: HookContext) {
         return;
     };
 
-    info!("spec_combatant: {species:#?} {ctx:#?}");
+    info!("spec_combatant: {species:#?}");
     let params = species.params();
     let base: BaseParameters = params.into();
     let health = base.health();
