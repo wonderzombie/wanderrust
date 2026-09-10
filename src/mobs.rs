@@ -9,7 +9,7 @@ use crate::{
     colors,
     combat::{Attack, Combatant},
     fov::Fov,
-    gamestate::{GameState, NextTurn, Turn, WorldClock},
+    gamestate::{AddTurnTimerDelay, GameState, NextTurn, Turn, WorldClock},
     interactions::Interactable,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
@@ -139,6 +139,8 @@ pub fn consume_turn(
             mob.insert(clock.recovery_after(mob_view.params.move_speed));
         }
     }
+
+    commands.queue(AddTurnTimerDelay::default());
 }
 
 #[derive(Component, Debug, Default)]
