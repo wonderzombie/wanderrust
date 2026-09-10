@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use itertools::Itertools;
-use std::{collections::BTreeMap, fmt::Display};
+use std::fmt::Display;
 
 use crate::{
     actors::{Flasks, Player},
@@ -15,7 +15,16 @@ pub(super) fn plugin(app: &mut App) {
     app.add_message::<ResetScenario>()
         .add_observer(player_rested)
         .add_observer(player_died)
-        .init_resource::<WorldClock>();
+        .init_resource::<WorldClock>()
+        .init_resource::<TurnTimer>()
+        .add_systems(
+            Update,
+            ramify
+                .run_if(in_state(GameState::Ramifying))
+                .run_if(not(resource_exists::<NextTurn>))
+                .run_if(is_turn_timer_done),
+        )
+        .add_systems(PreUpdate, tick_turn_timer);
 }
 
 #[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -106,77 +115,89 @@ pub struct Turn;
 #[derive(Resource, Debug, Reflect)]
 pub struct TurnDelay(pub f32);
 
+pub const DEFAULT_TURN_DELAY: f32 = 0.15;
+
 #[derive(Component, Default, Clone, Copy, Reflect, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
 #[require(Turn)]
 pub struct Recovery(pub usize);
+
+#[derive(Resource, Debug, Default, Deref)]
+pub struct TurnTimer(Timer);
+
+impl TurnTimer {
+    pub fn hold_for(&mut self, seconds: f32) {
+        let t = self.0.remaining_secs().max(seconds);
+        self.0 = Timer::from_seconds(t, TimerMode::Once);
+    }
+}
+
+#[derive(Default)]
+pub struct AddTurnTimerDelay(pub Option<f32>);
+
+impl Command for AddTurnTimerDelay {
+    type Out = ();
+
+    fn apply(self, world: &mut World) -> Self::Out {
+        let delay = self.0.unwrap_or_else(|| {
+            world
+                .get_resource::<TurnDelay>()
+                .map_or(DEFAULT_TURN_DELAY, |it| it.0)
+        });
+
+        world
+            .get_resource_mut::<TurnTimer>()
+            .expect("expected a turn timer to exist")
+            .hold_for(delay);
+    }
+}
 
 #[derive(Resource, Debug, Reflect)]
 pub struct NextTurn(pub Entity);
 
 pub fn ramify(
     mut commands: Commands,
-    mut turn_timer: Local<Timer>,
-    time: Res<Time>,
-    actors: Query<(Entity, Option<NameOrEntity>, Option<&Recovery>, Has<Player>), With<Turn>>,
+    player: Single<Entity, With<Player>>,
+    actors: Query<(NameOrEntity, Option<&Recovery>), With<Turn>>,
     mut ns: ResMut<NextState<GameState>>,
     mut world_clock: ResMut<WorldClock>,
-    next_turn: Option<Res<NextTurn>>,
-    turn_delay: Res<TurnDelay>,
 ) {
-    if next_turn.is_some() {
-        trace!("current actor still needs to take turn: {next_turn:?}");
-        return;
-    }
-    let TurnDelay(delay) = *turn_delay;
+    assert!(!actors.is_empty(), "no eligible actors to take turns?!");
 
-    if *turn_timer == Timer::default() {
-        trace!("setting turn timer to {delay}");
-        *turn_timer = Timer::from_seconds(delay, TimerMode::Once);
-    }
-
-    if !turn_timer.tick(time.delta()).just_finished() {
-        return;
-    }
-
-    if actors.is_empty() {
-        panic!("no eligible actors to take turns?!");
-    } else {
-        trace!("actors: found {}", actors.count());
-    }
-
-    for (entity, name_or_entity_item_opt, recovery_opt, is_player) in actors.iter() {
-        trace!("actors: {entity} {name_or_entity_item_opt:?} {recovery_opt:?} {is_player}");
-    }
-
-    let schedule: BTreeMap<usize, Vec<_>> = actors
+    let now = world_clock.recovery_now();
+    let next_up = actors
         .iter()
-        .filter(|(_, _, r_opt, _)| r_opt.is_some())
-        .into_group_map_by(|it| it.2.map(|it| it.0).unwrap_or_default())
-        .into_iter()
-        .collect();
+        .map(|(nt, r_opt)| {
+            let r = match r_opt {
+                Some(r) => r,
+                None => {
+                    warn!("found entity with Turn but not recovery: {nt}");
+                    commands.entity(nt.entity).insert(now);
+                    &now
+                }
+            };
+            (nt, *r)
+        })
+        .min_set_by_key(|it| it.1);
 
-    trace!("WHOLE SCHEDULE: {schedule:?}");
+    let (name_or_nt, Recovery(tick)) = next_up.first().unwrap();
+    world_clock.advance_to(*tick);
 
-    let Some((&tick, entities)) = schedule.first_key_value() else {
-        panic!("schedule is empty? {schedule:?}");
-    };
-    world_clock.advance_to(tick);
-
-    trace!("NEXT ENTITIES: {entities:?}");
-
-    let (nt, name_or_nt_opt, _, _) = entities.first().unwrap();
-
-    if entities.iter().any(|(_, _, _, is_player)| *is_player) {
-        info!("player turn; awaiting input");
+    if next_up.iter().any(|it| it.0.entity == *player) {
+        trace!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
-        *turn_timer = Timer::from_seconds(delay * 0.75, TimerMode::Repeating);
         return;
     } else {
-        *turn_timer = Timer::from_seconds(delay * 1.0, TimerMode::Repeating);
+        info!("next entity: {:?} {}", name_or_nt.name, name_or_nt.entity);
+        commands.insert_resource(NextTurn(name_or_nt.entity));
     }
+}
 
-    info!("next entity: {nt} {:?}", name_or_nt_opt);
-    commands.insert_resource(NextTurn(*nt));
+pub fn tick_turn_timer(time: Res<Time>, mut turn_timer: ResMut<TurnTimer>) {
+    turn_timer.0.tick(time.delta());
+}
+
+pub fn is_turn_timer_done(t: Res<TurnTimer>) -> bool {
+    t.is_finished()
 }
 
 #[derive(Event, Debug)]
