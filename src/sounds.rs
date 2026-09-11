@@ -64,6 +64,9 @@ pub fn on_loaded(
     commands.add_observer(on_bonk_sound);
     commands.add_observer(on_attack_sound);
     commands.add_observer(on_acquired_sound);
+    commands.add_observer(on_quaff_sound);
+    commands.add_observer(on_equip_sound);
+    commands.add_observer(on_unequip_sound);
     info!("🔈 finished initializing sounds");
 }
 
@@ -91,6 +94,33 @@ fn on_attack_sound(
         "enemy_hurt"
     };
     if let Some(s) = sounds.lookup.get(sound) {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct Quaffed;
+
+fn on_quaff_sound(_on: On<Quaffed>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("quaff") {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct Equip;
+
+fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("equip") {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct Unequip;
+
+fn on_unequip_sound(_on: On<Unequip>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("unequip") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }

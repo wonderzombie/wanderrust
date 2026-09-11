@@ -439,7 +439,9 @@ fn process_actions(
                 flasks.0 -= 1;
                 commands
                     .entity(action.entity)
-                    .insert(clock.recovery_after(params.move_speed));
+                    .insert(clock.recovery_after(params.move_speed))
+                    .commands()
+                    .trigger(sounds::Quaffed);
             } else {
                 commands.write_message(LogEvent {
                     txt: "no more flasks.".into(),
