@@ -173,7 +173,7 @@ impl Inventory {
             return None;
         }
 
-        let (item, qty) = ItemId::from_spec(item_spec);
+        let (item, qty) = ItemId::from_spec(item_spec)?;
         Some(Inventory::with_item(item, qty))
     }
 
@@ -185,7 +185,7 @@ impl Inventory {
         Some(
             item_specs
                 .into_iter()
-                .map(|it| ItemId::from_spec(it.as_ref()))
+                .flat_map(|it| ItemId::from_spec(it.as_ref()))
                 .collect(),
         )
     }
