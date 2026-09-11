@@ -67,6 +67,7 @@ pub fn on_loaded(
     commands.add_observer(on_quaff_sound);
     commands.add_observer(on_equip_sound);
     commands.add_observer(on_unequip_sound);
+    commands.add_observer(on_enemy_defeated_sound);
     info!("🔈 finished initializing sounds");
 }
 
@@ -130,6 +131,15 @@ pub(crate) struct Opened;
 
 fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds>) {
     if let Some(s) = sounds.lookup.get("open") {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct EnemyDefeated;
+
+fn on_enemy_defeated_sound(_on: On<EnemyDefeated>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.lookup.get("enemy_defeated") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }

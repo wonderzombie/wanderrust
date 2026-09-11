@@ -12,6 +12,7 @@ use crate::{
     message_log::LogEvent,
     mobs::Behavior,
     parameters::*,
+    sounds,
     tiles::TileIdx,
 };
 
@@ -214,6 +215,8 @@ pub fn process_attacks(
 
                 if is_player {
                     commands.trigger(PlayerDied);
+                } else {
+                    commands.trigger(sounds::EnemyDefeated);
                 }
             } else {
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
