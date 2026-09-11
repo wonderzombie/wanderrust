@@ -11,7 +11,7 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 210,
+	"nextUid": 211,
 	"identifierStyle": "Free",
 	"toc": [
 		{
@@ -4210,7 +4210,7 @@
 					"tilesetUid": null
 				},
 				{
-					"identifier": "name",
+					"identifier": "id",
 					"doc": null,
 					"__type": "String",
 					"uid": 209,
@@ -4236,7 +4236,10 @@
 					"max": null,
 					"regex": null,
 					"acceptFileTypes": null,
-					"defaultOverride": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["first shrine"]
+					},
 					"textLanguageMode": null,
 					"symmetricalRef": false,
 					"autoChainRef": true,
@@ -5171,7 +5174,7 @@
 							"px": [176,176],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Shrine", "__tile": null, "defUid": 208, "realEditorValues": [] },
-								{ "__identifier": "name", "__type": "String", "__value": "", "__tile": null, "defUid": 209, "realEditorValues": [] }
+								{ "__identifier": "id", "__type": "String", "__value": "first shrine", "__tile": null, "defUid": 209, "realEditorValues": [] }
 							],
 							"__worldX": 176,
 							"__worldY": 176
@@ -5795,7 +5798,10 @@
 							"px": [80,128],
 							"fieldInstances": [
 								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 41, "realEditorValues": [] },
-								{ "__identifier": "contents", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 10, "realEditorValues": [] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": [ "gold:11", "" ], "__tile": null, "defUid": 10, "realEditorValues": [ {
+									"id": "V_String",
+									"params": ["gold:11"]
+								}, null ] },
 								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 23, "realEditorValues": [] },
 								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 128, "y": 96, "w": 16, "h": 16 }, "defUid": 62, "realEditorValues": [] },
 								{ "__identifier": "open", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 144, "y": 96, "w": 16, "h": 16 }, "defUid": 61, "realEditorValues": [] }
