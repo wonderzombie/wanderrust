@@ -427,7 +427,6 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
             LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
             LdtkActor::Spawn => Some(Self::Spawn),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
-            LdtkActor::Unset => None,
         }
     }
 }
