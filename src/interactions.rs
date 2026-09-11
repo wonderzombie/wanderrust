@@ -122,6 +122,9 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 let contents = entity
                     .get_str_array("contents")
                     .and_then(Inventory::from_str_array);
+                if contents.is_none() {
+                    warn!("empty chest found: {name} {tile_idx}\n{entity:#?}")
+                }
                 let is_open = entity.get_bool("is_open");
                 Some(Self::Chest {
                     is_open,
