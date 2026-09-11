@@ -51,7 +51,9 @@ use crate::{
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
-    gamestate::{GameState, Modal, Screen, TurnDelay, WorldClock},
+    gamestate::{
+        AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Screen, TurnDelay, WorldClock,
+    },
     items::ItemId,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
@@ -260,10 +262,10 @@ pub fn run() {
             actors::on_player_added,
         ),
     )
-    .add_systems(
-        Update,
-        gamestate::ramify.run_if(in_state(GameState::Ramifying)),
-    )
+    // .add_systems(
+    //     Update,
+    //     gamestate::ramify.run_if(in_state(GameState::Ramifying)),
+    // )
     .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Last,
@@ -453,6 +455,7 @@ fn process_actions(
     }
 
     trace!("ramifying actions");
+    commands.queue(AddTurnTimerDelay(Some(DEFAULT_TURN_DELAY * 0.5)));
     commands.set_state(GameState::Ramifying);
 }
 
