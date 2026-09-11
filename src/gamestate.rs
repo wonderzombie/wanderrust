@@ -151,6 +151,37 @@ impl Command for AddTurnTimerDelay {
     }
 }
 
+pub struct AddRecovery(pub usize);
+
+impl EntityCommand for AddRecovery {
+    type Out = Result<(), String>;
+
+    fn apply(self, mut entity: EntityWorldMut) -> Self::Out {
+        let AddRecovery(tick) = self;
+        let rec = entity
+            .get_resource::<WorldClock>()
+            .ok_or("AddRecovery: no WorldClock")?
+            .recovery_after(tick);
+        entity.insert(rec);
+        Ok(())
+    }
+}
+
+pub struct RecoveryNow;
+
+impl EntityCommand for RecoveryNow {
+    type Out = Result<(), String>;
+
+    fn apply(self, mut entity: EntityWorldMut) -> Self::Out {
+        let rec = entity
+            .get_resource::<WorldClock>()
+            .ok_or("RecoveryNow: no WorldClock")?
+            .recovery_now();
+        entity.insert(rec);
+        Ok(())
+    }
+}
+
 #[derive(Resource, Debug, Reflect)]
 pub struct NextTurn(pub Entity);
 
@@ -227,7 +258,6 @@ pub fn respawn_player(
     mut commands: Commands,
     last_respawn_point: Res<LastRespawnPoint>,
     player: Single<Entity, With<Player>>,
-    clock: Res<WorldClock>,
 ) {
     let LastRespawnPoint(cell, level_entity) = *last_respawn_point;
 
@@ -237,7 +267,7 @@ pub fn respawn_player(
         commands
             .entity(*player)
             .insert(Bestiary::Player)
-            .insert(clock.recovery_now())
+            .queue(RecoveryNow)
             .insert(Turn)
             .insert(flasks)
             .insert((cell, ChildOf(level_entity)));

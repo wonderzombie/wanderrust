@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     cell::Cell,
     colors,
-    gamestate::{PlayerDied, Recovery, Turn, WorldClock},
+    gamestate::{AddRecovery, PlayerDied, Recovery, Turn, WorldClock},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
@@ -151,7 +151,6 @@ pub fn process_attacks(
     mut attacks: MessageReader<Attack>,
     mut log: MessageWriter<LogEvent>,
     asset_server: Res<AssetServer>,
-    clock: Res<WorldClock>,
 ) {
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
@@ -174,7 +173,7 @@ pub fn process_attacks(
 
         commands
             .entity(attacker_id)
-            .insert(clock.recovery_after(atk_params.attack_speed));
+            .queue(AddRecovery(atk_params.attack_speed));
 
         if defender.is_dead {
             log.write(LogEvent {
