@@ -41,12 +41,12 @@
   - [ ] dialogue
   - [ ] examine
   - [ ] shop
-- [ ] respawning
-  - [ ] player respawns at shrines
-  - [ ] players respawn -> enemies respawn
+- [x] respawning
+  - [x] player respawns at shrines
+  - [x] players respawn -> enemies respawn
 - [x] equipment UI
   - [x] equip/un-equip
-  - [ ] show equipment stats
+  - [x] show equipment stats
 - [ ] distinct weapon qualities
   - [x] stick
   - [x] sword
