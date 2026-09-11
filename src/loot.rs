@@ -13,7 +13,14 @@ pub struct FixedLoot(pub inventory::Inventory);
 /// RandomQty of some item, where each usize is minimum and maximum.
 #[derive(Component, Default, Clone)]
 pub struct LootTable {
-    entries: Vec<(items::ItemId, usize, usize)>,
+    entries: Vec<TableEntry>,
+}
+
+#[derive(Clone, Debug)]
+pub struct TableEntry {
+    item: items::ItemId,
+    min_dropped: usize,
+    max_dropped: usize,
 }
 
 impl LootTable {
@@ -21,8 +28,12 @@ impl LootTable {
     /// the result.
     pub fn roll(&self) -> inventory::Inventory {
         match self.entries.choose(&mut rand::rng()) {
-            Some((item, min, max)) => {
-                let qty = rand::rng().random_range(*min..=*max);
+            Some(TableEntry {
+                item,
+                min_dropped,
+                max_dropped,
+            }) => {
+                let qty = rand::rng().random_range(*min_dropped..=*max_dropped);
                 inventory::Inventory::with_item(*item, Quantity(qty))
             }
             None => inventory::Inventory::empty(),
