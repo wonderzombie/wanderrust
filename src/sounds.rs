@@ -111,7 +111,7 @@ fn on_quaff_sound(_on: On<Quaffed>, mut commands: Commands, sounds: Res<Sounds>)
 pub(crate) struct Equip;
 
 fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("equip") {
+    if let Some(s) = sounds.lookup.get("equip_02") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -120,7 +120,7 @@ fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
 pub(crate) struct Unequip;
 
 fn on_unequip_sound(_on: On<Unequip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("unequip") {
+    if let Some(s) = sounds.lookup.get("unequip_02") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
