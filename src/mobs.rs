@@ -9,7 +9,7 @@ use crate::{
     colors,
     combat::{Attack, Combatant},
     fov::Fov,
-    gamestate::{AddTurnTimerDelay, GameState, NextTurn, Turn, WorldClock},
+    gamestate::{AddRecovery, AddTurnTimerDelay, GameState, NextTurn, Turn, WorldClock},
     interactions::Interactable,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
@@ -107,7 +107,6 @@ pub fn consume_turn(
     mobs: Query<MobView, With<Behavior>>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<Attack>,
-    clock: Res<WorldClock>,
     blocking: Res<BlockingMap>,
 ) {
     let NextTurn(next_nt) = **next_turn;
@@ -132,11 +131,12 @@ pub fn consume_turn(
         }
         MobAction::Move(cell) => {
             info!("{next_nt}: move {cell}");
-            mob.insert((cell, clock.recovery_after(mob_view.params.move_speed)));
+            mob.insert(cell)
+                .queue(AddRecovery(mob_view.params.move_speed));
         }
         MobAction::Pass => {
             info!("{next_nt}: wait");
-            mob.insert(clock.recovery_after(mob_view.params.move_speed));
+            mob.queue(AddRecovery(mob_view.params.move_speed));
         }
     }
 
