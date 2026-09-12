@@ -9,7 +9,7 @@ use crate::{
     colors,
     combat::{Attack, Combatant},
     fov::Fov,
-    gamestate::{AddRecovery, AddTurnTimerDelay, GameState, NextTurn, Turn, WorldClock},
+    gamestate::{AddRecovery, AddTurnTimerDelay, GameState, NextTurn, RecoveryNow, Turn},
     interactions::Interactable,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
@@ -27,7 +27,6 @@ pub fn check_fov(
         (With<AgentOfGrid>, Without<Dead>),
     >,
     player_cell: Single<&Cell, With<Player>>,
-    clock: Res<WorldClock>,
 ) {
     let player_cell: (i32, i32) = (*player_cell).into();
 
@@ -40,7 +39,7 @@ pub fn check_fov(
                 .entity(entity)
                 .insert(Awareness::Alerted)
                 .insert_if_new(Turn)
-                .insert_if_new(clock.recovery_now());
+                .queue(RecoveryNow);
         }
     }
 }
