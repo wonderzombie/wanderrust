@@ -52,7 +52,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::{Cell, PreviousCell},
     gamestate::{
-        AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Screen, TurnDelay, WorldClock,
+        AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Screen, TurnDelay,
     },
     items::ItemId,
     ldtk_loader::LdtkProject,
@@ -381,7 +381,6 @@ fn process_actions(
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
     player: Single<(&Parameters, &mut Health, &mut Flasks), With<Player>>,
-    clock: Res<WorldClock>,
 ) {
     trace!("{action:?}");
     commands.remove_resource::<Action>();
@@ -407,7 +406,7 @@ fn process_actions(
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
-                        .insert(clock.recovery_after(params.move_speed))
+                        .queue(AddRecovery(params.move_speed))
                         .trigger(Moved);
                 }
                 Some(target) if portals.get(target).is_ok() => {
@@ -416,7 +415,7 @@ fn process_actions(
                     // TODO: extract to constant.
                     commands
                         .entity(action.entity)
-                        .insert(clock.recovery_after(1));
+                        .queue(AddRecovery(params.move_speed));
                     commands.insert_resource(PendingTransition {
                         arrive_at: portal.arrive_at.clone(),
                     });
@@ -433,7 +432,7 @@ fn process_actions(
         Act::Pass => {
             commands
                 .entity(action.entity)
-                .insert(clock.recovery_after(params.move_speed));
+                .queue(AddRecovery(params.move_speed));
         }
         Act::Flask => {
             if flasks.0 > 0 {
@@ -441,7 +440,7 @@ fn process_actions(
                 flasks.0 -= 1;
                 commands
                     .entity(action.entity)
-                    .insert(clock.recovery_after(params.move_speed))
+                    .queue(AddRecovery(params.move_speed))
                     .commands()
                     .trigger(sounds::Quaffed);
             } else {

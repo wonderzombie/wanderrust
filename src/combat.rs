@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     cell::Cell,
     colors,
-    gamestate::{AddRecovery, PlayerDied, Recovery, Turn, WorldClock},
+    gamestate::{AddRecovery, PlayerDied, Recovery, Turn},
     interactions::Interactable,
     message_log::LogEvent,
     mobs::Behavior,
