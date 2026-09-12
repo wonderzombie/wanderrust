@@ -61,6 +61,7 @@ pub struct MobView {
     agent_pos: &'static AgentPos,
     next_pos_opt: Option<&'static NextPos>,
     path_failed_opt: Option<&'static PathfindingFailed>,
+    awareness: Option<&'static Awareness>,
 }
 
 impl<'w, 's> MobViewItem<'w, 's> {
@@ -139,7 +140,14 @@ pub fn consume_turn(
         }
     }
 
-    commands.queue(AddTurnTimerDelay::default());
+    match mob_view.awareness {
+        Some(awareness) => {
+            if awareness >= &Awareness::Alerted {
+                commands.queue(AddTurnTimerDelay::default());
+            }
+        }
+        None => (),
+    }
 }
 
 #[derive(Component, Debug, Default)]
@@ -228,7 +236,7 @@ pub fn update_mob_indicators(
 ) {
     for (indicator_nt, ChildOf(parent), mut sprite) in indicators {
         if *parent == *player || !zone.collection().contains(parent) {
-            info!("{parent} isn't in the active level; skipping");
+            trace!("{parent} isn't in the active level; skipping");
             continue;
         }
 
