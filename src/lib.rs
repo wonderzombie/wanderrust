@@ -262,10 +262,6 @@ pub fn run() {
             actors::on_player_added,
         ),
     )
-    // .add_systems(
-    //     Update,
-    //     gamestate::ramify.run_if(in_state(GameState::Ramifying)),
-    // )
     .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Last,
