@@ -151,6 +151,8 @@ tiles! {
     DoorBrownThinClosed2 = atlas_idx(8, 9),
     DoorwayBrownThin = atlas_idx(9, 9),
 
+    DoorwayMetal = 551,
+
     Bars = atlas_idx(5, 3),
     BarsBroken = atlas_idx(6, 3),
     BarsDoorClosed = atlas_idx(3, 4),
@@ -291,6 +293,7 @@ impl TileIdx {
         GrassTall,
         DoorwayBrownThick,
         DoorwayBrownThin,
+        DoorwayMetal,
         GreenTree1,
         GreenTree2,
         GreenTree3,
