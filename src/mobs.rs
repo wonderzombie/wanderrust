@@ -18,6 +18,13 @@ use crate::{
     tiles::{TILE_SIZE_PX, TileIdx},
 };
 
+#[derive(Component, Debug)]
+pub enum Predisposition {
+    Player,
+    Passive,
+    Hostile,
+}
+
 /// Checks each mob's status and alerts mobs when the player enters their FOV.
 pub fn check_fov(
     mut commands: Commands,
