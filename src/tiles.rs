@@ -322,6 +322,12 @@ impl TileIdx {
         DoorBrownThinClosed2,
         RockLarge,
         RockMedium,
+        // TODO: this is a neat change; needs more testing.
+        // DoubleGreenTree1,
+        // DoubleGreenTree2,
+        // BigGreenTree1,
+        // BigGreenTree2,
+        // BigRoundTree,
     ];
 
     const INTERACTABLE: &'static [TileIdx] = &[
