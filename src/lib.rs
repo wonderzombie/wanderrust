@@ -189,7 +189,7 @@ pub fn run() {
             exited: GameState::AwaitingInput,
             entered: GameState::Loading,
         },
-        tilemap::despawn_tilemap,
+        tilemap::despawn_worldmap,
     )
     .add_systems(
         OnEnter(GameState::Loading),
