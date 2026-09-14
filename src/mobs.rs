@@ -47,7 +47,7 @@ pub fn check_fov(
 #[derive(
     Component, Debug, Clone, Copy, Default, PartialEq, Eq, Reflect, Serialize, Deserialize,
 )]
-pub enum Behavior {
+pub enum Role {
     #[default]
     Melee,
 }
@@ -104,7 +104,7 @@ enum MobAction {
 pub fn consume_turn(
     mut commands: Commands,
     next_turn: If<Res<NextTurn>>,
-    mobs: Query<MobView, With<Behavior>>,
+    mobs: Query<MobView, With<Role>>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<Attack>,
     blocking: Res<BlockingMap>,

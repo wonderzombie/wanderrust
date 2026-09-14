@@ -10,7 +10,7 @@ use crate::{
     gamestate::{AddRecovery, PlayerDied, Recovery, Turn},
     interactions::Interactable,
     message_log::LogEvent,
-    mobs::Behavior,
+    mobs::Role,
     parameters::*,
     sounds,
     tiles::TileIdx,
@@ -46,7 +46,7 @@ pub fn detect_belligerents(
                 .entity(entity)
                 .insert((
                     beast,
-                    Behavior::default(),
+                    Role::default(),
                     CombatantBundle::default(),
                     Name::new(name.clone()),
                 ))
