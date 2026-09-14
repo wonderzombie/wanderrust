@@ -37,7 +37,7 @@ pub enum Interactable {
         name: String,
         tile_idx: TileIdx,
     },
-    Belligerent {
+    Mob {
         name: String,
         tile_idx: TileIdx,
     },
@@ -52,7 +52,7 @@ impl Interactable {
         match self {
             Self::Chest { tile_idx, .. }
             | Self::Door { tile_idx, .. }
-            | Self::Belligerent { tile_idx, .. }
+            | Self::Mob { tile_idx, .. }
             | Self::Shrine { tile_idx, .. } => *tile_idx,
             _ => TileIdx::GridSquare,
         }
@@ -78,7 +78,7 @@ impl Interactable {
                 requires: *requires,
                 tile_idx,
             },
-            Self::Belligerent { name, tile_idx: _ } => Self::Belligerent {
+            Self::Mob { name, tile_idx: _ } => Self::Mob {
                 name: name.clone(),
                 tile_idx,
             },
@@ -107,7 +107,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
         let tile_idx = entity.get_tile();
 
         match ty {
-            LdtkActor::Combatant => Some(Self::Belligerent { name, tile_idx }),
+            LdtkActor::Combatant => Some(Self::Mob { name, tile_idx }),
             LdtkActor::Speaker => Some(Self::Speaker { name, tile_idx }),
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").and_then(ItemId::from_label);
@@ -264,7 +264,7 @@ pub fn process_interactions(
                 );
                 speech.write(Listen { entity });
             }
-            Interactable::Belligerent { name, .. } => {
+            Interactable::Mob { name, .. } => {
                 info!("Player attacks {name}.");
                 attacks.write(combat::Attack {
                     attacker: attempt.interactor,
