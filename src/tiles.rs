@@ -164,6 +164,7 @@ tiles! {
     DoubleGreenTree2 = atlas_idx(3, 2),
     BigGreenTree1 = atlas_idx(5, 1),
     BigGreenTree2 = atlas_idx(4, 2),
+    BigRoundTree = 53,
 
     // Water
     WaterSquare = atlas_idx(8, 5),
@@ -297,6 +298,7 @@ impl TileIdx {
         DoubleGreenTree2,
         BigGreenTree1,
         BigGreenTree2,
+        BigRoundTree,
         GridSquare,
         MineEntrance,
         BarsDoorOpen,
