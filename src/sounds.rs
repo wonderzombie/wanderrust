@@ -12,41 +12,31 @@ use crate::{
 };
 
 #[derive(Resource, Default)]
-pub struct Sounds {
-    lookup: HashMap<String, Handle<AudioSource>>,
-    folder_handle: Handle<LoadedFolder>,
-    pub loaded: bool,
-}
+pub struct Sounds(HashMap<String, Handle<AudioSource>>);
 
 const DEFAULT_SOUND_VOL: f32 = 1.;
 
-pub fn load_sounds(mut sounds: ResMut<Sounds>, asset_server: Res<AssetServer>) {
+#[derive(Resource, Deref)]
+pub struct SoundFolder(Handle<LoadedFolder>);
+
+pub fn load_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("🔈 preparing to load sounds");
     let handle = asset_server.load_folder("audio");
-
-    *sounds = Sounds {
-        folder_handle: handle,
-        loaded: false,
-        ..default()
-    };
+    commands.insert_resource(SoundFolder(handle));
 }
 
 pub fn on_loaded(
     mut commands: Commands,
-    mut sounds: ResMut<Sounds>,
+    folder_handle: Res<SoundFolder>,
     loaded_folders: Res<Assets<LoadedFolder>>,
     asset_server: Res<AssetServer>,
 ) {
-    if sounds.loaded {
-        return;
-    }
-
-    let Some(folder) = loaded_folders.get(&sounds.folder_handle) else {
+    let Some(folder) = loaded_folders.get(folder_handle.id()) else {
         return;
     };
 
     info!("🔈 sounds loaded & accessible; initializing");
-    sounds.lookup = folder
+    let lookup: HashMap<String, Handle<AudioSource>> = folder
         .handles
         .iter()
         .filter_map(|handle| {
@@ -58,7 +48,9 @@ pub fn on_loaded(
         })
         .collect();
 
-    sounds.loaded = true;
+    info!("🔈 sounds loaded: {}", lookup.len());
+
+    commands.insert_resource(Sounds(lookup));
 
     commands.add_observer(on_walk_sound);
     commands.add_observer(on_bonk_sound);
@@ -72,13 +64,13 @@ pub fn on_loaded(
 }
 
 fn on_bonk_sound(_on: On<Bonk>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("bonk") {
+    if let Some(s) = sounds.0.get("bonk") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
 
 fn on_walk_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("step") {
+    if let Some(s) = sounds.0.get("step") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -94,7 +86,7 @@ fn on_attack_sound(
     } else {
         "enemy_hurt"
     };
-    if let Some(s) = sounds.lookup.get(sound) {
+    if let Some(s) = sounds.0.get(sound) {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -103,7 +95,7 @@ fn on_attack_sound(
 pub(crate) struct Quaffed;
 
 fn on_quaff_sound(_on: On<Quaffed>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("quaff") {
+    if let Some(s) = sounds.0.get("quaff") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -112,7 +104,7 @@ fn on_quaff_sound(_on: On<Quaffed>, mut commands: Commands, sounds: Res<Sounds>)
 pub(crate) struct Equip;
 
 fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("equip_02") {
+    if let Some(s) = sounds.0.get("equip_02") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -121,7 +113,7 @@ fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
 pub(crate) struct Unequip;
 
 fn on_unequip_sound(_on: On<Unequip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("unequip_02") {
+    if let Some(s) = sounds.0.get("unequip_02") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -130,7 +122,7 @@ fn on_unequip_sound(_on: On<Unequip>, mut commands: Commands, sounds: Res<Sounds
 pub(crate) struct Opened;
 
 fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("open") {
+    if let Some(s) = sounds.0.get("open") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
@@ -139,7 +131,7 @@ fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds
 pub(crate) struct EnemyDefeated;
 
 fn on_enemy_defeated_sound(_on: On<EnemyDefeated>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.lookup.get("enemy_defeated") {
+    if let Some(s) = sounds.0.get("enemy_defeated") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
