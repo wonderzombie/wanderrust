@@ -46,7 +46,7 @@ where
     T: std::fmt::Display + AsRef<str>,
 {
     let brackets: &'static str = match interact_opt {
-        Some(Interactable::Belligerent { .. }) => "<>",
+        Some(Interactable::Mob { .. }) => "<>",
         _ => "  ",
     };
 

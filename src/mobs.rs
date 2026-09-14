@@ -189,7 +189,7 @@ pub fn init_indicators(
     let xform = Transform::from_xyz(0., 0., 1.);
     for (nt, interx) in query {
         match interx {
-            Interactable::Belligerent { .. } | Interactable::Speaker { .. } => {
+            Interactable::Mob { .. } | Interactable::Speaker { .. } => {
                 info!("initialized indicator for {nt:?}");
                 commands.spawn((
                     Name::new(format!("indicator {} {interx:?} {nt}", interx.tile())),
