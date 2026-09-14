@@ -218,7 +218,7 @@ pub fn ramify(
         ns.set(GameState::AwaitingInput);
         return;
     } else {
-        info!("next entity: {:?} {}", name_or_nt.name, name_or_nt.entity);
+        trace!("next entity: {:?} {}", name_or_nt.name, name_or_nt.entity);
         commands.insert_resource(NextTurn(name_or_nt.entity));
     }
 }
