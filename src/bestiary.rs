@@ -1,4 +1,5 @@
 use crate::{
+    mobs::Predisposition,
     parameters::{BaseParameters, Parameters, Vision},
     tiles::TileIdx,
 };
@@ -16,7 +17,8 @@ macro_rules! define_bestiary {
             def = $def:expr,
             hp = $hp:expr,
             mov = $mov:expr,
-            vis = $vis:expr
+            vis = $vis:expr,
+            mood = $mood:expr
         ], )* $(,)?
     ) => {
         #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect)]
@@ -42,6 +44,13 @@ macro_rules! define_bestiary {
                 }
             }
 
+            pub fn attitude(&self) -> Predisposition {
+                match self {
+                    $( Bestiary::$name => $mood ),*
+                }
+            }
+
+
             pub fn from_name(name: impl AsRef<str>) -> Option<Bestiary> {
                 match name.as_ref() {
                     $( stringify!($name) => Some((Bestiary::$name)), )*
@@ -60,9 +69,10 @@ macro_rules! define_bestiary {
 }
 
 define_bestiary!(
-    Player => [TileIdx::Player, atk = 3, atk_spd = 5, def = 2, hp = 20, mov = 5, vis = 5],
-    Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4],
-    Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2],
+    Player => [TileIdx::Player, atk = 3, atk_spd = 5, def = 2, hp = 20, mov = 5, vis = 5, mood = Predisposition::Player],
+    Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4, mood = Predisposition::Hostile],
+    Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2, mood = Predisposition::Hostile],
+    Chicken => [TileIdx::Chicken, atk = 0, atk_spd = 0, def = 0, hp = 1, mov = 0, vis = 1, mood = Predisposition::Passive],
 );
 
 pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
@@ -75,7 +85,9 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     let params = species.params();
     let base: BaseParameters = params.into();
     let health = base.health();
+    let att = species.attitude();
+
     w.commands()
         .entity(ctx.entity)
-        .insert((params, base, health));
+        .insert((params, base, health, att));
 }
