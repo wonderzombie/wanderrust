@@ -19,11 +19,10 @@ pub(super) fn plugin(app: &mut App) {
         .init_resource::<TurnTimer>()
         .add_systems(
             Update,
-            ramify.run_if(
-                in_state(GameState::Ramifying)
-                    .and_then(not(resource_exists::<NextTurn>))
-                    .and_then(is_turn_timer_done),
-            ),
+            ramify
+                .run_if(in_state(GameState::Ramifying))
+                .run_if(not(resource_exists::<NextTurn>))
+                .run_if(is_turn_timer_done),
         )
         .add_systems(PreUpdate, tick_turn_timer);
 }
