@@ -412,7 +412,7 @@ impl WorldSpawn {
     }
 }
 
-pub fn despawn_tilemap(
+pub fn despawn_worldmap(
     mut commands: Commands,
     player: Single<Entity, With<Player>>,
     levels: Query<Entity, With<Level>>,
