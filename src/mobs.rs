@@ -73,7 +73,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
         match (self.next_pos_opt, self.path_failed_opt) {
             // No route possible.
             (_, Some(_)) => {
-                info!("no route\n{self:?}");
+                trace!("no route\n{self:?}");
                 MobAction::Pass
             }
             // Something is blocking the way.
@@ -88,7 +88,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
             }
             // We're not pathing if there's no failure and no next position.
             (None, None) => {
-                info!("no route and no failure\n{self:?}");
+                trace!("no route and no failure\n{self:?}");
                 MobAction::Pass
             }
         }
@@ -123,19 +123,19 @@ pub fn consume_turn(
 
     match mob_view.decide(player_nt, player_cell, blocking.as_ref()) {
         MobAction::Attack(target) => {
-            info!("{next_nt}: attack {target}");
+            trace!("{next_nt}: attack {target}");
             attacks.write(Attack {
                 attacker: next_nt,
                 target,
             });
         }
         MobAction::Move(cell) => {
-            info!("{next_nt}: move {cell}");
+            trace!("{next_nt}: move {cell}");
             mob.insert(cell)
                 .queue(AddRecovery(mob_view.params.move_speed));
         }
         MobAction::Pass => {
-            info!("{next_nt}: wait");
+            trace!("{next_nt}: wait");
             mob.queue(AddRecovery(mob_view.params.move_speed));
         }
     }
@@ -241,7 +241,7 @@ pub fn update_mob_indicators(
         }
 
         let Ok((awareness, is_dead)) = mobs.get(*parent) else {
-            info!("{parent} is not a combatant; skipping");
+            trace!("{parent} is not a combatant; skipping");
             continue;
         };
 
