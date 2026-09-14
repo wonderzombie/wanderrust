@@ -21,7 +21,7 @@ macro_rules! define_bestiary {
     ) => {
         #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect)]
         #[reflect(Component)]
-        #[component(immutable, on_insert = spec_combatant)]
+        #[component(immutable, on_insert = spec_mob)]
         pub enum Bestiary {
             $( $name, )*
         }
@@ -65,7 +65,7 @@ define_bestiary!(
     Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2],
 );
 
-pub fn spec_combatant(mut w: DeferredWorld, ctx: HookContext) {
+pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     let Some(species) = w.entity(ctx.entity).get::<Bestiary>() else {
         error!("unknown species: {ctx:#?}");
         return;
