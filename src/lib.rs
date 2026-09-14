@@ -69,6 +69,17 @@ use clap::Parser;
 /// The clear color for the window.
 const CLEAR_COLOR: ClearColor = ClearColor(Color::srgb(71.0 / 255.0, 45.0 / 255.0, 60.0 / 255.0));
 
+const DEFAULT_MAP_PATH: &str = "data/wandrs_proto.ldtk";
+
+#[derive(Resource, Debug)]
+struct LdtkMapPath(String);
+
+impl Default for LdtkMapPath {
+    fn default() -> Self {
+        Self(DEFAULT_MAP_PATH.into())
+    }
+}
+
 fn insert_fq_plugins(app: &mut App) {
     app.add_plugins(EguiPlugin::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
@@ -86,6 +97,9 @@ struct Args {
 
     #[arg(short, long)]
     procedural_map: bool,
+
+    #[arg(short, long, default_value = DEFAULT_MAP_PATH)]
+    ldtk_map_path: String,
 }
 
 pub fn run() {
@@ -126,6 +140,7 @@ pub fn run() {
     .add_message::<combat::Attack>()
     .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
+    .insert_resource(LdtkMapPath(args.ldtk_map_path))
     .insert_resource(SpritePickingSettings {
         // clicking on a sprite ignores alpha transparency
         picking_mode: SpritePickingMode::BoundingBox,
@@ -299,8 +314,8 @@ pub enum GameSystem {
     Grid,
 }
 
-fn load_ldtk(mut commands: Commands) {
-    let fname = "data/wandrs_proto.ldtk";
+fn load_ldtk(mut commands: Commands, map_path: Res<LdtkMapPath>) {
+    let fname = map_path.0.as_str();
     let res = ldtk_loader::load_and_import(fname.into()).expect("expected to load ldtk level");
     commands.insert_resource(res);
 }
