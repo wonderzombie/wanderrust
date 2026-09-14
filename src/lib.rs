@@ -124,7 +124,6 @@ pub fn run() {
             }),
     )
     .add_message::<combat::Attack>()
-    .init_resource::<sounds::Sounds>()
     .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
     .insert_resource(SpritePickingSettings {
@@ -158,7 +157,13 @@ pub fn run() {
     )
     .add_systems(
         Update,
-        (finalize_starting, sounds::on_loaded).run_if(in_state(GameState::Starting)),
+        (
+            finalize_starting
+                .run_if(resource_exists::<sounds::Sounds>)
+                .run_if(resource_exists::<atlas::SpriteAtlas>),
+            sounds::on_loaded.run_if(not(resource_exists::<sounds::Sounds>)),
+        )
+            .run_if(in_state(GameState::Starting)),
     )
     .add_systems(
         OnExit(GameState::Starting),
@@ -300,16 +305,9 @@ fn load_ldtk(mut commands: Commands) {
     commands.insert_resource(res);
 }
 
-fn finalize_starting(
-    mut next: ResMut<NextState<GameState>>,
-    atlas: Option<Res<atlas::SpriteAtlas>>,
-    sounds: Res<sounds::Sounds>,
-) {
-    trace!("atlas {:?} sounds {:?}", atlas.is_some(), sounds.loaded);
-    if atlas.is_some() && sounds.loaded {
-        info!("✅ done [STARTING]");
-        next.set(GameState::Loading);
-    }
+fn finalize_starting(mut next: ResMut<NextState<GameState>>) {
+    info!("✅ done [STARTING]");
+    next.set(GameState::Loading);
 }
 
 fn finalize_loading(
