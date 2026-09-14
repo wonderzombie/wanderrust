@@ -200,6 +200,7 @@ pub fn run() {
         OnExit(GameState::Loading),
         (actors::spawn_player, interactions::spawn_interxs),
     )
+    .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Update,
         (
@@ -262,7 +263,6 @@ pub fn run() {
             actors::on_player_added,
         ),
     )
-    .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
     .add_systems(
         Last,
         (
