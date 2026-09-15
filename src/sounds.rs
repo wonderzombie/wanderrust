@@ -60,6 +60,8 @@ pub fn on_loaded(
     commands.add_observer(on_equip_sound);
     commands.add_observer(on_unequip_sound);
     commands.add_observer(on_enemy_defeated_sound);
+    commands.add_observer(on_lit_shrine_sound);
+    commands.add_observer(on_rest_sound);
     info!("🔈 finished initializing sounds");
 }
 
@@ -132,6 +134,24 @@ pub(crate) struct EnemyDefeated;
 
 fn on_enemy_defeated_sound(_on: On<EnemyDefeated>, mut commands: Commands, sounds: Res<Sounds>) {
     if let Some(s) = sounds.0.get("enemy_defeated") {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct LitShrine;
+
+fn on_lit_shrine_sound(_on: On<LitShrine>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.0.get("lit_shrine") {
+        commands.spawn(one_off_sound_bundle(s));
+    }
+}
+
+#[derive(Event, Debug)]
+pub(crate) struct Rest;
+
+fn on_rest_sound(_on: On<Rest>, mut commands: Commands, sounds: Res<Sounds>) {
+    if let Some(s) = sounds.0.get("rest") {
         commands.spawn(one_off_sound_bundle(s));
     }
 }
