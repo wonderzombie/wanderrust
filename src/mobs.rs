@@ -20,7 +20,7 @@ use crate::{
 
 #[derive(Component, Debug)]
 pub enum Predisposition {
-    Player,
+    Human,
     Passive,
     Hostile,
 }
