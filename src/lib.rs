@@ -50,9 +50,11 @@ use crate::{
     actors::*,
     ascii_map::AsciiMapSpec,
     atlas::SpriteAtlas,
+    bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     gamestate::{
-        AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Screen, TurnDelay,
+        AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Recovery, Screen,
+        TurnDelay,
     },
     items::ItemId,
     ldtk_loader::LdtkProject,
@@ -84,6 +86,8 @@ fn insert_fq_plugins(app: &mut App) {
     app.add_plugins(EguiPlugin::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<ItemId>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Bestiary>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Recovery>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Level>>::default());
 }
 
