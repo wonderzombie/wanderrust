@@ -275,9 +275,14 @@ pub fn run() {
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::Fov)
                 .run_if(in_state(GameState::Ramifying)),
-            combat::detect_belligerents,
-            combat::init_combatants,
-            grid::init_agents,
+            (
+                mobs::detect_mobs,
+                combat::init_combatants,
+                grid::init_agents,
+            )
+                .in_set(GameSystem::Mobs)
+                .after(GameSystem::Grid)
+                .chain(),
             actors::on_player_added,
         ),
     )
@@ -312,6 +317,7 @@ pub enum GameSystem {
     Fov,
     Light,
     Grid,
+    Mobs,
 }
 
 fn load_ldtk(mut commands: Commands, map_path: Res<LdtkMapPath>) {

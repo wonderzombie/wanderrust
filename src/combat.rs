@@ -4,13 +4,11 @@ use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, Pathfind};
 use crate::{
     actors::{Dead, Player},
     atlas::SpriteAtlas,
-    bestiary::Bestiary,
     cell::Cell,
     colors,
-    gamestate::{AddRecovery, PlayerDied, Recovery, Turn},
-    interactions::Interactable,
+    gamestate::{AddRecovery, PlayerDied, RecoveryNow, Turn},
     message_log::LogEvent,
-    mobs::Role,
+    mobs::{Behavior, Role},
     parameters::*,
     sounds,
     tiles::TileIdx,
@@ -24,42 +22,6 @@ pub(crate) struct Hit(pub Entity);
 
 #[derive(EntityEvent, Debug)]
 pub(crate) struct Died(pub Entity);
-
-/// Detects entities with Interactable that may be Belligerents.
-/// Adds Combatant and Name components.
-pub fn detect_belligerents(
-    mut commands: Commands,
-    interxs: Populated<
-        (Entity, &Interactable, &Cell),
-        Or<(Added<Interactable>, Added<NeedsRespawn>)>,
-    >,
-) {
-    for (entity, interx, cell) in interxs {
-        if let Interactable::Mob { name, tile_idx, .. } = interx {
-            let Some(beast) = Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx))
-            else {
-                error!("unable to determine beast from tile or name: {name} {tile_idx}");
-                continue;
-            };
-
-            commands
-                .entity(entity)
-                .insert((
-                    beast,
-                    Role::default(),
-                    CombatantBundle::default(),
-                    Name::new(name.clone()),
-                ))
-                // Only insert the respawn point if it doesn't have one. This allows a mob to
-                // respawn where it originated, either because it started somewhere, or some other
-                // process set it already..
-                .insert_if_new(RespawnPoint(*cell))
-                // Recovery indicates active participation in combat. We want to clear this
-                // in case this is a respawning situation.
-                .remove::<Recovery>();
-        }
-    }
-}
 
 #[derive(Component)]
 pub(crate) struct AttackIcon(pub Timer);
@@ -97,29 +59,40 @@ pub(crate) fn animate_icons(
 pub fn init_combatants(
     mut commands: Commands,
     combatants: Populated<
-        (
-            Entity,
-            &Name,
-            Has<NeedsRespawn>,
-            &BaseParameters,
-            Option<&RespawnPoint>,
-        ),
-        Or<(Added<Combatant>, Added<NeedsRespawn>)>,
+        (Entity, &Cell, &Name, Has<NeedsRespawn>, &BaseParameters),
+        Added<Combatant>,
     >,
+    respawn_info: Query<Option<&RespawnPoint>>,
 ) {
-    for (entity, name, respawning, base_params, respawn_opt) in combatants.into_iter() {
+    for (entity, cell, name, respawning, base_params) in combatants.into_iter() {
+        info!("{name}: init at {cell}");
+
         let health = base_params.health();
 
         let mut ecmd = commands.entity(entity);
-        ecmd.insert(health);
+        ecmd.insert(health)
+            .queue(RecoveryNow)
+            .insert_if_new(CombatantBundle::default())
+            .insert(Role::default())
+            .insert(Behavior::default());
 
-        if respawning && let Some(cell) = respawn_opt.map(|it| it.0) {
-            ecmd.remove::<(NeedsRespawn, Pathfind, Dead)>()
-                .insert((CombatantBundle::default(), cell));
-            info!("respawning {name} {entity}");
-        } else {
-            ecmd.observe(on_attacked);
-            info!("first spawn for {name} {entity}");
+        match (respawning, respawn_info.get(entity).ok().flatten()) {
+            (true, Some(RespawnPoint(respawn_cell))) => {
+                // Respawn as usual, and remove the marker.
+                ecmd.insert(*respawn_cell).remove::<NeedsRespawn>();
+                info!("respawn for {name} {entity}");
+            }
+            (false, None) => {
+                // Without respaswning and without a respawn point, this is obviously first spawn.
+                ecmd.insert(RespawnPoint(*cell)).observe(on_attacked);
+                info!("first spawn for {name} {entity}");
+            }
+            (true, None) => {
+                error!("entity needs respawn but has no respawn point: {entity} {name} at {cell}");
+                // A RespawnPoint is required for respawning.
+                ecmd.remove::<NeedsRespawn>();
+            }
+            (false, _) => (),
         }
     }
 }
@@ -209,8 +182,8 @@ pub fn process_attacks(
                     .entity(defender_id)
                     .insert(Dead)
                     .trigger(Died)
-                    .remove::<(AgentOfGrid, AgentPos, Blocking)>()
-                    .remove::<(Awareness, Turn)>();
+                    .remove::<(AgentOfGrid, AgentPos, Pathfind, Blocking)>()
+                    .remove::<CombatantBundle>();
 
                 if is_player {
                     commands.trigger(PlayerDied);

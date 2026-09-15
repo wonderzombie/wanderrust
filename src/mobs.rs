@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::{Dead, Player},
     atlas::{self, SpriteAtlas},
+    bestiary,
     cell::Cell,
     colors,
     combat::{Attack, Combatant},
@@ -31,6 +32,47 @@ pub enum Behavior {
     Standing,
     Loitering,
     Wandering,
+}
+
+pub fn detect_mobs(
+    mut commands: Commands,
+    new_interactables: Query<(Entity, &Cell, &Interactable), Added<Interactable>>,
+) -> Result<()> {
+    let mut count = 0;
+
+    for (entity, cell, interx) in new_interactables.into_iter() {
+        let (name, tile_idx) = match interx {
+            Interactable::Mob { name, tile_idx } => (name, tile_idx),
+            _ => continue,
+        };
+
+        info!("detected mob: {} {} {}", name, tile_idx, cell);
+
+        let Some(beast) = bestiary::best_guess(interx) else {
+            error!("mob not in bestiary; skipping {cell} {interx:?}");
+            continue;
+        };
+
+        info!("beast is {beast:?}");
+
+        commands.entity(entity).insert_if_neq(beast);
+
+        match beast.attitude() {
+            Predisposition::Human => (),
+            Predisposition::Passive => (),
+            Predisposition::Hostile => {
+                commands.entity(entity).insert(Combatant);
+            }
+        }
+
+        count += 1;
+    }
+
+    if count > 0 {
+        info!("handled {count} mobs");
+    }
+
+    Ok(())
 }
 
 /// Checks each mob's status and alerts mobs when the player enters their FOV.
@@ -77,6 +119,7 @@ pub struct MobView {
     next_pos_opt: Option<&'static NextPos>,
     path_failed_opt: Option<&'static PathfindingFailed>,
     awareness: Option<&'static Awareness>,
+    attitude: Option<&'static Predisposition>,
 }
 
 impl<'w, 's> MobViewItem<'w, 's> {
@@ -119,7 +162,7 @@ enum MobAction {
 pub fn consume_turn(
     mut commands: Commands,
     next_turn: If<Res<NextTurn>>,
-    mobs: Query<MobView, With<Role>>,
+    mobs: Query<MobView>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut attacks: MessageWriter<Attack>,
     blocking: Res<BlockingMap>,
