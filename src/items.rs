@@ -121,6 +121,7 @@ impl Display for ItemId {
 /// A Component on an entity representing a quantity of an associated ItemId.
 /// When there's no Quantity, it's equivalent to `Quantity(1)`.
 #[derive(Component, Copy, Clone, Reflect, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[reflect(Component)]
 pub struct Quantity(pub usize);
 
 impl std::fmt::Display for Quantity {
