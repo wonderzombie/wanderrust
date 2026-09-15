@@ -280,12 +280,14 @@ pub fn process_interactions(
                     });
                     commands.insert_resource(LastRespawnPoint(*player_cell, *active_level));
                     commands.trigger(PlayerRested);
+                    commands.trigger(sounds::Rest);
                 } else {
                     shrines_visited.0.insert(entity);
                     log.write(LogEvent {
                         txt: format!("lit shrine {id}"),
                         color: Some(colors::KENNEY_BLUE),
                     });
+                    commands.trigger(sounds::LitShrine);
                 }
             }
         }
