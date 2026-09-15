@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[derive(Component, Debug)]
-pub enum Predisposition {
+pub enum Attitude {
     Human,
     Passive,
     Hostile,
@@ -58,9 +58,9 @@ pub fn detect_mobs(
         commands.entity(entity).insert_if_neq(beast);
 
         match beast.attitude() {
-            Predisposition::Human => (),
-            Predisposition::Passive => (),
-            Predisposition::Hostile => {
+            Attitude::Human => (),
+            Attitude::Passive => (),
+            Attitude::Hostile => {
                 commands.entity(entity).insert(Combatant);
             }
         }
@@ -120,7 +120,7 @@ pub struct MobView {
     next_pos_opt: Option<&'static NextPos>,
     path_failed_opt: Option<&'static PathfindingFailed>,
     awareness: Option<&'static Awareness>,
-    attitude: Option<&'static Predisposition>,
+    attitude: Option<&'static Attitude>,
 }
 
 impl<'w, 's> MobViewItem<'w, 's> {

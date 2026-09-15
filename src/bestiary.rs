@@ -1,6 +1,6 @@
 use crate::{
     interactions::Interactable,
-    mobs::Predisposition,
+    mobs::{Attitude, Behavior, Role},
     parameters::{BaseParameters, Parameters, Vision},
     tiles::TileIdx,
 };
@@ -45,12 +45,11 @@ macro_rules! define_bestiary {
                 }
             }
 
-            pub fn attitude(&self) -> Predisposition {
+            pub fn attitude(&self) -> Attitude {
                 match self {
                     $( Bestiary::$name => $mood ),*
                 }
             }
-
 
             pub fn from_name(name: impl AsRef<str>) -> Option<Bestiary> {
                 match name.as_ref() {
@@ -70,10 +69,10 @@ macro_rules! define_bestiary {
 }
 
 define_bestiary!(
-    Player => [TileIdx::Player, atk = 3, atk_spd = 5, def = 2, hp = 20, mov = 5, vis = 5, mood = Predisposition::Human],
-    Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4, mood = Predisposition::Hostile],
-    Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2, mood = Predisposition::Hostile],
-    Chicken => [TileIdx::Chicken, atk = 0, atk_spd = 0, def = 0, hp = 1, mov = 0, vis = 1, mood = Predisposition::Passive],
+    Player => [TileIdx::Player, atk = 3, atk_spd = 5, def = 2, hp = 20, mov = 5, vis = 5, mood = Attitude::Human],
+    Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4, mood = Attitude::Hostile],
+    Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2, mood = Attitude::Hostile],
+    Chicken => [TileIdx::Chicken, atk = 0, atk_spd = 0, def = 0, hp = 1, mov = 0, vis = 1, mood = Attitude::Passive],
 );
 
 pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
@@ -88,9 +87,14 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     let health = base.health();
     let att = species.attitude();
 
-    w.commands()
-        .entity(ctx.entity)
-        .insert((params, base, health, att));
+    w.commands().entity(ctx.entity).insert((
+        params,
+        base,
+        health,
+        att,
+        Behavior::default(),
+        Role::default(),
+    ));
 }
 
 pub fn best_guess(interx: &Interactable) -> Option<Bestiary> {
