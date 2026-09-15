@@ -105,8 +105,6 @@ pub fn on_toggle_equipped(
 ) {
     let ToggleEquipped { target, equipment } = *event;
 
-    info!("toggle equipped: {target} {equipment}");
-
     // Need `ItemId` to 1) see equipment def, and 2) log the change.
     let Ok(item_id) = all_itam.get(equipment) else {
         error!("no such item: {event:?}");
@@ -117,6 +115,8 @@ pub fn on_toggle_equipped(
         error!("unable to find target item {equipment:?} ({item_id}) as specified by {event:?}");
         return;
     };
+
+    info!("toggle equipped: {item_id} {target_eq_slot:?} ({target} toggles {equipment})");
 
     let target_eq_list = match all_equipment_sets.get(target) {
         Ok(has_equipped_opt) => unwrap_collection(has_equipped_opt),
