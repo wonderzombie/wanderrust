@@ -27,7 +27,8 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(PreUpdate, tick_turn_timer);
 }
 
-#[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Resource, Debug, Default, Deref, PartialEq, Eq, Ord, PartialOrd, Hash, Reflect)]
+#[reflect(Resource)]
 pub struct WorldClock(usize);
 
 impl WorldClock {
@@ -110,6 +111,7 @@ pub struct MenuSelection(Entity);
 
 /// Represents the current turn state of an actor.
 #[derive(Component, Debug, Default, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
 pub struct Turn;
 
 #[derive(Resource, Debug, Reflect)]
@@ -183,6 +185,7 @@ impl EntityCommand for RecoveryNow {
 }
 
 #[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
 pub struct NextTurn(pub Entity);
 
 pub fn ramify(

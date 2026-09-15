@@ -104,6 +104,7 @@ pub fn check_fov(
 #[derive(
     Component, Debug, Clone, Copy, Default, PartialEq, Eq, Reflect, Serialize, Deserialize,
 )]
+#[reflect(Component)]
 pub enum Role {
     #[default]
     Melee,

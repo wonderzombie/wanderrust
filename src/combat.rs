@@ -100,7 +100,7 @@ pub fn init_combatants(
 #[derive(Component, Default, Reflect)]
 pub struct Combatant;
 
-#[derive(Component, Default, Reflect)]
+#[derive(Component, Default, Reflect, Debug)]
 pub struct RespawnPoint(pub Cell);
 
 #[derive(Component, Default, Reflect)]
