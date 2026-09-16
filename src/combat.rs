@@ -8,9 +8,9 @@ use crate::{
     colors,
     gamestate::{AddRecovery, PlayerDied, RecoveryNow, Turn},
     message_log::LogEvent,
-    mobs::{Behavior, Role},
     parameters::*,
     sounds,
+    tilemap::DenizenOf,
     tiles::TileIdx,
 };
 
@@ -59,40 +59,33 @@ pub(crate) fn animate_icons(
 pub fn init_combatants(
     mut commands: Commands,
     combatants: Populated<
-        (Entity, &Cell, &Name, Has<NeedsRespawn>, &BaseParameters),
-        Added<Combatant>,
+        (Entity, &Cell, &Name, &BaseParameters),
+        Or<(Added<Combatant>, Added<NeedsRespawn>)>,
     >,
-    respawn_info: Query<Option<&RespawnPoint>>,
+    respawn_info: Query<(Has<NeedsRespawn>, &SpawnPoint)>,
 ) {
-    for (entity, cell, name, respawning, base_params) in combatants.into_iter() {
+    for (entity, cell, name, base_params) in combatants.into_iter() {
         info!("{name}: init at {cell}");
 
         let health = base_params.health();
 
         let mut ecmd = commands.entity(entity);
         ecmd.insert(health)
+            .remove::<(Dead, NeedsRespawn)>()
             .queue(RecoveryNow)
-            .insert_if_new(CombatantBundle::default())
-            .insert(Role::default())
-            .insert(Behavior::default());
+            .insert_if_new(CombatantBundle::default());
 
-        match (respawning, respawn_info.get(entity).ok().flatten()) {
-            (true, Some(RespawnPoint(respawn_cell))) => {
-                // Respawn as usual, and remove the marker.
-                ecmd.insert(*respawn_cell).remove::<NeedsRespawn>();
-                info!("respawn for {name} {entity}");
+        match respawn_info.get(entity).ok() {
+            Some((
+                true,
+                SpawnPoint {
+                    respawn_cell,
+                    level_nt,
+                },
+            )) => {
+                ecmd.insert(ChildOf(*level_nt)).insert(*respawn_cell);
             }
-            (false, None) => {
-                // Without respaswning and without a respawn point, this is obviously first spawn.
-                ecmd.insert(RespawnPoint(*cell)).observe(on_attacked);
-                info!("first spawn for {name} {entity}");
-            }
-            (true, None) => {
-                error!("entity needs respawn but has no respawn point: {entity} {name} at {cell}");
-                // A RespawnPoint is required for respawning.
-                ecmd.remove::<NeedsRespawn>();
-            }
-            (false, _) => (),
+            Some((false, _)) | None => (),
         }
     }
 }
@@ -100,8 +93,11 @@ pub fn init_combatants(
 #[derive(Component, Default, Reflect)]
 pub struct Combatant;
 
-#[derive(Component, Default, Reflect, Debug)]
-pub struct RespawnPoint(pub Cell);
+#[derive(Component, Reflect, Debug)]
+pub struct SpawnPoint {
+    pub respawn_cell: Cell,
+    pub level_nt: Entity,
+}
 
 #[derive(Component, Default, Reflect)]
 pub struct NeedsRespawn;
