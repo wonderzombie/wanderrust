@@ -90,6 +90,29 @@ pub fn init_combatants(
     }
 }
 
+/// Set respawn points for combatants who don't have one. This explicitly
+/// excludes players to avoid conflicts with `[LastRespawnPoint]`.
+pub fn set_mob_respawns(
+    mut commands: Commands,
+    combatants: Populated<(Entity, &Cell, &DenizenOf), (With<Combatant>, Without<SpawnPoint>)>,
+) {
+    let mut count = 0;
+    for (nt, respawn_cell, DenizenOf(level_nt)) in combatants {
+        commands
+            .entity(nt)
+            .insert(SpawnPoint {
+                respawn_cell: *respawn_cell,
+                level_nt: *level_nt,
+            })
+            .observe(on_attacked);
+        count += 1;
+    }
+
+    if count > 0 {
+        info!("set_mob_respawn: {count} handled");
+    }
+}
+
 #[derive(Component, Default, Reflect)]
 pub struct Combatant;
 
