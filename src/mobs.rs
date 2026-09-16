@@ -305,8 +305,11 @@ pub fn update_mob_indicators(
         };
 
         if is_dead || awareness.is_none() {
-            commands.entity(indicator_nt).despawn();
+            commands.entity(indicator_nt).insert(Visibility::Hidden);
         } else if let Some(awareness) = awareness {
+            commands
+                .entity(indicator_nt)
+                .insert_if_neq(Visibility::Inherited);
             match awareness {
                 Awareness::Idling => sprite.color = colors::KENNEY_OFF_WHITE,
                 Awareness::Alerted => sprite.color = colors::KENNEY_RED,
