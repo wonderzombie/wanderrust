@@ -6,6 +6,7 @@ use bevy::remote::http::RemoteHttpPlugin;
 
 use crate::colors;
 use crate::equipment::{EquippedBy, HasEquipped};
+use crate::gamestate::ResetScenario;
 use crate::inventory::{CarriedBy, Inventory};
 use crate::items::{ItemId, Quantity};
 use crate::message_log::LogEvent;
@@ -88,6 +89,9 @@ pub(super) fn on_button_input(
             .map(|it| it.def())
             .collect::<Vec<_>>();
         dbg!(equipped);
+    } else if input.just_released(KeyCode::F5) {
+        info!("resetting scenario");
+        commands.write_message(ResetScenario);
     }
 }
 
