@@ -5,9 +5,9 @@ use std::fmt::Display;
 use crate::{
     actors::{Flasks, Player},
     bestiary::Bestiary,
-    combat::{NeedsRespawn, RespawnPoint},
+    combat::{NeedsRespawn, SpawnPoint},
     equipment::EquipmentChanged,
-    interactions::{Interactable, LastRespawnPoint},
+    interactions::Interactable,
     tiles::TileIdx,
 };
 
@@ -259,40 +259,40 @@ pub fn player_rested(_on: On<PlayerRested>, mut commands: Commands) {
 pub fn respawn_player(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
-    last_respawn_point: Res<LastRespawnPoint>,
-    player: Single<Entity, With<Player>>,
+    player_respawn: Single<(Entity, &SpawnPoint), With<Player>>,
 ) {
-    let LastRespawnPoint(cell, level_entity) = *last_respawn_point;
+    reader.clear();
 
-    for _ in reader.read() {
-        let flasks = Flasks::default();
+    let (entity, respawn) = *player_respawn;
+    let SpawnPoint {
+        respawn_cell,
+        level_nt,
+    } = *respawn;
 
-        commands
-            .entity(*player)
-            .insert(Bestiary::Player)
-            .queue(RecoveryNow)
-            .insert(Turn)
-            .insert(flasks)
-            .insert((cell, ChildOf(level_entity)));
+    commands
+        .entity(entity)
+        .insert(Bestiary::Player)
+        .queue(RecoveryNow)
+        .insert(Turn)
+        .insert(Flasks::default())
+        .insert((respawn_cell, ChildOf(level_nt)));
 
-        commands.write_message(EquipmentChanged);
-    }
+    commands.write_message(EquipmentChanged);
 }
 
 pub fn respawn_combatants(
     mut reader: PopulatedMessageReader<ResetScenario>,
     mut commands: Commands,
-    monsters: Query<(Entity, &TileIdx), (With<RespawnPoint>, Without<NeedsRespawn>)>,
+    monsters: Query<(Entity, &TileIdx), (With<SpawnPoint>, Without<NeedsRespawn>)>,
 ) {
-    for (m, id) in reader.read_with_id() {
-        let mut count = 0;
-        for (entity, tile_idx) in monsters.iter() {
-            count += 1;
-            trace!("{tile_idx} marked for respawn");
-            commands.entity(entity).insert(NeedsRespawn);
-        }
-        trace!("! {m:?} {id:?} respawned combatants: {count}");
+    reader.clear();
+    let mut count = 0;
+    for (entity, tile_idx) in monsters.iter() {
+        count += 1;
+        trace!("{tile_idx} marked for respawn");
+        commands.entity(entity).insert(NeedsRespawn);
     }
+    trace!("marked {count} entities as needing respawn");
 }
 
 pub fn reset_doors(

@@ -5,7 +5,8 @@ use crate::{
     actors::{Actor, PieceBundle, Player},
     atlas::SpriteAtlas,
     cell::Cell,
-    colors, combat,
+    colors,
+    combat::{self, SpawnPoint},
     gamestate::PlayerRested,
     inventory::*,
     items::ItemId,
@@ -146,11 +147,6 @@ impl LdtkEntityExt<Interactable> for Interactable {
 #[reflect(Resource)]
 pub struct ShrinesVisited(pub HashSet<Entity>);
 
-/// LastRespawnPoint specifies the level and cell of the most recently set respawn point.
-#[derive(Resource, Debug, Reflect)]
-#[reflect(Resource)]
-pub struct LastRespawnPoint(pub Cell, pub Entity);
-
 /// Examine is a general word for interactions.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Examine {
@@ -278,7 +274,10 @@ pub fn process_interactions(
                         txt: format!("rested at shrine {id}"),
                         color: Some(colors::KENNEY_GOLD),
                     });
-                    commands.insert_resource(LastRespawnPoint(*player_cell, *active_level));
+                    commands.entity(player_nt).insert(SpawnPoint {
+                        respawn_cell: *player_cell,
+                        level_nt: *active_level,
+                    });
                     commands.trigger(PlayerRested);
                     commands.trigger(sounds::Rest);
                 } else {
