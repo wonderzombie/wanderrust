@@ -8,6 +8,7 @@ mod colors;
 mod combat;
 pub mod debug;
 mod diagnostics;
+mod dialogue_modal;
 mod effects;
 mod equipment;
 mod equipment_menu;
@@ -160,6 +161,7 @@ pub fn run() {
     .add_plugins(title_screen::TitleScreenPlugin)
     .add_plugins(inventory_menu::InventoryMenuPlugin)
     .add_plugins(equipment_menu::EquipmentMenuPlugin)
+    .add_plugins(dialogue_modal::plugin)
     .add_plugins(equipment::plugin)
     .add_plugins(status_panel::plugin)
     .add_plugins(you_died_screen::YouDiedScreenPlugin)
@@ -233,7 +235,6 @@ pub fn run() {
             (
                 process_actions,
                 interactions::process_interactions,
-                interactions::process_dialogue,
                 inventory::process_inventory_changes,
                 combat::process_attacks,
                 handle_pending_transition,

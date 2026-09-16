@@ -6,7 +6,7 @@ use bevy::remote::http::RemoteHttpPlugin;
 
 use crate::colors;
 use crate::equipment::{EquippedBy, HasEquipped};
-use crate::gamestate::ResetScenario;
+use crate::gamestate::{Modal, ResetScenario};
 use crate::inventory::{CarriedBy, Inventory};
 use crate::items::{ItemId, Quantity};
 use crate::message_log::LogEvent;
@@ -56,6 +56,7 @@ pub(super) fn on_button_input(
     mut input: ResMut<ButtonInput<KeyCode>>,
     game_state: Res<State<GameState>>,
     screen_state: Res<State<Screen>>,
+    modal_state: Res<State<Modal>>,
     world_spawn: Single<&WorldSpawn>,
     all_items: Query<(Entity, &ItemId, &Quantity, &CarriedBy)>,
     inventory: Res<Inventory>,
@@ -68,7 +69,8 @@ pub(super) fn on_button_input(
 
     if input.pressed(KeyCode::ShiftLeft) && input.just_released(KeyCode::Digit5) {
         info!("game state is: {game_state:?} {:?}", game_state.get());
-        info!("game state is: {screen_state:?} {:?}", screen_state.get());
+        info!("screen state is: {screen_state:?} {:?}", screen_state.get());
+        info!("modal state is: {modal_state:?} {:?}", modal_state.get());
         input.reset_all();
     } else if input.just_released(KeyCode::Digit1) && input.pressed(KeyCode::ShiftLeft) {
         info!("relocating player to world spawn");

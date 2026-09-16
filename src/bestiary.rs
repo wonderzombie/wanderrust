@@ -73,6 +73,7 @@ define_bestiary!(
     Bat => [TileIdx::Bat, atk = 6,  atk_spd = 3, def = 1, hp = 12, mov = 3, vis = 4, mood = Attitude::Hostile],
     Skeleton => [TileIdx::Skeleton, atk = 4, atk_spd = 5, def = 3, hp = 20, mov = 5, vis = 2, mood = Attitude::Hostile],
     Chicken => [TileIdx::Chicken, atk = 0, atk_spd = 0, def = 0, hp = 1, mov = 0, vis = 1, mood = Attitude::Passive],
+    Wretch => [TileIdx::Wretch, atk = 0, atk_spd = 0, def = 0, hp = 1, mov = 0, vis = 1, mood = Attitude::Passive],
 );
 
 pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {

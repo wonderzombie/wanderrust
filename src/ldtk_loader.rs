@@ -274,7 +274,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                 .extend(get_grid_tiles(tiles, level.px_hei, level.world_depth));
 
             if layer.layer_type.eq_ignore_ascii_case("entities") {
-                info!("🧰 loading {} entities", layer.entities.len());
+                info!("🧰 {level_id}: loading {} entities", layer.entities.len());
                 for actor in &layer.entities {
                     let cell = actor.ldtk_cell.to_wandrs(layer.c_height, spec.depth);
 

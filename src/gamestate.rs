@@ -79,6 +79,7 @@ pub enum Modal {
     None,
     Inventory,
     Equipment,
+    Dialogue,
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]

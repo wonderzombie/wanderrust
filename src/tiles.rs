@@ -201,6 +201,7 @@ tiles! {
     Bat = atlas_idx(26, 8),
     Slime = atlas_idx(27, 8),
     Chicken = 369,
+    Wretch = 24,
 
     // Emitters (usually)
     Candle = atlas_idx(3, 15),

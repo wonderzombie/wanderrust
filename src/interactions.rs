@@ -7,6 +7,7 @@ use crate::{
     cell::Cell,
     colors,
     combat::{self, SpawnPoint},
+    dialogue_modal::DialogueStart,
     gamestate::PlayerRested,
     inventory::*,
     items::ItemId,
@@ -37,6 +38,7 @@ pub enum Interactable {
     Speaker {
         name: String,
         tile_idx: TileIdx,
+        lines: Vec<String>,
     },
     Mob {
         name: String,
@@ -54,8 +56,12 @@ impl Interactable {
             Self::Chest { tile_idx, .. }
             | Self::Door { tile_idx, .. }
             | Self::Mob { tile_idx, .. }
+            | Self::Speaker { tile_idx, .. }
             | Self::Shrine { tile_idx, .. } => *tile_idx,
-            _ => TileIdx::GridSquare,
+            _ => {
+                warn!("no tile for interactable: {self:?}");
+                TileIdx::GridSquare
+            }
         }
     }
 
@@ -83,6 +89,15 @@ impl Interactable {
                 name: name.clone(),
                 tile_idx,
             },
+            Self::Speaker {
+                name,
+                tile_idx: _,
+                lines,
+            } => Self::Speaker {
+                name: name.clone(),
+                tile_idx,
+                lines: lines.clone(),
+            },
             Self::Shrine { .. } => {
                 error!("set_tile not implemented for Shrine yet");
                 self.clone()
@@ -109,7 +124,17 @@ impl LdtkEntityExt<Interactable> for Interactable {
 
         match ty {
             LdtkActor::Combatant => Some(Self::Mob { name, tile_idx }),
-            LdtkActor::Speaker => Some(Self::Speaker { name, tile_idx }),
+            LdtkActor::Speaker => {
+                let lines = entity.get_str_array("lines").unwrap_or_default();
+                if lines.is_empty() {
+                    warn!("found zero lines for speaker: {name} {tile_idx}");
+                }
+                Some(Self::Speaker {
+                    name,
+                    tile_idx,
+                    lines,
+                })
+            }
             LdtkActor::Door => {
                 let requires = entity.get_string("requires").and_then(ItemId::from_label);
                 let is_open = entity.get_bool("is_open");
@@ -154,12 +179,6 @@ pub struct Examine {
     pub target: Entity,
 }
 
-/// The player listens to the NPC.
-#[derive(Message, Debug, Copy, Clone)]
-pub struct Listen {
-    pub entity: Entity,
-}
-
 /// Processes [`Examine`] messages, executing the interaction between the player
 /// and an [`Interactable`] entity. Interaction fails if the target cell is
 /// merely solid. Otherwise interaction depends on the type of [`Interactable`].
@@ -170,7 +189,6 @@ pub fn process_interactions(
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
     mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
-    mut speech: MessageWriter<Listen>,
     player_inv: Res<Inventory>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut log: MessageWriter<LogEvent>,
@@ -258,7 +276,7 @@ pub fn process_interactions(
                     "Player talks to {}.",
                     name_opt.map_or(name.as_str(), |n| n.as_str())
                 );
-                speech.write(Listen { entity });
+                commands.trigger(DialogueStart(attempt.target));
             }
             Interactable::Mob { name, .. } => {
                 info!("Player attacks {name}.");
@@ -297,32 +315,48 @@ pub fn process_interactions(
 ///
 /// This component is used to store and manage the dialogue of an NPC, including
 /// the current phrase and the list of phrases.
-#[derive(Component, Debug, Default, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Serialize, Deserialize, Reflect)]
+#[reflect(Component)]
 pub struct Dialogue {
     idx: usize,
     phrases: Vec<String>,
 }
 
 impl Dialogue {
-    pub fn advance(&mut self) -> &str {
-        let phrase = &self.phrases[self.idx];
-        self.idx = (self.idx + 1) % self.phrases.len();
-        phrase
+    pub fn advance(&mut self) -> Option<&str> {
+        match &self.phrases.get(self.idx) {
+            Some(phrase) => {
+                self.idx = (self.idx + 1) % self.phrases.len();
+                Some(phrase)
+            }
+            _ => None,
+        }
     }
 }
 
-/// Processes the dialogue of an NPC when the player listens to it.
-pub fn process_dialogue(
-    mut speech: MessageReader<Listen>,
-    mut log: MessageWriter<LogEvent>,
-    mut dialogues: Query<&mut Dialogue>,
-) {
-    for attempt in speech.read() {
-        let Ok(mut dialogue) = dialogues.get_mut(attempt.entity) else {
-            continue;
-        };
+#[derive(Resource)]
+pub struct DialogueEntity(pub Entity);
 
-        log.write((dialogue.advance(), colors::KENNEY_BLUE).into());
+pub fn detect_speakers(
+    mut commands: Commands,
+    interactables: Query<(Entity, &Interactable), Added<Interactable>>,
+) {
+    let mut count = 0;
+    for (nt, interx) in interactables {
+        match interx {
+            Interactable::Speaker { lines, .. } => {
+                count += 1;
+                commands.entity(nt).insert(Dialogue {
+                    idx: 0,
+                    phrases: lines.clone(),
+                });
+            }
+            _ => continue,
+        };
+    }
+
+    if count > 0 {
+        info!("detected speakers: {count}");
     }
 }
 
@@ -367,6 +401,7 @@ pub fn spawn_interxs(
                 )
             })
             .for_each(|b| {
+                info!("spawning {}", b.0);
                 trace!("spawning {b:?}");
                 count += 1;
                 commands.spawn(b);
@@ -377,7 +412,7 @@ pub fn spawn_interxs(
 }
 
 pub fn plugin(app: &mut App) {
-    app.add_message::<Listen>()
+    app.add_systems(PreUpdate, detect_speakers)
         .add_message::<Examine>()
         .init_resource::<ShrinesVisited>();
 }
