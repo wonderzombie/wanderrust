@@ -51,6 +51,20 @@ pub enum Interactable {
 }
 
 impl Interactable {
+    /// Uses the tile label for inanimate-adjacent types. Animate types have names.
+    pub fn display_name(&self) -> Option<String> {
+        match self {
+            Interactable::Door { tile_idx, .. } | Interactable::Chest { tile_idx, .. } => {
+                tile_idx.label().map(String::from)
+            }
+            Interactable::Speaker { name, .. } | Interactable::Mob { name, .. } => {
+                Some(name.clone())
+            }
+            Interactable::Shrine { id, .. } => Some(id.clone()),
+            _ => None,
+        }
+    }
+
     pub fn tile(&self) -> TileIdx {
         match self {
             Self::Chest { tile_idx, .. }
@@ -86,7 +100,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
             LdtkActor::Speaker => {
                 let lines = entity.get_str_array("lines").unwrap_or_default();
                 if lines.is_empty() {
-                    warn!("found zero lines for speaker: {name} {tile_idx}");
+                    error!("found zero lines for speaker: {name} {tile_idx}");
                 }
                 Some(Self::Speaker {
                     name,
@@ -108,7 +122,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
                     .get_str_array("contents")
                     .and_then(Inventory::from_str_array);
                 if contents.is_none() {
-                    warn!("empty chest found: {name} {tile_idx}\n{entity:#?}")
+                    error!("empty chest found: {name} {tile_idx}\n{entity:#?}")
                 }
                 let is_open = entity.get_bool("is_open");
                 Some(Self::Chest {
@@ -159,13 +173,16 @@ pub fn process_interactions(
             interactables.get_mut(attempt.target)
         else {
             info!(
-                "📦 Interaction attempted with entity {:?}, but it's not interactable.",
+                "📦 Interaction attempted with entity {}, but it's not interactable.",
                 attempt.target
             );
             continue;
         };
 
-        trace!("process_interactions: matched interactable: {interactable:#?}",);
+        info!(
+            "process_interactions: matched interactable: {entity} {:?}",
+            interactable.display_name(),
+        );
 
         match interactable.as_mut() {
             Interactable::Invalid => {
@@ -248,7 +265,7 @@ pub fn process_interactions(
                 info!("Player interacts with {id}.");
                 if shrines_visited.0.contains(&entity) {
                     log.write(LogEvent {
-                        txt: format!("rested at shrine {id}"),
+                        txt: format!("rest at {id}"),
                         color: Some(colors::KENNEY_GOLD),
                     });
                     commands.entity(player_nt).insert(SpawnPoint {
@@ -344,8 +361,9 @@ pub fn spawn_interxs(
         spec.interxs
             .iter()
             .map(|(interx, cell)| {
+                let name = interx.display_name().unwrap_or_else(|| format!("{cell}"));
                 (
-                    Name::new(format!("{} {}", interx.tile(), *cell)),
+                    Name::new(name),
                     InterxBundle {
                         interx: interx.clone(),
                         tile_idx: interx.tile(),
