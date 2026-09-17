@@ -64,47 +64,6 @@ impl Interactable {
             }
         }
     }
-
-    pub fn set_tile(&self, tile_idx: TileIdx) -> Self {
-        match self {
-            Self::Chest {
-                is_open,
-                contents,
-                tile_idx: _,
-            } => Self::Chest {
-                is_open: *is_open,
-                contents: contents.clone(),
-                tile_idx,
-            },
-            Self::Door {
-                is_open,
-                requires,
-                tile_idx: _,
-            } => Self::Door {
-                is_open: *is_open,
-                requires: *requires,
-                tile_idx,
-            },
-            Self::Mob { name, tile_idx: _ } => Self::Mob {
-                name: name.clone(),
-                tile_idx,
-            },
-            Self::Speaker {
-                name,
-                tile_idx: _,
-                lines,
-            } => Self::Speaker {
-                name: name.clone(),
-                tile_idx,
-                lines: lines.clone(),
-            },
-            Self::Shrine { .. } => {
-                error!("set_tile not implemented for Shrine yet");
-                self.clone()
-            }
-            _ => self.clone(),
-        }
-    }
 }
 
 impl LdtkEntityExt<Interactable> for Interactable {
