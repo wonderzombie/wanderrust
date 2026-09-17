@@ -45,8 +45,8 @@ fn populate(
     };
 
     let speech = dialogue.advance();
-    name_text.0 = name.into();
-    speech_text.0 = speech.unwrap_or_default().into();
+    name_text.0 = name.to_ascii_uppercase().into();
+    speech_text.0 = speech.unwrap_or_default().to_ascii_uppercase().into();
 }
 
 fn interaction_system(
