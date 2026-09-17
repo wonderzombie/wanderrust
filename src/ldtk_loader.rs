@@ -152,14 +152,7 @@ impl LdtkEntity {
     }
 
     pub fn display_name(&self) -> Option<String> {
-        [
-            self.get_string("name"),
-            Some(self.identifier.clone()),
-            Some(self.get_tile().to_string()),
-        ]
-        .into_iter()
-        .flatten()
-        .find(|s| !s.is_empty())
+        self.get_string("name")
     }
 }
 
