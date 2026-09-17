@@ -3,7 +3,7 @@ use bevy_northstar::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::{Dead, Player},
+    actors::{Actor, Dead, Player},
     atlas::{self, SpriteAtlas},
     bestiary,
     cell::Cell,
@@ -289,7 +289,7 @@ pub fn player_indicator(
 pub fn update_mob_indicators(
     mut commands: Commands,
     zone: Single<&Zone, With<ActiveLevel>>,
-    mobs: Populated<(Option<&Awareness>, Has<Dead>), With<Combatant>>,
+    mobs: Populated<(Option<&Awareness>, Has<Dead>), With<Actor>>,
     indicators: Query<(Entity, &ChildOf, &mut Sprite), With<Indicator>>,
     player: Single<Entity, With<Player>>,
 ) {
