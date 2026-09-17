@@ -44,9 +44,10 @@ fn populate(
         return;
     };
 
-    let speech = dialogue.advance();
-    name_text.0 = name.to_ascii_uppercase().into();
-    speech_text.0 = speech.unwrap_or_default().to_ascii_uppercase().into();
+    name_text.set_if_neq(format!("[{}]", name.to_ascii_uppercase()).into());
+
+    let speech = dialogue.advance().map(|it| it.to_ascii_uppercase());
+    speech_text.set_if_neq(format!("\"{}\"", speech.unwrap_or_default()).into());
 }
 
 fn interaction_system(
@@ -90,20 +91,26 @@ fn scene() -> impl Scene {
         }
         Children [
             Node {
-                min_width: px(256),
-                height: vh(33.),
-                row_gap: px(32.),
+                width: vw(75.),
+                height: vh(20.),
+                row_gap: px(4.),
                 flex_direction: FlexDirection::Column,
             }
             BackgroundColor(Color::BLACK)
             Children [
                 (
+                    Node {
+                        padding: UiRect::all(px(4)),
+                    }
                     SpeakerName
                     Text::new("Metir")
-                    TextLayout::justify(Justify::Left)
+                    TextLayout::justify(Justify::Center)
                     pcsr_font(16)
                 ),
                 (
+                    Node {
+                        padding: UiRect::all(px(4)),
+                    }
                     SpeakerText
                     Text::new("")
                     TextLayout::justify(Justify::Left)
