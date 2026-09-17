@@ -202,6 +202,9 @@ tiles! {
     Slime = atlas_idx(27, 8),
     Chicken = 369,
     Wretch = 24,
+    SignBrownBlank = 244,
+    SignHangingBrownBlank = 439,
+    SignWideBrownBlank = 359,
 
     // Emitters (usually)
     Candle = atlas_idx(3, 15),
