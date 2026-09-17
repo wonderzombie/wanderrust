@@ -273,14 +273,14 @@ pub fn process_interactions(
                         level_nt: *active_level,
                     });
                     commands.trigger(PlayerRested);
-                    commands.trigger(sounds::Rest);
+                    // commands.trigger(sounds::Rest);
                 } else {
                     shrines_visited.0.insert(entity);
                     log.write(LogEvent {
                         txt: format!("lit shrine {id}"),
                         color: Some(colors::KENNEY_BLUE),
                     });
-                    commands.trigger(sounds::LitShrine);
+                    // commands.trigger(sounds::LitShrine);
                 }
             }
         }
