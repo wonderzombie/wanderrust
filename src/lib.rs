@@ -53,7 +53,6 @@ use crate::{
     atlas::SpriteAtlas,
     bestiary::Bestiary,
     cell::{Cell, PreviousCell},
-    combat::set_mob_respawns,
     gamestate::{
         AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Recovery, Screen,
         TurnDelay,
@@ -284,7 +283,7 @@ pub fn run() {
             (
                 mobs::detect_mobs,
                 combat::init_combatants,
-                set_mob_respawns,
+                combat::set_mob_spawns,
                 grid::init_agents,
             )
                 .in_set(GameSystem::Mobs)

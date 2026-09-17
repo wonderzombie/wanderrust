@@ -92,11 +92,12 @@ pub fn init_combatants(
 
 /// Set respawn points for combatants who don't have one. This explicitly
 /// excludes players to avoid conflicts with `[LastRespawnPoint]`.
-pub fn set_mob_respawns(
+pub fn set_mob_spawns(
     mut commands: Commands,
     combatants: Populated<(Entity, &Cell, &DenizenOf), (With<Combatant>, Without<SpawnPoint>)>,
 ) {
     let mut count = 0;
+    // TODO: this may not work if `[tilemap::snapshot_denizens()]` doesn't run before this.
     for (nt, respawn_cell, DenizenOf(level_nt)) in combatants {
         commands
             .entity(nt)
