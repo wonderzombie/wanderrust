@@ -35,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
 /// ItemEntry is a representation of an Item and its Quantity.
 /// Modifying this has no impact on item-related components or relationships;
 /// this is a type that makes many type signatures substantially simpler.
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Reflect, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Reflect, Eq)]
 pub struct ItemEntry(pub ItemId, pub Quantity);
 
 impl From<(ItemId, Quantity)> for ItemEntry {
