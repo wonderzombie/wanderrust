@@ -34,6 +34,7 @@ mod parameters;
 mod procgen;
 mod ptable;
 mod sounds;
+mod speaker;
 mod status_panel;
 pub mod tilemap;
 pub mod tiles;

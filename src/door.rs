@@ -1,7 +1,10 @@
+#![allow(dead_code)]
+
 use bevy::prelude::*;
 
 use crate::{
     actors::Player,
+    interacticator,
     interacticator::{Interacticator, Interxn, Outcome},
     inventory::Inventory,
     items::ItemId,
