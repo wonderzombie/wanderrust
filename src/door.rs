@@ -62,12 +62,12 @@ fn do_open_door(
 
     let is_player = actor == *player;
 
-    let should_open = door
-        .as_ref()
+    let should_open: bool = door
         .requires
-        .is_none_or(|it| inv.has_item(&it) && is_player);
+        .map(|it| inv.has(&it) && is_player)
+        .unwrap_or(!door.is_open);
 
-    if should_open && !door.as_ref().is_open {
+    if should_open {
         door.is_open = true;
         if let Some(new_tile) = tile_idx.engaged_version() {
             tile_idx.set_if_neq(new_tile);

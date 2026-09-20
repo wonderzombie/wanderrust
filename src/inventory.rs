@@ -127,7 +127,7 @@ impl Inventory {
         self
     }
 
-    pub fn has_item(&self, want_itam: &ItemId) -> bool {
+    pub fn has(&self, want_itam: &ItemId) -> bool {
         self.0.iter().any(|ItemEntry(it, _)| it == want_itam)
     }
 

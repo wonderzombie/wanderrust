@@ -198,7 +198,7 @@ pub fn process_interactions(
                 if !*is_open {
                     if let Some(required_item) = requires {
                         let reqd_itam = required_item.def();
-                        if !player_inv.has_item(required_item) {
+                        if !player_inv.has(required_item) {
                             info!("Player lacks required item: {reqd_itam}");
                             log.write(("Locked.", colors::KENNEY_BLUE).into());
                             continue;
