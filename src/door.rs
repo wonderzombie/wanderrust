@@ -2,15 +2,11 @@
 
 use bevy::prelude::*;
 
+use crate::interacticator;
+use crate::interaxnable;
 use crate::{
-    actors::Player,
-    interacticator,
-    interacticator::{Interacticator, Interxn, Outcome},
-    inventory::Inventory,
-    items::ItemId,
-    tiles::TileIdx,
+    actors::Player, interacticator::Outcome, inventory::Inventory, items::ItemId, tiles::TileIdx,
 };
-use anyhow::anyhow;
 
 #[derive(Component, Debug, Copy, Clone, Default)]
 pub struct Door {
@@ -18,37 +14,8 @@ pub struct Door {
     is_open: bool,
 }
 
-impl Interxn for Door {
-    type Default = OpenDoor;
-
-    fn default_action(actor: Entity, target: Entity) -> Self::Default {
-        OpenDoor { actor, target }
-    }
-}
-
-pub struct OpenDoor {
-    pub actor: Entity,
-    pub target: Entity,
-}
-
-impl Command for OpenDoor {
-    type Out = ();
-
-    fn apply(self, world: &mut World) -> Self::Out {
-        let _ = self.perform(world);
-    }
-}
-
-impl Interacticator for OpenDoor {
-    type Subject = Door;
-    type Result = Result<Outcome, anyhow::Error>;
-
-    fn perform(self, world: &mut World) -> Self::Result {
-        world
-            .run_system_cached_with(do_open_door, self)
-            .map_err(|e| anyhow!(e))
-    }
-}
+interaxnable!(Door defaults to OpenDoor);
+interacticator!(OpenDoor on Door via do_open_door);
 
 fn do_open_door(
     In(open_action): In<OpenDoor>,

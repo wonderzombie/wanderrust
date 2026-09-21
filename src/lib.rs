@@ -33,6 +33,7 @@ mod mobs;
 mod parameters;
 mod procgen;
 mod ptable;
+mod shrine;
 mod sounds;
 mod speaker;
 mod status_panel;

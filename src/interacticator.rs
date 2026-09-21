@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {}
@@ -9,64 +7,79 @@ pub enum Outcome {
     Success,
 }
 
+#[derive(Copy, Clone)]
+pub struct Actors {
+    pub actor: Entity,
+    pub target: Entity,
+}
+
 pub trait Interacticator: Command + Send + 'static {
-    type Subject: Interxn<Default = Self>;
+    /// This verb operates on a Subject that is Interactable.
+    type Subject: Interxnable;
     type Result;
+
     fn perform(self, world: &mut World) -> Self::Result;
 }
 
-pub trait Interxn: Component {
-    type Default: Interacticator<Subject = Self>;
-    fn default_action(actor: Entity, target: Entity) -> Self::Default;
-}
+pub trait Interxnable: Component {
+    type DefaultAction: Interacticator<Subject = Self>;
+    type Args: Into<Self::DefaultAction>;
 
-trait InteractExt {
-    fn interact<T: Interxn + Command>(&mut self, actor: Entity, target: Entity);
-}
-
-impl InteractExt for Commands<'_, '_> {
-    fn interact<T: Interxn>(&mut self, actor: Entity, target: Entity) {
-        self.queue(T::default_action(actor, target));
+    fn default_action(args: Self::Args) -> Self::DefaultAction {
+        Self::Args::into(args)
     }
 }
 
-// struct Args<T: Component> {
-//     actor: Entity,
-//     target: Entity,
-//     _t: PhantomData<T>,
-// }
+pub trait InteractCommand {
+    fn interact<T: Interxnable>(&mut self, args: T::Args);
+}
+
+impl InteractCommand for Commands<'_, '_> {
+    fn interact<T: Interxnable>(&mut self, args: T::Args) {
+        self.queue(T::default_action(args));
+    }
+}
+
+/// Pronounced "interaction-able."
+#[macro_export]
+macro_rules! interaxnable {
+    ( $obj:ident defaults to $verb:ident ) => {
+        impl crate::interacticator::Interxnable for $obj {
+            type DefaultAction = $verb;
+            type Args = $crate::interacticator::Actors;
+        }
+    };
+}
 
 #[macro_export]
 macro_rules! interacticator {
-    ( $verb:ident => $obj:ident => $fxn:path ) => {
-        use crate::interacticator::*;
+    ( $verb:ident on $obj:ident via $fxn:path ) => {
+        pub struct $verb {
+            actor: ::bevy::prelude::Entity,
+            target: ::bevy::prelude::Entity,
+        }
 
-        #[derive(Component)]
-        struct $obj;
-
-        impl Interxn for $obj {
-            type Default = $verb;
-
-            fn default_action(actor: Entity, target: Entity) -> Self::Default {
+        impl From<$crate::interacticator::Actors> for $verb {
+            fn from(
+                $crate::interacticator::Actors { actor, target }: $crate::interacticator::Actors,
+            ) -> Self {
                 $verb { actor, target }
             }
         }
 
-        impl Command for $verb {
-            type Out = ();
-            fn apply(self, world: &mut World) -> Self::Out {
-                let _ = self.perform(world);
+        impl ::bevy::prelude::Command for $verb {
+            type Out = ::bevy::prelude::Result<()>;
+            fn apply(self, world: &mut ::bevy::prelude::World) -> Self::Out {
+                $crate::interacticator::Interacticator::perform(self, world).map(|_| ())
             }
         }
 
-        impl Interacticator for $verb {
+        impl $crate::interacticator::Interacticator for $verb {
             type Subject = $obj;
-            type Result = Result<Outcome, anyhow::Error>;
+            type Result = ::bevy::prelude::Result<$crate::interacticator::Outcome>;
 
-            fn perform(self, world: &mut World) -> Self::Result {
-                world
-                    .run_system_cached_with($fxn, self)
-                    .map_err(|e| anyhow::anyhow!(e))
+            fn perform(self, world: &mut ::bevy::prelude::World) -> Self::Result {
+                world.run_system_cached_with($fxn, self)?
             }
         }
     };
