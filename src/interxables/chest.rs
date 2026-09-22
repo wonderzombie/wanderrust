@@ -1,14 +1,15 @@
 use anyhow::anyhow;
 use bevy::prelude::*;
 
-use crate::interacticator;
 use crate::interactions::Interactable;
-use crate::interaxnable;
+use crate::message_log::LogEvent;
+use crate::{colors, interacticator};
 use crate::{
     interacticator::Outcome,
     inventory::{Inventory, InventoryChange},
     tiles::TileIdx,
 };
+use crate::{interaxnable, sounds};
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct Chest {
@@ -21,8 +22,10 @@ interacticator!(OpenChest on Chest via do_open_chest);
 
 fn do_open_chest(
     In(open_action): In<OpenChest>,
+    mut commands: Commands,
     mut chests: Query<(&mut Chest, &mut TileIdx)>,
-    mut inv_change: MessageWriter<InventoryChange>,
+    mut inv_changes: MessageWriter<InventoryChange>,
+    mut log: MessageWriter<LogEvent>,
 ) -> Result<Outcome> {
     let OpenChest { actor, target } = open_action;
 
@@ -31,6 +34,7 @@ fn do_open_chest(
     };
 
     if chest.as_ref().is_open {
+        log.write(("Empty.", colors::GRAY).into());
         return Ok(Outcome::Failure);
     }
 
@@ -43,8 +47,15 @@ fn do_open_chest(
         tile_idx.set_if_neq(new_tile);
     }
 
+    info!("Player opens chest: {contents:?}");
     chest.is_open = true;
-    inv_change.write_batch(InventoryChange::acquire(actor, contents));
+    log.write(("Opened chest.", colors::KENNEY_BLUE).into());
+    commands.trigger(sounds::Opened);
+    inv_changes.write_batch(InventoryChange::acquire(actor, contents.clone()));
+    contents.summarized("got").iter().for_each(|it| {
+        log.write((it.as_str(), colors::KENNEY_GREEN).into());
+    });
+
     Ok(Outcome::Success)
 }
 

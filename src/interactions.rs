@@ -9,6 +9,7 @@ use crate::{
     combat::{self, SpawnPoint},
     dialogue_modal::DialogueStart,
     gamestate::PlayerRested,
+    interacticator::{Actors, InteractCommand},
     interxables::*,
     inventory::*,
     items::ItemId,
@@ -202,7 +203,7 @@ pub fn process_interactions(
     active_level: Single<Entity, With<ActiveLevel>>,
     mut attempts: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
-    mut inv_changes: MessageWriter<InventoryChange>,
+    // mut inv_changes: MessageWriter<InventoryChange>,
     mut attacks: MessageWriter<combat::Attack>,
     player_inv: Res<Inventory>,
     player: Single<(Entity, &Cell), With<Player>>,
@@ -269,25 +270,11 @@ pub fn process_interactions(
                     info!("Player can't open an open door.");
                 }
             }
-            Interactable::Chest {
-                is_open,
-                contents,
-                tile_idx: _,
-            } => {
-                if !*is_open {
-                    *is_open = true;
-                    tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
-                    info!("Player opens chest: {contents:?}");
-                    log.write(("Opened chest.", colors::KENNEY_BLUE).into());
-                    commands.trigger(sounds::Opened);
-                    if let Some(contents) = contents {
-                        inv_changes
-                            .write_batch(InventoryChange::acquire(player_nt, contents.clone()));
-                        contents.summarized("got").iter().for_each(|it| {
-                            log.write((it.as_str(), colors::KENNEY_GREEN).into());
-                        });
-                    }
-                }
+            Interactable::Chest { .. } => {
+                commands.interact::<chest::Chest>(Actors {
+                    actor: attempt.interactor,
+                    target: attempt.target,
+                });
             }
             Interactable::Speaker { name, .. } => {
                 info!(
