@@ -141,6 +141,7 @@ impl LdtkEntityExt<Interactable> for Interactable {
     }
 }
 
+/// Given an [`Interactable`], insert the [`crate::interxables`] version.
 struct InsertInto(pub Interactable);
 
 impl EntityCommand for InsertInto {

@@ -13,13 +13,13 @@ pub struct Actors {
 
 pub trait Interacticator: Command + Send + 'static {
     /// This verb operates on a Subject that is Interactable.
-    type Subject: Interxnable;
+    type Subject: Interxable;
     type Result;
 
     fn perform(self, world: &mut World) -> Self::Result;
 }
 
-pub trait Interxnable: Component {
+pub trait Interxable: Component {
     type DefaultAction: Interacticator<Subject = Self>;
     type Args: Into<Self::DefaultAction>;
 
@@ -29,11 +29,11 @@ pub trait Interxnable: Component {
 }
 
 pub trait InteractCommand {
-    fn interact<T: Interxnable>(&mut self, args: T::Args);
+    fn interact<T: Interxable>(&mut self, args: T::Args);
 }
 
 impl InteractCommand for Commands<'_, '_> {
-    fn interact<T: Interxnable>(&mut self, args: T::Args) {
+    fn interact<T: Interxable>(&mut self, args: T::Args) {
         self.queue(T::default_action(args));
     }
 }
@@ -42,7 +42,7 @@ impl InteractCommand for Commands<'_, '_> {
 #[macro_export]
 macro_rules! interaxnable {
     ( $obj:ident defaults to $verb:ident ) => {
-        impl crate::interacticator::Interxnable for $obj {
+        impl crate::interacticator::Interxable for $obj {
             type DefaultAction = $verb;
             type Args = $crate::interacticator::Actors;
         }
