@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::interacticator;
+use crate::interactions::Interactable;
 use crate::interaxnable;
 use crate::{
     actors::Player, interacticator::Outcome, inventory::Inventory, items::ItemId, tiles::TileIdx,
@@ -10,8 +11,8 @@ use crate::{
 
 #[derive(Component, Debug, Copy, Clone, Default)]
 pub struct Door {
-    requires: Option<ItemId>,
-    is_open: bool,
+    pub requires: Option<ItemId>,
+    pub is_open: bool,
 }
 
 interaxnable!(Door defaults to OpenDoor);
@@ -43,4 +44,19 @@ fn do_open_door(
     }
 
     Ok(Outcome::Failure)
+}
+
+impl TryFrom<Interactable> for Door {
+    type Error = Interactable;
+
+    fn try_from(value: Interactable) -> std::prelude::v1::Result<Self, Self::Error> {
+        match value {
+            Interactable::Door {
+                is_open,
+                requires,
+                tile_idx: _,
+            } => Ok(Door { requires, is_open }),
+            _ => Err(value),
+        }
+    }
 }

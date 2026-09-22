@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use bevy::prelude::*;
 
 use crate::interacticator;
+use crate::interactions::Interactable;
 use crate::interaxnable;
 use crate::{
     interacticator::Outcome,
@@ -45,4 +46,19 @@ fn do_open_chest(
     chest.is_open = true;
     inv_change.write_batch(InventoryChange::acquire(actor, contents));
     Ok(Outcome::Success)
+}
+
+impl TryFrom<Interactable> for Chest {
+    type Error = Interactable;
+
+    fn try_from(value: Interactable) -> std::prelude::v1::Result<Self, Self::Error> {
+        match value {
+            Interactable::Chest {
+                is_open,
+                contents,
+                tile_idx: _,
+            } => Ok(Chest { is_open, contents }),
+            _ => Err(value),
+        }
+    }
 }
