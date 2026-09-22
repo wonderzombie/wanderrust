@@ -444,7 +444,7 @@ fn process_actions(
                 Some(target) => {
                     info!("process_actions: interaction");
                     interaction_attempts.write(interactions::Examine {
-                        interactor: action.entity,
+                        actor: action.entity,
                         target,
                     });
                 }

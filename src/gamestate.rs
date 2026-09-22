@@ -8,6 +8,7 @@ use crate::{
     combat::{NeedsRespawn, SpawnPoint},
     equipment::EquipmentChanged,
     interactions::Interactable,
+    interxables::door::Door,
     tiles::TileIdx,
 };
 
@@ -299,19 +300,12 @@ pub fn respawn_combatants(
 pub fn reset_doors(
     mut commands: Commands,
     mut reader: PopulatedMessageReader<ResetScenario>,
-    mut interactables: Query<(Entity, &mut Interactable)>,
+    mut doors: Query<(Entity, &mut Door)>,
 ) {
     reader.clear();
 
-    for (entity, mut interx) in interactables.iter_mut() {
-        match interx.as_mut() {
-            Interactable::Door {
-                is_open, tile_idx, ..
-            } => {
-                *is_open = false;
-                commands.entity(entity).insert(*tile_idx);
-            }
-            _ => continue,
-        }
+    for (door_nt, mut door) in doors.iter_mut() {
+        door.is_open = false;
+        commands.entity(door_nt).insert(door.tile_idx);
     }
 }

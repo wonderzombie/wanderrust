@@ -9,14 +9,13 @@ use crate::{
     combat::{self, SpawnPoint},
     dialogue_modal::DialogueStart,
     gamestate::PlayerRested,
-    interacticator::{Actors, InteractCommand},
+    interacticator::InteractCommand,
     interxables::*,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     message_log::LogEvent,
     mobs::{self},
-    sounds,
     tilemap::{ActiveLevel, Level, WorldSpec},
     tiles::TileIdx,
 };
@@ -155,9 +154,13 @@ impl EntityCommand for InsertInto {
             Interactable::Door {
                 is_open,
                 requires,
-                tile_idx: _,
+                tile_idx,
             } => {
-                entity.insert(door::Door { is_open, requires });
+                entity.insert(door::Door {
+                    is_open,
+                    requires,
+                    tile_idx,
+                });
             }
             Interactable::Chest {
                 is_open,
@@ -191,7 +194,7 @@ pub struct ShrinesVisited(pub HashSet<Entity>);
 /// Examine is a general word for interactions.
 #[derive(Message, Debug, Copy, Clone)]
 pub struct Examine {
-    pub interactor: Entity,
+    pub actor: Entity,
     pub target: Entity,
 }
 
@@ -201,23 +204,20 @@ pub struct Examine {
 pub fn process_interactions(
     mut commands: Commands,
     active_level: Single<Entity, With<ActiveLevel>>,
-    mut attempts: MessageReader<Examine>,
-    mut interactables: Query<(Entity, &mut TileIdx, &mut Interactable, Option<&Name>)>,
-    // mut inv_changes: MessageWriter<InventoryChange>,
+    mut interactions: MessageReader<Examine>,
+    mut interactables: Query<(Entity, &mut Interactable, Option<&Name>)>,
     mut attacks: MessageWriter<combat::Attack>,
-    player_inv: Res<Inventory>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut log: MessageWriter<LogEvent>,
     mut shrines_visited: ResMut<ShrinesVisited>,
 ) {
     let (player_nt, player_cell) = *player;
-    for attempt in attempts.read() {
-        let Ok((entity, mut tile_idx, mut interactable, name_opt)) =
-            interactables.get_mut(attempt.target)
+    for interaction in interactions.read() {
+        let Ok((entity, mut interactable, name_opt)) = interactables.get_mut(interaction.target)
         else {
             info!(
                 "📦 Interaction attempted with entity {}, but it's not interactable.",
-                attempt.target
+                interaction.target
             );
             continue;
         };
@@ -229,64 +229,26 @@ pub fn process_interactions(
 
         match interactable.as_mut() {
             Interactable::Invalid => {
-                error!("invalid interactable; skipping: {attempt:?}");
+                error!("invalid interactable; skipping: {interaction:?}");
                 continue;
             }
-            Interactable::Door {
-                is_open,
-                requires,
-                tile_idx: _,
-            } => {
-                trace!("process_interactions: door");
-                if !*is_open {
-                    if let Some(required_item) = requires {
-                        let reqd_itam = required_item.def();
-                        if !player_inv.has(required_item) {
-                            info!("Player lacks required item: {reqd_itam}");
-                            log.write(("Locked.", colors::KENNEY_BLUE).into());
-                            continue;
-                        } else {
-                            info!("Player opens the door with {reqd_itam}.");
-                            log.write(
-                                (
-                                    format!("Opened door with {reqd_itam}.").as_str(),
-                                    colors::KENNEY_BLUE,
-                                )
-                                    .into(),
-                            );
-                        }
-                    } else {
-                        info!("Player opens the door.");
-                        log.write(("Opened door.", colors::KENNEY_BLUE).into());
-                    }
-                    *is_open = true;
-                    trace!(
-                        "changing tile_idx from {tile_idx:?} to {:?}",
-                        tile_idx.engaged_version()
-                    );
-                    commands.trigger(sounds::Opened);
-                    tile_idx.set_if_neq(tile_idx.engaged_version().unwrap_or(*tile_idx));
-                } else {
-                    info!("Player can't open an open door.");
-                }
+            Interactable::Door { .. } => {
+                commands.interact::<door::Door>(interaction.into());
             }
             Interactable::Chest { .. } => {
-                commands.interact::<chest::Chest>(Actors {
-                    actor: attempt.interactor,
-                    target: attempt.target,
-                });
+                commands.interact::<chest::Chest>(interaction.into());
             }
             Interactable::Speaker { name, .. } => {
                 info!(
                     "Player talks to {}.",
                     name_opt.map_or(name.as_str(), |n| n.as_str())
                 );
-                commands.trigger(DialogueStart(attempt.target));
+                commands.trigger(DialogueStart(interaction.target));
             }
             Interactable::Mob { name, .. } => {
                 info!("Player attacks {name}.");
                 attacks.write(combat::Attack {
-                    attacker: attempt.interactor,
+                    attacker: interaction.actor,
                     target: entity,
                 });
             }

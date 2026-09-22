@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::interactions::Examine;
+
 pub enum Outcome {
     Failure,
     Success,
@@ -9,6 +11,15 @@ pub enum Outcome {
 pub struct Actors {
     pub actor: Entity,
     pub target: Entity,
+}
+
+impl From<&Examine> for Actors {
+    fn from(Examine { actor, target }: &Examine) -> Self {
+        Self {
+            actor: *actor,
+            target: *target,
+        }
+    }
 }
 
 pub trait Interacticator: Command + Send + 'static {
