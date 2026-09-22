@@ -5,7 +5,8 @@ use crate::{colors, interacticator};
 use crate::{interacticator::Outcome, inventory::Inventory, items::ItemId, tiles::TileIdx};
 use crate::{interaxnable, sounds};
 
-#[derive(Component, Debug, Copy, Clone, Default)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Door {
     pub requires: Option<ItemId>,
     /// Whether the door is open.

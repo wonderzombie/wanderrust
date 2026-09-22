@@ -11,7 +11,8 @@ use crate::{
 };
 use crate::{interaxnable, sounds};
 
-#[derive(Component, Debug, Clone, Default)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Chest {
     pub is_open: bool,
     pub contents: Option<Inventory>,

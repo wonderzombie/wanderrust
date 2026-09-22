@@ -11,8 +11,9 @@ use crate::interacticator;
 use crate::interacticator::Outcome;
 use crate::interaxnable;
 
-#[derive(Component)]
+#[derive(Component, Debug, Reflect)]
 #[component(on_insert = insert_dialogue)]
+#[reflect(Component)]
 pub struct Speaker {
     pub name: String,
     pub lines: Vec<String>,
