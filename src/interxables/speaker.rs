@@ -17,6 +17,7 @@ interaxnable!( Speaker defaults to ListenTo );
 interacticator!( ListenTo on Speaker via do_listen_to_speaker );
 
 fn do_listen_to_speaker(input: In<ListenTo>) -> Result<Outcome, BevyError> {
+    _ = input;
     Ok(Outcome::Failure)
 }
 
@@ -29,7 +30,7 @@ impl TryFrom<Interactable> for Speaker {
                 name,
                 lines,
                 tile_idx: _,
-            } => Ok((Self { name, lines })),
+            } => Ok(Self { name, lines }),
             _ => Err(value),
         }
     }

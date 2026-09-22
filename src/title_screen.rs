@@ -99,16 +99,18 @@ fn interaction_system(
     debug_mode: Res<State<DebugState>>,
 ) {
     for (interaction, button_ty) in interactions.iter() {
-        if interaction == &Interaction::Pressed { match button_ty {
-            Buttons::Start => {
-                commands.set_state_if_neq(Screen::Playing);
-                return;
+        if interaction == &Interaction::Pressed {
+            match button_ty {
+                Buttons::Start => {
+                    commands.set_state_if_neq(Screen::Playing);
+                    return;
+                }
+                Buttons::Intro => {
+                    commands.set_state_if_neq(Screen::Intro);
+                    return;
+                }
             }
-            Buttons::Intro => {
-                commands.set_state_if_neq(Screen::Intro);
-                return;
-            }
-        } }
+        }
 
         if input.is_changed() && input.any_just_pressed([KeyCode::Space, KeyCode::Enter]) {
             commands.set_state_if_neq(Screen::Playing);

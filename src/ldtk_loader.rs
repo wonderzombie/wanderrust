@@ -151,8 +151,15 @@ impl LdtkEntity {
         self.tile.unwrap_or_default().into()
     }
 
-    pub fn display_name(&self) -> Option<String> {
+    pub fn get_name_field(&self) -> Option<String> {
         self.get_string("name")
+    }
+
+    pub fn deduce_display_name(&self) -> String {
+        self.get_name_field()
+            .or_else(|| self.get_tile().label().map(Into::into))
+            .or_else(|| Some(self.identifier.clone()).filter(|s| !s.is_empty()))
+            .unwrap_or_else(|| self.get_tile().to_string())
     }
 }
 

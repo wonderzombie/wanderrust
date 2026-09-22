@@ -9,10 +9,12 @@ use crate::{
     combat::{self, SpawnPoint},
     dialogue_modal::DialogueStart,
     gamestate::PlayerRested,
+    interxables::*,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     message_log::LogEvent,
+    mobs::{self},
     sounds,
     tilemap::{ActiveLevel, Level, WorldSpec},
     tiles::TileIdx,
@@ -22,6 +24,7 @@ use crate::{
 /// or chest, that can be interacted with by actors.
 #[derive(Component, Debug, Default, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 #[reflect(Component)]
+#[require(Actor)]
 pub enum Interactable {
     #[default]
     Invalid,
@@ -90,10 +93,8 @@ impl LdtkEntityExt<Interactable> for Interactable {
             return None;
         };
 
-        let name = entity
-            .display_name()
-            .unwrap_or_else(|| String::from("MISSINGNAME"));
         let tile_idx = entity.get_tile();
+        let name = entity.deduce_display_name();
 
         match ty {
             LdtkActor::Combatant => Some(Self::Mob { name, tile_idx }),
@@ -136,6 +137,46 @@ impl LdtkEntityExt<Interactable> for Interactable {
                 Some(Self::Shrine { tile_idx, id })
             }
             _ => None,
+        }
+    }
+}
+
+struct InsertInto(pub Interactable);
+
+impl EntityCommand for InsertInto {
+    type Out = ();
+
+    fn apply(self, mut entity: EntityWorldMut) -> Self::Out {
+        let InsertInto(value) = self;
+        match value {
+            Interactable::Invalid => (),
+            Interactable::Door {
+                is_open,
+                requires,
+                tile_idx: _,
+            } => {
+                entity.insert(door::Door { is_open, requires });
+            }
+            Interactable::Chest {
+                is_open,
+                contents,
+                tile_idx: _,
+            } => {
+                entity.insert(chest::Chest { is_open, contents });
+            }
+            Interactable::Speaker {
+                name,
+                tile_idx: _,
+                lines,
+            } => {
+                entity.insert(speaker::Speaker { name, lines });
+            }
+            Interactable::Shrine { id, tile_idx: _ } => {
+                entity.insert(shrine::Shrine { id });
+            }
+            Interactable::Mob { name, tile_idx: _ } => {
+                entity.insert(mobs::Mob { name: name.clone() });
+            }
         }
     }
 }

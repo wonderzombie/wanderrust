@@ -30,6 +30,7 @@ pub struct Actor;
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
+#[require(Actor)]
 pub struct Player;
 
 /// A bundle for map pieces that includes a sprite, cell position, transform,

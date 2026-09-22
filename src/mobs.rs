@@ -19,6 +19,13 @@ use crate::{
     tiles::{TILE_SIZE_PX, TileIdx},
 };
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[require(Actor)]
+pub struct Mob {
+    pub name: String,
+}
+
 #[derive(Component, Debug)]
 pub enum Attitude {
     Human,
@@ -26,6 +33,8 @@ pub enum Attitude {
     Hostile,
 }
 
+// TODO: remove Loitering, Wandering or implement.
+#[allow(unused)]
 #[derive(Component, Debug, Default)]
 pub enum Behavior {
     #[default]
@@ -55,7 +64,10 @@ pub fn detect_mobs(
 
         info!("beast is {beast:?}");
 
-        commands.entity(entity).insert_if_neq(beast);
+        commands
+            .entity(entity)
+            .insert_if_neq(beast)
+            .insert(Mob { name: name.clone() });
 
         match beast.attitude() {
             Attitude::Human => (),

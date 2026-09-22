@@ -12,8 +12,8 @@ use crate::{
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct Chest {
-    is_open: bool,
-    contents: Option<Inventory>,
+    pub is_open: bool,
+    pub contents: Option<Inventory>,
 }
 
 interaxnable!(Chest defaults to OpenChest);

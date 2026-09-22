@@ -83,9 +83,10 @@ fn advance_typewriter(
             };
 
             if let Ok(mut txt_color) = colors.get_mut(next_nt)
-                && txt_color.as_ref().0 != tw.tint {
-                    *txt_color = TextColor(tw.tint);
-                }
+                && txt_color.as_ref().0 != tw.tint
+            {
+                *txt_color = TextColor(tw.tint);
+            }
 
             rev.revealed_idx += 1;
             trace!("rev is now {:?}", rev);
