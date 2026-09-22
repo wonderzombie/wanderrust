@@ -22,6 +22,23 @@ impl From<&Examine> for Actors {
     }
 }
 
+pub fn dispatch_default<T: Interxable<Args = Actors>>(
+    mut examines: MessageReader<Examine>,
+    targets: Query<(), With<T>>,
+    mut commands: Commands,
+) {
+    for ex in examines.read() {
+        trace!("ex: {} {ex:#?}", T::name());
+        if targets.contains(ex.target) {
+            info!("interacted with {}", T::name());
+            commands.interact::<T>(Actors {
+                actor: ex.actor,
+                target: ex.target,
+            });
+        }
+    }
+}
+
 pub trait Interacticator: Command + Send + 'static {
     /// This verb operates on a Subject that is Interactable.
     type Subject: Interxable;
@@ -37,6 +54,8 @@ pub trait Interxable: Component {
     fn default_action(args: Self::Args) -> Self::DefaultAction {
         Self::Args::into(args)
     }
+
+    fn name() -> &'static str;
 }
 
 pub trait InteractCommand {
@@ -56,6 +75,10 @@ macro_rules! interaxnable {
         impl crate::interacticator::Interxable for $obj {
             type DefaultAction = $verb;
             type Args = $crate::interacticator::Actors;
+
+            fn name() -> &'static str {
+                stringify!($obj)
+            }
         }
     };
 }

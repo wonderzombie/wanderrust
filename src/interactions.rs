@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::{Actor, PieceBundle},
     atlas::SpriteAtlas,
-    combat::{self},
-    interacticator::InteractCommand,
     interxables::*,
     inventory::*,
     items::ItemId,
@@ -191,57 +189,6 @@ pub struct ShrinesVisited(pub HashSet<Entity>);
 pub struct Examine {
     pub actor: Entity,
     pub target: Entity,
-}
-
-/// Processes [`Examine`] messages, matching the [`Interactable`] type with its
-/// [`crate::interacticator::Interxable`] counterpart via [`crate::interacticator::Interacticator`],
-/// specifically [`InteractCommand`].
-pub fn process_interactions(
-    mut commands: Commands,
-    mut interactions: MessageReader<Examine>,
-    interactables: Query<(Entity, &Interactable)>,
-    mut attacks: MessageWriter<combat::Attack>,
-) {
-    for interaction in interactions.read() {
-        let Ok((entity, interactable)) = interactables.get(interaction.target) else {
-            info!(
-                "📦 Interaction attempted with entity {}, but it's not interactable.",
-                interaction.target
-            );
-            continue;
-        };
-
-        info!(
-            "process_interactions: matched interactable: {entity} {:?}",
-            interactable.display_name(),
-        );
-
-        match interactable {
-            Interactable::Invalid => {
-                error!("invalid interactable; skipping: {interaction:?}");
-                continue;
-            }
-            Interactable::Door { .. } => {
-                commands.interact::<door::Door>(interaction.into());
-            }
-            Interactable::Chest { .. } => {
-                commands.interact::<chest::Chest>(interaction.into());
-            }
-            Interactable::Speaker { .. } => {
-                commands.interact::<speaker::Speaker>(interaction.into());
-            }
-            Interactable::Shrine { .. } => {
-                commands.interact::<shrine::Shrine>(interaction.into());
-            }
-            Interactable::Mob { name, .. } => {
-                info!("Player attacks {name}.");
-                attacks.write(combat::Attack {
-                    attacker: interaction.actor,
-                    target: entity,
-                });
-            }
-        }
-    }
 }
 
 #[derive(Bundle, Default, Debug)]

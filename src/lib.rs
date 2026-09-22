@@ -55,6 +55,7 @@ use crate::{
     atlas::SpriteAtlas,
     bestiary::Bestiary,
     cell::{Cell, PreviousCell},
+    combat::Attack,
     gamestate::{
         AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Recovery, Screen,
         TurnDelay,
@@ -174,6 +175,7 @@ pub fn run() {
     .add_plugins(ui::plugin)
     .add_plugins(grid::plugin)
     .add_plugins(effects::plugin)
+    .add_plugins(interxables::plugin)
     .add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
@@ -235,7 +237,6 @@ pub fn run() {
                 .before(GameSystem::Ramifications),
             (
                 process_actions,
-                interactions::process_interactions,
                 inventory::process_inventory_changes,
                 combat::process_attacks,
                 handle_pending_transition,
@@ -398,6 +399,8 @@ fn process_actions(
     mut commands: Commands,
     action: If<Res<Action>>,
     portals: Query<&Portal>,
+    combatants: Query<&combat::Combatant>,
+    mut attacks: MessageWriter<Attack>,
     mut interaction_attempts: MessageWriter<interactions::Examine>,
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
@@ -441,8 +444,14 @@ fn process_actions(
                         arrive_at: portal.arrive_at.clone(),
                     });
                 }
+                Some(target) if combatants.get(target).is_ok() => {
+                    attacks.write(Attack {
+                        attacker: action.entity,
+                        target,
+                    });
+                }
                 Some(target) => {
-                    info!("process_actions: interaction");
+                    trace!("process_actions: interaction");
                     interaction_attempts.write(interactions::Examine {
                         actor: action.entity,
                         target,
