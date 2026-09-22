@@ -11,7 +11,6 @@ use crate::{
     combat::{Attack, Combatant},
     fov::Fov,
     gamestate::{AddRecovery, AddTurnTimerDelay, GameState, NextTurn, RecoveryNow, Turn},
-    interactions::Interactable,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
@@ -24,6 +23,7 @@ use crate::{
 #[require(Actor)]
 pub struct Mob {
     pub name: String,
+    pub tile_idx: TileIdx,
 }
 
 #[derive(Component, Debug)]
@@ -45,29 +45,21 @@ pub enum Behavior {
 
 pub fn detect_mobs(
     mut commands: Commands,
-    new_interactables: Query<(Entity, &Cell, &Interactable), Added<Interactable>>,
+    new_interactables: Query<(Entity, &Mob, &Name, &Cell, &TileIdx), Added<Mob>>,
 ) -> Result<()> {
     let mut count = 0;
 
-    for (entity, cell, interx) in new_interactables.into_iter() {
-        let (name, tile_idx) = match interx {
-            Interactable::Mob { name, tile_idx } => (name, tile_idx),
-            _ => continue,
-        };
-
+    for (entity, mob, name, cell, tile_idx) in new_interactables.into_iter() {
         info!("detected mob: {} {} {}", name, tile_idx, cell);
 
-        let Some(beast) = bestiary::best_guess(interx) else {
-            error!("mob not in bestiary; skipping {cell} {interx:?}");
+        let Some(beast) = bestiary::best_guess(mob) else {
+            error!("mob not in bestiary; skipping {cell} {mob:?}");
             continue;
         };
 
         info!("beast is {beast:?}");
 
-        commands
-            .entity(entity)
-            .insert_if_neq(beast)
-            .insert(Mob { name: name.clone() });
+        commands.entity(entity).insert_if_neq(beast);
 
         match beast.attitude() {
             Attitude::Human => (),
@@ -228,7 +220,7 @@ pub fn init_indicators(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     atlas: Res<SpriteAtlas>,
-    query: Populated<(Entity, &Interactable), Added<Interactable>>,
+    added_mobs: Populated<(Entity, &Name, &TileIdx), Added<Mob>>,
     player: Single<Entity, Added<Player>>,
 ) {
     let image: Handle<Image> = asset_server.load(atlas::TRANSPARENT_SHEET);
@@ -243,22 +235,17 @@ pub fn init_indicators(
     sprite.custom_size = Some(Vec2::splat(TILE_SIZE_PX * 1.5));
 
     let xform = Transform::from_xyz(0., 0., 1.);
-    for (nt, interx) in query {
-        match interx {
-            Interactable::Mob { .. } | Interactable::Speaker { .. } => {
-                info!("initialized indicator for {nt:?}");
-                commands.spawn((
-                    Name::new(format!("indicator {} {interx:?} {nt}", interx.tile())),
-                    Indicator,
-                    xform,
-                    ChildOf(nt),
-                    TileIdx::Corners,
-                    sprite.clone(),
-                    Visibility::Inherited,
-                ));
-            }
-            _ => continue,
-        }
+    for (entity, name, tile_idx) in added_mobs {
+        info!("initialized indicator for {name} {tile_idx} {entity}");
+        commands.spawn((
+            Name::new(format!("indicator {name} {tile_idx} {entity}")),
+            Indicator,
+            xform,
+            ChildOf(entity),
+            TileIdx::Corners,
+            sprite.clone(),
+            Visibility::Inherited,
+        ));
     }
 
     let mut sprite = sprite.clone();

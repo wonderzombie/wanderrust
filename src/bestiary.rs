@@ -1,7 +1,6 @@
 use crate::{
-    interactions::Interactable,
-    mobs::{Attitude, Behavior, Role},
-    parameters::{BaseParameters, Parameters, Vision},
+    mobs::{Attitude, Behavior, Mob, Role},
+    parameters::BaseParameters,
     tiles::TileIdx,
 };
 use bevy::{
@@ -32,20 +31,20 @@ macro_rules! define_bestiary {
         impl Bestiary {
             // pub const ALL: &'static [Bestiary] = &[ $( Bestiary::$name, )* ];
 
-            pub fn params(self) -> Parameters {
+            pub fn params(self) -> $crate::parameters::Parameters {
                 match self {
-                    $( Bestiary::$name => Parameters {
+                    $( Bestiary::$name => $crate::parameters::Parameters {
                              attack: $atk,
                              attack_speed: $atk_spd,
                              defense: $def,
                              max_hp: $hp,
                              move_speed: $mov,
-                             vision: Vision($vis)
+                             vision: $crate::parameters::Vision($vis)
                     }, )*
                 }
             }
 
-            pub fn attitude(&self) -> Attitude {
+            pub fn attitude(&self) -> $crate::mobs::Attitude {
                 match self {
                     $( Bestiary::$name => $mood ),*
                 }
@@ -98,11 +97,6 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     ));
 }
 
-pub fn best_guess(interx: &Interactable) -> Option<Bestiary> {
-    if let Interactable::Mob { name, tile_idx } = interx {
-        return Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx));
-    }
-
-    warn!("unable to guess type of beast: {interx:?}");
-    None
+pub fn best_guess(Mob { name, tile_idx }: &Mob) -> Option<Bestiary> {
+    return Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx));
 }

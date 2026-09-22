@@ -15,12 +15,10 @@ use crate::{
 
 /// A component representing an interactable object in the world, such as a door
 /// or chest, that can be interacted with by actors.
-#[derive(Component, Debug, Default, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Component, Debug, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 #[reflect(Component)]
 #[require(Actor)]
 pub enum Interactable {
-    #[default]
-    Invalid,
     Door {
         is_open: bool,
         requires: Option<ItemId>,
@@ -57,7 +55,6 @@ impl Interactable {
                 Some(name.clone())
             }
             Interactable::Shrine { id, .. } => Some(id.clone()),
-            _ => None,
         }
     }
 
@@ -68,10 +65,6 @@ impl Interactable {
             | Self::Mob { tile_idx, .. }
             | Self::Speaker { tile_idx, .. }
             | Self::Shrine { tile_idx, .. } => *tile_idx,
-            _ => {
-                warn!("no tile for interactable: {self:?}");
-                TileIdx::GridSquare
-            }
         }
     }
 }
@@ -142,38 +135,56 @@ impl EntityCommand for InsertInto {
 
     fn apply(self, mut entity: EntityWorldMut) -> Self::Out {
         let InsertInto(value) = self;
+        let name_component = Name::new(
+            value
+                .display_name()
+                .unwrap_or_else(|| format!("MISSINGNAME")),
+        );
+
         match value {
-            Interactable::Invalid => (),
             Interactable::Door {
                 is_open,
                 requires,
                 tile_idx,
             } => {
-                entity.insert(door::Door {
-                    is_open,
-                    requires,
-                    tile_idx,
-                });
+                entity
+                    .insert(door::Door {
+                        is_open,
+                        requires,
+                        tile_idx,
+                    })
+                    .insert((name_component, tile_idx));
             }
             Interactable::Chest {
                 is_open,
                 contents,
-                tile_idx: _,
+                tile_idx,
             } => {
-                entity.insert(chest::Chest { is_open, contents });
+                entity
+                    .insert(chest::Chest { is_open, contents })
+                    .insert((name_component, tile_idx));
             }
             Interactable::Speaker {
                 name,
-                tile_idx: _,
+                tile_idx,
                 lines,
             } => {
-                entity.insert(speaker::Speaker { name, lines });
+                entity
+                    .insert(speaker::Speaker { name, lines })
+                    .insert((name_component, tile_idx));
             }
-            Interactable::Shrine { id, tile_idx: _ } => {
-                entity.insert(shrine::Shrine { id });
+            Interactable::Shrine { id, tile_idx } => {
+                entity
+                    .insert(shrine::Shrine { id })
+                    .insert((name_component, tile_idx));
             }
-            Interactable::Mob { name, tile_idx: _ } => {
-                entity.insert(mobs::Mob { name: name.clone() });
+            Interactable::Mob { name, tile_idx } => {
+                entity
+                    .insert(mobs::Mob {
+                        name: name.clone(),
+                        tile_idx,
+                    })
+                    .insert((name_component, tile_idx));
             }
         }
     }
@@ -191,14 +202,6 @@ pub struct Examine {
     pub target: Entity,
 }
 
-#[derive(Bundle, Default, Debug)]
-struct InterxBundle {
-    act: Actor,
-    tile_idx: TileIdx,
-    interx: Interactable,
-    piece: PieceBundle,
-}
-
 pub fn spawn_interxs(
     mut commands: Commands,
     world_spec: Res<WorldSpec>,
@@ -210,37 +213,29 @@ pub fn spawn_interxs(
             continue;
         };
 
-        info!("📦 {level_id:?}: spawning interactables");
+        info!("📦 {level_id} {level_entity}: spawning interactables");
 
         let mut count = 0;
-        spec.interxs
-            .iter()
-            .map(|(interx, cell)| {
-                let name = interx.display_name().unwrap_or_else(|| format!("{cell}"));
-                (
-                    Name::new(name),
-                    InterxBundle {
-                        interx: interx.clone(),
-                        tile_idx: interx.tile(),
-                        piece: PieceBundle {
-                            cell: *cell,
-                            sprite: atlas.sprite(),
-                            ..default()
-                        },
+        for (interx, cell) in spec.interxs.iter() {
+            commands
+                .spawn((
+                    ChildOf(*level_entity), // for display purposes
+                    PieceBundle {
+                        cell: *cell,
+                        sprite: atlas.sprite(),
                         ..default()
                     },
-                    ChildOf(*level_entity),
-                )
-            })
-            .for_each(|b| {
-                let insert_interxable = InsertInto(b.1.interx.clone());
-                info!("spawning {}", b.0);
-                trace!("spawning {b:?}");
-                count += 1;
-                commands.spawn(b).queue(insert_interxable);
-            });
+                ))
+                .queue(InsertInto(interx.clone()));
+            info!(
+                "spawning {} ({})",
+                interx.display_name().unwrap_or_else(|| cell.to_string()),
+                interx.tile()
+            );
+            count += 1;
+        }
 
-        info!("📦 {level_id:?}: spawned {count} interactables");
+        info!("📦 {level_id} {level_entity}: spawned {count} interactables");
     }
 }
 

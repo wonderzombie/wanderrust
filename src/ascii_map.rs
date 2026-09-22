@@ -158,7 +158,6 @@ impl crate::interactions::Interactable {
                 error!("set_tile not implemented for Shrine yet");
                 self.clone()
             }
-            _ => self.clone(),
         }
     }
 }
