@@ -2,20 +2,16 @@ use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::{Actor, PieceBundle, Player},
+    actors::{Actor, PieceBundle},
     atlas::SpriteAtlas,
-    cell::Cell,
-    colors,
-    combat::{self, SpawnPoint},
-    gamestate::PlayerRested,
+    combat::{self},
     interacticator::InteractCommand,
     interxables::*,
     inventory::*,
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
-    message_log::LogEvent,
     mobs::{self},
-    tilemap::{ActiveLevel, Level, WorldSpec},
+    tilemap::{Level, WorldSpec},
     tiles::TileIdx,
 };
 
@@ -202,15 +198,10 @@ pub struct Examine {
 /// merely solid. Otherwise interaction depends on the type of [`Interactable`].
 pub fn process_interactions(
     mut commands: Commands,
-    active_level: Single<Entity, With<ActiveLevel>>,
     mut interactions: MessageReader<Examine>,
     mut interactables: Query<(Entity, &mut Interactable)>,
     mut attacks: MessageWriter<combat::Attack>,
-    player: Single<(Entity, &Cell), With<Player>>,
-    mut log: MessageWriter<LogEvent>,
-    mut shrines_visited: ResMut<ShrinesVisited>,
 ) {
-    let (player_nt, player_cell) = *player;
     for interaction in interactions.read() {
         let Ok((entity, mut interactable)) = interactables.get_mut(interaction.target) else {
             info!(
@@ -239,34 +230,15 @@ pub fn process_interactions(
             Interactable::Speaker { .. } => {
                 commands.interact::<speaker::Speaker>(interaction.into());
             }
+            Interactable::Shrine { .. } => {
+                commands.interact::<shrine::Shrine>(interaction.into());
+            }
             Interactable::Mob { name, .. } => {
                 info!("Player attacks {name}.");
                 attacks.write(combat::Attack {
                     attacker: interaction.actor,
                     target: entity,
                 });
-            }
-            Interactable::Shrine { id, .. } => {
-                info!("Player interacts with {id}.");
-                if shrines_visited.0.contains(&entity) {
-                    log.write(LogEvent {
-                        txt: format!("rest at {id}"),
-                        color: Some(colors::KENNEY_GOLD),
-                    });
-                    commands.entity(player_nt).insert(SpawnPoint {
-                        respawn_cell: *player_cell,
-                        level_nt: *active_level,
-                    });
-                    commands.trigger(PlayerRested);
-                    // commands.trigger(sounds::Rest);
-                } else {
-                    shrines_visited.0.insert(entity);
-                    log.write(LogEvent {
-                        txt: format!("lit shrine {id}"),
-                        color: Some(colors::KENNEY_BLUE),
-                    });
-                    // commands.trigger(sounds::LitShrine);
-                }
             }
         }
     }
