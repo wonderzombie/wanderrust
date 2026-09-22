@@ -420,10 +420,11 @@ pub fn spawn_interxs(
                 )
             })
             .for_each(|b| {
+                let insert_interxable = InsertInto(b.1.interx.clone());
                 info!("spawning {}", b.0);
                 trace!("spawning {b:?}");
                 count += 1;
-                commands.spawn(b);
+                commands.spawn(b).queue(insert_interxable);
             });
 
         info!("📦 {level_id:?}: spawned {count} interactables");
