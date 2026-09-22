@@ -7,7 +7,6 @@ use crate::{
     cell::Cell,
     colors,
     combat::{self, SpawnPoint},
-    dialogue_modal::DialogueStart,
     gamestate::PlayerRested,
     interacticator::InteractCommand,
     interxables::*,
@@ -205,7 +204,7 @@ pub fn process_interactions(
     mut commands: Commands,
     active_level: Single<Entity, With<ActiveLevel>>,
     mut interactions: MessageReader<Examine>,
-    mut interactables: Query<(Entity, &mut Interactable, Option<&Name>)>,
+    mut interactables: Query<(Entity, &mut Interactable)>,
     mut attacks: MessageWriter<combat::Attack>,
     player: Single<(Entity, &Cell), With<Player>>,
     mut log: MessageWriter<LogEvent>,
@@ -213,8 +212,7 @@ pub fn process_interactions(
 ) {
     let (player_nt, player_cell) = *player;
     for interaction in interactions.read() {
-        let Ok((entity, mut interactable, name_opt)) = interactables.get_mut(interaction.target)
-        else {
+        let Ok((entity, mut interactable)) = interactables.get_mut(interaction.target) else {
             info!(
                 "📦 Interaction attempted with entity {}, but it's not interactable.",
                 interaction.target
@@ -238,12 +236,8 @@ pub fn process_interactions(
             Interactable::Chest { .. } => {
                 commands.interact::<chest::Chest>(interaction.into());
             }
-            Interactable::Speaker { name, .. } => {
-                info!(
-                    "Player talks to {}.",
-                    name_opt.map_or(name.as_str(), |n| n.as_str())
-                );
-                commands.trigger(DialogueStart(interaction.target));
+            Interactable::Speaker { .. } => {
+                commands.interact::<speaker::Speaker>(interaction.into());
             }
             Interactable::Mob { name, .. } => {
                 info!("Player attacks {name}.");
@@ -275,55 +269,6 @@ pub fn process_interactions(
                 }
             }
         }
-    }
-}
-
-/// A component representing the dialogue of an NPC.
-///
-/// This component is used to store and manage the dialogue of an NPC, including
-/// the current phrase and the list of phrases.
-#[derive(Component, Debug, Default, Serialize, Deserialize, Reflect)]
-#[reflect(Component)]
-pub struct Dialogue {
-    idx: usize,
-    phrases: Vec<String>,
-}
-
-impl Dialogue {
-    pub fn advance(&mut self) -> Option<&str> {
-        match &self.phrases.get(self.idx) {
-            Some(phrase) => {
-                self.idx = (self.idx + 1) % self.phrases.len();
-                Some(phrase)
-            }
-            _ => None,
-        }
-    }
-}
-
-#[derive(Resource)]
-pub struct DialogueEntity(pub Entity);
-
-pub fn detect_speakers(
-    mut commands: Commands,
-    interactables: Query<(Entity, &Interactable), Added<Interactable>>,
-) {
-    let mut count = 0;
-    for (nt, interx) in interactables {
-        match interx {
-            Interactable::Speaker { lines, .. } => {
-                count += 1;
-                commands.entity(nt).insert(Dialogue {
-                    idx: 0,
-                    phrases: lines.clone(),
-                });
-            }
-            _ => continue,
-        };
-    }
-
-    if count > 0 {
-        info!("detected speakers: {count}");
     }
 }
 
@@ -381,7 +326,6 @@ pub fn spawn_interxs(
 }
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(PreUpdate, detect_speakers)
-        .add_message::<Examine>()
+    app.add_message::<Examine>()
         .init_resource::<ShrinesVisited>();
 }

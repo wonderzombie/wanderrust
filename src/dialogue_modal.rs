@@ -1,10 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    gamestate::Modal,
-    interactions::{Dialogue, DialogueEntity},
-    ui::theme::pcsr_font,
-};
+use crate::{gamestate::Modal, interxables::speaker::Dialogue, ui::theme::pcsr_font};
 
 pub fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Modal::Dialogue), (setup, populate).chain())
@@ -25,6 +21,9 @@ fn discard(mut commands: Commands, scene: Single<Entity, With<SpeechBox>>) {
 
 #[derive(Event, Debug)]
 pub struct DialogueStart(pub Entity);
+
+#[derive(Resource)]
+pub struct DialogueEntity(pub Entity);
 
 pub fn on_dialogue_start(on: On<DialogueStart>, mut commands: Commands) {
     let DialogueStart(speaker_nt) = *on;

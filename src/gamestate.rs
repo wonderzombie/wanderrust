@@ -7,7 +7,6 @@ use crate::{
     bestiary::Bestiary,
     combat::{NeedsRespawn, SpawnPoint},
     equipment::EquipmentChanged,
-    interactions::Interactable,
     interxables::door::Door,
     tiles::TileIdx,
 };
