@@ -193,17 +193,17 @@ pub struct Examine {
     pub target: Entity,
 }
 
-/// Processes [`Examine`] messages, executing the interaction between the player
-/// and an [`Interactable`] entity. Interaction fails if the target cell is
-/// merely solid. Otherwise interaction depends on the type of [`Interactable`].
+/// Processes [`Examine`] messages, matching the [`Interactable`] type with its
+/// [`crate::interacticator::Interxable`] counterpart via [`crate::interacticator::Interacticator`],
+/// specifically [`InteractCommand`].
 pub fn process_interactions(
     mut commands: Commands,
     mut interactions: MessageReader<Examine>,
-    mut interactables: Query<(Entity, &mut Interactable)>,
+    interactables: Query<(Entity, &Interactable)>,
     mut attacks: MessageWriter<combat::Attack>,
 ) {
     for interaction in interactions.read() {
-        let Ok((entity, mut interactable)) = interactables.get_mut(interaction.target) else {
+        let Ok((entity, interactable)) = interactables.get(interaction.target) else {
             info!(
                 "📦 Interaction attempted with entity {}, but it's not interactable.",
                 interaction.target
@@ -216,7 +216,7 @@ pub fn process_interactions(
             interactable.display_name(),
         );
 
-        match interactable.as_mut() {
+        match interactable {
             Interactable::Invalid => {
                 error!("invalid interactable; skipping: {interaction:?}");
                 continue;
