@@ -180,10 +180,10 @@ pub fn process_attacks(
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);
             defender.hp = defender.hp.saturating_sub(damage);
-            log.write(LogEvent {
-                txt: format!("{attacker_name} hits {defender_name}!"),
-                color: Some(colors::KENNEY_GOLD),
-            });
+            // log.write(LogEvent {
+            //     txt: format!("{attacker_name} hits {defender_name}!"),
+            //     color: Some(colors::KENNEY_GOLD),
+            // });
 
             if defender.hp <= 0 {
                 defender.is_dead = true;
