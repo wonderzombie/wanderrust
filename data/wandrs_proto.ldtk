@@ -5580,6 +5580,30 @@
 							],
 							"__worldX": 224,
 							"__worldY": 208
+						},
+						{
+							"__identifier": "Pot",
+							"__grid": [7,12],
+							"__pivot": [0,0],
+							"__tags": ["chest"],
+							"__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 },
+							"__smartColor": "#FEAE34",
+							"iid": "ed6fb040-96d0-11f1-9fa9-850c71817e76",
+							"width": 16,
+							"height": 16,
+							"defUid": 69,
+							"px": [112,192],
+							"fieldInstances": [
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Chest", "__tile": null, "defUid": 72, "realEditorValues": [] },
+								{ "__identifier": "contents", "__type": "Array<String>", "__value": ["gold:3"], "__tile": null, "defUid": 70, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["gold:3"]
+								}] },
+								{ "__identifier": "is_open", "__type": "Bool", "__value": false, "__tile": null, "defUid": 71, "realEditorValues": [] },
+								{ "__identifier": "closed", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 80, "y": 224, "w": 16, "h": 16 }, "defUid": 73, "realEditorValues": [] }
+							],
+							"__worldX": 112,
+							"__worldY": 192
 						}
 					]
 				},
