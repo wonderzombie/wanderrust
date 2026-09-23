@@ -44,3 +44,54 @@ pub fn apply_params_modifiers(
 pub fn detect_spawn(_event: On<PlayerSpawned>, mut refresh: MessageWriter<EquipmentChanged>) {
     refresh.write_default();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Bestiary, equipment::EquippedBy, items::Slot};
+    #[test]
+    fn test_apply_params_modifiers() -> Result<(), BevyError> {
+        let mut app = _init_app();
+        app.add_systems(Update, apply_params_modifiers);
+
+        let player_nt = app
+            .world_mut()
+            .commands()
+            .spawn((Bestiary::Player, Slots::standard()))
+            .id();
+        app.update();
+
+        let params = app.world().get::<Parameters>(player_nt);
+        assert_eq!(Some(&Bestiary::Player.params()), params);
+
+        let item_nt = app
+            .world_mut()
+            .commands()
+            .spawn((
+                ItemId::Sword,
+                EquippedBy {
+                    entity: player_nt,
+                    slot: Slot::MainHand,
+                },
+            ))
+            .id();
+        app.update();
+
+        let params = app.world().get::<Parameters>(player_nt);
+        assert_ne!(Some(&Bestiary::Player.params()), params);
+
+        app.world_mut().commands().entity(item_nt).despawn();
+        app.update();
+
+        let params = app.world().get::<Parameters>(player_nt);
+        assert_eq!(Some(&Bestiary::Player.params()), params);
+
+        Ok(())
+    }
+
+    fn _init_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app
+    }
+}
