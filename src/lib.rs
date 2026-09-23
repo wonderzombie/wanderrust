@@ -307,6 +307,7 @@ pub fn run() {
     )
     .add_observer(on_discard_cell)
     .add_observer(click_observer)
+    .add_observer(on_discard_cell)
     .add_observer(gamestate::player_died);
 
     if args.inspector {

@@ -243,3 +243,91 @@ pub fn plugin(app: &mut App) {
     app.add_message::<Examine>()
         .init_resource::<ShrinesVisited>();
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::items::Quantity;
+
+    use super::*;
+
+    fn _init_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app
+    }
+
+    #[test]
+    fn test_insert_into_basic() {
+        let mut app = _init_app();
+
+        let id = app.world_mut().spawn_empty().id();
+
+        app.update();
+
+        let op = InsertInto(Interactable::Mob {
+            name: "hello".into(),
+            tile_idx: TileIdx::Chicken,
+        });
+
+        let mut c = app.world_mut().commands();
+        let mut ec = c.entity(id);
+        ec.queue(op);
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<TileIdx>(id)
+                .is_some_and(|it| it == &TileIdx::Chicken)
+        );
+        assert!(
+            app.world()
+                .get::<Name>(id)
+                .is_some_and(|it| it.as_str().eq_ignore_ascii_case("hello"))
+        );
+    }
+
+    #[test]
+    fn test_insert_into_with_chest() {
+        let mut app = _init_app();
+
+        let id = app.world_mut().spawn_empty().id();
+
+        let op = InsertInto(Interactable::Chest {
+            is_open: false,
+            contents: Some(Inventory::with_item(ItemId::Gold, Quantity(2))),
+            tile_idx: TileIdx::ChestBrownClosed,
+        });
+
+        let w = app.world_mut();
+        let mut c = w.commands();
+        c.entity(id).queue(op);
+
+        app.update();
+
+        assert!(
+            app.world_mut()
+                .get::<TileIdx>(id)
+                .is_some_and(|it| it == &TileIdx::ChestBrownClosed)
+        );
+
+        let chest = app
+            .world_mut()
+            .get::<chest::Chest>(id)
+            .expect("expected chest to be present");
+
+        let contents = chest
+            .contents
+            .clone()
+            .expect("expected chest to have contents");
+
+        let q = contents
+            .item_quantity(&ItemId::Gold)
+            .map(|q| q.0)
+            .unwrap_or_default();
+
+        assert_eq!(false, chest.is_open, "expected chest not to be open");
+        assert_eq!(q, 2, "expected two gold pieces to be present in chest");
+    }
+}

@@ -293,9 +293,178 @@ pub fn sync_occupied_tiles(
                 commands.entity(tile).insert(Occupied);
             }
 
-            if let Some(prev_tile) = storage.get(prev_cell) {
+            if let Some(prev_tile) = storage.get(prev_cell)
+                && prev_cell.0 != *curr_cell
+            {
                 commands.entity(prev_tile).remove::<Occupied>();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tilemap::Dimensions;
+
+    use super::*;
+
+    fn _init_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app
+    }
+
+    fn _spawn_tiles(mut commands: Commands, size: u32) -> Entity {
+        let ntiles = size.pow(2);
+        let mut storage = TileStorage::new(Dimensions {
+            width: size,
+            height: size,
+            depth: 0,
+            tile_size: 16,
+        });
+        let parent = commands.spawn_empty().id();
+        (0..ntiles)
+            .into_iter()
+            .map(move |i| {
+                let cell = Cell::from_idx(size, i as usize);
+                let tile_idx = TileIdx::Grass;
+                (cell, tile_idx, MapTile)
+            })
+            .for_each(|it| {
+                let id = commands.spawn((it, ChildOf(parent))).id();
+                storage.set(&it.0, id);
+            });
+        commands.entity(parent).insert(storage);
+
+        parent
+    }
+
+    #[test]
+    fn test_sync_occupied_tile() -> Result<()> {
+        let mut app = _init_app();
+
+        app.add_systems(Update, sync_occupied_tiles);
+
+        let parent = _spawn_tiles(app.world_mut().commands(), 5);
+        app.update();
+
+        let occupied = app
+            .world_mut()
+            .query::<&Occupied>()
+            .iter(app.world())
+            .count();
+        assert!(
+            occupied == 0,
+            "expected no occupied tiles in a world with only MapTile"
+        );
+
+        let cell = Cell::new(1, 1);
+
+        // Spawn a nondescript actor.
+        app.world_mut().commands().spawn((
+            ChildOf(parent),
+            Actor,
+            cell.clone(),
+            PreviousCell(Cell::new(0, 0)),
+        ));
+        app.update();
+
+        let Some(storage) = app.world().entity(parent).get::<TileStorage>() else {
+            panic!("expected tilestorage to be present on parent of tiles");
+        };
+
+        let Some(should_be_occupied) = storage.get(&cell) else {
+            panic!("expected tilestorage to contain cell (1, 1)");
+        };
+
+        let should_be_none = storage
+            .get(&Cell::new(0, 0))
+            .and_then(|nt| app.world().get::<Occupied>(nt));
+
+        assert!(app.world().get::<Occupied>(should_be_occupied).is_some());
+        assert!(should_be_none.is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_sync_occupied_tile_update_prev_cell() -> Result<()> {
+        let mut app = _init_app();
+
+        app.add_systems(Update, sync_occupied_tiles)
+            .add_observer(crate::on_discard_cell);
+
+        let parent = _spawn_tiles(app.world_mut().commands(), 5);
+        app.update();
+
+        let first_cell = Cell::new(1, 1);
+
+        // Spawn a nondescript actor.
+        let actor_nt = app
+            .world_mut()
+            .commands()
+            .spawn((
+                ChildOf(parent),
+                Actor,
+                first_cell.clone(),
+                PreviousCell(Cell::new(0, 0)),
+            ))
+            .id();
+        app.update();
+
+        assert_eq!(
+            1,
+            app.world_mut()
+                .query::<&Occupied>()
+                .iter(app.world())
+                .count()
+        );
+
+        let second_cell = Cell::new(2, 1);
+
+        app.world_mut()
+            .commands()
+            .entity(actor_nt)
+            .insert(second_cell);
+
+        app.update();
+
+        assert_eq!(
+            app.world_mut().entity(actor_nt).get::<Cell>(),
+            Some(&second_cell),
+            "expected current cell to be newly inserted second cell",
+        );
+        assert_eq!(
+            app.world_mut().entity(actor_nt).get::<PreviousCell>(),
+            Some(&PreviousCell(first_cell)),
+            "expected previous cell to be first inserted cell",
+        );
+
+        let Some(storage) = app.world().entity(parent).get::<TileStorage>() else {
+            panic!("expected tilestorage to be present on parent of tiles");
+        };
+        let storage = storage.clone();
+
+        let Some(should_be_occupied) = storage.get(&second_cell).clone() else {
+            panic!("expected tilestorage to contain cell (1, 1)");
+        };
+
+        assert_eq!(
+            1,
+            app.world_mut()
+                .query::<&Occupied>()
+                .iter(app.world())
+                .count()
+        );
+
+        let should_be_none = storage
+            .get(&first_cell)
+            .and_then(|nt| app.world().get::<Occupied>(nt).clone())
+            .clone();
+
+        assert!(app.world().get::<Occupied>(should_be_occupied).is_some());
+        assert!(should_be_none.is_none());
+
+        Ok(())
     }
 }

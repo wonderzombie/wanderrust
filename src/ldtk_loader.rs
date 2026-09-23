@@ -430,3 +430,113 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parsed_value_ztring() -> Result<(), String> {
+        let field = LdtkField {
+            identifier: "name".to_string(),
+            field_type: "String".to_string(),
+            val: "Poppy".into(),
+        };
+
+        let parsed: ParsedValue = field.into();
+        let name = "Poppy".to_string();
+
+        let ParsedValue::Ztring(parsed_name) = parsed else {
+            panic!("expected ParsedValue to be Ztring; was {parsed:?}");
+        };
+
+        assert_eq!(parsed_name, name);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parsed_value_tile() -> Result<(), String> {
+        let px_tile =
+            serde_json::from_str(r#"{ "tilesetUid": 2, "x": 416, "y": 112, "w": 16, "h": 16 }"#)
+                .map_err(|e| e.to_string())?;
+
+        let parsed: ParsedValue = LdtkField {
+            identifier: "tile".to_string(),
+            field_type: "Tile".to_string(),
+            val: px_tile,
+        }
+        .into();
+
+        let ParsedValue::PxTile(parsed_tile) = parsed else {
+            panic!("expected ParsedValue to be Tile; was {parsed:?}");
+        };
+
+        assert_eq!(parsed_tile, TileIdx::Chicken);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_deduce_display_name_uses_name() {
+        let entity = LdtkEntity {
+            identifier: "hello".into(),
+            ldtk_cell: super::LdtkCell(Cell::new(5, 5)),
+            // Chicken tile
+            tile: Some(super::LdtkPxTile {
+                atlas_x_px: 416,
+                atlas_y_px: 112,
+            }),
+            field_instances: vec![LdtkField {
+                identifier: "name".into(),
+                field_type: "String".into(),
+                val: "Poppy".into(),
+            }],
+        };
+        let display_name = entity.deduce_display_name();
+        assert_eq!(display_name, "Poppy".to_string());
+    }
+
+    #[test]
+    fn test_deduce_display_name_uses_identifier() {
+        let entity = LdtkEntity {
+            identifier: "Identifier".into(),
+            ldtk_cell: super::LdtkCell(Cell::new(5, 5)),
+            // Chicken tile
+            tile: Some(super::LdtkPxTile {
+                atlas_x_px: 416,
+                atlas_y_px: 112,
+            }),
+            field_instances: vec![],
+        };
+        let display_name = entity.deduce_display_name();
+        assert_eq!(display_name, "Identifier".to_string());
+    }
+
+    #[test]
+    fn test_deduce_display_name_uses_tile_label() {
+        let entity = LdtkEntity {
+            identifier: "Some Kind Of Pot".into(),
+            ldtk_cell: super::LdtkCell(Cell::new(5, 5)),
+            // Chest tile has a label.
+            tile: Some(super::LdtkPxTile {
+                atlas_x_px: 80,
+                atlas_y_px: 224,
+            }),
+            field_instances: vec![
+                LdtkField {
+                    identifier: "contents".into(),
+                    field_type: "String".into(),
+                    val: Value::from("gold:2"),
+                },
+                LdtkField {
+                    identifier: "is_open".into(),
+                    field_type: "Bool".into(),
+                    val: Value::from(false),
+                },
+            ],
+        };
+        let display_name = entity.deduce_display_name();
+        assert_eq!(display_name, "pot".to_string());
+    }
+}
