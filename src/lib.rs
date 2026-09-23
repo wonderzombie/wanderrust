@@ -306,6 +306,7 @@ pub fn run() {
         ),
     )
     .add_observer(click_observer)
+    .add_observer(on_discard_cell)
     .add_observer(gamestate::player_died);
 
     if args.inspector {
@@ -351,7 +352,9 @@ fn finalize_loading(
 
 fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell), Without<MapTile>>) {
     for (curr, mut prev) in query.iter_mut() {
-        *prev = PreviousCell(*curr);
+        if curr.is_changed() {
+            *prev = PreviousCell(*curr);
+        }
     }
 }
 

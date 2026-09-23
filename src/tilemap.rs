@@ -224,7 +224,7 @@ impl TileStorage {
         self.tiles.is_empty()
     }
 
-    fn new(size: Dimensions) -> Self {
+    pub(crate) fn new(size: Dimensions) -> Self {
         Self {
             tiles: vec![None; (size.width * size.height) as usize],
             size,
