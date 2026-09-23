@@ -100,3 +100,40 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
 pub fn best_guess(Mob { name, tile_idx }: &Mob) -> Option<Bestiary> {
     return Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_best_guess() {
+        let mob = Mob {
+            name: "Bat".into(),
+            tile_idx: TileIdx::GridSquare,
+        };
+
+        assert_eq!(
+            Some(Bestiary::Bat),
+            best_guess(&mob),
+            "expected Bat type from name, not GridSquare"
+        );
+
+        let mob = Mob {
+            name: "".into(),
+            tile_idx: TileIdx::Chicken,
+        };
+
+        assert_eq!(
+            Some(Bestiary::Chicken),
+            best_guess(&mob),
+            "expected Chicken tile when name is blank"
+        );
+
+        let mob = Mob {
+            name: "StoneWall".into(),
+            tile_idx: TileIdx::StoneWall,
+        };
+
+        assert_eq!(None, best_guess(&mob))
+    }
+}
