@@ -66,7 +66,7 @@ use crate::{
     message_log::LogEvent,
     parameters::{Health, Parameters},
     tilemap::{ActiveLevel, EntryId, Level, Portal, WorldSpec},
-    tiles::{MapTile, TileIdx},
+    tiles::TileIdx,
 };
 use bevy_northstar::{plugin::NorthstarPlugin, prelude::*};
 
@@ -228,7 +228,7 @@ pub fn run() {
         OnExit(GameState::Loading),
         (actors::spawn_player, interactions::spawn_interxs),
     )
-    .add_systems(PreUpdate, (snapshot_cells, tilemap::snapshot_denizens))
+    .add_systems(PreUpdate, tilemap::snapshot_denizens)
     .add_systems(
         Update,
         (
@@ -305,6 +305,7 @@ pub fn run() {
             gamestate::reset_doors,
         ),
     )
+    .add_observer(on_discard_cell)
     .add_observer(click_observer)
     .add_observer(gamestate::player_died);
 
@@ -349,9 +350,15 @@ fn finalize_loading(
     next_screen.set(Screen::Title);
 }
 
-fn snapshot_cells(mut query: Query<(Ref<Cell>, &mut PreviousCell), Without<MapTile>>) {
-    for (curr, mut prev) in query.iter_mut() {
-        *prev = PreviousCell(*curr);
+fn on_discard_cell(
+    on: On<Discard, Cell>,
+    mut commands: Commands,
+    entities: Query<&Cell, With<PreviousCell>>,
+) {
+    if let Ok(cell) = entities.get(on.event_target()) {
+        commands
+            .entity(on.event_target())
+            .insert(PreviousCell(*cell));
     }
 }
 
