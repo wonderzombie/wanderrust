@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::interactions::Examine;
 
+#[derive(Debug)]
 pub enum Outcome {
     Failure,
     Success,
