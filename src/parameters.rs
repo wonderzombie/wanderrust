@@ -1,17 +1,65 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
-#[derive(Component, Debug, Default, Copy, Clone, Serialize, Deserialize, Reflect, PartialEq)]
+#[derive(
+    Component,
+    Debug,
+    Default,
+    Deref,
+    DerefMut,
+    Copy,
+    Clone,
+    Serialize,
+    Deserialize,
+    Reflect,
+    PartialEq,
+)]
 #[reflect(Component)]
 pub struct Health {
-    pub hp: i32,
+    #[deref]
+    pub hp: u32,
+    pub max: u32,
     pub is_dead: bool,
 }
 
 impl Health {
-    pub fn new(hp: i32) -> Self {
-        Self { hp, is_dead: false }
+    pub fn new(max: u32) -> Self {
+        Self {
+            hp: max,
+            is_dead: false,
+            max,
+        }
+    }
+
+    pub fn set(&mut self, new_val: u32) -> Self {
+        self.hp = if new_val > self.max {
+            self.max
+        } else {
+            new_val
+        };
+
+        self.is_dead = self.hp == 0;
+
+        *self
+    }
+}
+
+impl Add<u32> for Health {
+    type Output = Health;
+
+    fn add(mut self, rhs: u32) -> Self::Output {
+        self.set(self.hp.saturating_add(rhs));
+        self
+    }
+}
+
+impl Sub<u32> for Health {
+    type Output = Health;
+
+    fn sub(mut self, rhs: u32) -> Self::Output {
+        self.set(self.hp.saturating_sub(rhs));
+        self
     }
 }
 
@@ -95,7 +143,7 @@ impl BaseParameters {
     }
 
     pub fn health(&self) -> Health {
-        Health::new(self.0.max_hp as i32)
+        Health::new(self.0.max_hp)
     }
 
     pub fn params(&self) -> Parameters {

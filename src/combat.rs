@@ -179,7 +179,7 @@ pub fn process_attacks(
         let damage = atk_params.attack - def_params.defense;
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);
-            defender.hp = defender.hp.saturating_sub(damage);
+            defender.hp = defender.hp.saturating_sub(damage.cast_unsigned());
             // log.write(LogEvent {
             //     txt: format!("{attacker_name} hits {defender_name}!"),
             //     color: Some(colors::KENNEY_GOLD),

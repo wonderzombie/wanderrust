@@ -504,7 +504,7 @@ fn process_actions(
         }
         Act::Flask => {
             if flasks.0 > 0 {
-                health.hp = params.max_hp.cast_signed().min(health.hp + 8);
+                health.hp = params.max_hp.min(health.hp + 8);
                 flasks.0 -= 1;
                 commands
                     .entity(action.entity)
