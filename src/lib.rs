@@ -34,6 +34,7 @@ mod procgen;
 mod ptable;
 mod sounds;
 mod status_panel;
+mod testing;
 pub mod tilemap;
 pub mod tiles;
 mod title_screen;

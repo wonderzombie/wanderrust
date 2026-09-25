@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use itertools::Itertools;
-use std::fmt::Display;
+use std::{fmt::Display, ops::Add, ops::Sub};
 
 use crate::{
     actors::{Flasks, Player},
@@ -31,6 +31,43 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Resource)]
 pub struct WorldClock(usize);
 
+#[derive(Deref, Debug, PartialEq, Eq, Ord, PartialOrd, Reflect)]
+pub struct Tick(pub usize);
+
+impl Display for Tick {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "T @ {}", self.0)
+    }
+}
+
+impl Add<usize> for Tick {
+    type Output = Tick;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        Tick(self.0 + rhs)
+    }
+}
+
+impl Sub<usize> for Tick {
+    type Output = Tick;
+
+    fn sub(self, rhs: usize) -> Self::Output {
+        Tick(self.0 - rhs)
+    }
+}
+
+impl From<&Recovery> for Tick {
+    fn from(Recovery(t): &Recovery) -> Self {
+        Tick(*t)
+    }
+}
+
+impl From<&Tick> for Recovery {
+    fn from(Tick(t): &Tick) -> Self {
+        Recovery(*t)
+    }
+}
+
 impl WorldClock {
     pub fn tick(&mut self) -> &mut Self {
         self.0 += 1;
@@ -45,8 +82,8 @@ impl WorldClock {
         self
     }
 
-    pub fn now(&self) -> usize {
-        self.0
+    pub fn now(&self) -> Tick {
+        Tick(self.0)
     }
 
     pub fn recovery_after(&self, action: usize) -> Recovery {
@@ -199,32 +236,43 @@ pub fn ramify(
     assert!(!actors.is_empty(), "no eligible actors to take turns?!");
 
     let now = world_clock.recovery_now();
-    let next_up = actors
-        .iter()
-        .map(|(nt, r_opt)| {
-            let r = match r_opt {
-                Some(r) => r,
-                None => {
-                    warn!("found entity with Turn but not recovery: {nt}");
-                    commands.entity(nt.entity).insert(now);
-                    &now
-                }
-            };
-            (nt, *r)
-        })
-        .min_set_by_key(|it| it.1);
 
-    let (name_or_nt, Recovery(tick)) = next_up.first().unwrap();
+    let entities_with_recovery = actors.iter().map(|(nt, r_opt)| {
+        let r = match r_opt {
+            Some(r) => r,
+            None => {
+                warn!("found entity with Turn but not recovery: {nt}");
+                commands.entity(nt.entity).insert(now);
+                &now
+            }
+        };
+        (nt.entity, *r)
+    });
+
+    let (next_up, tick) = select_next(entities_with_recovery);
+
     world_clock.advance_to(*tick);
 
-    if next_up.iter().any(|it| it.0.entity == *player) {
-        trace!("player turn; awaiting input");
+    if next_up.iter().any(|it| *it == *player) {
+        println!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
         return;
-    } else {
-        trace!("next entity: {:?} {}", name_or_nt.name, name_or_nt.entity);
+    } else if let Some(&first) = next_up.first()
+        && let Ok((name_or_nt, _)) = actors.get(first)
+    {
+        println!("next entity: {:?}", name_or_nt);
         commands.insert_resource(NextTurn(name_or_nt.entity));
     }
+}
+
+pub fn select_next(actors: impl Iterator<Item = (Entity, Recovery)>) -> (Vec<Entity>, Tick) {
+    let next_up = actors.min_set_by_key(|it| it.1.0);
+    let entities = next_up.iter().map(|(nt, _)| *nt).collect_vec();
+    let (_, r) = next_up
+        .first()
+        .expect("expected there to be at least one entity; found none");
+
+    (entities, r.into())
 }
 
 pub fn tick_turn_timer(time: Res<Time>, mut turn_timer: ResMut<TurnTimer>) {
@@ -306,5 +354,198 @@ pub fn reset_doors(
     for (door_nt, mut door) in doors.iter_mut() {
         door.is_open = false;
         commands.entity(door_nt).insert(door.tile_idx);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use bevy::state::app::StatesPlugin;
+
+    use super::*;
+    use crate::testing::*;
+    use std::assert_matches;
+
+    fn spawn_with_rec(world: &mut World, recovery: usize) -> (Entity, Recovery) {
+        let rec = Recovery(recovery);
+        (world.spawn(rec).id(), rec)
+    }
+
+    #[test]
+    fn test_select_next_simple() {
+        let mut app = init_app();
+
+        let entities = vec![
+            spawn_with_rec(app.world_mut(), 10),
+            spawn_with_rec(app.world_mut(), 100),
+        ];
+
+        let (next_up, tick) = select_next(entities.into_iter());
+
+        assert_eq!(1, next_up.len());
+        assert_eq!(10, *tick);
+    }
+
+    #[test]
+    fn test_select_next() {
+        let mut app = init_app();
+
+        let entities = vec![
+            spawn_with_rec(app.world_mut(), 10),
+            spawn_with_rec(app.world_mut(), 10),
+            spawn_with_rec(app.world_mut(), 100),
+            spawn_with_rec(app.world_mut(), 1000),
+        ];
+
+        let (next_up, tick) = select_next(entities.iter().copied());
+        assert_eq!(2, next_up.len());
+        assert_eq!(10, *tick);
+
+        assert!(next_up.contains(&entities[0].0));
+        assert!(next_up.contains(&entities[1].0));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_select_next_empty() {
+        let entities: Vec<(Entity, Recovery)> = vec![];
+        let _ = select_next(entities.iter().copied());
+    }
+
+    #[test]
+    fn test_ramify() {
+        let mut app = init_app();
+        app.add_plugins(StatesPlugin);
+        app.insert_resource(WorldClock(0));
+        app.insert_state(GameState::Ramifying);
+        app.add_systems(PreUpdate, ramify);
+
+        {
+            let mut commands = app.world_mut().commands();
+            commands.spawn((Name("PlayerRecovery10".into()), Player, Turn, Recovery(10)));
+            commands.spawn((Name("Recovery100".into()), Turn, Recovery(100)));
+        }
+
+        app.update();
+
+        let clock = app
+            .world()
+            .get_resource::<WorldClock>()
+            .expect("expected WorldClock to be present in world");
+        assert_eq!(clock.now(), Tick(10));
+
+        let next_turn = app.world().get_resource::<NextTurn>();
+        assert_matches!(next_turn, None::<&NextTurn>);
+
+        let state = app
+            .world()
+            .get_resource::<State<GameState>>()
+            .expect("expected GameState to be present in world")
+            .get();
+        assert_eq!(&GameState::AwaitingInput, state);
+    }
+
+    #[test]
+    fn test_ramify_enemy_turn() {
+        #[derive(Component)]
+        struct ExpectedNext;
+
+        let mut app = init_app();
+        app.add_plugins(StatesPlugin);
+        app.insert_resource(WorldClock(0));
+        app.insert_state(GameState::Ramifying);
+        app.add_systems(PreUpdate, ramify);
+
+        {
+            let mut commands = app.world_mut().commands();
+            commands.spawn((
+                Name("PlayerRecovery100".into()),
+                Player,
+                Turn,
+                Recovery(100),
+            ));
+            commands.spawn((Name("Recovery10".into()), Turn, Recovery(10), ExpectedNext));
+        }
+
+        app.update();
+
+        let state = app
+            .world()
+            .get_resource::<State<GameState>>()
+            .expect("expected GameState to be present in world")
+            .get();
+        assert_eq!(
+            &GameState::Ramifying,
+            state,
+            "expected GameState to remain in Ramifying because it isn't player's turn"
+        );
+
+        let clock = app
+            .world()
+            .get_resource::<WorldClock>()
+            .expect("expected WorldClock to be present in world");
+        assert_eq!(
+            clock.now(),
+            Tick(10),
+            "world clock should have advanced to enemy's recovery tick"
+        );
+
+        let NextTurn(next_up) = app
+            .world()
+            .get_resource::<NextTurn>()
+            .expect("expected NextTurn to exist since it is not the player's turn");
+
+        app.world()
+            .get::<ExpectedNext>(*next_up)
+            .expect("expected {next_up} have `ExpectedNext`");
+    }
+
+    #[test]
+    fn test_ramify_with_recovery_missing() {
+        #[derive(Component)]
+        struct ExpectedNext;
+
+        let mut app = init_app();
+        app.add_plugins(StatesPlugin);
+        app.insert_resource(WorldClock(0));
+        app.insert_state(GameState::Ramifying);
+        app.add_systems(PreUpdate, ramify);
+
+        {
+            let mut commands = app.world_mut().commands();
+            commands.spawn((
+                Name("RecoveryMissing".into()),
+                Turn,
+                ExpectedNext, // no Recovery
+            ));
+            commands.spawn((
+                Name("PlayerRecovery100".into()),
+                Player,
+                Turn,
+                Recovery(100),
+            ));
+            commands.spawn((Name("Recovery10".into()), Turn, Recovery(10)));
+        }
+
+        app.update();
+
+        let NextTurn(next_up) = app
+            .world()
+            .get_resource::<NextTurn>()
+            .expect("expected NextTurn to exist since it is not the player's turn");
+
+        app.world()
+            .get::<ExpectedNext>(*next_up)
+            .expect("expected {next_up} have `ExpectedNext`");
+
+        let clock = app
+            .world()
+            .get_resource::<WorldClock>()
+            .expect("expected WorldClock to be present in world");
+
+        assert_eq!(
+            clock.now(),
+            Tick(0),
+            "entity without Recovery should go first without advancing WorldClock"
+        );
     }
 }
