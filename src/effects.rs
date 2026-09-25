@@ -51,7 +51,7 @@ mod tests {
     use crate::{Bestiary, equipment::EquippedBy, items::Slot};
     #[test]
     fn test_apply_params_modifiers() -> Result<(), BevyError> {
-        let mut app = _init_app();
+        let mut app = init_app();
         app.add_systems(Update, apply_params_modifiers);
 
         let player_nt = app
@@ -89,7 +89,7 @@ mod tests {
         Ok(())
     }
 
-    fn _init_app() -> App {
+    fn init_app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app

@@ -251,7 +251,7 @@ mod tests {
 
     use super::*;
 
-    fn _init_app() -> App {
+    fn init_app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app
@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn test_insert_into_basic() {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         let id = app.world_mut().spawn_empty().id();
 
@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_insert_into_with_chest() {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         let id = app.world_mut().spawn_empty().id();
 

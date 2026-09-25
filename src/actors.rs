@@ -308,13 +308,13 @@ mod tests {
 
     use super::*;
 
-    fn _init_app() -> App {
+    fn init_app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app
     }
 
-    fn _spawn_tiles(mut commands: Commands, size: u32) -> Entity {
+    fn spawn_tiles(mut commands: Commands, size: u32) -> Entity {
         let ntiles = size.pow(2);
         let mut storage = TileStorage::new(Dimensions {
             width: size,
@@ -341,11 +341,11 @@ mod tests {
 
     #[test]
     fn test_sync_occupied_tile() -> Result<()> {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         app.add_systems(Update, sync_occupied_tiles);
 
-        let parent = _spawn_tiles(app.world_mut().commands(), 5);
+        let parent = spawn_tiles(app.world_mut().commands(), 5);
         app.update();
 
         let occupied = app
@@ -389,12 +389,12 @@ mod tests {
 
     #[test]
     fn test_sync_occupied_tile_update_prev_cell() -> Result<()> {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         app.add_systems(Update, sync_occupied_tiles)
             .add_observer(crate::on_discard_cell);
 
-        let parent = _spawn_tiles(app.world_mut().commands(), 5);
+        let parent = spawn_tiles(app.world_mut().commands(), 5);
         app.update();
 
         let first_cell = Cell::new(1, 1);
@@ -440,15 +440,6 @@ mod tests {
             "expected previous cell to be first inserted cell",
         );
 
-        let Some(storage) = app.world().entity(parent).get::<TileStorage>() else {
-            panic!("expected tilestorage to be present on parent of tiles");
-        };
-        let storage = storage.clone();
-
-        let Some(should_be_occupied) = storage.get(&second_cell).clone() else {
-            panic!("expected tilestorage to contain cell (1, 1)");
-        };
-
         assert_eq!(
             1,
             app.world_mut()
@@ -457,13 +448,19 @@ mod tests {
                 .count()
         );
 
-        let should_be_none = storage
-            .get(&first_cell)
-            .and_then(|nt| app.world().get::<Occupied>(nt).clone())
-            .clone();
+        let storage = app
+            .world()
+            .entity(parent)
+            .get::<TileStorage>()
+            .expect("expected tilestorage to be present");
 
-        assert!(app.world().get::<Occupied>(should_be_occupied).is_some());
-        assert!(should_be_none.is_none());
+        let (expect_not_occupied, expect_occupied) = (
+            storage.get(&first_cell).unwrap(),
+            storage.get(&second_cell).unwrap(),
+        );
+
+        assert!(app.world().get::<Occupied>(expect_occupied).is_some());
+        assert!(app.world().get::<Occupied>(expect_not_occupied).is_none());
 
         Ok(())
     }

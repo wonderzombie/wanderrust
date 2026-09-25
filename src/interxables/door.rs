@@ -82,7 +82,7 @@ mod tests {
 
     use super::*;
 
-    fn _init_app() -> App {
+    fn init_app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_do_open_door_simple() -> Result<(), BevyError> {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         app.add_message::<LogEvent>();
 
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_do_open_door_missing_required_key() -> Result<(), BevyError> {
-        let mut app = _init_app();
+        let mut app = init_app();
 
         app.add_message::<LogEvent>();
 
