@@ -349,3 +349,72 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(Last, handle_dead);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::*;
+    use std::assert_matches;
+
+    #[test]
+    fn test_detect_mobs() {
+        let mut app = init_app();
+
+        app.add_systems(Update, detect_mobs);
+
+        let (chicken, bat) = {
+            let mut commands = app.world_mut().commands();
+            let chicken = commands
+                .spawn((
+                    Mob {
+                        name: "Poppy".into(),
+                        tile_idx: TileIdx::Chicken,
+                    },
+                    Name("Poppy".into()),
+                    Cell::new(0, 0),
+                    TileIdx::Chicken,
+                ))
+                .id();
+            let bat = commands
+                .spawn((
+                    Mob {
+                        name: "Bat".into(),
+                        tile_idx: TileIdx::Bat,
+                    },
+                    Name("Bat".into()),
+                    Cell::new(1, 0),
+                    TileIdx::Bat,
+                ))
+                .id();
+            (chicken, bat)
+        };
+
+        app.update();
+
+        let beast = app
+            .world()
+            .get::<bestiary::Bestiary>(bat)
+            .expect("expected entity spawned as bat to be present");
+        assert_matches!(beast, bestiary::Bestiary::Bat);
+
+        let beast = app
+            .world()
+            .get::<bestiary::Bestiary>(chicken)
+            .expect("expected entity spawned as bat to be present");
+        assert_matches!(beast, bestiary::Bestiary::Chicken);
+
+        let name = app.world().get::<Name>(bat).unwrap();
+        assert_eq!("Bat".to_string(), name.to_string());
+        let attitude = app.world().get::<Attitude>(bat).unwrap();
+        assert_matches!(attitude, Attitude::Hostile);
+        let combatant = app.world().get::<Combatant>(bat);
+        assert!(combatant.is_some());
+
+        let name = app.world().get::<Name>(chicken).unwrap();
+        assert_eq!("Poppy".to_string(), name.to_string());
+        let attitude = app.world().get::<Attitude>(chicken).unwrap();
+        assert_matches!(attitude, Attitude::Passive);
+        let combatant = app.world().get::<Combatant>(chicken);
+        assert!(combatant.is_none());
+    }
+}
