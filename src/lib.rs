@@ -160,7 +160,7 @@ pub fn run() {
     .add_plugins(gamestate::plugin)
     .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
     .add_plugins(typewriter::plugin)
-    .add_plugins(debug::DebugPlugin)
+    .add_plugins(debug::plugin)
     .add_plugins(title_screen::plugin)
     .add_plugins(inventory_menu::plugin)
     .add_plugins(equipment_menu::plugin)

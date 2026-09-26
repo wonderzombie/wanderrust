@@ -180,36 +180,32 @@ pub fn on_log_message(input: Res<ButtonInput<KeyCode>>, mut log_events: MessageW
     });
 }
 
-pub struct DebugPlugin;
-
-impl Plugin for DebugPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            ((
-                (
-                    on_button_input,
-                    on_zoom_button_input,
-                    on_toggle_visibilities,
-                    on_log_message,
-                )
-                    .chain()
-                    .run_if(in_state(DebugState::Enabled)),
-                on_toggle_debug,
-            ),),
-        )
-        .insert_state(DebugState::Enabled)
-        .add_plugins(RemotePlugin::default())
-        .add_plugins(RemoteHttpPlugin::default())
-        .add_plugins(DebugPickingPlugin)
-        .insert_resource(DebugPickingMode::Normal)
-        .add_observer(
-            |on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
-                if s.get() == &DebugState::Enabled {
-                    info!("clicked: {on:?}");
-                    commands.entity(on.entity).log_components();
-                }
-            },
-        );
-    }
+pub fn plugin(app: &mut App) {
+    app.add_systems(
+        Update,
+        ((
+            (
+                on_button_input,
+                on_zoom_button_input,
+                on_toggle_visibilities,
+                on_log_message,
+            )
+                .chain()
+                .run_if(in_state(DebugState::Enabled)),
+            on_toggle_debug,
+        ),),
+    )
+    .insert_state(DebugState::Enabled)
+    .add_plugins(RemotePlugin::default())
+    .add_plugins(RemoteHttpPlugin::default())
+    .add_plugins(DebugPickingPlugin)
+    .insert_resource(DebugPickingMode::Normal)
+    .add_observer(
+        |on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
+            if s.get() == &DebugState::Enabled {
+                info!("clicked: {on:?}");
+                commands.entity(on.entity).log_components();
+            }
+        },
+    );
 }
