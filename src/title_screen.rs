@@ -5,15 +5,11 @@ use crate::{
     colors, debug::DebugState, gamestate::Screen, typewriter::Typewriter, ui::theme::pcsr_font,
 };
 
-pub struct TitleScreenPlugin;
-
-impl Plugin for TitleScreenPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_state(Screen::Title)
-            .add_systems(OnEnter(Screen::Title), setup)
-            .add_systems(OnExit(Screen::Title), discard)
-            .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
-    }
+pub fn plugin(app: &mut App) {
+    app.insert_state(Screen::Title)
+        .add_systems(OnEnter(Screen::Title), setup)
+        .add_systems(OnExit(Screen::Title), discard)
+        .add_systems(Update, interaction_system.run_if(in_state(Screen::Title)));
 }
 
 #[derive(Component, Clone, Default, Debug)]
