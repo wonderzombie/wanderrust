@@ -122,6 +122,7 @@ impl Inventory {
         self.0.is_empty()
     }
 
+    /// Returns a new version of [`Inventory`] with this item. Does not dedupe.
     pub fn include_item(&mut self, itam: ItemId, q: Quantity) -> &mut Self {
         self.0.push((itam, q).into());
         self
@@ -135,6 +136,7 @@ impl Inventory {
         self.0.iter()
     }
 
+    /// Returns labels that include item and quantity like `"Gold 2"`.
     pub fn as_labels(&self) -> Vec<String> {
         self.iter_items()
             .map(|ItemEntry(id, q)| format!("{} {q}", id.def()))
@@ -167,6 +169,7 @@ impl Inventory {
         Inventory(vec![(itam, q).into()])
     }
 
+    /// Return an [`Inventory`] from [`ItemId::from_spec`].
     pub fn from_str(item_spec: impl AsRef<str>) -> Option<Inventory> {
         let spec: String = item_spec.as_ref().into();
         if spec.is_empty() {
@@ -177,6 +180,7 @@ impl Inventory {
         Some(Inventory::with_item(item, qty))
     }
 
+    /// Returns an [`Inventory`] from a list of item specs. See also [`Inventory::from_str`].
     pub fn from_str_array<S, I>(item_specs: I) -> Option<Inventory>
     where
         S: AsRef<str> + Clone + std::fmt::Debug,
@@ -194,6 +198,7 @@ impl Inventory {
 #[derive(Component, Reflect, Debug)]
 #[relationship(relationship_target = Carrying)]
 #[reflect(Component)]
+#[component(immutable)]
 pub(super) struct CarriedBy(pub Entity);
 
 #[derive(Component, Reflect, Debug, Serialize, Deserialize, Default)]
@@ -255,6 +260,7 @@ impl InventoryChange {
             .collect()
     }
 
+    /// Creates a batch of [`InventoryChange`] which add [`Inventory`] to the given `Entity`.
     pub(crate) fn acquire(entity: Entity, inv: Inventory) -> Vec<InventoryChange> {
         Self::from_inv(entity, inv, Change::Acquired)
     }
@@ -287,6 +293,7 @@ pub(super) fn process_inventory_changes(
     }
 }
 
+/// Actuates [`InventoryChange`] for [`Change::Removed`]. See also [`InventoryChange::remove`].
 fn remove<'a>(
     commands: &mut Commands,
     change: &InventoryChange,
@@ -318,6 +325,7 @@ fn remove<'a>(
     }
 }
 
+/// Actuates [`InventoryChange`] for [`Change::Acquired`]. See also [`InventoryChange::acquire`].
 fn acquire<'a>(
     commands: &mut Commands,
     InventoryChange {
@@ -346,6 +354,7 @@ fn acquire<'a>(
         .insert_if_new(CarriedBy(*entity));
 }
 
+/// Inserts as a [`Resource`] a snapshot of player's inventory as [`Inventory`].
 fn snapshot_inventory(
     mut commands: Commands,
     player_carrying: Single<&Carrying, With<Player>>,

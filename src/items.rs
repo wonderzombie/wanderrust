@@ -92,6 +92,7 @@ macro_rules! define_items {
 }
 
 impl ItemId {
+    /// Given a spec like `"gold:2"`, returns `(ItemId::Gold, Quantity(2))`.
     pub fn from_spec(item_spec: impl AsRef<str>) -> Option<(Self, Quantity)> {
         if let Some((it, n)) = item_spec.as_ref().split_once(':') {
             let item = ItemId::from_label(it)?;
