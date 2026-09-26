@@ -13,22 +13,18 @@ use crate::{
     ui::theme::pcsr_font,
 };
 
-pub struct InventoryMenuPlugin;
-
-impl Plugin for InventoryMenuPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Modal::Inventory), (setup, populate).chain())
-            .add_systems(OnExit(Modal::Inventory), discard)
-            .add_systems(
-                Update,
-                (
-                    interaction_system.run_if(in_state(Modal::Inventory)),
-                    update_highlighted.run_if(in_state(Modal::Inventory)),
-                ),
-            )
-            .init_resource::<PrevSelection>()
-            .add_observer(toggle_menu);
-    }
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(OnEnter(Modal::Inventory), (setup, populate).chain())
+        .add_systems(OnExit(Modal::Inventory), discard)
+        .add_systems(
+            Update,
+            (
+                interaction_system.run_if(in_state(Modal::Inventory)),
+                update_highlighted.run_if(in_state(Modal::Inventory)),
+            ),
+        )
+        .init_resource::<PrevSelection>()
+        .add_observer(toggle_menu);
 }
 
 #[derive(Component, Copy, Clone, Debug, Default)]

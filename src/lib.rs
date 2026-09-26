@@ -162,7 +162,7 @@ pub fn run() {
     .add_plugins(typewriter::plugin)
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::TitleScreenPlugin)
-    .add_plugins(inventory_menu::InventoryMenuPlugin)
+    .add_plugins(inventory_menu::plugin)
     .add_plugins(equipment_menu::EquipmentMenuPlugin)
     .add_plugins(dialogue_modal::plugin)
     .add_plugins(equipment::plugin)
