@@ -14,25 +14,21 @@ use crate::{
     unwrap_collection,
 };
 
-pub struct EquipmentMenuPlugin;
-
-impl Plugin for EquipmentMenuPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Modal::Equipment), (setup, populate).chain())
-            .add_systems(OnExit(Modal::Equipment), discard)
-            .add_systems(
-                Update,
-                (
-                    interaction_system.run_if(in_state(Modal::Equipment)),
-                    update_highlighted.run_if(in_state(Modal::Equipment)),
-                    refresh_labels
-                        .run_if(in_state(Modal::Equipment))
-                        .run_if(on_message::<EquipmentChanged>),
-                ),
-            )
-            .init_resource::<PrevSelection>()
-            .add_observer(toggle_menu);
-    }
+pub fn plugin(app: &mut App) {
+    app.add_systems(OnEnter(Modal::Equipment), (setup, populate).chain())
+        .add_systems(OnExit(Modal::Equipment), discard)
+        .add_systems(
+            Update,
+            (
+                interaction_system.run_if(in_state(Modal::Equipment)),
+                update_highlighted.run_if(in_state(Modal::Equipment)),
+                refresh_labels
+                    .run_if(in_state(Modal::Equipment))
+                    .run_if(on_message::<EquipmentChanged>),
+            ),
+        )
+        .init_resource::<PrevSelection>()
+        .add_observer(toggle_menu);
 }
 
 #[derive(Component, Copy, Clone, Debug, Default)]

@@ -163,7 +163,7 @@ pub fn run() {
     .add_plugins(debug::DebugPlugin)
     .add_plugins(title_screen::plugin)
     .add_plugins(inventory_menu::plugin)
-    .add_plugins(equipment_menu::EquipmentMenuPlugin)
+    .add_plugins(equipment_menu::plugin)
     .add_plugins(dialogue_modal::plugin)
     .add_plugins(equipment::plugin)
     .add_plugins(status_panel::plugin)
