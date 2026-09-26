@@ -162,12 +162,16 @@ pub fn run() {
 
     app.add_systems(
         Startup,
-        (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
+        (
+            atlas::load_spritesheet,
+            sounds::load_sounds,
+            crate::load_ldtk,
+        ),
     )
     .add_systems(
         Update,
         (
-            finalize_starting
+            crate::finalize_starting
                 .run_if(resource_exists::<sounds::Sounds>)
                 .run_if(resource_exists::<atlas::SpriteAtlas>),
             sounds::on_loaded.run_if(not(resource_exists::<sounds::Sounds>)),
@@ -176,7 +180,11 @@ pub fn run() {
     )
     .add_systems(
         OnExit(GameState::Starting),
-        (camera::setup_camera, tooltip::setup, set_mouse_cursor),
+        (
+            camera::setup_camera,
+            tooltip::setup,
+            crate::set_mouse_cursor,
+        ),
     )
     .add_systems(
         OnTransition::<GameState> {
@@ -205,7 +213,7 @@ pub fn run() {
             )
                 .in_set(GameSystem::SetupGrid)
                 .after(GameSystem::SetupTiles),
-            finalize_loading.after(GameSystem::SetupGrid),
+            crate::finalize_loading.after(GameSystem::SetupGrid),
         ),
     )
     .add_systems(
@@ -220,10 +228,10 @@ pub fn run() {
                 .run_if(in_state(GameState::AwaitingInput))
                 .before(GameSystem::Ramifications),
             (
-                process_actions,
+                crate::process_actions,
                 inventory::process_inventory_changes,
                 combat::process_attacks,
-                handle_pending_transition,
+                crate::handle_pending_transition,
             )
                 .chain()
                 .after(PathingSet)
@@ -289,9 +297,9 @@ pub fn run() {
             gamestate::reset_doors,
         ),
     )
-    .add_observer(on_discard_cell)
-    .add_observer(click_observer)
-    .add_observer(on_discard_cell)
+    .add_observer(crate::on_discard_cell)
+    .add_observer(crate::click_observer)
+    .add_observer(crate::on_discard_cell)
     .add_observer(gamestate::player_died);
 
     if args.inspector {
