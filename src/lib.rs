@@ -156,28 +156,11 @@ pub fn run() {
         ..Default::default()
     })
     .insert_state(GameState::Starting)
-    .insert_state(Modal::None)
-    .add_plugins(gamestate::plugin)
-    .add_plugins(NorthstarPlugin::<CardinalNeighborhood>::default())
-    .add_plugins(typewriter::plugin)
-    .add_plugins(debug::plugin)
-    .add_plugins(title_screen::plugin)
-    .add_plugins(inventory_menu::plugin)
-    .add_plugins(equipment_menu::plugin)
-    .add_plugins(dialogue_modal::plugin)
-    .add_plugins(equipment::plugin)
-    .add_plugins(status_panel::plugin)
-    .add_plugins(you_died_screen::plugin)
-    .add_plugins(interactions::plugin)
-    .add_plugins(inventory::plugin)
-    .add_plugins(mobs::plugin)
-    .add_plugins(message_log::plugin)
-    .add_plugins(intro_screen::plugin)
-    .add_plugins(ui::plugin)
-    .add_plugins(grid::plugin)
-    .add_plugins(effects::plugin)
-    .add_plugins(interxables::plugin)
-    .add_systems(
+    .insert_state(Modal::None);
+
+    add_wanderrust_plugins(&mut app);
+
+    app.add_systems(
         Startup,
         (atlas::load_spritesheet, sounds::load_sounds, load_ldtk),
     )
@@ -316,6 +299,41 @@ pub fn run() {
     }
 
     app.run();
+}
+
+fn add_wanderrust_plugins(app: &mut App) {
+    app.add_plugins(debug::plugin)
+        .add_plugins((
+            // Screens
+            intro_screen::plugin,
+            title_screen::plugin,
+            you_died_screen::plugin,
+        ))
+        .add_plugins((
+            // UI
+            dialogue_modal::plugin,
+            message_log::plugin,
+            status_panel::plugin,
+            typewriter::plugin,
+            ui::plugin,
+        ))
+        .add_plugins((
+            // Menus
+            inventory_menu::plugin,
+            equipment_menu::plugin,
+        ))
+        .add_plugins((
+            // Gameplay
+            effects::plugin,
+            equipment::plugin,
+            gamestate::plugin,
+            grid::plugin,
+            interactions::plugin,
+            interxables::plugin,
+            inventory::plugin,
+            mobs::plugin,
+            NorthstarPlugin::<CardinalNeighborhood>::default(),
+        ));
 }
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
