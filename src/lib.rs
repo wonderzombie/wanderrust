@@ -147,7 +147,6 @@ pub fn run() {
             }),
     )
     .add_message::<combat::Attack>()
-    .insert_resource(TurnDelay(0.15))
     .insert_resource(CLEAR_COLOR)
     .insert_resource(LdtkMapPath(args.ldtk_map_path))
     .insert_resource(SpritePickingSettings {
@@ -299,8 +298,7 @@ pub fn run() {
     )
     .add_observer(crate::on_discard_cell)
     .add_observer(crate::click_observer)
-    .add_observer(crate::on_discard_cell)
-    .add_observer(gamestate::player_died);
+    .add_observer(crate::on_discard_cell);
 
     if args.inspector {
         insert_fq_plugins(&mut app);

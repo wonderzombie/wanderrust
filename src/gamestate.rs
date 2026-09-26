@@ -17,6 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(player_died)
         .init_resource::<WorldClock>()
         .init_resource::<TurnTimer>()
+        .insert_resource(TurnDelay(0.15))
         .add_systems(
             Update,
             ramify
