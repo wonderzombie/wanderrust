@@ -171,6 +171,7 @@ impl TurnTimer {
     }
 }
 
+/// Leave the [`Option`] empty to use [`DEFAULT_TURN_DELAY`].
 #[derive(Default)]
 pub struct AddTurnTimerDelay(pub Option<f32>);
 
