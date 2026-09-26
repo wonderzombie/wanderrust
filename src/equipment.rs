@@ -34,11 +34,13 @@ fn notify(mut w: DeferredWorld, _c: HookContext) {
     w.write_message_default::<EquipmentChanged>();
 }
 
+/// Defines a collection of [`Slot`].
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
 pub struct Slots(pub Vec<Slot>);
 
 impl Slots {
+    /// Returns a standard list of [`Slot`] for such as a human-adjacent creature.
     pub fn standard() -> Self {
         Self(vec![
             Slot::Armor,
@@ -54,16 +56,8 @@ impl Slots {
 #[reflect(Component)]
 pub struct HasEquipped(Vec<Entity>);
 
-impl IntoIterator for HasEquipped {
-    type Item = Entity;
-
-    type IntoIter = vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
+/// [`Modifiers`] is a newtype over [`Parameters`] which is combined with
+/// [`crate::parameters::BaseParameters`].
 #[derive(Component, Default, Hash, Debug, Copy, Clone, Reflect, PartialEq, Eq)]
 pub struct Modifiers(pub Parameters);
 
@@ -90,12 +84,16 @@ pub struct ToggleEquipped {
     pub equipment: Entity,
 }
 
+/// Returns which item (if any) is equipped in `slot`.
 fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
     equipped
         .into_iter()
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))
 }
 
+/// Handles [`ToggleEquipped`] by marking a piece of equipment as [`EquippedBy`],
+/// removing [`CarriedBy`] accordingly, removing [`EquippedBy`] (and restoring
+/// [`CarriedBy`]) for an item previously equipped in the same [`Slot`] (if any).
 pub fn on_toggle_equipped(
     event: On<ToggleEquipped>,
     mut commands: Commands,

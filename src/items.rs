@@ -145,6 +145,7 @@ impl Display for ItemDef {
     }
 }
 
+/// [`Slot`] defines all possible equipment slots.
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
 pub enum Slot {
     #[default]
@@ -155,6 +156,7 @@ pub enum Slot {
     Trinket,
 }
 
+/// Used to categorize items very roughly by tier.
 #[derive(
     Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, Ord, PartialOrd,
 )]
@@ -164,6 +166,7 @@ pub enum Rating {
     A,
 }
 
+/// Defines which [`Slot`] this equipment uses and the [`Modifiers`] conferred when worn.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct EquipDef {
     pub slot: Slot,
