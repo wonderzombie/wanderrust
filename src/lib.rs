@@ -167,7 +167,7 @@ pub fn run() {
     .add_plugins(dialogue_modal::plugin)
     .add_plugins(equipment::plugin)
     .add_plugins(status_panel::plugin)
-    .add_plugins(you_died_screen::YouDiedScreenPlugin)
+    .add_plugins(you_died_screen::plugin)
     .add_plugins(interactions::plugin)
     .add_plugins(inventory::plugin)
     .add_plugins(mobs::plugin)

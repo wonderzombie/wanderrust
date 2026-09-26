@@ -2,15 +2,11 @@ use bevy::prelude::*;
 
 use crate::gamestate::{GameState, ResetScenario, Screen};
 
-pub struct YouDiedScreenPlugin;
-
-impl Plugin for YouDiedScreenPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_state(Screen::YouDied)
-            .add_systems(OnEnter(Screen::YouDied), setup)
-            .add_systems(OnExit(Screen::YouDied), discard)
-            .add_systems(Update, interaction_system.run_if(in_state(Screen::YouDied)));
-    }
+pub fn plugin(app: &mut App) {
+    app.insert_state(Screen::YouDied)
+        .add_systems(OnEnter(Screen::YouDied), setup)
+        .add_systems(OnExit(Screen::YouDied), discard)
+        .add_systems(Update, interaction_system.run_if(in_state(Screen::YouDied)));
 }
 
 #[derive(Component, Debug)]
