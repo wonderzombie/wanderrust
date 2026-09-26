@@ -41,6 +41,7 @@ pub fn setup(mut commands: Commands) {
     commands.spawn_scene(scene());
 }
 
+/// Records the last selected item before despawning the menu.
 fn discard(
     mut commands: Commands,
     scene: Single<Entity, With<InventoryMenu>>,
@@ -228,6 +229,7 @@ fn interaction_system(
     }
 }
 
+/// Changes menu appearance when `SelectedItem` changes.
 fn update_highlighted(
     mut commands: Commands,
     highlighted: Single<Entity, Added<SelectedItem>>,

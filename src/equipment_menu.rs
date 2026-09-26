@@ -45,6 +45,7 @@ fn setup(mut commands: Commands) {
     commands.spawn_scene(scene());
 }
 
+/// Records the last selected item before despawning the menu.
 fn discard(
     mut commands: Commands,
     scene: Single<Entity, With<EquipmentMenu>>,
@@ -111,6 +112,7 @@ fn populate(
     }
 }
 
+/// Refreshes equipment labels, particularly equipped-or-not.
 fn refresh_labels(
     mut eq_item_rows: Query<(&mut Text, &EquipmentRow)>,
     all_items: Query<(&ItemId, Has<EquippedBy>)>,
@@ -246,6 +248,7 @@ fn scene() -> impl Scene {
     }
 }
 
+/// Changes menu appearance when `SelectedItem` changes.
 fn update_highlighted(
     mut commands: Commands,
     highlighted: Single<Entity, Added<SelectedItem>>,
