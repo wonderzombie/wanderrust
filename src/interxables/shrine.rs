@@ -13,7 +13,7 @@ use crate::message_log::LogEvent;
 use crate::tilemap::ActiveLevel;
 use crate::{colors, interacticator};
 
-#[derive(Component, Debug,  Reflect)]
+#[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct Shrine {
     pub(crate) id: String,
