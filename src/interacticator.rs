@@ -1,3 +1,19 @@
+//! `interacticator.rs` defines the basis of an interaction for items.
+//!
+//! [`interxable!`] defines an object, like a Door or Chest. [`interacticator!`] defines *an*
+//! interaction with an object, like `OpenDoor` or `CloseDoor`.
+//!
+//! The minial setup is a pair:
+//!
+//!     interxable!(Door defaults to OpenDoor);
+//!     interacticator!(OpenDoor on Door via do_open_door);
+//!
+//! `do_open_door` is ultimately invoked via [`run_system_cached_with`]. It receives `OpenDoor`
+//! as a `SystemInput`, at a minimum.
+//!
+//! To enable dispatch, modify `interxables.rs`, registering the `Interxable` type, and allowing
+//! (in the above example) us to register `default_dispatch::<Door>`.
+//!
 use bevy::prelude::*;
 
 use crate::interactions::Examine;
@@ -23,6 +39,8 @@ impl From<&Examine> for Actors {
     }
 }
 
+/// This dispatches each `Examine` message to each `Interaxcticator` `System`.
+/// Each `Interxable` that has an `Interacticator` is
 pub fn dispatch_default<T: Interxable<Args = Actors>>(
     mut examines: MessageReader<Examine>,
     targets: Query<(), With<T>>,
