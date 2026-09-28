@@ -52,6 +52,7 @@ pub enum Awareness {
     // Hunting,
 }
 
+/// Defines core attributes which may change according to [`crate::equipment::Modifiers`].
 #[derive(
     Component, Debug, Default, Hash, Clone, Copy, Serialize, Deserialize, Reflect, PartialEq, Eq,
 )]
@@ -68,6 +69,7 @@ pub struct Parameters {
 impl Add<Parameters> for Parameters {
     type Output = Self;
 
+    /// Combines two [`Parameters`].
     fn add(self, rhs: Parameters) -> Parameters {
         Self {
             attack: self.attack + rhs.attack,
@@ -80,6 +82,8 @@ impl Add<Parameters> for Parameters {
     }
 }
 
+/// Represents the basic, immutable stats for a creature.
+/// [`Parameters`] represents the modified version.
 #[derive(Component, Debug, Reflect)]
 #[component(immutable)]
 #[reflect(Component)]
