@@ -57,6 +57,7 @@ use crate::{
     bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     combat::Attack,
+    debug::DebugState,
     gamestate::{
         AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Recovery, Screen,
     },
@@ -391,13 +392,18 @@ fn click_observer(
     on: On<Pointer<Click>>,
     tile_cells: Query<(&TileIdx, &Cell, Option<&Name>)>,
     mut log: MessageWriter<LogEvent>,
+    debug_mode: Res<State<DebugState>>,
 ) {
     match tile_cells.get(on.event_target()) {
         Ok((tile_idx, &cell, name_opt)) => {
-            if on.button == PointerButton::Primary {
+            if on.button == PointerButton::Primary
+                && matches!(debug_mode.get(), DebugState::Enabled)
+            {
                 let name = name_opt
-                    .map(|it| it.to_string())
-                    .unwrap_or(format!("{tile_idx}"));
+                    .map(|it| it.as_str())
+                    .or(tile_idx.label())
+                    .map(String::from)
+                    .unwrap_or_else(|| tile_idx.to_string());
                 log.write((format!("{cell} = {name}").as_str(), Color::WHITE).into());
             }
         }
