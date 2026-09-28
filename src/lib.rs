@@ -518,6 +518,7 @@ fn process_actions(
                 });
             }
         },
+        // TODO: there is no explicit attack action yet.
         Act::Attack(_) => todo!(),
     }
 
