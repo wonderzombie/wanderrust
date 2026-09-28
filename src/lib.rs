@@ -65,7 +65,7 @@ use crate::{
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
     message_log::LogEvent,
-    parameters::{Health, Parameters},
+    parameters::{Flasks, Health, Parameters},
     tilemap::{ActiveLevel, EntryId, Level, Portal, WorldSpec},
     tiles::TileIdx,
 };
@@ -502,22 +502,22 @@ fn process_actions(
                 .entity(action.entity)
                 .queue(AddRecovery(params.move_speed));
         }
-        Act::Flask => {
-            if flasks.0 > 0 {
-                health.hp = params.max_hp.min(health.hp + 8);
-                flasks.0 -= 1;
+        Act::Flask => match flasks.consume() {
+            Some(healed) => {
+                *health = *health + healed;
                 commands
                     .entity(action.entity)
                     .queue(AddRecovery(params.move_speed))
                     .commands()
                     .trigger(sounds::Quaffed);
-            } else {
+            }
+            None => {
                 commands.write_message(LogEvent {
                     txt: "no more flasks.".into(),
                     color: Some(colors::KENNEY_RED),
                 });
             }
-        }
+        },
         Act::Attack(_) => todo!(),
     }
 

@@ -14,6 +14,7 @@ use crate::{
     inventory_menu,
     items::{ItemId, Quantity},
     light::{Emitter, LightLevel},
+    parameters::Flasks,
     tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
     tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
@@ -170,16 +171,6 @@ pub enum Act {
     Pass,
     Flask,
     Attack((Entity, Entity)),
-}
-
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Flasks(pub i32);
-
-impl Default for Flasks {
-    fn default() -> Self {
-        Self(3)
-    }
 }
 
 /// Handles player input and sends an [ActionAttempt] message derived from player input.

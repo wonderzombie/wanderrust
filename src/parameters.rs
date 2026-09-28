@@ -87,6 +87,30 @@ impl Add<Vision> for Vision {
     }
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct Flasks {
+    pub uses: i32,
+    pub heals: u32,
+}
+
+impl Default for Flasks {
+    fn default() -> Self {
+        Self { uses: 3, heals: 8 }
+    }
+}
+
+impl Flasks {
+    pub fn consume(&mut self) -> Option<u32> {
+        if self.uses > 0 {
+            self.uses -= 1;
+            return Some(self.heals);
+        }
+
+        None
+    }
+}
+
 /// Add Awareness if the Actor needs complex behavior related to the Player.
 #[derive(Component, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Reflect)]
 #[reflect(Component)]

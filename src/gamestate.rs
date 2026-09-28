@@ -3,11 +3,12 @@ use itertools::Itertools;
 use std::{fmt::Display, ops::Add, ops::Sub};
 
 use crate::{
-    actors::{Flasks, Player},
+    actors::Player,
     bestiary::Bestiary,
     combat::{NeedsRespawn, SpawnPoint},
     equipment::EquipmentChanged,
     interxables::door::Door,
+    parameters::Flasks,
     tiles::TileIdx,
 };
 

@@ -1,14 +1,14 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use crate::{
-    actors::{Flasks, Player},
+    actors::Player,
     cell::Cell,
     colors,
     equipment::{EquippedBy, HasEquipped},
     gamestate::{Screen, WorldClock},
     inventory::Inventory,
     items::{ItemId, Slot},
-    parameters::{Health, Parameters},
+    parameters::{Flasks, Health, Parameters},
     ui::theme,
     unwrap_collection,
 };
@@ -64,7 +64,7 @@ fn update_labels(
     for (mut text, label) in labels.iter_mut() {
         let new_text = match label {
             Label::Hp => format!("HP: {}", health.hp),
-            Label::Flasks => format!("FR: {}", flasks.0),
+            Label::Flasks => format!("FR: {}", flasks.uses),
             Label::Ticks => format!("T:  {}", *clock),
             Label::Cell => format!("C:  {}", *cell),
             Label::Move => format!("M: S{}", params.move_speed),
