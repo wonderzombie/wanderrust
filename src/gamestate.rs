@@ -257,13 +257,13 @@ pub fn ramify(
     world_clock.advance_to(*tick);
 
     if next_up.iter().any(|it| *it == *player) {
-        println!("player turn; awaiting input");
+        trace!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
         return;
     } else if let Some(&first) = next_up.first()
         && let Ok((name_or_nt, _)) = actors.get(first)
     {
-        println!("next entity: {:?}", name_or_nt);
+        trace!("next entity: {:?}", name_or_nt);
         commands.insert_resource(NextTurn(name_or_nt.entity));
     }
 }
