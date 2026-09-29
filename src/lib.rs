@@ -290,10 +290,11 @@ pub fn run() {
             gamestate::respawn_combatants,
             gamestate::reset_doors,
         ),
-    )
-    .add_observer(crate::on_discard_cell)
-    .add_observer(crate::click_observer)
-    .add_observer(crate::on_discard_cell);
+    );
+
+    app.add_observer(crate::on_discard_cell)
+        .add_observer(crate::click_observer)
+        .add_observer(crate::on_discard_cell);
 
     if args.inspector {
         add_filter_query_plugins(&mut app);
