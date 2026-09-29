@@ -295,15 +295,9 @@ pub fn sync_occupied_tiles(
 
 #[cfg(test)]
 mod tests {
-    use crate::tilemap::Dimensions;
+    use crate::{testing::init_app, tilemap::Dimensions};
 
     use super::*;
-
-    fn init_app() -> App {
-        let mut app = App::new();
-        app.add_plugins(MinimalPlugins);
-        app
-    }
 
     fn spawn_tiles(mut commands: Commands, size: u32) -> Entity {
         let ntiles = size.pow(2);

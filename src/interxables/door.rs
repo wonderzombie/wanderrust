@@ -78,15 +78,9 @@ mod tests {
     use bevy::ecs::system::{RunSystemError, RunSystemOnce};
     use std::assert_matches;
 
-    use crate::items::Quantity;
+    use crate::{items::Quantity, testing::init_app};
 
     use super::*;
-
-    fn init_app() -> App {
-        let mut app = App::new();
-        app.add_plugins(MinimalPlugins);
-        app
-    }
 
     #[test]
     fn test_do_open_door_simple() -> Result<(), BevyError> {
