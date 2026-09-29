@@ -393,7 +393,7 @@ fn on_discard_cell(
 }
 
 fn click_observer(
-    on: On<Pointer<Click>>,
+    on: On<Pointer<Release>>,
     tile_cells: Query<(&TileIdx, &Cell, Option<&Name>, &ChildOf)>,
     spatial_indices: Query<&SpatialIndex>,
     mut log: MessageWriter<LogEvent>,
@@ -404,6 +404,7 @@ fn click_observer(
             if on.button == PointerButton::Primary
                 && matches!(debug_mode.get(), DebugState::Enabled)
             {
+                trace!("clicked {tile_idx} {cell} {name_opt:?} {child_of:?}");
                 let name = name_opt
                     .map(|it| it.as_str())
                     .or(tile_idx.label())
@@ -420,7 +421,7 @@ fn click_observer(
             }
         }
         Err(err) => {
-            debug!("couldn't get_entity() on.event_target(): {err:?}");
+            warn!("couldn't get_entity() on.event_target(): {err:?}");
         }
     }
 }
@@ -500,7 +501,7 @@ fn process_actions(
                     });
                 }
                 Some(target) => {
-                    debug!("process_actions: interaction");
+                    info!("process_actions: interaction");
                     interaction_attempts.write(interactions::Examine {
                         actor: action.entity,
                         target,
@@ -509,6 +510,7 @@ fn process_actions(
             }
         }
         Act::Pass => {
+            info!("The Player passes time.");
             commands
                 .entity(action.entity)
                 .queue(AddRecovery(params.move_speed));
@@ -516,6 +518,10 @@ fn process_actions(
         Act::Flask => match flasks.consume() {
             Some(healed) => {
                 *health = *health + healed;
+                info!(
+                    "Player consumes a flask. Health is {health:?}. {}",
+                    flasks.uses
+                );
                 commands
                     .entity(action.entity)
                     .queue(AddRecovery(params.move_speed))
@@ -523,6 +529,7 @@ fn process_actions(
                     .trigger(sounds::Quaffed);
             }
             None => {
+                info!("Player has run out of flasks.");
                 commands.write_message(LogEvent {
                     txt: "no more flasks.".into(),
                     color: Some(colors::KENNEY_RED),
@@ -534,6 +541,7 @@ fn process_actions(
     }
 
     debug!("ramifying actions");
+    trace!("setting turn timer delay to {}", DEFAULT_TURN_DELAY * 0.5);
     commands.queue(AddTurnTimerDelay(Some(DEFAULT_TURN_DELAY * 0.5)));
     commands.set_state(GameState::Ramifying);
 }
@@ -560,13 +568,16 @@ fn handle_pending_transition(
             info!("ℹ️ portal to {:?} at cell {cell}", portal.arrive_at);
 
             if portal_child_of.parent() != *active_level {
+                debug!("marking {} as active", portal_child_of.parent());
                 commands
                     .entity(portal_child_of.parent())
                     .insert(ActiveLevel);
+                debug!("removing {} as active", portal_child_of.parent());
                 commands.entity(*active_level).remove::<ActiveLevel>();
                 commands
                     .entity(*player)
                     .insert(ChildOf(portal_child_of.parent()));
+                debug!("Player arrives at {:?}", portal.arrive_at);
             }
 
             commands.entity(*player).insert(*cell);
