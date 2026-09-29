@@ -3,4 +3,7 @@
 assets/audio/chiptone/grab-bag/
 book/
 .serena/
+docs/.obsidian/
+last-*w
+logs/
 
