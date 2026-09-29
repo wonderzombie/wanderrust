@@ -89,15 +89,6 @@ impl Default for LdtkMapPath {
     }
 }
 
-fn insert_fq_plugins(app: &mut App) {
-    app.add_plugins(EguiPlugin::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<ItemId>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Bestiary>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Recovery>>::default())
-        .add_plugins(FilterQueryInspectorPlugin::<With<Level>>::default());
-}
-
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(short, long)]
@@ -305,7 +296,7 @@ pub fn run() {
     .add_observer(crate::on_discard_cell);
 
     if args.inspector {
-        insert_fq_plugins(&mut app);
+        add_filter_query_plugins(&mut app);
     }
 
     app.run();
@@ -344,6 +335,15 @@ fn add_wanderrust_plugins(app: &mut App) {
             mobs::plugin,
             NorthstarPlugin::<CardinalNeighborhood>::default(),
         ));
+}
+
+fn add_filter_query_plugins(app: &mut App) {
+    app.add_plugins(EguiPlugin::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Actor>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<ItemId>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Bestiary>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Recovery>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Level>>::default());
 }
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
