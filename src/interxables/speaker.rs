@@ -62,7 +62,7 @@ fn do_listen_to_speaker(
 fn insert_dialogue(mut w: DeferredWorld, ctx: HookContext) {
     let lines = w
         .get::<Speaker>(ctx.entity)
-        .expect("expected Speaker to be present after `on_insert` hook called")
+        .expect("Speaker was missing in its own on_insert handler?!")
         .lines
         .clone();
 

@@ -106,7 +106,7 @@ macro_rules! interaxnable {
 macro_rules! interacticator {
     ( $verb:ident on $obj:ident via $fxn:path ) => {
         pub struct $verb {
-            // TODO: remove actor if it is not needed.
+            // TODO: remove actor field if it is not needed.
             #[allow(unused)]
             actor: ::bevy::prelude::Entity,
             target: ::bevy::prelude::Entity,
