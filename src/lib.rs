@@ -24,6 +24,7 @@ mod inventory_menu;
 mod items;
 mod ldtk_loader;
 pub mod light;
+mod log;
 mod loot;
 mod macros;
 mod map;
@@ -142,8 +143,10 @@ pub fn run() {
             })
             .set(AssetPlugin::default())
             .set(bevy::log::LogPlugin {
-                // level: Level::TRACE,
-                // filter: "bevy_asset=trace".to_string(),
+                level: bevy::log::Level::TRACE,
+                filter: "wgpu=warn,naga=warn,bevy_render=info,bevy_ecs=info".into(),
+                custom_layer: crate::log::trace_file_layer,
+                fmt_layer: log::stdout_layer,
                 ..default()
             }),
     )
