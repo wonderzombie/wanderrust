@@ -452,7 +452,7 @@ fn process_actions(
     portals: Query<&Portal>,
     combatants: Query<&combat::Combatant>,
     mut attacks: MessageWriter<Attack>,
-    mut interaction_attempts: MessageWriter<interactions::Examine>,
+    mut interactions: MessageWriter<interactions::Examine>,
     all_spatial: Query<&grid::SpatialIndex>,
     actors: Query<&ChildOf, With<Actor>>,
     player: Single<(&Parameters, &mut Health, &mut Flasks), With<Player>>,
@@ -502,7 +502,7 @@ fn process_actions(
                 }
                 Some(target) => {
                     info!("process_actions: interaction");
-                    interaction_attempts.write(interactions::Examine {
+                    interactions.write(interactions::Examine {
                         actor: action.entity,
                         target,
                     });
