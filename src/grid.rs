@@ -5,7 +5,7 @@ use crate::{
     actors::{Dead, Player},
     cell::Cell,
     parameters::Awareness,
-    tilemap::{ActiveLevel, Level, WorldId, WorldSpec},
+    tilemap::{self, ActiveLevel, Level, WorldId, WorldSpec},
     tiles::{MapTile, TileIdx, Walkable},
 };
 
@@ -35,33 +35,30 @@ impl SpatialIndex {
     }
 }
 
-/// Updates [SpatialIndex] resource based on the current [Cell] of non-walkable
-/// entities in the world.
+/// Updates [`SpatialIndex`] resource based on the current [`Cell`] of non-walkable
+/// entities in the world as well as [`tilemap::Portal`]s.
 pub(crate) fn update_spatial_index(
-    query: Populated<(&Children, &mut SpatialIndex)>,
-    tiles: Query<&Cell, (Without<Walkable>, Without<Dead>)>,
+    levels: Populated<(&Children, &mut SpatialIndex)>,
+    unwalkable_tiles: Query<(Entity, &Cell), (Without<Walkable>, Without<Dead>)>,
+    portals: Query<(Entity, &Cell), With<tilemap::Portal>>,
 ) {
-    for (children, mut index) in query {
+    for (children, mut index) in levels {
         index.clear();
-        for &child in children {
-            if let Ok(cell) = tiles.get(child) {
-                index.insert(*cell, child);
-            }
+        for (nt, cell) in unwalkable_tiles.iter_many(children) {
+            index.insert(*cell, nt);
+        }
+
+        for (portal_nt, cell) in portals.iter_many(children) {
+            index.insert(*cell, portal_nt)
         }
     }
 }
 
-pub(crate) fn setup_spatial_indices(
-    mut commands: Commands,
-    level_children: Populated<(&Level, &Children)>,
-    unwalkable_cells: Populated<(Entity, &Cell), Without<Walkable>>,
-) {
-    for (Level(level_entity, _), children) in level_children.iter() {
-        let mut index = SpatialIndex::default();
-        for (nt, cell) in unwalkable_cells.iter_many(children) {
-            index.insert(*cell, nt);
-        }
-        commands.entity(*level_entity).insert(index);
+pub(crate) fn setup_spatial_indices(mut commands: Commands, levels: Populated<&Level>) {
+    for Level(level_entity, _) in levels.iter() {
+        commands
+            .entity(*level_entity)
+            .insert(SpatialIndex::default());
     }
 }
 

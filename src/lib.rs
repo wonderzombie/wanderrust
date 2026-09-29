@@ -61,6 +61,7 @@ use crate::{
     gamestate::{
         AddRecovery, AddTurnTimerDelay, DEFAULT_TURN_DELAY, GameState, Modal, Recovery, Screen,
     },
+    grid::SpatialIndex,
     items::ItemId,
     ldtk_loader::LdtkProject,
     map::update_level_visuals,
@@ -390,12 +391,13 @@ fn on_discard_cell(
 
 fn click_observer(
     on: On<Pointer<Click>>,
-    tile_cells: Query<(&TileIdx, &Cell, Option<&Name>)>,
+    tile_cells: Query<(&TileIdx, &Cell, Option<&Name>, &ChildOf)>,
+    spatial_indices: Query<&SpatialIndex>,
     mut log: MessageWriter<LogEvent>,
     debug_mode: Res<State<DebugState>>,
 ) {
     match tile_cells.get(on.event_target()) {
-        Ok((tile_idx, &cell, name_opt)) => {
+        Ok((tile_idx, &cell, name_opt, child_of)) => {
             if on.button == PointerButton::Primary
                 && matches!(debug_mode.get(), DebugState::Enabled)
             {
@@ -404,6 +406,13 @@ fn click_observer(
                     .or(tile_idx.label())
                     .map(String::from)
                     .unwrap_or_else(|| tile_idx.to_string());
+                if let Ok(index) = spatial_indices.get(child_of.parent()) {
+                    if let Some(nt) = index.get(cell) {
+                        warn!("{name} {nt} found in spatial index at {cell}");
+                    } else {
+                        error!("{name} not found in spatial index of parent");
+                    }
+                }
                 log.write((format!("{cell} = {name}").as_str(), Color::WHITE).into());
             }
         }
@@ -474,7 +483,6 @@ fn process_actions(
                 Some(target) if portals.get(target).is_ok() => {
                     let portal = portals.get(target).unwrap();
                     info!("process_actions: portal");
-                    // TODO: extract to constant.
                     commands
                         .entity(action.entity)
                         .queue(AddRecovery(params.move_speed));
