@@ -201,8 +201,13 @@ pub fn plugin(app: &mut App) {
     .add_plugins(DebugPickingPlugin)
     .insert_resource(DebugPickingMode::Normal)
     .add_observer(
-        |on: On<Pointer<Click>>, mut commands: Commands, s: Res<State<DebugState>>| {
-            if s.get() == &DebugState::Enabled {
+        |on: On<Pointer<Click>>,
+         input: Res<ButtonInput<KeyCode>>,
+         mut commands: Commands,
+         s: Res<State<DebugState>>| {
+            if s.get() == &DebugState::Enabled
+                && input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+            {
                 info!("clicked: {on:?}");
                 commands.entity(on.entity).log_components();
             }
