@@ -353,7 +353,7 @@ pub fn update_emitter_maps(
     }
 
     if count > 0 {
-        trace!("🔥 updated {count} emitter maps");
+        debug!("🔥 updated {count} emitter maps");
     }
 }
 

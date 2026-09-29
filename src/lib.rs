@@ -420,7 +420,7 @@ fn click_observer(
             }
         }
         Err(err) => {
-            trace!("couldn't get_entity() on.event_target(): {err:?}");
+            debug!("couldn't get_entity() on.event_target(): {err:?}");
         }
     }
 }
@@ -456,7 +456,7 @@ fn process_actions(
     actors: Query<&ChildOf, With<Actor>>,
     player: Single<(&Parameters, &mut Health, &mut Flasks), With<Player>>,
 ) {
-    trace!("{action:?}");
+    debug!("{action:?}");
     commands.remove_resource::<Action>();
 
     let Some(spatial_index) = actors
@@ -476,7 +476,7 @@ fn process_actions(
 
             match spatial_index.get(adjusted_cell) {
                 None => {
-                    trace!("move: recovery after: {}", params.move_speed);
+                    debug!("move: recovery after: {}", params.move_speed);
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
@@ -500,7 +500,7 @@ fn process_actions(
                     });
                 }
                 Some(target) => {
-                    trace!("process_actions: interaction");
+                    debug!("process_actions: interaction");
                     interaction_attempts.write(interactions::Examine {
                         actor: action.entity,
                         target,
@@ -533,7 +533,7 @@ fn process_actions(
         Act::Attack(_) => todo!(),
     }
 
-    trace!("ramifying actions");
+    debug!("ramifying actions");
     commands.queue(AddTurnTimerDelay(Some(DEFAULT_TURN_DELAY * 0.5)));
     commands.set_state(GameState::Ramifying);
 }

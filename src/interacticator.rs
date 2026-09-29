@@ -47,7 +47,7 @@ pub fn dispatch_default<T: Interxable<Args = Actors>>(
     mut commands: Commands,
 ) {
     for ex in examines.read() {
-        trace!("ex: {} {ex:#?}", T::name());
+        debug!("ex: {} {ex:#?}", T::name());
         if targets.contains(ex.target) {
             info!("interacted with {}", T::name());
             commands.interact::<T>(Actors {

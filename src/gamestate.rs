@@ -80,7 +80,7 @@ impl WorldClock {
         while self.0 < tick {
             self.tick();
         }
-        trace!("ticked from {} to {}", self.now() - tick, self.now());
+        debug!("ticked from {} to {}", self.now() - tick, self.now());
         self
     }
 
@@ -257,13 +257,13 @@ pub fn ramify(
     world_clock.advance_to(*tick);
 
     if next_up.iter().any(|it| *it == *player) {
-        trace!("player turn; awaiting input");
+        debug!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
         return;
     } else if let Some(&first) = next_up.first()
         && let Ok((name_or_nt, _)) = actors.get(first)
     {
-        trace!("next entity: {:?}", name_or_nt);
+        debug!("next entity: {:?}", name_or_nt);
         commands.insert_resource(NextTurn(name_or_nt.entity));
     }
 }
@@ -341,10 +341,10 @@ pub fn respawn_combatants(
     let mut count = 0;
     for (entity, tile_idx) in monsters.iter() {
         count += 1;
-        trace!("{tile_idx} marked for respawn");
+        debug!("{tile_idx} marked for respawn");
         commands.entity(entity).insert(NeedsRespawn);
     }
-    trace!("marked {count} entities as needing respawn");
+    debug!("marked {count} entities as needing respawn");
 }
 
 pub fn reset_doors(

@@ -89,7 +89,7 @@ fn advance_typewriter(
             }
 
             rev.revealed_idx += 1;
-            trace!("rev is now {:?}", rev);
+            debug!("rev is now {:?}", rev);
         }
     }
 }

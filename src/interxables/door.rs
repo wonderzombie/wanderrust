@@ -67,7 +67,7 @@ fn do_open_door(
 fn open_door(commands: &mut Commands, mut door: Mut<'_, Door>, mut tile_idx: Mut<'_, TileIdx>) {
     door.is_open = true;
     if let Some(new_tile) = tile_idx.engaged_version() {
-        trace!("changing tile_idx from {tile_idx:?} to {:?}", new_tile);
+        debug!("changing tile_idx from {tile_idx:?} to {:?}", new_tile);
         tile_idx.set_if_neq(new_tile);
     }
     commands.trigger(sounds::Opened);

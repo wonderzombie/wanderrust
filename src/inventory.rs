@@ -341,7 +341,7 @@ fn acquire<'a>(
         .find(|(_, it, _)| item_id == *it)
         .unwrap_or_else(|| (commands.spawn_empty().id(), item_id, &Quantity(0)));
 
-    trace!(
+    debug!(
         "acquiring item {:?} for {:?}",
         (item_nt, item_id, delta),
         entity

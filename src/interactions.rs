@@ -227,7 +227,7 @@ pub fn spawn_interxs(
                     },
                 ))
                 .queue(InsertInto(interx.clone()));
-            trace!(
+            debug!(
                 "spawning {} at {cell} ({})",
                 interx.display_name().unwrap_or_else(|| cell.to_string()),
                 interx.tile()

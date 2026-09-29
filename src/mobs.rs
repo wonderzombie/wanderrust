@@ -136,7 +136,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
         match (self.next_pos_opt, self.path_failed_opt) {
             // No route possible.
             (_, Some(_)) => {
-                trace!("no route\n{self:?}");
+                debug!("no route\n{self:?}");
                 MobAction::Pass
             }
             // Something is blocking the way.
@@ -151,7 +151,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
             }
             // We're not pathing if there's no failure and no next position.
             (None, None) => {
-                trace!("no route and no failure\n{self:?}");
+                debug!("no route and no failure\n{self:?}");
                 MobAction::Pass
             }
         }
@@ -186,19 +186,19 @@ pub fn consume_turn(
 
     match mob_view.decide(player_nt, player_cell, blocking.as_ref()) {
         MobAction::Attack(target) => {
-            trace!("{next_nt}: attack {target}");
+            debug!("{next_nt}: attack {target}");
             attacks.write(Attack {
                 attacker: next_nt,
                 target,
             });
         }
         MobAction::Move(cell) => {
-            trace!("{next_nt}: move {cell}");
+            debug!("{next_nt}: move {cell}");
             mob.insert(cell)
                 .queue(AddRecovery(mob_view.params.move_speed));
         }
         MobAction::Pass => {
-            trace!("{next_nt}: wait");
+            debug!("{next_nt}: wait");
             mob.queue(AddRecovery(mob_view.params.move_speed));
         }
     }
@@ -294,12 +294,12 @@ pub fn update_mob_indicators(
 ) {
     for (indicator_nt, ChildOf(parent), mut sprite) in indicators {
         if *parent == *player || !zone.collection().contains(parent) {
-            trace!("{parent} isn't in the active level; skipping");
+            debug!("{parent} isn't in the active level; skipping");
             continue;
         }
 
         let Ok((awareness, is_dead)) = mobs.get(*parent) else {
-            trace!("{parent} is not a combatant; skipping");
+            debug!("{parent} is not a combatant; skipping");
             continue;
         };
 

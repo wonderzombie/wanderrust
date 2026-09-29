@@ -149,7 +149,7 @@ pub fn process_attacks(
     let font: Handle<Font> = asset_server.load("fonts/Kenney Mini.ttf");
 
     for attack in attacks.read() {
-        trace!("{attack:?}");
+        debug!("{attack:?}");
         let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
         else {
             warn!(
@@ -162,7 +162,7 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_id, defender_name, def_params, mut defender, is_player) = defender;
+        let (defender_id, defender_name, def_params, mut defender, defender_is_player) = defender;
         let (attacker_id, attacker_name, atk_params, _, _) = attacker;
 
         commands
@@ -177,15 +177,13 @@ pub fn process_attacks(
             continue;
         }
         let damage = atk_params.attack - def_params.defense;
+        trace!("attacker: {atk_params:#?}; defender: {def_params:#?}");
         if damage >= 0 {
             commands.entity(defender_id).trigger(Hit);
             defender.hp = defender.hp.saturating_sub(damage.cast_unsigned());
-            // log.write(LogEvent {
-            //     txt: format!("{attacker_name} hits {defender_name}!"),
-            //     color: Some(colors::KENNEY_GOLD),
-            // });
 
             if defender.hp <= 0 {
+                info!("{attacker_name} slays {defender_name}.");
                 defender.is_dead = true;
                 log.write(LogEvent {
                     txt: format!("{defender_name} is dead"),
@@ -205,16 +203,19 @@ pub fn process_attacks(
                     .remove::<(AgentOfGrid, AgentPos, Pathfind, Blocking)>()
                     .remove::<CombatantBundle>();
 
-                if is_player {
+                info!("{defender_name} has died. they were killed by {attacker_name}.");
+                if defender_is_player {
                     commands.trigger(PlayerDied);
                 } else {
                     commands.trigger(sounds::EnemyDefeated);
                 }
             } else {
+                info!("{attacker_name} attacks {defender_name}");
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
                 commands.trigger(Attacked(defender_id))
             }
         } else {
+            info!("{attacker_name}'s damage did not overcome {defender_name}'s defense.");
             log.write(LogEvent {
                 txt: format!("{attacker_name} does no damage"),
                 color: Some(colors::KENNEY_GOLD),
