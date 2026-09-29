@@ -51,7 +51,7 @@ fn do_listen_to_speaker(
     speakers: Query<&Speaker>,
 ) -> Result<Outcome, BevyError> {
     if let Ok(speaker) = speakers.get(input.target) {
-        info!("Player talks to {}.", speaker.name);
+        info!("Player listens to {}.", speaker.name);
         commands.trigger(DialogueStart(input.target));
         return Ok(Outcome::Success);
     }

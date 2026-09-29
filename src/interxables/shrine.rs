@@ -36,8 +36,8 @@ fn do_shrine_interaction(
     let (entity, Shrine { id }) = shrines.get(target)?;
     let cell = actors.get(actor)?;
 
-    info!("Player interacts with {id}.");
     if shrines_visited.0.contains(&entity) {
+        info!("Player rests at the shrine {id}.");
         log.write(LogEvent {
             txt: format!("rest at {id}"),
             color: Some(colors::KENNEY_GOLD),
@@ -50,6 +50,7 @@ fn do_shrine_interaction(
         // commands.trigger(sounds::Rest);
     } else {
         shrines_visited.0.insert(entity);
+        info!("Player lights the shrine {id}.");
         log.write(LogEvent {
             txt: format!("lit shrine {id}"),
             color: Some(colors::KENNEY_BLUE),

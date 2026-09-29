@@ -24,17 +24,21 @@ interacticator!(OpenChest on Chest via do_open_chest);
 fn do_open_chest(
     In(open_action): In<OpenChest>,
     mut commands: Commands,
-    mut chests: Query<(&mut Chest, &mut TileIdx)>,
+    mut chests: Query<(&Name, &mut Chest, &mut TileIdx)>,
     mut inv_changes: MessageWriter<InventoryChange>,
     mut log: MessageWriter<LogEvent>,
 ) -> Result<Outcome> {
     let OpenChest { actor, target } = open_action;
 
-    let Ok((mut chest, mut tile_idx)) = chests.get_mut(target) else {
+    let Ok((name, mut chest, mut tile_idx)) = chests.get_mut(target) else {
+        error!("chest does not exist: {target}");
         return Ok(Outcome::Failure);
     };
 
+    let label = tile_idx.as_ref().label().unwrap_or(name.as_str());
+
     if chest.as_ref().is_open {
+        info!("The {label} is empty.");
         log.write(("Empty.", colors::GRAY).into());
         return Ok(Outcome::Failure);
     }
@@ -42,15 +46,15 @@ fn do_open_chest(
     let contents = chest
         .contents
         .clone()
-        .ok_or(anyhow!("chest had no inventory: {target} {chest:#?}"))?;
+        .ok_or(anyhow!("{label} had no inventory: {target} {chest:#?}"))?;
 
     if let Some(new_tile) = tile_idx.engaged_version() {
         tile_idx.set_if_neq(new_tile);
     }
 
-    info!("Player opens chest: {contents:?}");
+    info!("Player opens {label}: {contents:?}");
     chest.is_open = true;
-    log.write(("Opened chest.", colors::KENNEY_BLUE).into());
+    log.write(("Opened {label}.", colors::KENNEY_BLUE).into());
     commands.trigger(sounds::Opened);
     inv_changes.write_batch(InventoryChange::acquire(actor, contents.clone()));
     contents.summarized("got").iter().for_each(|it| {
