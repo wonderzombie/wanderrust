@@ -398,7 +398,9 @@ fn click_observer(
     spatial_indices: Query<&SpatialIndex>,
     mut log: MessageWriter<LogEvent>,
     debug_mode: Res<State<DebugState>>,
+    screen: Res<State<Screen>>,
 ) {
+    let screen = screen.get();
     match tile_cells.get(on.event_target()) {
         Ok((tile_idx, &cell, name_opt, child_of)) => {
             if on.button == PointerButton::Primary
@@ -421,7 +423,9 @@ fn click_observer(
             }
         }
         Err(err) => {
-            warn!("couldn't get_entity() on.event_target(): {err:?}");
+            if screen == &Screen::Playing {
+                warn!("couldn't get_entity() on.event_target(): {err:?}");
+            }
         }
     }
 }
