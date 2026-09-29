@@ -26,13 +26,17 @@
 - [x] simple healing (flasks)
 - [x] basic time, hp, flasks display
 - [x] equipment definitions w/ slots
+- [ ] "dialogue" (aka Souls-like "listen to")
+  - [x] load lines from ldtk
+  - [x] show lines for signs, NPCs
+  - [ ] allow >1 line per "listen to" action (i.e. paging)
 - [ ] enemy AI 
   - [x] enemy pathing AI via bevy_northstar
   - [x] enemies idle until they see player
   - [ ] enemy patrol routes
 - [ ] quests
-  - [x] check/track status
-  - [x] change status
+  - [x] check/track status (items)
+  - [x] change status (items)
   - [ ] simple content pipeline :P
 - [ ] alternative tiles
   - [ ] tile flipping
