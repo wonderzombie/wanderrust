@@ -118,6 +118,7 @@ pub fn set_mob_spawns(
 pub struct Combatant;
 
 #[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
 pub struct SpawnPoint {
     pub respawn_cell: Cell,
     pub level_nt: Entity,
