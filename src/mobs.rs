@@ -11,6 +11,7 @@ use crate::{
     combat::{Attack, Combatant},
     fov::Fov,
     gamestate::{AddRecovery, AddTurnTimerDelay, GameState, NextTurn, RecoveryNow, Turn},
+    grid::PathfindView,
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
@@ -120,11 +121,7 @@ pub struct MobView {
     entity: Entity,
     params: &'static Parameters,
     cell: &'static Cell,
-    agent_pos: &'static AgentPos,
-    next_pos_opt: Option<&'static NextPos>,
-    path_failed_opt: Option<&'static PathfindingFailed>,
-    awareness: Option<&'static Awareness>,
-    attitude: Option<&'static Attitude>,
+    pf_view: PathfindView,
 }
 
 impl<'w, 's> MobViewItem<'w, 's> {
@@ -133,7 +130,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
             return MobAction::Attack(player_nt);
         }
 
-        match (self.next_pos_opt, self.path_failed_opt) {
+        match (self.pf_view.next_pos_opt, self.pf_view.path_failed_opt) {
             // No route possible.
             (_, Some(_)) => {
                 debug!("no route\n{self:?}");
@@ -203,7 +200,7 @@ pub fn consume_turn(
         }
     }
 
-    match mob_view.awareness {
+    match mob_view.pf_view.awareness_opt {
         Some(awareness) => {
             if awareness >= &Awareness::Alerted {
                 commands.queue(AddTurnTimerDelay::default());

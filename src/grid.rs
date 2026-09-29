@@ -1,4 +1,4 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{ecs::query::QueryData, platform::collections::HashMap, prelude::*};
 use bevy_northstar::prelude::*;
 
 use crate::{
@@ -170,6 +170,15 @@ pub fn pathfind(
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
         }
     }
+}
+
+#[derive(QueryData, Debug)]
+#[query_data(derive(Debug))]
+pub struct PathfindView {
+    pub next_pos_opt: Option<&'static NextPos>,
+    pub pathfind_opt: Option<&'static Pathfind>,
+    pub path_failed_opt: Option<&'static PathfindingFailed>,
+    pub awareness_opt: Option<&'static Awareness>,
 }
 
 pub(crate) fn sync_agent_pos(agents: Populated<(&Cell, &mut AgentPos), Changed<Cell>>) {
