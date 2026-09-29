@@ -172,6 +172,28 @@ pub fn pathfind(
     }
 }
 
+#[derive(Component, Debug)]
+pub struct Waypoints {
+    pub idx: usize,
+    pub waypoints: Vec<Cell>,
+}
+
+impl Waypoints {
+    pub fn current(&self) -> Option<&Cell> {
+        self.waypoints.get(self.idx)
+    }
+
+    pub fn advance(&mut self) -> Option<&Cell> {
+        match &self.waypoints.get(self.idx) {
+            Some(cell) => {
+                self.idx = (self.idx + 1) % self.waypoints.len();
+                Some(cell)
+            }
+            _ => None,
+        }
+    }
+}
+
 #[derive(QueryData, Debug)]
 #[query_data(derive(Debug))]
 pub struct PathfindView {
@@ -179,6 +201,7 @@ pub struct PathfindView {
     pub pathfind_opt: Option<&'static Pathfind>,
     pub path_failed_opt: Option<&'static PathfindingFailed>,
     pub awareness_opt: Option<&'static Awareness>,
+    pub waypoints_opt: Option<&'static Waypoints>,
 }
 
 pub(crate) fn sync_agent_pos(agents: Populated<(&Cell, &mut AgentPos), Changed<Cell>>) {
