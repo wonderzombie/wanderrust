@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use bevy::prelude::*;
 
 pub fn init_app() -> App {
