@@ -1,3 +1,11 @@
+//! Sets up two log layers and log rotation.
+//!
+//! The most verbose layer is [`trace_file_layer`] which logs at the TRACE level. That goes to a
+//! file which is rotated among three (0, 1, 2) outputs and stored in `logs/`. This kind of log is
+//! suitable for more detailed forensics.
+//!
+//! [`stdout_layer`] is INFO, suitable for on-the-spot debugging and testing, possibly for
+//! a bug report. The filters may be overridden by `WANDER_LOG` when set in the shell env.
 use bevy::log::tracing_subscriber::{self, EnvFilter, Layer};
 use bevy::log::{BoxedFmtLayer, BoxedLayer};
 use bevy::prelude::*;
