@@ -33,6 +33,7 @@ mod mobs;
 mod parameters;
 mod procgen;
 mod ptable;
+mod route;
 mod sounds;
 mod status_panel;
 mod testing;

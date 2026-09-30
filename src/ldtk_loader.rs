@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
 
 use crate::{
@@ -9,6 +9,7 @@ use crate::{
     enum_with_str,
     interactions::{self, Interactable},
     light::{self, Emitter, LightLevel},
+    route::Route,
     tilemap::{self, Dimensions, LevelId, LevelSpec, Portal, TileCell, WorldSpec},
     tiles::{SHEET_SIZE_G, TileIdx},
 };
@@ -129,6 +130,13 @@ impl LdtkEntity {
         }
     }
 
+    pub fn get_point_array(&self, key: &str) -> Option<Vec<LdtkGridPoint>> {
+        match self.field_val(key) {
+            Some(ParsedValue::ArrayPoint(points)) => Some(points),
+            _ => None,
+        }
+    }
+
     // pub fn get_actor_enum(&self, key: &str) -> Option<String> {
     //     match self.field_val(key) {
     //         Some(ParsedValue::ActorEnum(s)) => Some(s),
@@ -207,13 +215,27 @@ impl From<LdtkPxTile> for TileIdx {
     }
 }
 
-#[derive(Deref, Debug, Deserialize, Default, Clone, Copy)]
-pub struct LdtkCell(Cell);
+#[derive(Deref, PartialEq, Debug, Deserialize, Default, Clone, Copy)]
+pub struct LdtkCell(pub Cell);
 
 impl LdtkCell {
-    fn to_wandrs(self, level_height_cells: i32, depth: i32) -> Cell {
+    pub fn to_wandrs(self, level_height_cells: i32, depth: i32) -> Cell {
         Cell::at_depth(self.x, level_height_cells - 1 - self.y, depth)
     }
+}
+
+impl From<&LdtkGridPoint> for LdtkCell {
+    fn from(value: &LdtkGridPoint) -> Self {
+        LdtkCell(Cell::new(value.x, value.y))
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Copy, Clone)]
+pub struct LdtkGridPoint {
+    #[serde(rename = "cx")]
+    pub x: i32,
+    #[serde(rename = "cy")]
+    pub y: i32,
 }
 
 pub fn load_and_import(fname: PathBuf) -> Result<LdtkProject, BevyError> {
@@ -294,6 +316,10 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                                 );
                             }
                         }
+                        Some(ParsedActor::Route) => {
+                            let w = Route::new(&spec.dimensions, actor);
+                            spec.routes.push((w, cell));
+                        }
                         None => warn!("ignoring unparsable actor: {actor:?}"),
                     }
                 }
@@ -347,6 +373,7 @@ pub enum ParsedValue {
     Bool(bool),
     // EntityRef(HashMap<String, String>),
     ArrayString(Vec<String>),
+    ArrayPoint(Vec<LdtkGridPoint>),
     LightLevelEnum(String),
 }
 
@@ -386,6 +413,10 @@ impl From<&LdtkField> for ParsedValue {
                 Ok(vec) => ArrayString(vec.clone()),
                 Err(_) => Unset,
             },
+            "Array<Point>" => match from_value::<Vec<LdtkGridPoint>>(val) {
+                Ok(vec) => ArrayPoint(vec),
+                Err(_) => Unset,
+            },
             // "EntityRef" => match from_value::<HashMap<String, String>>(val) {
             //     Ok(map) => EntityRef(map),
             //     Err(_) => Unset,
@@ -398,7 +429,7 @@ impl From<&LdtkField> for ParsedValue {
 enum_with_str!(
     LdtkActor,
     [
-        Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn, Shrine
+        Combatant, Speaker, Door, Chest, Emitter, Portal, Spawn, Shrine, Route
     ]
 );
 
@@ -409,6 +440,7 @@ pub enum ParsedActor {
     Portal(tilemap::Portal),
     Emitter(light::Emitter),
     Spawn,
+    Route,
 }
 
 impl LdtkEntityExt<ParsedActor> for ParsedActor {
@@ -426,6 +458,7 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
             | LdtkActor::Shrine => Interactable::from_ldtk(entity).map(Self::Interactable),
             LdtkActor::Portal => Portal::from_ldtk(entity).map(Self::Portal),
             LdtkActor::Spawn => Some(Self::Spawn),
+            LdtkActor::Route => Some(Self::Route),
             LdtkActor::Emitter => Emitter::from_ldtk(entity).map(Self::Emitter),
         }
     }
@@ -434,6 +467,39 @@ impl LdtkEntityExt<ParsedActor> for ParsedActor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_grid_point() -> Result<()> {
+        let ldtk_grid_point = r#"{ "cx": 8, "cy": 6 }"#;
+
+        let grid_point = serde_json::from_str::<LdtkGridPoint>(ldtk_grid_point)?;
+        assert_eq!(grid_point, LdtkGridPoint { x: 8, y: 6 });
+
+        let ldtk_array_grid_point = r#"[ { "cx": 9, "cy": 5 } ]"#;
+        let array_grid_point = serde_json::from_str::<Vec<LdtkGridPoint>>(ldtk_array_grid_point)?;
+        assert_eq!(array_grid_point, vec![LdtkGridPoint { x: 9, y: 5 }]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parsed_value_array_point() -> Result<()> {
+        let grid_point = LdtkGridPoint { x: 77, y: 99 };
+        let field = LdtkField {
+            identifier: "waypoints".to_string(),
+            field_type: "Array<Point>".to_string(),
+            val: serde_json::to_value(vec![grid_point])?,
+        };
+
+        let parsed: ParsedValue = field.into();
+
+        let ParsedValue::ArrayPoint(actual) = parsed else {
+            panic!("expected ParsedValue to be ArrayPoint; was {parsed:?}");
+        };
+
+        assert_eq!(vec![grid_point], actual);
+        Ok(())
+    }
 
     #[test]
     fn test_parsed_value_ztring() -> Result<(), String> {
