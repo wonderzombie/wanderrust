@@ -133,7 +133,8 @@ pub struct PrevWaypoint(Entity);
 
 ////// Commands //////
 
-pub struct SpawnWaypoints(pub Route);
+/// Spawns waypoints for the [`Route`] as a child of [`Entity`], presumably a [`Level`].
+pub struct SpawnWaypoints(pub Entity, pub Route);
 
 impl Command for SpawnWaypoints {
     type Out = Result<()>;
@@ -142,7 +143,7 @@ impl Command for SpawnWaypoints {
         let route_id = world.spawn_empty().id();
 
         let point_ids = &self
-            .0
+            .1
             .points
             .iter()
             .map(|c| world.spawn((*c, ChildOf(route_id))).id())
@@ -158,7 +159,7 @@ impl Command for SpawnWaypoints {
 
         world
             .entity_mut(route_id)
-            .insert((self.0, FirstWaypoint(*first_wp)));
+            .insert((ChildOf(self.0), self.1, FirstWaypoint(*first_wp)));
 
         Ok(())
     }
@@ -170,7 +171,10 @@ mod tests {
     use crate::testing::*;
 
     fn insert_route(app: &mut App, new_route: Route) {
-        app.world_mut().commands().queue(SpawnWaypoints(new_route));
+        let parent = app.world_mut().commands().spawn_empty().id();
+        app.world_mut()
+            .commands()
+            .queue(SpawnWaypoints(parent, new_route));
     }
 
     fn points() -> Vec<Cell> {
