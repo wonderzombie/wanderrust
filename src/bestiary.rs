@@ -110,6 +110,7 @@ mod tests {
         let mob = Mob {
             name: "Bat".into(),
             tile_idx: TileIdx::GridSquare,
+            route_id: None,
         };
 
         assert_eq!(
@@ -121,6 +122,7 @@ mod tests {
         let mob = Mob {
             name: "".into(),
             tile_idx: TileIdx::Chicken,
+            route_id: None,
         };
 
         assert_eq!(
@@ -132,6 +134,7 @@ mod tests {
         let mob = Mob {
             name: "StoneWall".into(),
             tile_idx: TileIdx::StoneWall,
+            route_id: None,
         };
 
         assert_eq!(None, best_guess(&mob))

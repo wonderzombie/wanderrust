@@ -14,6 +14,7 @@ use crate::{
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
+    route::RouteId,
     tilemap::{ActiveLevel, Zone},
     tiles::{TILE_SIZE_PX, TileIdx},
 };
@@ -24,6 +25,7 @@ use crate::{
 pub struct Mob {
     pub name: String,
     pub tile_idx: TileIdx,
+    pub route_id: Option<RouteId>,
 }
 
 #[derive(Component, Debug)]
@@ -365,6 +367,7 @@ mod tests {
                     Mob {
                         name: "Poppy".into(),
                         tile_idx: TileIdx::Chicken,
+                        route_id: None,
                     },
                     Name("Poppy".into()),
                     Cell::new(0, 0),
@@ -376,6 +379,7 @@ mod tests {
                     Mob {
                         name: "Bat".into(),
                         tile_idx: TileIdx::Bat,
+                        route_id: None,
                     },
                     Name("Bat".into()),
                     Cell::new(1, 0),

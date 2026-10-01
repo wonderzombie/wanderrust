@@ -141,9 +141,12 @@ impl crate::interactions::Interactable {
                 requires: *requires,
                 tile_idx,
             },
-            Self::Mob { name, tile_idx: _ } => Self::Mob {
+            Self::Mob {
+                name, tile_idx: _, ..
+            } => Self::Mob {
                 name: name.clone(),
                 tile_idx,
+                route_id: None,
             },
             Self::Speaker {
                 name,

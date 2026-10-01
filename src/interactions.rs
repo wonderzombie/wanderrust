@@ -9,6 +9,7 @@ use crate::{
     items::ItemId,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     mobs::{self},
+    route::RouteId,
     tilemap::{Level, WorldSpec},
     tiles::TileIdx,
 };
@@ -37,6 +38,7 @@ pub enum Interactable {
     Mob {
         name: String,
         tile_idx: TileIdx,
+        route_id: Option<RouteId>,
     },
     Shrine {
         id: String,
@@ -83,7 +85,14 @@ impl LdtkEntityExt<Interactable> for Interactable {
         let name = entity.deduce_display_name();
 
         match ty {
-            LdtkActor::Combatant => Some(Self::Mob { name, tile_idx }),
+            LdtkActor::Combatant => {
+                let route_id = entity.get_string("route_id").map(RouteId);
+                Some(Self::Mob {
+                    name,
+                    tile_idx,
+                    route_id,
+                })
+            }
             LdtkActor::Speaker => {
                 let lines = entity.get_str_array("lines").unwrap_or_default();
                 if lines.is_empty() {
@@ -178,11 +187,16 @@ impl EntityCommand for InsertInto {
                     .insert(shrine::Shrine { id })
                     .insert((name_component, tile_idx));
             }
-            Interactable::Mob { name, tile_idx } => {
+            Interactable::Mob {
+                name,
+                tile_idx,
+                route_id,
+            } => {
                 entity
                     .insert(mobs::Mob {
                         name: name.clone(),
                         tile_idx,
+                        route_id,
                     })
                     .insert((name_component, tile_idx));
             }
@@ -262,6 +276,7 @@ mod tests {
         let op = InsertInto(Interactable::Mob {
             name: "hello".into(),
             tile_idx: TileIdx::Chicken,
+            route_id: None,
         });
 
         let mut c = app.world_mut().commands();

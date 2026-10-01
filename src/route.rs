@@ -1,5 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     cell::Cell,
@@ -8,7 +9,7 @@ use crate::{
     tilemap::Dimensions,
 };
 
-#[derive(Component, Debug, PartialEq, Clone, Reflect)]
+#[derive(Component, Debug, PartialEq, Clone, Reflect, Deserialize, Serialize, Eq)]
 pub struct RouteId(pub String);
 
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
