@@ -54,7 +54,7 @@ fn do_open_chest(
 
     info!("Player opens {label}: {contents:?}");
     chest.is_open = true;
-    log.write(("Opened {label}.", colors::KENNEY_BLUE).into());
+    log.write((format!("Opened {label}."), colors::KENNEY_BLUE).into());
     commands.trigger(sounds::Opened);
     inv_changes.write_batch(InventoryChange::acquire(actor, contents.clone()));
     contents.summarized("got").iter().for_each(|it| {

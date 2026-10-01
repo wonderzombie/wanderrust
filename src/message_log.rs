@@ -35,6 +35,15 @@ impl From<(&str, Color)> for LogEvent {
     }
 }
 
+impl From<(String, Color)> for LogEvent {
+    fn from(value: (String, Color)) -> Self {
+        Self {
+            txt: value.0,
+            color: Some(value.1),
+        }
+    }
+}
+
 impl From<&str> for LogEvent {
     fn from(value: &str) -> Self {
         Self::from_txt(value)
