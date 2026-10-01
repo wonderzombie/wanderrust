@@ -1,12 +1,10 @@
-use bevy::{
-    ecs::{query::QueryData, system::SystemParam},
-    prelude::*,
-};
+use bevy::{ecs::system::SystemParam, prelude::*};
 use itertools::Itertools;
 
 use crate::{
     cell::Cell,
     ldtk_loader::{LdtkCell, LdtkEntity},
+    mobs,
     tilemap::Dimensions,
 };
 
@@ -47,8 +45,59 @@ impl Route {
     }
 }
 
-/// Applied to a [`Route`] entity to get the first waypoint, for convenience.
-#[derive(Component)]
+/// Type alias for selecting any kind of waypoint. This is useful because the first waypoint will
+/// have `NextWaypoint` but not `PrevWaypoint`, and the last waypoint will have `PrevWaypoing` but
+/// not `NextWaypoint`.
+type AnyWaypoint = AnyOf<(&'static NextWaypoint, &'static PrevWaypoint)>;
+
+#[derive(SystemParam)]
+pub struct RouteAssist<'w, 's> {
+    commands: Commands<'w, 's>,
+    mobs: Query<'w, 's, (&'static Cell, &'static EnRouteTo), With<mobs::Mob>>,
+    routes: Query<'w, 's, (&'static Route, &'static FirstWaypoint)>,
+    waypoints: Query<'w, 's, (&'static Cell, AnyWaypoint, &'static ChildOf)>,
+}
+
+impl<'w, 's> RouteAssist<'w, 's> {
+    pub fn assign(&mut self, assignee: Entity, route_id: RouteId) -> Result<()> {
+        self.mobs.get(assignee)?;
+
+        let (_, first_wp) = self
+            .routes
+            .iter()
+            .find(|(route, _)| route.id.eq(&route_id))
+            .ok_or_else(|| format!("{route_id:?}: no such route exists"))?;
+
+        self.commands.entity(assignee).insert(EnRouteTo(**first_wp));
+
+        Ok(())
+    }
+
+    /// Returns the next waypoint for an entity [`Following`] a route, which may be their current
+    /// destination [`Cell`] if they've yet to reach it, or the next waypoint if they have reached
+    /// the current waypoint's [`Cell`].
+    ///
+    /// Suitable for use with `set_if_neq` when [`Cell`] changes.
+    pub fn next_waypoint(&self, follower: Entity) -> Result<Entity> {
+        let (mob_cell, en_route_to) = self.mobs.get(follower)?;
+        let (wp_cell, (next_opt, _), child_of) = self.waypoints.get(**en_route_to)?;
+
+        if mob_cell != wp_cell {
+            return Ok(**en_route_to);
+        }
+
+        match next_opt {
+            Some(next_wp) => Ok(**next_wp),
+            None => {
+                let (_, first_wp) = self.routes.get(child_of.parent())?;
+                Ok(**first_wp)
+            }
+        }
+    }
+}
+
+/// Applied to a [`Route`] entity to get the first waypoint.
+#[derive(Component, Deref)]
 pub struct FirstWaypoint(pub Entity);
 
 /// [`EnRouteTo`] marks one entity as pursuing the next waypoint identified by [`Entity`].
@@ -56,33 +105,31 @@ pub struct FirstWaypoint(pub Entity);
 #[reflect(Component)]
 pub struct EnRouteTo(pub Entity);
 
-////// NextWaypoint //////
-
 /// [`NextWaypoint`] marks an entity as part of a chain of waypoints, identifying the next entity.
-#[derive(Component, Reflect, Debug)]
+/// The last waypoint in the list will not (must not) have this component.
+#[derive(Component, Reflect, Debug, Deref)]
 #[relationship(relationship_target = PrevWaypoint)]
 #[reflect(Component)]
 pub struct NextWaypoint(pub Entity);
 
 /// [`PrevWaypoint`] marks an entity as preceding another entity in a chain of waypoints.
-#[derive(Component, Reflect, Debug)]
+/// The first waypoint in the list will not (must not) have this component.
+#[derive(Component, Reflect, Debug, Deref)]
 #[relationship_target(relationship = NextWaypoint)]
 #[reflect(Component)]
 pub struct PrevWaypoint(Entity);
 
-////// Following //////
+// /// [`Following`] identifies an [`Entity`] as following a particular [`Route`] entity's points.
+// #[derive(Component, Reflect, Debug, Deref)]
+// #[relationship(relationship_target = Followers)]
+// #[reflect(Component)]
+// pub struct Following(pub Entity);
 
-/// [`Following`] identifies an [`Entity`] as following a particular [`Route`] entity's points.
-#[derive(Component, Reflect, Debug, Deref)]
-#[relationship(relationship_target = Followers)]
-#[reflect(Component)]
-pub struct Following(pub Entity);
-
-/// [`Followers`] is a list of entities that are following this particular [`Route`].
-#[derive(Component, Reflect, Debug)]
-#[relationship_target(relationship = Following)]
-#[reflect(Component)]
-pub struct Followers(Vec<Entity>);
+// /// [`Followers`] is a list of entities that are following this particular [`Route`].
+// #[derive(Component, Reflect, Debug)]
+// #[relationship_target(relationship = Following)]
+// #[reflect(Component)]
+// pub struct Followers(Vec<Entity>);
 
 ////// Commands //////
 
