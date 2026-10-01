@@ -14,7 +14,7 @@ use crate::{
     inventory::{self, InventoryChange},
     loot::{FixedLoot, LootTable},
     parameters::{Awareness, Parameters},
-    route::RouteId,
+    route::{RouteAssist, RouteId},
     tilemap::{ActiveLevel, Zone},
     tiles::{TILE_SIZE_PX, TileIdx},
 };
@@ -48,6 +48,7 @@ pub enum Behavior {
 pub fn detect_mobs(
     mut commands: Commands,
     new_interactables: Query<(Entity, &Mob, &Name, &Cell, &TileIdx), Added<Mob>>,
+    mut route_assist: RouteAssist,
 ) -> Result<()> {
     let mut count = 0;
 
@@ -69,6 +70,11 @@ pub fn detect_mobs(
             Attitude::Hostile => {
                 commands.entity(entity).insert(Combatant);
             }
+        }
+
+        if let Some(route_id) = &mob.route_id {
+            info!("{name}: assigning requested route: {route_id:?}");
+            route_assist.assign(entity, route_id)?;
         }
 
         count += 1;

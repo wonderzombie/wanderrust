@@ -27,6 +27,7 @@ impl Route {
     pub fn new(dimensions: &Dimensions, entity: &LdtkEntity) -> Self {
         let name = entity
             .get_name_field()
+            .or_else(|| entity.get_string("route_id"))
             .unwrap_or_else(|| format!("WaypointNameMissing"));
 
         let points: Vec<Cell> = entity
@@ -54,19 +55,19 @@ type AnyWaypoint = AnyOf<(&'static NextWaypoint, &'static PrevWaypoint)>;
 #[derive(SystemParam)]
 pub struct RouteAssist<'w, 's> {
     commands: Commands<'w, 's>,
-    mobs: Query<'w, 's, (&'static Cell, &'static EnRouteTo), With<mobs::Mob>>,
+    mobs: Query<'w, 's, (&'static Cell, Option<&'static EnRouteTo>), With<mobs::Mob>>,
     routes: Query<'w, 's, (&'static Route, &'static FirstWaypoint)>,
     waypoints: Query<'w, 's, (&'static Cell, AnyWaypoint, &'static ChildOf)>,
 }
 
 impl<'w, 's> RouteAssist<'w, 's> {
-    pub fn assign(&mut self, assignee: Entity, route_id: RouteId) -> Result<()> {
+    pub fn assign(&mut self, assignee: Entity, route_id: &RouteId) -> Result<()> {
         self.mobs.get(assignee)?;
 
         let (_, first_wp) = self
             .routes
             .iter()
-            .find(|(route, _)| route.id.eq(&route_id))
+            .find(|(route, _)| route.id.eq(route_id))
             .ok_or_else(|| format!("{route_id:?}: no such route exists"))?;
 
         self.commands.entity(assignee).insert(EnRouteTo(**first_wp));
@@ -81,6 +82,9 @@ impl<'w, 's> RouteAssist<'w, 's> {
     /// Suitable for use with `set_if_neq` when [`Cell`] changes.
     pub fn next_waypoint(&self, follower: Entity) -> Result<Entity> {
         let (mob_cell, en_route_to) = self.mobs.get(follower)?;
+        let en_route_to =
+            en_route_to.ok_or_else(|| format!("{follower} is not en route to anywhere"))?;
+
         let (wp_cell, (next_opt, _), child_of) = self.waypoints.get(**en_route_to)?;
 
         if mob_cell != wp_cell {
