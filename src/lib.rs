@@ -194,7 +194,8 @@ pub fn run() {
                 tilemap::spawn_worldmap,
                 map::sync_tiles,
                 tilemap::initialize_tile_storage,
-                tilemap::setup_portals,
+                tilemap::spawn_portals,
+                tilemap::spawn_routes,
             )
                 .chain()
                 .in_set(GameSystem::SetupTiles),

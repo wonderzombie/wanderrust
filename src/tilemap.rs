@@ -13,7 +13,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     light::{Emitter, LightLevel},
-    route::Route,
+    route::{Route, SpawnWaypoints},
     tiles::{self, MapTile, Revealed, TileIdx},
 };
 
@@ -503,7 +503,7 @@ pub fn initialize_tile_storage(
     }
 }
 
-pub fn setup_portals(
+pub fn spawn_portals(
     mut commands: Commands,
     world: Res<WorldSpec>,
     levels: Query<&Level>,
@@ -527,6 +527,22 @@ pub fn setup_portals(
                 ));
                 info!("- 📍 inserted portal {portal:?} at {cell:?}");
             }
+        }
+    }
+}
+
+pub fn spawn_routes(mut commands: Commands, world_spec: Res<WorldSpec>, levels: Query<&Level>) {
+    for Level(level_entity, level_id) in levels {
+        let Some(spec) = world_spec.maps.get(level_id) else {
+            error!(
+                "{level_entity} {level_id} not found in WorldSpec maps; {:?}",
+                world_spec.maps
+            );
+            continue;
+        };
+
+        for route in spec.routes.iter() {
+            commands.queue(SpawnWaypoints(*level_entity, route.clone()));
         }
     }
 }
