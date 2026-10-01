@@ -1,4 +1,8 @@
-use bevy::prelude::*;
+use bevy::{
+    ecs::{query::QueryData, system::SystemParam},
+    prelude::*,
+};
+use itertools::Itertools;
 
 use crate::{
     cell::Cell,
@@ -6,10 +10,11 @@ use crate::{
     tilemap::Dimensions,
 };
 
-#[derive(Debug, PartialEq, Clone, Reflect)]
+#[derive(Component, Debug, PartialEq, Clone, Reflect)]
 pub struct RouteId(pub String);
 
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
+#[component(immutable)]
 #[reflect(Component)]
 pub struct Route {
     pub id: RouteId,
@@ -39,5 +44,276 @@ impl Route {
             id: RouteId(name),
             points,
         }
+    }
+}
+
+/// Applied to a [`Route`] entity to get the first waypoint, for convenience.
+#[derive(Component)]
+pub struct FirstWaypoint(pub Entity);
+
+/// [`EnRouteTo`] marks one entity as pursuing the next waypoint identified by [`Entity`].
+#[derive(Component, Debug, Deref, Reflect)]
+#[reflect(Component)]
+pub struct EnRouteTo(pub Entity);
+
+////// NextWaypoint //////
+
+/// [`NextWaypoint`] marks an entity as part of a chain of waypoints, identifying the next entity.
+#[derive(Component, Reflect, Debug)]
+#[relationship(relationship_target = PrevWaypoint)]
+#[reflect(Component)]
+pub struct NextWaypoint(pub Entity);
+
+/// [`PrevWaypoint`] marks an entity as preceding another entity in a chain of waypoints.
+#[derive(Component, Reflect, Debug)]
+#[relationship_target(relationship = NextWaypoint)]
+#[reflect(Component)]
+pub struct PrevWaypoint(Entity);
+
+////// Following //////
+
+/// [`Following`] identifies an [`Entity`] as following a particular [`Route`] entity's points.
+#[derive(Component, Reflect, Debug, Deref)]
+#[relationship(relationship_target = Followers)]
+#[reflect(Component)]
+pub struct Following(pub Entity);
+
+/// [`Followers`] is a list of entities that are following this particular [`Route`].
+#[derive(Component, Reflect, Debug)]
+#[relationship_target(relationship = Following)]
+#[reflect(Component)]
+pub struct Followers(Vec<Entity>);
+
+////// Commands //////
+
+pub struct SpawnWaypoints(pub Route);
+
+impl Command for SpawnWaypoints {
+    type Out = Result<()>;
+
+    fn apply(self, world: &mut World) -> Self::Out {
+        let route_id = world.spawn_empty().id();
+
+        let point_ids = &self
+            .0
+            .points
+            .iter()
+            .map(|c| world.spawn((*c, ChildOf(route_id))).id())
+            .collect_vec();
+
+        for (prev_id, next_id) in point_ids.iter().tuple_windows() {
+            world.entity_mut(*prev_id).insert(NextWaypoint(*next_id));
+        }
+
+        let first_wp = point_ids
+            .first()
+            .ok_or_else(|| "unable to access first waypoint entity id?!")?;
+
+        world
+            .entity_mut(route_id)
+            .insert((self.0, FirstWaypoint(*first_wp)));
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::*;
+
+    fn insert_route(app: &mut App, new_route: Route) {
+        app.world_mut().commands().queue(SpawnWaypoints(new_route));
+    }
+
+    fn points() -> Vec<Cell> {
+        vec![
+            Cell::new(0, 0),
+            Cell::new(2, 0),
+            Cell::new(2, 2),
+            Cell::new(0, 2),
+        ]
+    }
+
+    fn setup() -> App {
+        let mut app = init_app();
+        insert_route(
+            &mut app,
+            Route {
+                id: RouteId("route_one".to_string()),
+                points: points(),
+            },
+        );
+        app.update();
+        app
+    }
+
+    #[test]
+    fn test_spawn_waypoints_route_has_children() -> Result<()> {
+        let mut app = setup();
+
+        let route_nt = app
+            .world_mut()
+            .query_filtered::<Entity, With<Route>>()
+            .single(app.world())?;
+
+        let children = app
+            .world()
+            .get::<Children>(route_nt)
+            .expect("expected route entity to have Children component")
+            .collection();
+
+        assert_eq!(4, children.len());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_spawn_waypoints_first_waypoint() -> Result<()> {
+        let mut app = setup();
+
+        let (route_nt, first_wp) = app
+            .world_mut()
+            .query_filtered::<(Entity, &FirstWaypoint), With<Route>>()
+            .single(app.world())
+            .expect("expected exactly one entity with first waypoint");
+
+        let children = app
+            .world()
+            .get::<Children>(route_nt)
+            .expect("expected route entity to have Children component")
+            .collection()
+            .clone();
+
+        let first_child = children.first().expect("expected Children not to be empty");
+
+        assert_eq!(*first_child, first_wp.0);
+
+        let second_child = children
+            .get(1)
+            .expect("expected Children two have at least two entities");
+
+        let next_wp = app
+            .world()
+            .get::<NextWaypoint>(*first_child)
+            .expect("expected first child to have NextWaypoint");
+
+        assert_eq!(*second_child, next_wp.0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_spawn_waypoints_waypoint_cells() -> Result<()> {
+        let mut app = setup();
+
+        // `setup()` uses this to initialize waypoints.
+        let points = points();
+
+        let route_nt = app
+            .world_mut()
+            .query_filtered::<Entity, With<Route>>()
+            .single(app.world())
+            .expect("expected exactly one entity with Route");
+
+        let children = app
+            .world()
+            .get::<Children>(route_nt)
+            .expect("expected Children to be present on Route entity");
+
+        for (i, cell) in points.iter().enumerate() {
+            let wp_nt = children
+                .get(i)
+                .expect("expected an equal number of Children and Cells");
+
+            let actual_cell = app
+                .world()
+                .get::<Cell>(*wp_nt)
+                .expect("expected each waypoint to have a Cell");
+
+            assert_eq!(cell, actual_cell);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_spawn_waypoints_next_and_prev_waypoint() {
+        let mut app = setup();
+
+        let children = app
+            .world_mut()
+            .query_filtered::<&Children, With<Route>>()
+            .single(app.world())
+            .expect("expected exactly one entity with first waypoint");
+
+        let world = app.world();
+
+        // This presumes a list of waypoints greater than one.
+        for (i, (left, right)) in children.collection().iter().tuple_windows().enumerate() {
+            let the_next_wp = world
+                .get::<NextWaypoint>(*left)
+                .expect("expected not-last-child of Route to have NextWaypoint");
+
+            assert_eq!(
+                *right, the_next_wp.0,
+                "{left} @ {i} did not point to {right}"
+            );
+
+            let the_prev_wp = world
+                .get::<PrevWaypoint>(*right)
+                .expect("expected next waypoint's PrevWaypoint to exist");
+
+            assert_eq!(
+                *left, the_prev_wp.0,
+                "{right} @ {i} did not point back to {left}"
+            );
+        }
+
+        let last_wp = children
+            .last()
+            .expect("expected there to be a last waypoint in list");
+
+        assert_eq!(world.entity(*last_wp).contains::<NextWaypoint>(), false);
+    }
+
+    #[test]
+    fn test_spawn_waypoints_with_next_without_prev() -> Result<()> {
+        let mut app = setup();
+
+        let no_predecessor = app
+            .world_mut()
+            .query_filtered::<Entity, (With<NextWaypoint>, Without<PrevWaypoint>)>()
+            .single(app.world())?;
+
+        let first = app
+            .world_mut()
+            .query::<&FirstWaypoint>()
+            .single(app.world())?;
+
+        assert_eq!(no_predecessor, first.0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_spawn_waypoints_without_next_with_prev() -> Result<()> {
+        let mut app = setup();
+
+        let no_successor = app
+            .world_mut()
+            .query_filtered::<Entity, (With<PrevWaypoint>, Without<NextWaypoint>)>()
+            .single(app.world())?;
+
+        let last = app
+            .world_mut()
+            .query_filtered::<&Children, With<Route>>()
+            .single(app.world())?
+            .last()
+            .expect("expected Children to have a non-zero number of entities");
+
+        assert_eq!(no_successor, *last);
+
+        Ok(())
     }
 }
