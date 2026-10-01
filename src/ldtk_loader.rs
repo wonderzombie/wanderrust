@@ -318,7 +318,7 @@ pub fn generate_ldtk_world(mut commands: Commands, project: Option<Res<LdtkProje
                         }
                         Some(ParsedActor::Route) => {
                             let w = Route::new(&spec.dimensions, actor);
-                            spec.routes.push((w, cell));
+                            spec.routes.push(w);
                         }
                         None => warn!("ignoring unparsable actor: {actor:?}"),
                     }

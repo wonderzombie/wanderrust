@@ -41,7 +41,6 @@ type TileSpec = (TileIdx, Cell);
 type PortalSpec = (Portal, Cell);
 type InterxSpec = (Interactable, Cell);
 type EmitterSpec = (Emitter, Cell);
-type RouteSpec = (Route, Cell);
 
 #[derive(Debug, Default, Resource, PartialEq, Reflect, Clone)]
 #[reflect(Resource)]
@@ -56,7 +55,7 @@ pub struct LevelSpec {
     pub emitters: Vec<EmitterSpec>,
     pub interxs: Vec<InterxSpec>,
     pub portals: Vec<PortalSpec>,
-    pub routes: Vec<RouteSpec>,
+    pub routes: Vec<Route>,
 
     pub spawn_point: Option<SpawnCell>,
     pub light_level: LightLevel,
