@@ -47,9 +47,6 @@ impl Route {
     }
 }
 
-/// Type alias for selecting any kind of waypoint. This is useful because the first waypoint will
-/// have `NextWaypoint` but not `PrevWaypoint`, and the last waypoint will have `PrevWaypoing` but
-/// not `NextWaypoint`.
 type AnyWaypoint = AnyOf<(&'static NextWaypoint, &'static PrevWaypoint)>;
 
 #[derive(SystemParam)]
@@ -75,29 +72,27 @@ impl<'w, 's> RouteAssist<'w, 's> {
         Ok(())
     }
 
-    /// Returns the next waypoint for an entity [`Following`] a route, which may be their current
-    /// destination [`Cell`] if they've yet to reach it, or the next waypoint if they have reached
-    /// the current waypoint's [`Cell`].
-    ///
-    /// Suitable for use with `set_if_neq` when [`Cell`] changes.
-    pub fn next_waypoint(&self, follower: Entity) -> Result<Entity> {
-        let (mob_cell, en_route_to) = self.mobs.get(follower)?;
-        let en_route_to =
+    pub fn destination(&self, follower: Entity) -> Result<Cell> {
+        let (_, en_route_to) = self.mobs.get(follower)?;
+        let EnRouteTo(target) =
             en_route_to.ok_or_else(|| format!("{follower} is not en route to anywhere"))?;
+        self.cell_for(*target)
+    }
 
-        let (wp_cell, (next_opt, _), child_of) = self.waypoints.get(**en_route_to)?;
-
-        if mob_cell != wp_cell {
-            return Ok(**en_route_to);
-        }
+    pub fn successor(&self, waypoint: Entity) -> Result<Entity> {
+        let (_, (next_opt, _), child_of) = self.waypoints.get(waypoint)?;
 
         match next_opt {
             Some(next_wp) => Ok(**next_wp),
-            None => {
-                let (_, first_wp) = self.routes.get(child_of.parent())?;
-                Ok(**first_wp)
-            }
+            None => Ok(**self.routes.get(child_of.parent())?.1),
         }
+    }
+
+    pub fn cell_for(&self, waypoint: Entity) -> Result<Cell> {
+        self.waypoints
+            .get(waypoint)
+            .map(|it| *it.0)
+            .map_err(Into::into)
     }
 }
 
