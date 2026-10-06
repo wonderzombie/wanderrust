@@ -9,19 +9,26 @@ use crate::{
 };
 
 pub fn plugin(app: &mut App) {
-    app.add_observer(on_cell_update);
+    app.add_observer(on_cell_inserted);
 }
 
-pub fn on_cell_update(
+/// [`Cell`] is immutable so [`Insert`] is a mutation.
+pub fn on_cell_inserted(
     on: On<Insert, Cell>,
     mut route_assist: RouteAssist,
-    cells: Query<&Cell, With<crate::mobs::Mob>>,
+    cells: Query<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
 ) -> Result<()> {
-    let dest_cell = route_assist.destination(on.event_target())?;
-    let curr_cell = cells.get(on.event_target())?;
+    let dest = route_assist
+        .destination(on.event_target())
+        .with_severity(Severity::Error)?;
+    let curr = cells
+        .get(on.event_target())
+        .with_severity(Severity::Error)?;
 
-    if dest_cell == *curr_cell {
-        route_assist.advance(on.event_target())?;
+    if dest == *curr {
+        route_assist
+            .advance(on.event_target())
+            .with_severity(Severity::Error)?;
     }
 
     Ok(())
@@ -201,6 +208,7 @@ mod tests {
             })
             .unwrap();
 
+        // Advance once, beyond index 0
         world
             .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
                 assist.advance(mob).unwrap();
@@ -209,25 +217,79 @@ mod tests {
 
         world.flush();
 
-        let on_route = world.get::<OnRoute>(mob).unwrap().clone();
-        assert_eq!(on_route.idx, 1);
+        let idx = idx_for(&world, mob);
+        assert_eq!(idx, 1);
 
         let dest: Cell = world
             .run_system_once(move |assist: RouteAssist| assist.destination(mob))
             .unwrap();
-        assert_eq!(cells[on_route.idx], dest);
+        assert_eq!(cells[idx], dest);
 
+        // As if we have wrapped around a two-waypoint-route
         world
             .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
                 assist.advance(mob).unwrap();
             })
             .unwrap();
-        let on_route = world.get::<OnRoute>(mob).unwrap().clone();
-        assert_eq!(on_route.idx, 0);
+        let idx = idx_for(&world, mob);
+        assert_eq!(idx, 0);
 
         let dest: Cell = world
             .run_system_once(move |assist: RouteAssist| assist.destination(mob))
             .unwrap();
-        assert_eq!(cells[on_route.idx], dest);
+        assert_eq!(cells[idx], dest);
+    }
+
+    fn idx_for(w: &World, e: Entity) -> usize {
+        w.entity(e).get::<OnRoute>().unwrap().idx
+    }
+
+    #[test]
+    fn test_on_cell_inserted() -> Result {
+        let mut world = World::default();
+
+        let chicken = world
+            .spawn((
+                Mob {
+                    name: "Poppy".into(),
+                    tile_idx: TileIdx::Chicken,
+                    route_id: Some("fake_route".into()),
+                },
+                Cell::new(0, 0),
+            ))
+            .id();
+
+        world.spawn(Route {
+            id: "fake_route".into(),
+            points: vec![Cell::new(0, 2), Cell::new(2, 2)],
+        });
+
+        world.flush();
+
+        world
+            .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
+                assist.assign(chicken, &"fake_route".into())
+            })
+            .unwrap();
+
+        world.add_observer(on_cell_inserted);
+
+        // As if we're progressing along the route.
+        world.entity_mut(chicken).insert(Cell::new(0, 1));
+        world.flush();
+        assert_eq!(idx_for(&world, chicken), 0);
+
+        // As if we've arrived at the first waypoint.
+        world.entity_mut(chicken).insert(Cell::new(0, 2));
+        world.flush();
+        assert_eq!(idx_for(&world, chicken), 1);
+
+        // As if we've made a massive detour for some reason.
+        // Regardless, our progress remains the same.
+        world.entity_mut(chicken).insert(Cell::new(0, 22));
+        world.flush();
+        assert_eq!(idx_for(&world, chicken), 1);
+
+        Ok(())
     }
 }
