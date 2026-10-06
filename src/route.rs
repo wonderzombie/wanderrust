@@ -7,6 +7,25 @@ use crate::{
     tilemap::Dimensions,
 };
 
+pub fn plugin(app: &mut App) {
+    app.add_observer(on_cell_update);
+}
+
+pub fn on_cell_update(
+    on: On<Insert, Cell>,
+    mut route_assist: RouteAssist,
+    cells: Query<&Cell, With<crate::mobs::Mob>>,
+) -> Result<()> {
+    let dest_cell = route_assist.destination(on.event_target())?;
+    let curr_cell = cells.get(on.event_target())?;
+
+    if dest_cell == *curr_cell {
+        route_assist.advance(on.event_target())?;
+    }
+
+    Ok(())
+}
+
 #[derive(Component, Debug, PartialEq, Clone, Reflect, Deserialize, Serialize, Eq)]
 pub struct RouteId(pub String);
 

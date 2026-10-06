@@ -335,6 +335,7 @@ fn add_wanderrust_plugins(app: &mut App) {
             interxables::plugin,
             inventory::plugin,
             mobs::plugin,
+            route::plugin,
             NorthstarPlugin::<CardinalNeighborhood>::default(),
         ));
 }
