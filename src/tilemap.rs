@@ -13,7 +13,7 @@ use crate::{
     interactions::Interactable,
     ldtk_loader::{LdtkActor, LdtkEntity, LdtkEntityExt},
     light::{Emitter, LightLevel},
-    route::{Route, SpawnWaypoints},
+    route::Route,
     tiles::{self, MapTile, Revealed, TileIdx},
 };
 
@@ -542,7 +542,7 @@ pub fn spawn_routes(mut commands: Commands, world_spec: Res<WorldSpec>, levels: 
         };
 
         for route in spec.routes.iter() {
-            commands.queue(SpawnWaypoints(*level_entity, route.clone()));
+            commands.spawn(route.clone());
         }
     }
 }
