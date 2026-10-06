@@ -1,3 +1,4 @@
+use anyhow::Context;
 use bevy::{ecs::system::SystemParam, prelude::*};
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +29,12 @@ pub fn on_cell_update(
 
 #[derive(Component, Debug, PartialEq, Clone, Reflect, Deserialize, Serialize, Eq)]
 pub struct RouteId(pub String);
+
+impl From<&str> for RouteId {
+    fn from(value: &str) -> Self {
+        Self(String::from(value))
+    }
+}
 
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[component(immutable)]
@@ -81,7 +88,9 @@ pub struct RouteAssist<'w, 's> {
 
 impl<'w, 's> RouteAssist<'w, 's> {
     pub fn assign(&mut self, follower: Entity, route_id: &RouteId) -> Result<()> {
-        self.mobs.get(follower)?;
+        self.mobs
+            .get(follower)
+            .context("unable to find follower among mobs")?;
 
         let (route_nt, _) = self
             .routes
@@ -110,5 +119,115 @@ impl<'w, 's> RouteAssist<'w, 's> {
         let (_, route) = self.routes.get(on_route.route)?;
         on_route.idx = (on_route.idx + 1) % route.points.len();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mobs::Mob, tiles::TileIdx};
+    use bevy::ecs::system::RunSystemOnce;
+
+    #[test]
+    fn test_assign_route_destination() -> Result {
+        let mut world = World::new();
+
+        let cells = vec![Cell::new(1, 1), Cell::new(2, 2)];
+
+        let route = world
+            .spawn(Route {
+                id: "the_route".into(),
+                points: cells.clone(),
+            })
+            .id();
+
+        let mob = world
+            .spawn((
+                Mob {
+                    name: "bat".into(),
+                    tile_idx: TileIdx::Bat,
+                    route_id: Some("the_route".into()),
+                },
+                Cell::new(0, 0),
+            ))
+            .id();
+
+        world
+            .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
+                assist.assign(mob, &"the_route".into())
+            })
+            .unwrap();
+
+        let dest: Cell = world
+            .run_system_once(move |assist: RouteAssist| assist.destination(mob))
+            .unwrap();
+
+        world.flush();
+
+        let on_route = world.query::<&OnRoute>().single(&world).unwrap();
+
+        assert_eq!(on_route.route, route);
+        assert_eq!(on_route.idx, 0);
+        assert_eq!(cells[on_route.idx], dest);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_assign_route_advance() {
+        let mut world = World::new();
+
+        let cells = vec![Cell::new(1, 1), Cell::new(2, 2)];
+
+        world.spawn(Route {
+            id: "the_route".into(),
+            points: cells.clone(),
+        });
+
+        let mob = world
+            .spawn((
+                Mob {
+                    name: "bat".into(),
+                    tile_idx: TileIdx::Bat,
+                    route_id: Some("the_route".into()),
+                },
+                Cell::new(0, 0),
+            ))
+            .id();
+
+        world
+            .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
+                assist.assign(mob, &"the_route".into())
+            })
+            .unwrap();
+
+        world
+            .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
+                assist.advance(mob).unwrap();
+            })
+            .unwrap();
+
+        world.flush();
+
+        let on_route = world.get::<OnRoute>(mob).unwrap().clone();
+        assert_eq!(on_route.idx, 1);
+
+        let dest: Cell = world
+            .run_system_once(move |assist: RouteAssist| assist.destination(mob))
+            .unwrap();
+        assert_eq!(cells[on_route.idx], dest);
+
+        world
+            .run_system_once::<_, (), _>(move |mut assist: RouteAssist| {
+                assist.advance(mob).unwrap();
+            })
+            .unwrap();
+        let on_route = world.get::<OnRoute>(mob).unwrap().clone();
+        assert_eq!(on_route.idx, 0);
+
+        let dest: Cell = world
+            .run_system_once(move |assist: RouteAssist| assist.destination(mob))
+            .unwrap();
+        assert_eq!(cells[on_route.idx], dest);
     }
 }
