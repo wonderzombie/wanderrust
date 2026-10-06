@@ -531,6 +531,7 @@ pub fn spawn_portals(
     }
 }
 
+/// Spawns [`Route`] as gleaned from [`WorldSpec`].
 pub fn spawn_routes(mut commands: Commands, world_spec: Res<WorldSpec>, levels: Query<&Level>) {
     for Level(level_entity, level_id) in levels {
         let Some(spec) = world_spec.maps.get(level_id) else {
