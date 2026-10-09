@@ -8,7 +8,7 @@ members = [".", "mrpas"]
 
 [dependencies]
 anyhow = "1.0.104"
-bevy = { version = "0.19", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
+bevy = { version = "0.20", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
 bevy-inspector-egui = "0.37.0"
 bevy_northstar = "0.7.0"
 clap = { version = "4.6.6", features = ["derive"] }
