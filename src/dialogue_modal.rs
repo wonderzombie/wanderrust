@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui};
 
 use crate::{gamestate::Modal, interxables::speaker::Dialogue, ui::theme::pcsr_font};
 
@@ -28,7 +28,7 @@ pub struct DialogueEntity(pub Entity);
 pub fn on_dialogue_start(on: On<DialogueStart>, mut commands: Commands) {
     let DialogueStart(speaker_nt) = *on;
     commands.insert_resource(DialogueEntity(speaker_nt));
-    commands.set_state_if_neq(Modal::Dialogue)
+    commands.set_state_if_different(Modal::Dialogue)
 }
 
 fn populate(
@@ -53,21 +53,18 @@ fn populate(
 
 fn interaction_system(
     mut commands: Commands,
-    interactions: Query<&Interaction, Changed<Interaction>>,
+    interactions: Query<&ui::Pressed, Changed<ui::Pressed>>,
     input: Res<ButtonInput<KeyCode>>,
 ) {
     if input.is_changed()
         && input.any_just_pressed([KeyCode::Space, KeyCode::Enter, KeyCode::Escape])
     {
-        commands.set_state_if_neq(Modal::None);
+        commands.set_state_if_different(Modal::None);
         return;
     }
 
-    for interaction in interactions {
-        if interaction == &Interaction::Pressed {
-            commands.set_state_if_neq(Modal::None);
-            return;
-        }
+    if !interactions.is_empty() {
+        commands.set_state_if_different(Modal::None);
     }
 }
 
@@ -99,24 +96,21 @@ fn scene() -> impl Scene {
             }
             BackgroundColor(Color::BLACK)
             Children [
-                (
                     Node {
                         padding: UiRect::all(px(4)),
                     }
                     SpeakerName
                     Text::new("Metir")
                     TextLayout::justify(Justify::Center)
-                    pcsr_font(16)
-                ),
-                (
+                    @pcsr_font(16)
+                --
                     Node {
                         padding: UiRect::all(px(4)),
                     }
                     SpeakerText
                     Text::new("")
                     TextLayout::justify(Justify::Left)
-                    pcsr_font(14)
-                )
+                    @pcsr_font(14)
             ]
         ]
     }

@@ -52,6 +52,7 @@ fn update_labels(
     let equip_nt: Vec<Entity> = unwrap_collection(equipment_opt);
     let equipped = equipment
         .iter_many(equip_nt)
+        .matched()
         .map(|(it, eq_by)| (eq_by.slot, it.def().label))
         .collect::<HashMap<Slot, &str>>();
     let eq_or_none = |s: Slot| equipped.get(&s).unwrap_or(&"--").to_uppercase();
@@ -117,51 +118,51 @@ pub(crate) fn scene() -> impl Scene {
         Children [
                 Node
                 Text::new("WANDERRUST")
-                theme::pcsr_font(16)
+                @theme::pcsr_font(16)
                 TextColor(colors::KENNEY_OFF_WHITE)
-            ,
+                --
                 Node { height: px(16) }
-            ,
-                theme::label_row("HP: ??")
+                --
+               @theme::label_row("HP: ??")
                 Label::Hp
-            ,
-                theme::label_row("FR: ??")
+                --
+               @theme::label_row("FR: ??")
                 Label::Flasks
-            ,
-                theme::label_row("T: ??")
+                --
+               @theme::label_row("T: ??")
                 Label::Ticks
-            ,
-                theme::label_row("C: ??")
+                --
+               @theme::label_row("C: ??")
                 Label::Cell
-            ,
+                --
                 Node { height: px(16) }
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::Move
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::Attack
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::Defense
-            ,
+                --
                 Node { height: px(16) }
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::MainHand
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::OffHand
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::Armor
-            ,
-                theme::label_row("")
+                --
+               @theme::label_row("")
                 Label::Trinket
-            ,
+                --
                 Node { height: px(16) }
-            ,
-                theme::label_row("?? GP")
+                --
+               @theme::label_row("?? GP")
                 Label::Gold
         ]
     }

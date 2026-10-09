@@ -74,7 +74,7 @@ pub fn setup_fov(
         let mut transparent_count = 0;
         let mut fov = Fov(Mrpas::new(dimensions.width as i32, dimensions.width as i32));
 
-        for cell in transparent_tiles.iter_many(children) {
+        for cell in transparent_tiles.iter_many(children).matched() {
             fov.set_transparent(cell.into(), true);
             transparent_count += 1;
         }

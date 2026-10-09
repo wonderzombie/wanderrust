@@ -101,7 +101,7 @@ pub fn check_fov(
 
     let (fov, entities) = active_zone.into_inner();
 
-    for (entity, awareness, cell, params) in active_mobs.iter_many(entities.iter()) {
+    for (entity, awareness, cell, params) in active_mobs.iter_many(entities.iter()).matched() {
         let view = fov.from(cell.into(), params.vision.range());
         if view.has(player_cell) && awareness < &Awareness::Alerted {
             commands

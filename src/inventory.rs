@@ -285,7 +285,7 @@ pub(super) fn process_inventory_changes(
             Err(_) => &Carrying(vec![]),
         };
 
-        let carried_items = all_carried.iter_many(target_carrying.iter());
+        let carried_items = all_carried.iter_many(target_carrying.iter()).matched();
         match inv_change.typ {
             Change::Acquired => acquire(&mut commands, inv_change, carried_items),
             Change::Removed => remove(&mut commands, inv_change, carried_items),
@@ -362,6 +362,7 @@ fn snapshot_inventory(
 ) {
     let inv: Inventory = all_items
         .iter_many(player_carrying.iter())
+        .matched()
         .map(|(it, q)| ItemEntry(*it, *q))
         .collect::<Vec<ItemEntry>>()
         .into();

@@ -64,7 +64,7 @@ fn update_log(
             Node {
                 width: percent(100),
             }
-            pcsr_font(12)
+            @pcsr_font(12)
             Text::new(out_txt)
             TextColor(out_color)
             ChildOf(log_nt)

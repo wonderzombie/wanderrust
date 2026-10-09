@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui, ui_widgets::Button};
 
 use crate::gamestate::{GameState, ResetScenario, Screen};
 
@@ -59,16 +59,14 @@ pub fn screen_bundle(asset_server: Res<AssetServer>) -> impl Bundle {
 
 pub fn interaction_system(
     mut commands: Commands,
-    interactions: Query<(Entity, &Interaction), Changed<Interaction>>,
+    interactions: Query<&ui::Pressed, Changed<ui::Pressed>>,
     mut next_gamestate: ResMut<NextState<GameState>>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    for (_, interaction) in interactions.iter() {
-        if interaction == &Interaction::Pressed {
-            info!("interaction");
-            commands.write_message(ResetScenario);
-            next_gamestate.set(GameState::AwaitingInput);
-            next_screen.set(Screen::Playing);
-        }
+    if !interactions.is_empty() {
+        info!("interaction");
+        commands.write_message(ResetScenario);
+        next_gamestate.set(GameState::AwaitingInput);
+        next_screen.set(Screen::Playing);
     }
 }

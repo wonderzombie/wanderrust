@@ -488,7 +488,7 @@ pub fn initialize_tile_storage(
     for (Level(level_entity, level_id), size, children) in levels {
         let mut num_cells = 0;
         let mut storage = TileStorage::new(*size);
-        for (nt, cell) in tiles.iter_many(children.iter()) {
+        for (nt, cell) in tiles.iter_many(children.iter()).matched() {
             if cell == &Cell::ZERO {
                 zero_cells += 1;
             }

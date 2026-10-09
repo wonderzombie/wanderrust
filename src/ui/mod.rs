@@ -36,17 +36,17 @@ fn hud() -> impl Scene {
         }
         Pickable::IGNORE
         Children [
-            (PlayField Node { flex_grow: 1.0 } Pickable::IGNORE ),
-            (
+            PlayField Node { flex_grow: 1.0 } Pickable::IGNORE
+            --
                 Node {
                     width: px(SIDEBAR_W),
                     flex_direction: FlexDirection::Column,
                 }
                 Children [
-                    status_panel::scene(),
-                    message_log::scene(),
+                    @status_panel::scene()
+                    --
+                    @message_log::scene()
                 ]
-            ),
         ]
     }
 }

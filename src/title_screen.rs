@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui, ui_widgets::Button};
 use std::time::Duration;
 
 use crate::{
@@ -48,7 +48,7 @@ pub fn screen_bundle() -> impl Scene {
         }
         Children [
             TitleText
-            pcsr_font(54)
+            @pcsr_font(54)
             Text("")
             TextLayout::justify(Justify::Center)
             Typewriter {
@@ -56,26 +56,29 @@ pub fn screen_bundle() -> impl Scene {
                 per_char: Duration::from_millis(100),
                 txt: String::from("ADVENTUREGAME"),
             }
-            ,
+            --
             Node {
                 min_height: px(32)
-            },
+            }
+            --
 
             // TODO: justify center
             Button
             Buttons::Start
             Text("[ START ]")
-            pcsr_font(33),
+            @pcsr_font(33)
+            --
 
             // TODO: justify center
             Button
             Buttons::Intro
             Text("[ INTRO ]")
-            pcsr_font(33),
+            @pcsr_font(33)
+            --
 
             ColorTest
             Text("")
-            pcsr_font(33),
+            @pcsr_font(33)
 
         ]
     }
@@ -90,28 +93,26 @@ struct TextTest;
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    interactions: Query<(&Interaction, &Buttons), Changed<Interaction>>,
+    interactions: Query<&Buttons, Changed<ui::Pressed>>,
     ct: Single<Entity, With<ColorTest>>,
     debug_mode: Res<State<DebugState>>,
 ) {
-    for (interaction, button_ty) in interactions.iter() {
-        if interaction == &Interaction::Pressed {
-            match button_ty {
-                Buttons::Start => {
-                    commands.set_state_if_neq(Screen::Playing);
-                    return;
-                }
-                Buttons::Intro => {
-                    commands.set_state_if_neq(Screen::Intro);
-                    return;
-                }
+    for button_ty in interactions.iter() {
+        match button_ty {
+            Buttons::Start => {
+                commands.set_state_if_different(Screen::Playing);
+                return;
+            }
+            Buttons::Intro => {
+                commands.set_state_if_different(Screen::Intro);
+                return;
             }
         }
+    }
 
-        if input.is_changed() && input.any_just_pressed([KeyCode::Space, KeyCode::Enter]) {
-            commands.set_state_if_neq(Screen::Playing);
-            return;
-        }
+    if input.is_changed() && input.any_just_pressed([KeyCode::Space, KeyCode::Enter]) {
+        commands.set_state_if_different(Screen::Playing);
+        return;
     }
 
     if matches!(**debug_mode, DebugState::Disabled) {
@@ -126,7 +127,7 @@ fn interaction_system(
                 bsn! {
                         TextTest
                         Text("[COLOR]")
-                        pcsr_font(33)
+                        @pcsr_font(33)
                         TextColor(c)
                         ChildOf({ *ct })
                 }
@@ -142,7 +143,7 @@ fn interaction_system(
                 bsn! {
                         TextTest
                         Text("[COLOR]")
-                        pcsr_font(33)
+                        @pcsr_font(33)
                         TextColor(c)
                         ChildOf({ *ct })
                 }

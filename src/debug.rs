@@ -88,6 +88,7 @@ pub(super) fn on_button_input(
         info!("dumping player equipment");
         let equipped = all_equipment
             .iter_many(player_equipped.iter())
+            .matched()
             .map(|it| it.def())
             .collect::<Vec<_>>();
         dbg!(equipped);
@@ -201,7 +202,7 @@ pub fn plugin(app: &mut App) {
     .add_plugins(DebugPickingPlugin)
     .insert_resource(DebugPickingMode::Normal)
     .add_observer(
-        |on: On<Pointer<Click>>,
+        |on: On<PointerClick>,
          input: Res<ButtonInput<KeyCode>>,
          mut commands: Commands,
          s: Res<State<DebugState>>| {

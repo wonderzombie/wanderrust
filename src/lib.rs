@@ -391,7 +391,7 @@ fn finalize_loading(
 }
 
 fn on_discard_cell(
-    on: On<Discard, Cell>,
+    on: On<Discard<Cell>>,
     mut commands: Commands,
     entities: Query<&Cell, With<PreviousCell>>,
 ) {
@@ -403,7 +403,7 @@ fn on_discard_cell(
 }
 
 fn click_observer(
-    on: On<Pointer<Release>>,
+    on: On<PointerRelease>,
     tile_cells: Query<(&TileIdx, &Cell, Option<&Name>, &ChildOf)>,
     spatial_indices: Query<&SpatialIndex>,
     mut log: MessageWriter<LogEvent>,

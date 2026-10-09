@@ -299,8 +299,8 @@ pub struct PlayerRested;
 pub struct ResetScenario;
 
 pub fn player_died(_on: On<PlayerDied>, mut commands: Commands) {
-    commands.set_state_if_neq(GameState::Defeat);
-    commands.set_state_if_neq(Screen::YouDied);
+    commands.set_state_if_different(GameState::Defeat);
+    commands.set_state_if_different(Screen::YouDied);
 }
 
 pub fn player_rested(_on: On<PlayerRested>, mut commands: Commands) {

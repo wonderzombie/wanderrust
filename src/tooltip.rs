@@ -58,7 +58,7 @@ where
 }
 
 fn over_observer(
-    on: On<Pointer<Over>>,
+    on: On<PointerOver>,
     actors: Query<
         (
             Entity,
@@ -111,7 +111,7 @@ fn over_observer(
 }
 
 fn out_observer(
-    _on: On<Pointer<Out>>,
+    _on: On<PointerOut>,
     tooltip: Single<(Entity, &mut Text2d), With<Tooltip>>,
     mut commands: Commands,
 ) {

@@ -74,6 +74,7 @@ fn populate(
 
     let rows: Vec<Entity> = all_itam
         .iter_many(inventory.iter())
+        .matched()
         .map(|(nt, itam, qty)| {
             let label = if qty.0 > 1 {
                 format!("{} ({})", itam.def(), qty)
@@ -113,24 +114,21 @@ pub fn scene() -> impl Scene {
             padding: UiRect::all(px(12)),
         }
         Children [
-            (
                 #Heading
                 Node {
                     margin: UiRect::all(px(8))
                 }
                 Text::new("INVENTORY")
                 TextLayout::justify(Justify::Center)
-                pcsr_font(16)
-            ),
-            (
+                @pcsr_font(16)
+                --
                 #ListMenu
                 Node {
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::SpaceBetween,
                 }
                 ItemList
-                pcsr_font(14)
-            )
+                @pcsr_font(14)
         ]
     }
 }

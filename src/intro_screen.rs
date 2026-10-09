@@ -44,7 +44,7 @@ fn screen_bundle() -> impl Scene {
                 margin: UiRect::all(px(100))
             }
             IntroText
-            pcsr_font(20)
+            @pcsr_font(20)
             Text("")
             TextLayout::justify(Justify::Start)
             Typewriter {
@@ -75,8 +75,8 @@ fn interaction_system(
     };
 
     if revealed {
-        commands.set_state_if_neq(GameState::AwaitingInput);
-        commands.set_state_if_neq(Screen::Title);
+        commands.set_state_if_different(GameState::AwaitingInput);
+        commands.set_state_if_different(Screen::Title);
     } else {
         commands.trigger(FinishNow(nt));
     }

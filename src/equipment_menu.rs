@@ -226,24 +226,21 @@ fn scene() -> impl Scene {
             padding: UiRect::all(px(12)),
         }
         Children [
-            (
                 #Heading
                 Node {
                     margin: UiRect::all(px(8))
                 }
                 Text::new("EQUIPMENT")
                 TextLayout::justify(Justify::Center)
-                pcsr_font(16)
-            ),
-            (
+                @pcsr_font(16)
+            --
                 #ListMenu
                 Node {
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::SpaceBetween,
                 }
                 EquipmentList
-                pcsr_font(14)
-            )
+                @pcsr_font(14)
         ]
     }
 }

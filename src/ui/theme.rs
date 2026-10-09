@@ -17,7 +17,7 @@ pub(crate) fn label_row(s: &'static str) -> impl Scene {
     bsn! {
         Node
         Text::new(s)
-        pcsr_font(12)
+        @pcsr_font(12)
         TextColor(colors::KENNEY_OFF_WHITE)
     }
 }

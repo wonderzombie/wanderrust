@@ -46,11 +46,11 @@ pub(crate) fn update_spatial_index(
 ) {
     for (children, mut index) in levels {
         index.clear();
-        for (nt, cell) in unwalkable_tiles.iter_many(children) {
+        for (nt, cell) in unwalkable_tiles.iter_many(children).matched() {
             index.insert(*cell, nt);
         }
 
-        for (portal_nt, cell) in portals.iter_many(children) {
+        for (portal_nt, cell) in portals.iter_many(children).matched() {
             index.insert(*cell, portal_nt)
         }
     }
@@ -108,14 +108,14 @@ pub fn rebuild_grid(
     let mut nav_vec = vec![Nav::Impassable; nav_pos_count as usize];
 
     let mut passable = 0;
-    for cell in walkable_cells.iter_many(children.iter()) {
+    for cell in walkable_cells.iter_many(children.iter()).matched() {
         let i = cell.to_idx(grid.width());
         nav_vec[i] = Nav::Passable(1);
         passable += 1;
     }
 
     let mut blocked = 0;
-    for cell in unwalkable_cells.iter_many(children.iter()) {
+    for cell in unwalkable_cells.iter_many(children.iter()).matched() {
         let i = cell.to_idx(grid.width());
         nav_vec[i] = Nav::Impassable;
         blocked += 1;
