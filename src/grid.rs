@@ -177,23 +177,31 @@ pub fn pathfind_to_player(
 pub fn pathfind_to_route(
     mut commands: Commands,
     query: Populated<
-        (Entity, &OnRoute, Option<&Pathfind>, Has<PathfindingFailed>),
+        (
+            Entity,
+            &OnRoute,
+            Option<&Pathfind>,
+            Has<PathfindingFailed>,
+            Option<&Awareness>,
+        ),
         (With<AgentOfGrid>, With<Mob>),
     >,
     routes: Query<&Route>,
 ) {
-    for (entity, on_route, pathfind_opt, failed_pathfind) in query.iter() {
-        let OnRoute { route, idx } = on_route;
+    for (entity, on_route, pathfind_opt, failed_pathfind, awareness_opt) in query.iter() {
+        if awareness_opt.is_none_or(|a| *a < Awareness::Alerted) {
+            let OnRoute { route, idx } = on_route;
 
-        let Some(goal) = routes.get(*route).ok().and_then(|r| r.points.get(*idx)) else {
-            error!("{entity} had route {route} but couldn't find next cell");
-            continue;
-        };
+            let Some(goal) = routes.get(*route).ok().and_then(|r| r.points.get(*idx)) else {
+                error!("{entity} had route {route} but couldn't find next cell");
+                continue;
+            };
 
-        if failed_pathfind || pathfind_opt.is_none_or(|pf| pf.goal.ne(&goal.nav_pos())) {
-            commands
-                .entity(entity)
-                .insert(Pathfind::new_2d(goal.x as u32, goal.y as u32));
+            if failed_pathfind || pathfind_opt.is_none_or(|pf| pf.goal.ne(&goal.nav_pos())) {
+                commands
+                    .entity(entity)
+                    .insert(Pathfind::new_2d(goal.x as u32, goal.y as u32));
+            }
         }
     }
 }
