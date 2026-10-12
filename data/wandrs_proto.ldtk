@@ -5094,7 +5094,15 @@
 									"id": "V_String",
 									"params": ["upstairs"]
 								}] },
-								{ "__identifier": "entity_ref", "__type": "EntityRef", "__value": null, "__tile": null, "defUid": 18, "realEditorValues": [] },
+								{ "__identifier": "entity_ref", "__type": "EntityRef", "__value": {
+									"entityIid": "c85a23a0-21a0-11f1-94b8-6dd8a519b934",
+									"layerIid": "11d0d060-21a0-11f1-94b8-5ba7ca5edbec",
+									"levelIid": "e36e0960-21a0-11f1-94b8-8f25cfddaee3",
+									"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f"
+								}, "__tile": null, "defUid": 18, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["c85a23a0-21a0-11f1-94b8-6dd8a519b934"]
+								}] },
 								{ "__identifier": "tile", "__type": "Tile", "__value": { "tilesetUid": 2, "x": 32, "y": 96, "w": 16, "h": 16 }, "__tile": { "tilesetUid": 2, "x": 32, "y": 96, "w": 16, "h": 16 }, "defUid": 120, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["32,96,16,16"]
