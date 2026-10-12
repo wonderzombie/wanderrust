@@ -49,10 +49,10 @@
 			"instances": [],
 			"instancesData": [{ "iids": {
 				"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
-				"levelIid": "30835510-48b0-11f1-9037-d17afcac579f",
-				"layerIid": "30835511-48b0-11f1-9037-07473761197a",
-				"entityIid": "6c8c8ab0-bde0-11f1-9e71-975b33bdec8e"
-			}, "worldX": 272, "worldY": 304, "widPx": 16, "heiPx": 16, "fields" : {} }]
+				"levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c",
+				"layerIid": "11d0a950-21a0-11f1-94b8-83ad4e8b87c5",
+				"entityIid": "15122b80-bde0-11f1-9e71-357b8f0fb85a"
+			}, "worldX": 112, "worldY": 160, "widPx": 16, "heiPx": 16, "fields" : {} }]
 		},
 		{ "identifier": "Respawn", "instances": [], "instancesData": [] }
 	],
@@ -5741,6 +5741,22 @@
 							],
 							"__worldX": 112,
 							"__worldY": 192
+						},
+						{
+							"__identifier": "WorldSpawn",
+							"__grid": [7,10],
+							"__pivot": [0,0],
+							"__tags": ["spawn"],
+							"__tile": { "tilesetUid": 37, "x": 608, "y": 320, "w": 16, "h": 16 },
+							"__smartColor": "#FF0044",
+							"iid": "15122b80-bde0-11f1-9e71-357b8f0fb85a",
+							"width": 16,
+							"height": 16,
+							"defUid": 35,
+							"px": [112,160],
+							"fieldInstances": [{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
+							"__worldX": 112,
+							"__worldY": 160
 						}
 					]
 				},
@@ -6757,22 +6773,6 @@
 							],
 							"__worldX": 192,
 							"__worldY": 224
-						},
-						{
-							"__identifier": "WorldSpawn",
-							"__grid": [17,19],
-							"__pivot": [0,0],
-							"__tags": ["spawn"],
-							"__tile": { "tilesetUid": 37, "x": 608, "y": 320, "w": 16, "h": 16 },
-							"__smartColor": "#FF0044",
-							"iid": "6c8c8ab0-bde0-11f1-9e71-975b33bdec8e",
-							"width": 16,
-							"height": 16,
-							"defUid": 35,
-							"px": [272,304],
-							"fieldInstances": [{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
-							"__worldX": 272,
-							"__worldY": 304
 						}
 					]
 				},
