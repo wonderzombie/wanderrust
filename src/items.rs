@@ -161,6 +161,7 @@ pub enum Slot {
     Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, Ord, PartialOrd,
 )]
 pub enum Rating {
+    D,
     C,
     B,
     A,
@@ -216,7 +217,7 @@ define_items!(
         kind: Equipment,
         equip: MainHand,
         mods: modifiers!(attack: 1),
-        rating: Rating::C,
+        rating: Rating::D,
     },
     Rags => {
         label: "rags",
@@ -224,7 +225,7 @@ define_items!(
         kind: Equipment,
         equip: Armor,
         mods: modifiers!(defense: 1),
-        rating: Rating::C,
+        rating: Rating::D,
     },
     Sword => {
         label: "sword",
@@ -232,7 +233,7 @@ define_items!(
         kind: Equipment,
         equip: MainHand,
         mods: modifiers!(attack: 3),
-        rating: Rating::B,
+        rating: Rating::C,
     },
     Leather => {
         label: "leather",
@@ -240,7 +241,7 @@ define_items!(
         kind: Equipment,
         equip: Armor,
         mods: modifiers!(defense: 3),
-        rating: Rating::B,
+        rating: Rating::C,
     },
     Chainmail => {
         label: "chainmail",
@@ -248,7 +249,7 @@ define_items!(
         kind: Equipment,
         equip: Armor,
         mods: modifiers!(defense: 5),
-        rating: Rating::A,
+        rating: Rating::B,
     },
     Shield => {
         label: "shield",

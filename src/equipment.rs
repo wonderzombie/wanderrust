@@ -68,9 +68,9 @@ impl Modifiers {
 }
 
 macro_rules! modifiers {
-    ( $( $fieldn:tt: $fieldv:expr )* $(,)? ) => {
+    ( $( $fieldn:ident: $fieldv:expr $(,)? )+ ) => {
         Modifiers(Parameters {
-            $( $fieldn: $fieldv, )*
+            $( $fieldn: $fieldv, )+
             ..Default::default()
         })
     };
