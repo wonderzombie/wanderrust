@@ -28,7 +28,7 @@ pub struct Mob {
     pub route_id: Option<RouteId>,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Attitude {
     Human,
     Passive,
@@ -73,7 +73,7 @@ pub fn detect_mobs(
         }
 
         if let Some(route_id) = &mob.route_id {
-            info!("{name}: assigning requested route: {route_id:?}");
+            info!("{name}: assigned route {route_id:?}");
             route_assist.assign(entity, route_id)?;
         }
 
@@ -137,14 +137,16 @@ pub struct MobView {
 
 impl<'w, 's> MobViewItem<'w, 's> {
     fn decide(&self, player_nt: Entity, player_cell: &Cell, blocking: &BlockingMap) -> MobAction {
-        if self.cell.is_adjacent(player_cell) {
+        if self.cell.is_adjacent(player_cell)
+            && self.attitude.is_some_and(|a| *a == Attitude::Hostile)
+        {
             return MobAction::Attack(player_nt);
         }
 
         match (self.next_pos_opt, self.path_failed_opt) {
             // No route possible.
             (_, Some(_)) => {
-                debug!("no route\n{self:?}");
+                debug!("no path\n{self:?}");
                 MobAction::Pass
             }
             // Something is blocking the way.
@@ -159,7 +161,7 @@ impl<'w, 's> MobViewItem<'w, 's> {
             }
             // We're not pathing if there's no failure and no next position.
             (None, None) => {
-                debug!("no route and no failure\n{self:?}");
+                debug!("no path and no failure\n{self:?}");
                 MobAction::Pass
             }
         }
@@ -212,9 +214,10 @@ pub fn consume_turn(
     }
 
     if let Some(awareness) = mob_view.awareness
-        && awareness >= &Awareness::Alerted {
-            commands.queue(AddTurnTimerDelay::default());
-        }
+        && awareness >= &Awareness::Alerted
+    {
+        commands.queue(AddTurnTimerDelay::default());
+    }
 }
 
 #[derive(Component, Debug, Default)]

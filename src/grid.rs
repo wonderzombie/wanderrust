@@ -6,6 +6,7 @@ use crate::{
     cell::Cell,
     mobs::Mob,
     parameters::Awareness,
+    route::{OnRoute, Route},
     tilemap::{self, ActiveLevel, Level, WorldId, WorldSpec},
     tiles::{MapTile, TileIdx, Walkable},
 };
@@ -146,7 +147,7 @@ pub fn init_agents(
     }
 }
 
-pub fn pathfind(
+pub fn pathfind_to_player(
     mut commands: Commands,
     player_cell: Single<&Cell, With<Player>>,
     query: Populated<
@@ -156,7 +157,7 @@ pub fn pathfind(
             Option<&Pathfind>,
             Has<PathfindingFailed>,
         ),
-        Without<Player>,
+        (With<AgentOfGrid>, With<Mob>),
     >,
 ) {
     let player_cell: Cell = *player_cell.into_inner();
@@ -169,6 +170,30 @@ pub fn pathfind(
             commands
                 .entity(entity)
                 .insert(Pathfind::new_2d(player_cell.x as u32, player_cell.y as u32));
+        }
+    }
+}
+
+pub fn pathfind_to_route(
+    mut commands: Commands,
+    query: Populated<
+        (Entity, &OnRoute, Option<&Pathfind>, Has<PathfindingFailed>),
+        (With<AgentOfGrid>, With<Mob>),
+    >,
+    routes: Query<&Route>,
+) {
+    for (entity, on_route, pathfind_opt, failed_pathfind) in query.iter() {
+        let OnRoute { route, idx } = on_route;
+
+        let Some(goal) = routes.get(*route).ok().and_then(|r| r.points.get(*idx)) else {
+            error!("{entity} had route {route} but couldn't find next cell");
+            continue;
+        };
+
+        if failed_pathfind || pathfind_opt.is_none_or(|pf| pf.goal.ne(&goal.nav_pos())) {
+            commands
+                .entity(entity)
+                .insert(Pathfind::new_2d(goal.x as u32, goal.y as u32));
         }
     }
 }

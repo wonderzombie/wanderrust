@@ -5,16 +5,17 @@ use serde::{Deserialize, Serialize};
 use crate::{
     actors::Player,
     cell::Cell,
+    gamestate::RecoveryNow,
     ldtk_loader::{LdtkCell, LdtkEntity},
     tilemap::Dimensions,
 };
 
 pub fn plugin(app: &mut App) {
-    app.add_observer(on_cell_inserted);
+    app.add_observer(on_insert_cell);
 }
 
 /// [`Cell`] is immutable so [`Insert`] is a mutation.
-pub fn on_cell_inserted(
+pub fn on_insert_cell(
     on: On<Insert, Cell>,
     mut route_assist: RouteAssist,
     cells: Populated<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
@@ -110,10 +111,13 @@ impl<'w, 's> RouteAssist<'w, 's> {
                 format!("failed to assign route for {follower}: unable to find route {route_id:?}")
             })?;
 
-        self.commands.entity(follower).insert(OnRoute {
-            route: route_nt,
-            idx: 0usize,
-        });
+        self.commands
+            .entity(follower)
+            .insert(OnRoute {
+                route: route_nt,
+                idx: 0usize,
+            })
+            .queue(RecoveryNow);
 
         Ok(())
     }
@@ -275,7 +279,7 @@ mod tests {
             })
             .unwrap();
 
-        world.add_observer(on_cell_inserted);
+        world.add_observer(on_insert_cell);
 
         // As if we're progressing along the route.
         world.entity_mut(chicken).insert(Cell::new(0, 1));

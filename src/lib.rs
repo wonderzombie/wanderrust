@@ -266,7 +266,12 @@ pub fn run() {
                 .chain()
                 .in_set(GameSystem::Light)
                 .after(GameSystem::Fov),
-            (mobs::check_fov, grid::pathfind, mobs::consume_turn)
+            (
+                mobs::check_fov,
+                grid::pathfind_to_player,
+                grid::pathfind_to_route,
+                mobs::consume_turn,
+            )
                 .chain()
                 .in_set(GameSystem::Grid)
                 .after(GameSystem::Fov)
