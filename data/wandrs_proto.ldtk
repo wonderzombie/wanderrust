@@ -49,10 +49,10 @@
 			"instances": [],
 			"instancesData": [{ "iids": {
 				"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f",
-				"levelIid": "2f06fb40-21a0-11f1-94b8-0f0d10d6510c",
-				"layerIid": "11d0a950-21a0-11f1-94b8-83ad4e8b87c5",
-				"entityIid": "17022180-21a0-11f1-94b8-3f255c78f0a6"
-			}, "worldX": 112, "worldY": 160, "widPx": 16, "heiPx": 16, "fields" : {} }]
+				"levelIid": "30835510-48b0-11f1-9037-d17afcac579f",
+				"layerIid": "30835511-48b0-11f1-9037-07473761197a",
+				"entityIid": "6c8c8ab0-bde0-11f1-9e71-975b33bdec8e"
+			}, "worldX": 272, "worldY": 304, "widPx": 16, "heiPx": 16, "fields" : {} }]
 		},
 		{ "identifier": "Respawn", "instances": [], "instancesData": [] }
 	],
@@ -5057,22 +5057,6 @@
 					"gridTiles": [],
 					"entityInstances": [
 						{
-							"__identifier": "WorldSpawn",
-							"__grid": [7,10],
-							"__pivot": [0,0],
-							"__tags": ["spawn"],
-							"__tile": { "tilesetUid": 37, "x": 608, "y": 320, "w": 16, "h": 16 },
-							"__smartColor": "#FF0044",
-							"iid": "17022180-21a0-11f1-94b8-3f255c78f0a6",
-							"width": 16,
-							"height": 16,
-							"defUid": 35,
-							"px": [112,160],
-							"fieldInstances": [{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
-							"__worldX": 112,
-							"__worldY": 160
-						},
-						{
 							"__identifier": "PortalTwoWay",
 							"__grid": [7,5],
 							"__pivot": [0,0],
@@ -6396,74 +6380,6 @@
 							],
 							"__worldX": 80,
 							"__worldY": 128
-						},
-						{
-							"__identifier": "Chicken",
-							"__grid": [5,6],
-							"__pivot": [0,0],
-							"__tags": ["mob"],
-							"__tile": { "tilesetUid": 2, "x": 416, "y": 112, "w": 16, "h": 16 },
-							"__smartColor": "#E4A672",
-							"iid": "e4f756c0-96d0-11f1-9e71-5d869b14d68a",
-							"width": 16,
-							"height": 16,
-							"defUid": 201,
-							"px": [80,96],
-							"fieldInstances": [
-								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Combatant", "__tile": null, "defUid": 202, "realEditorValues": [] },
-								{ "__identifier": "name", "__type": "String", "__value": null, "__tile": null, "defUid": 203, "realEditorValues": [] },
-								{ "__identifier": "inventory", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 204, "realEditorValues": [] },
-								{ "__identifier": "route_id", "__type": "String", "__value": "chicken_route", "__tile": null, "defUid": 223, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["chicken_route"]
-								}] },
-								{ "__identifier": "route_ref", "__type": "EntityRef", "__value": {
-									"entityIid": "9f962650-96d0-11f1-9e71-97ba36aa5a7f",
-									"layerIid": "11d0d060-21a0-11f1-94b8-5ba7ca5edbec",
-									"levelIid": "e36e0960-21a0-11f1-94b8-8f25cfddaee3",
-									"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f"
-								}, "__tile": null, "defUid": 224, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["9f962650-96d0-11f1-9e71-97ba36aa5a7f"]
-								}] }
-							],
-							"__worldX": 80,
-							"__worldY": 96
-						},
-						{
-							"__identifier": "Route",
-							"__grid": [6,6],
-							"__pivot": [0,0],
-							"__tags": ["region"],
-							"__tile": { "tilesetUid": 37, "x": 272, "y": 144, "w": 16, "h": 16 },
-							"__smartColor": "#D77643",
-							"iid": "9f962650-96d0-11f1-9e71-97ba36aa5a7f",
-							"width": 16,
-							"height": 16,
-							"defUid": 225,
-							"px": [96,96],
-							"fieldInstances": [
-								{ "__identifier": "route_id", "__type": "String", "__value": "chicken_route", "__tile": null, "defUid": 226, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["chicken_route"]
-								}] },
-								{ "__identifier": "waypoints", "__type": "Array<Point>", "__value": [ { "cx": 6, "cy": 6 }, { "cx": 11, "cy": 6 }, { "cx": 11, "cy": 7 }, { "cx": 6, "cy": 7 } ], "__tile": null, "defUid": 227, "realEditorValues": [ {
-									"id": "V_String",
-									"params": ["6,6"]
-								}, {
-									"id": "V_String",
-									"params": ["11,6"]
-								}, {
-									"id": "V_String",
-									"params": ["11,7"]
-								}, {
-									"id": "V_String",
-									"params": ["6,7"]
-								} ] },
-								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Route", "__tile": null, "defUid": 229, "realEditorValues": [] }
-							],
-							"__worldX": 96,
-							"__worldY": 96
 						}
 					]
 				},
@@ -6773,6 +6689,90 @@
 							"fieldInstances": [],
 							"__worldX": 1360,
 							"__worldY": 576
+						},
+						{
+							"__identifier": "Chicken",
+							"__grid": [13,18],
+							"__pivot": [0,0],
+							"__tags": ["mob"],
+							"__tile": { "tilesetUid": 2, "x": 416, "y": 112, "w": 16, "h": 16 },
+							"__smartColor": "#E4A672",
+							"iid": "fc4f0570-bde0-11f1-9e71-2b29eb47a8b4",
+							"width": 16,
+							"height": 16,
+							"defUid": 201,
+							"px": [208,288],
+							"fieldInstances": [
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Combatant", "__tile": null, "defUid": 202, "realEditorValues": [] },
+								{ "__identifier": "name", "__type": "String", "__value": "RouteChicken", "__tile": null, "defUid": 203, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["RouteChicken"]
+								}] },
+								{ "__identifier": "inventory", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 204, "realEditorValues": [] },
+								{ "__identifier": "route_id", "__type": "String", "__value": "chicken_route", "__tile": null, "defUid": 223, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["chicken_route"]
+								}] },
+								{ "__identifier": "route_ref", "__type": "EntityRef", "__value": {
+									"entityIid": "055d22f0-bde0-11f1-9e71-13fa15977316",
+									"layerIid": "30835511-48b0-11f1-9037-07473761197a",
+									"levelIid": "30835510-48b0-11f1-9037-d17afcac579f",
+									"worldIid": "2f06d431-21a0-11f1-94b8-0bd0451e6a8f"
+								}, "__tile": null, "defUid": 224, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["055d22f0-bde0-11f1-9e71-13fa15977316"]
+								}] }
+							],
+							"__worldX": 208,
+							"__worldY": 288
+						},
+						{
+							"__identifier": "Route",
+							"__grid": [12,14],
+							"__pivot": [0,0],
+							"__tags": ["region"],
+							"__tile": { "tilesetUid": 37, "x": 272, "y": 144, "w": 16, "h": 16 },
+							"__smartColor": "#D77643",
+							"iid": "055d22f0-bde0-11f1-9e71-13fa15977316",
+							"width": 32,
+							"height": 32,
+							"defUid": 225,
+							"px": [192,224],
+							"fieldInstances": [
+								{ "__identifier": "route_id", "__type": "String", "__value": "chicken_route", "__tile": null, "defUid": 226, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["chicken_route"]
+								}] },
+								{ "__identifier": "waypoints", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 18 }, { "cx": 20, "cy": 18 }, { "cx": 16, "cy": 16 } ], "__tile": null, "defUid": 227, "realEditorValues": [ {
+									"id": "V_String",
+									"params": ["14,18"]
+								}, {
+									"id": "V_String",
+									"params": ["20,18"]
+								}, {
+									"id": "V_String",
+									"params": ["16,16"]
+								} ] },
+								{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Route", "__tile": null, "defUid": 229, "realEditorValues": [] }
+							],
+							"__worldX": 192,
+							"__worldY": 224
+						},
+						{
+							"__identifier": "WorldSpawn",
+							"__grid": [17,19],
+							"__pivot": [0,0],
+							"__tags": ["spawn"],
+							"__tile": { "tilesetUid": 37, "x": 608, "y": 320, "w": 16, "h": 16 },
+							"__smartColor": "#FF0044",
+							"iid": "6c8c8ab0-bde0-11f1-9e71-975b33bdec8e",
+							"width": 16,
+							"height": 16,
+							"defUid": 35,
+							"px": [272,304],
+							"fieldInstances": [{ "__identifier": "actor", "__type": "LocalEnum.Actor", "__value": "Spawn", "__tile": null, "defUid": 93, "realEditorValues": [] }],
+							"__worldX": 272,
+							"__worldY": 304
 						}
 					]
 				},

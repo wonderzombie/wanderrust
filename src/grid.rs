@@ -4,6 +4,7 @@ use bevy_northstar::prelude::*;
 use crate::{
     actors::{Dead, Player},
     cell::Cell,
+    mobs::Mob,
     parameters::Awareness,
     tilemap::{self, ActiveLevel, Level, WorldId, WorldSpec},
     tiles::{MapTile, TileIdx, Walkable},
@@ -133,7 +134,7 @@ pub fn rebuild_grid(
 pub fn init_agents(
     mut commands: Commands,
     grid: Single<Entity, With<CardinalGrid>>,
-    query: Populated<(Entity, &Cell, Has<Player>), (With<Awareness>, Without<AgentOfGrid>)>,
+    query: Populated<(Entity, &Cell, Has<Player>), (With<Mob>, Without<AgentOfGrid>)>,
 ) {
     let grid_nt = grid.into_inner();
     for (entity, cell, is_player) in query {

@@ -69,6 +69,7 @@ use crate::{
     map::update_level_visuals,
     message_log::LogEvent,
     parameters::{Flasks, Health, Parameters},
+    route::Route,
     tilemap::{ActiveLevel, EntryId, Level, Portal, WorldSpec},
     tiles::TileIdx,
 };
@@ -346,6 +347,7 @@ fn add_filter_query_plugins(app: &mut App) {
         .add_plugins(FilterQueryInspectorPlugin::<With<ItemId>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Bestiary>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Recovery>>::default())
+        .add_plugins(FilterQueryInspectorPlugin::<With<Route>>::default())
         .add_plugins(FilterQueryInspectorPlugin::<With<Level>>::default());
 }
 
@@ -417,9 +419,9 @@ fn click_observer(
                     .unwrap_or_else(|| tile_idx.to_string());
                 if let Ok(index) = spatial_indices.get(child_of.parent()) {
                     if let Some(nt) = index.get(cell) {
-                        warn!("{name} {nt} found in spatial index at {cell}");
+                        warn!("click_observer: {name} {nt} found in spatial index at {cell}");
                     } else {
-                        error!("{name} not found in spatial index of parent");
+                        error!("click_observer: {name} not found in spatial index of parent");
                     }
                 }
                 log.write((format!("{cell} = {name}").as_str(), Color::WHITE).into());

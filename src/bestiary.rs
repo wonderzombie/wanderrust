@@ -97,7 +97,7 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     ));
 }
 
-pub fn best_guess(Mob { name, tile_idx }: &Mob) -> Option<Bestiary> {
+pub fn best_guess(Mob { name, tile_idx, .. }: &Mob) -> Option<Bestiary> {
     Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx))
 }
 

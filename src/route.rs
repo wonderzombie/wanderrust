@@ -3,6 +3,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    actors::Player,
     cell::Cell,
     ldtk_loader::{LdtkCell, LdtkEntity},
     tilemap::Dimensions,
@@ -16,21 +17,23 @@ pub fn plugin(app: &mut App) {
 pub fn on_cell_inserted(
     on: On<Insert, Cell>,
     mut route_assist: RouteAssist,
-    cells: Query<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
+    cells: Populated<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
+    player: Single<Entity, With<Player>>,
 ) -> Result<()> {
-    let dest = route_assist
-        .destination(on.event_target())
-        .with_severity(Severity::Error)?;
-    let curr = cells
-        .get(on.event_target())
-        .with_severity(Severity::Error)?;
-
-    if dest == *curr {
-        route_assist
-            .advance(on.event_target())
+    if *player != on.event_target() {
+        let dest = route_assist
+            .destination(on.event_target())
             .with_severity(Severity::Error)?;
-    }
+        let curr = cells
+            .get(on.event_target())
+            .with_severity(Severity::Error)?;
 
+        if dest == *curr {
+            route_assist
+                .advance(on.event_target())
+                .with_severity(Severity::Error)?;
+        }
+    }
     Ok(())
 }
 
