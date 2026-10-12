@@ -4,7 +4,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use std::{fmt::Display, ops::Neg};
+use std::{fmt::Display, hash::Hash, ops::Neg};
 
 use crate::{
     actors::{Actor, PieceBundle, Player},
@@ -237,7 +237,7 @@ impl TileStorage {
 }
 
 /// EntryId uniquely identifies a [`Portal`].
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Hash, Eq, Reflect)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Deref, Reflect)]
 pub struct EntryId(pub String);
 
 impl PartialEq for EntryId {
@@ -246,9 +246,17 @@ impl PartialEq for EntryId {
     }
 }
 
+impl Eq for EntryId {}
+
 impl From<&str> for EntryId {
     fn from(value: &str) -> Self {
         Self(value.into())
+    }
+}
+
+impl Hash for EntryId {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 

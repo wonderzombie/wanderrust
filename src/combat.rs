@@ -183,7 +183,7 @@ pub fn process_attacks(
             commands.entity(defender_id).trigger(Hit);
             defender.hp = defender.hp.saturating_sub(damage.cast_unsigned());
 
-            if defender.hp <= 0 {
+            if defender.hp == 0 {
                 info!("{attacker_name} slays {defender_name}.");
                 defender.is_dead = true;
                 log.write(LogEvent {
