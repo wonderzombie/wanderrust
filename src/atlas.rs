@@ -32,7 +32,7 @@ impl SpriteAtlas {
         Sprite {
             image,
             texture_atlas: Some(TextureAtlas {
-                layout: layout,
+                layout,
                 index: index.into(),
             }),
             ..default()

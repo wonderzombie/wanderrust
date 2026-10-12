@@ -138,7 +138,7 @@ impl EntityCommand for InsertInto {
         let name_component = Name::new(
             value
                 .display_name()
-                .unwrap_or_else(|| format!("MISSINGNAME")),
+                .unwrap_or_else(|| "MISSINGNAME".to_string()),
         );
 
         match value {

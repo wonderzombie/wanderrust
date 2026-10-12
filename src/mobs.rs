@@ -203,14 +203,10 @@ pub fn consume_turn(
         }
     }
 
-    match mob_view.awareness {
-        Some(awareness) => {
-            if awareness >= &Awareness::Alerted {
-                commands.queue(AddTurnTimerDelay::default());
-            }
+    if let Some(awareness) = mob_view.awareness
+        && awareness >= &Awareness::Alerted {
+            commands.queue(AddTurnTimerDelay::default());
         }
-        None => (),
-    }
 }
 
 #[derive(Component, Debug, Default)]

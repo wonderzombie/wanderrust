@@ -256,10 +256,9 @@ pub fn ramify(
 
     world_clock.advance_to(*tick);
 
-    if next_up.iter().any(|it| *it == *player) {
+    if next_up.contains(&*player) {
         debug!("player turn; awaiting input");
         ns.set(GameState::AwaitingInput);
-        return;
     } else if let Some(&first) = next_up.first()
         && let Ok((name_or_nt, _)) = actors.get(first)
     {

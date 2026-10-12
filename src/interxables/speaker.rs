@@ -56,7 +56,7 @@ fn do_listen_to_speaker(
         return Ok(Outcome::Success);
     }
 
-    return Ok(Outcome::Failure);
+    Ok(Outcome::Failure)
 }
 
 fn insert_dialogue(mut w: DeferredWorld, ctx: HookContext) {

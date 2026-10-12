@@ -52,14 +52,14 @@ macro_rules! define_bestiary {
 
             pub fn from_name(name: impl AsRef<str>) -> Option<Bestiary> {
                 match name.as_ref() {
-                    $( stringify!($name) => Some((Bestiary::$name)), )*
+                    $( stringify!($name) => Some(Bestiary::$name), )*
                     _ => None,
                 }
             }
 
             pub fn from_tile(tile_idx: &TileIdx) -> Option<Bestiary> {
                 match tile_idx {
-                    $( $tile => Some((Bestiary::$name)), )*
+                    $( $tile => Some(Bestiary::$name), )*
                     _ => None,
                 }
             }
@@ -98,7 +98,7 @@ pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
 }
 
 pub fn best_guess(Mob { name, tile_idx }: &Mob) -> Option<Bestiary> {
-    return Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx));
+    Bestiary::from_name(name).or_else(|| Bestiary::from_tile(tile_idx))
 }
 
 #[cfg(test)]

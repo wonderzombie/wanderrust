@@ -54,7 +54,7 @@ fn update_labels(
         .iter_many(equip_nt)
         .map(|(it, eq_by)| (eq_by.slot, it.def().label))
         .collect::<HashMap<Slot, &str>>();
-    let eq_or_none = |s: Slot| equipped.get(&s).unwrap_or_else(|| &"--").to_uppercase();
+    let eq_or_none = |s: Slot| equipped.get(&s).unwrap_or(&"--").to_uppercase();
 
     let g = inv
         .item_quantity(&ItemId::Gold)

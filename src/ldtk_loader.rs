@@ -323,7 +323,7 @@ fn get_grid_tiles(
         }
         new_tiles.push((tile_idx, cell));
     }
-    if grid_tiles.len() > 0 {
+    if !grid_tiles.is_empty() {
         if blank == grid_tiles.len() {
             error!("🧰 {blank} out of {} tiles were blank", grid_tiles.len());
         }

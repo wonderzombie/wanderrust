@@ -91,7 +91,7 @@ impl InteractCommand for Commands<'_, '_> {
 #[macro_export]
 macro_rules! interaxnable {
     ( $obj:ident defaults to $verb:ident ) => {
-        impl crate::interacticator::Interxable for $obj {
+        impl $crate::interacticator::Interxable for $obj {
             type DefaultAction = $verb;
             type Args = $crate::interacticator::Actors;
 

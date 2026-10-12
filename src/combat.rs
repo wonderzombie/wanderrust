@@ -75,17 +75,14 @@ pub fn init_combatants(
             .queue(RecoveryNow)
             .insert_if_new(CombatantBundle::default());
 
-        match respawn_info.get(entity).ok() {
-            Some((
+        if let Ok((
                 true,
                 SpawnPoint {
                     respawn_cell,
                     level_nt,
                 },
-            )) => {
-                ecmd.insert(ChildOf(*level_nt)).insert(*respawn_cell);
-            }
-            Some((false, _)) | None => (),
+            )) = respawn_info.get(entity) {
+            ecmd.insert(ChildOf(*level_nt)).insert(*respawn_cell);
         }
     }
 }

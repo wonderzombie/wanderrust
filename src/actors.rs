@@ -186,8 +186,8 @@ pub fn handle_player_input(
 
     let (entity, &origin_cell) = *player_query;
 
-    match get_menu_input(&input) {
-        Some(menu_act) => match menu_act {
+    if let Some(menu_act) = get_menu_input(&input) {
+        match menu_act {
             MenuAct::Inventory => {
                 info!("inventory");
                 commands.trigger(inventory_menu::ToggleUi);
@@ -198,8 +198,7 @@ pub fn handle_player_input(
                 commands.trigger(equipment_menu::ToggleUi);
                 return;
             }
-        },
-        None => (),
+        }
     }
 
     if matches!(**modal, Modal::None)

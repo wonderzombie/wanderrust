@@ -138,7 +138,6 @@ pub fn run() {
                 filter: "wgpu=warn,naga=warn,bevy_render=info,bevy_ecs=info".into(),
                 custom_layer: crate::log::trace_file_layer,
                 fmt_layer: log::stdout_layer,
-                ..default()
             }),
     )
     .add_message::<combat::Attack>()
