@@ -483,21 +483,12 @@ checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
 name = "bevy"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bfadbebfc6599aa59289b754ac30023959854304f3d393da2cf62bb3cd5df8f"
-dependencies = [
- "bevy_internal 0.19.1",
-]
-
-[[package]]
-name = "bevy"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bd0e4ea5ec677698955f9f285221eab78606d8c27b57b889def199c16ce36e6"
 dependencies = [
  "bevy_dylib",
- "bevy_internal 0.20.0",
+ "bevy_internal",
 ]
 
 [[package]]
@@ -1122,7 +1113,7 @@ version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c85f66301e576bdf48e3bfa8b10d05e1f60a54d1a2ad78309eb21c6eb1b27bc"
 dependencies = [
- "bevy_internal 0.20.0",
+ "bevy_internal",
 ]
 
 [[package]]
@@ -1390,7 +1381,6 @@ dependencies = [
  "bevy_input 0.19.1",
  "bevy_log 0.19.1",
  "bevy_math 0.19.1",
- "bevy_mesh 0.19.1",
  "bevy_reflect 0.19.1",
  "bevy_time 0.19.1",
  "bevy_transform 0.19.1",
@@ -1641,40 +1631,6 @@ dependencies = [
 
 [[package]]
 name = "bevy_internal"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ba99ca2e501f14f4af3322d66ae41b5c5b6ebd3aac4d00cda47dea4c00290ae"
-dependencies = [
- "bevy_a11y 0.19.1",
- "bevy_android 0.19.1",
- "bevy_app 0.19.1",
- "bevy_asset 0.19.1",
- "bevy_camera 0.19.1",
- "bevy_color 0.19.1",
- "bevy_derive 0.19.1",
- "bevy_diagnostic 0.19.1",
- "bevy_ecs 0.19.1",
- "bevy_gizmos 0.19.1",
- "bevy_image 0.19.1",
- "bevy_input 0.19.1",
- "bevy_light 0.19.1",
- "bevy_log 0.19.1",
- "bevy_math 0.19.1",
- "bevy_mesh 0.19.1",
- "bevy_platform 0.19.1",
- "bevy_ptr 0.19.1",
- "bevy_reflect 0.19.1",
- "bevy_render 0.19.1",
- "bevy_shader 0.19.1",
- "bevy_tasks 0.19.1",
- "bevy_time 0.19.1",
- "bevy_transform 0.19.1",
- "bevy_utils 0.19.1",
- "bevy_window 0.19.1",
-]
-
-[[package]]
-name = "bevy_internal"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4ed1cb58d1761426a077a8aff55e6a2e0cdfd19e411211d4b0217409330bb84"
@@ -1747,7 +1703,6 @@ dependencies = [
  "bevy_camera 0.19.1",
  "bevy_color 0.19.1",
  "bevy_ecs 0.19.1",
- "bevy_gizmos 0.19.1",
  "bevy_image 0.19.1",
  "bevy_log 0.19.1",
  "bevy_math 0.19.1",
@@ -1942,7 +1897,6 @@ dependencies = [
  "derive_more",
  "glam 0.32.1",
  "itertools 0.14.0",
- "libm",
  "rand",
  "rand_distr",
  "serde",
@@ -2034,9 +1988,8 @@ checksum = "bff34eb29ff4b8a8688bc7299f14fb6b597461ca80fec03ed7d22939ab33e48f"
 [[package]]
 name = "bevy_northstar"
 version = "0.7.0"
-source = "git+file:///Users/wonderzombie/src/third_party/bevy_northstar?branch=wz-bevy-0.20#f4d85f6a85e5d26952574b29741f111c5277f10a"
 dependencies = [
- "bevy 0.19.1",
+ "bevy",
  "indexmap",
  "ndarray",
  "rayon",
@@ -4364,7 +4317,6 @@ checksum = "f70749695b063ecbf6b62949ccccde2e733ec3ecbbd71d467dca4e5c6c97cca0"
 dependencies = [
  "bytemuck",
  "encase",
- "libm",
  "rand",
  "serde_core",
 ]
@@ -7723,7 +7675,7 @@ name = "wanderrust"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bevy 0.20.0",
+ "bevy",
  "bevy-inspector-egui",
  "bevy_northstar",
  "clap",
