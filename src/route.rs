@@ -1,4 +1,3 @@
-use anyhow::Context;
 use bevy::{ecs::system::SystemParam, prelude::*};
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +15,7 @@ pub fn plugin(app: &mut App) {
 
 /// [`Cell`] is immutable so [`Insert`] is a mutation.
 pub fn on_insert_cell(
-    on: On<Insert, Cell>,
+    on: On<Insert<Cell>>,
     mut route_assist: RouteAssist,
     cells: Populated<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
     player: Single<Entity, With<Player>>,
