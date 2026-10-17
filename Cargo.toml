@@ -108,3 +108,11 @@ codegen-units = 4
 [profile.ci.package."*"]
 opt-level = 0
 
+[package.metadata.typos.default]
+extend-ignore-words-re = [
+    "^[Ss]trat",
+]
+extend-ignore-identifiers-re = [
+    "^[Ss]trat",
+]
+

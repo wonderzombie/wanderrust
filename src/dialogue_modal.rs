@@ -43,7 +43,7 @@ fn populate(
         return;
     };
 
-    // TODO: allow `DialogueEnitity` or similar to format this in some way.
+    // TODO: allow `DialogueEntity` or similar to format this in some way.
     name_text.set_if_neq(format!("[{}]", name.to_ascii_uppercase()).into());
 
     let speech = dialogue.advance().map(|it| it.to_ascii_uppercase());

@@ -48,7 +48,7 @@ impl From<&str> for RouteId {
     }
 }
 
-/// Identifies a sequence of [`Cell`]s as a sequence of detinations (points).
+/// Identifies a sequence of [`Cell`]s as a sequence of destinations (points).
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[component(immutable)]
 #[reflect(Component)]

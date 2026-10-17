@@ -9,7 +9,7 @@
 ///
 ///
 /// When an receives an item, the item is created if it doesn't exist; the item
-/// receives [`CarriedBy`]; and the player recieves an addendum to [`Carrying`].
+/// receives [`CarriedBy`]; and the player receives an addendum to [`Carrying`].
 ///
 /// The [`Inventory`] resource is a convenient snapshot.
 use bevy::{
@@ -50,7 +50,7 @@ impl From<(&ItemId, &Quantity)> for ItemEntry {
     }
 }
 
-/// Inventory is a colleciton of items constituting a view, typically of the
+/// Inventory is a collection of items constituting a view, typically of the
 /// player's current inventory. It's an abstraction over Carrying/CarriedBy,
 /// used as a resource primarily for the Player's inventory. Write `InventoryChange`
 /// messages to modify what a player is carrying. Modifying an Inventory has

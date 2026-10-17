@@ -288,7 +288,7 @@ pub fn is_turn_timer_done(t: Res<TurnTimer>) -> bool {
 #[derive(Event, Debug)]
 pub struct PlayerDied;
 
-/// An event indiciating the player spawned. If bool is true, it is a respawn.
+/// An event indicating the player spawned. If bool is true, it is a respawn.
 #[derive(Event, Debug, Default)]
 pub struct PlayerSpawned(pub bool);
 

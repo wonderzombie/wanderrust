@@ -127,14 +127,14 @@ pub struct LdtkEntity {
     pub field_instances: Vec<LdtkField>,
 }
 
-const LDTK_ENTITES_ENUM: &str = "Actor";
+const LDTK_ENTITIES_ENUM: &str = "Actor";
 
 impl LdtkEntity {
     /// Attempts to guess the type of [`LdtkActor`] this [`LdtkEntity`] represents.
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
             .iter()
-            .find(|f| f.identifier.eq_ignore_ascii_case(LDTK_ENTITES_ENUM))
+            .find(|f| f.identifier.eq_ignore_ascii_case(LDTK_ENTITIES_ENUM))
             .and_then(|v| v.val.as_str())
             .and_then(LdtkActor::from_str)
     }

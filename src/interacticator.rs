@@ -3,7 +3,7 @@
 //! [`interxable!`] defines an object, like a Door or Chest. [`interacticator!`] defines *an*
 //! interaction with an object, like `OpenDoor` or `CloseDoor`.
 //!
-//! The minial setup is a pair:
+//! The minimal setup is a pair:
 //!
 //!     interxable!(Door defaults to OpenDoor);
 //!     interacticator!(OpenDoor on Door via do_open_door);
