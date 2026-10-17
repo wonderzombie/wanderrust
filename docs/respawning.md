@@ -217,7 +217,7 @@ pub fn foo(
 
         // hand-wave params and health; we get these from Bestiary
         
-        // Logic that wants to know when any of these components are added shoudl work OK.
+        // Logic that wants to know when any of these components are added should work OK.
         // TODO: consider whether a subset of these could go into actors.rs or mobs.rs
         // since we may want similar logic to this for NPCs that wander but don't fight.
         // The entry point for mobs.rs or similar might be nonexistent yet, though. 

@@ -18,7 +18,7 @@
 - [x] LDtk to create levels w/ enemies, chests, et al
 - [x] level transitions ("portals")
 - [x] simple inventory UI
-  - [x] item defintions w/ descriptions
+  - [x] item definitions w/ descriptions
   - [x] examine carried items
 - [x] simple title screen
 - [x] drop tables for enemies

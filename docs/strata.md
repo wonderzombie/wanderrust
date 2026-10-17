@@ -122,7 +122,7 @@ But is this much better than `Query<&TileStorage, With<ActiveStratum>>`? Yes, in
 
 Some as-yet undesigned type *like* TileStorage, but Stratum-aware. Setting the active stratum also updates TileStorage so that `Single<&TileStorage>` will always operate on the active stratum.
 
-## seralizing & deserializing
+## serializing & deserializing
 
 This is almost a whole thing. :P
 

@@ -68,7 +68,7 @@ pub fn process_toggle_switch(
         }
         
         *target_tile = target_tile_opened;
-        *lever_tile = lever_tile_opend;
+        *lever_tile = lever_tile_opened;
         lever.is_on = true;
     }
 }

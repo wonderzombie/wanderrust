@@ -189,7 +189,7 @@ However, this would imply another mutable dereference of `Sprite`, which has eff
 
 If we need to make changes, it's best to do in as few places as possible. `map.rs` handles most generic `Sprite` mutations on its own. 
 
-Systems outside `map.rs` typically select a different a subset of entites with `Sprite`, and they use `ArchetypeFilter`. [This is not true of `Changed<T>` and others](https://docs.rs/bevy/latest/bevy/ecs/prelude/struct.Changed.html#time-complexity):
+Systems outside `map.rs` typically select a different a subset of entities with `Sprite`, and they use `ArchetypeFilter`. [This is not true of `Changed<T>` and others](https://docs.rs/bevy/latest/bevy/ecs/prelude/struct.Changed.html#time-complexity):
 
 >   Changed is not ArchetypeFilter, which practically means that if query (with T component filter) matches million entities, `Changed<T>` filter will iterate over all of them even if none of them were changed.
 

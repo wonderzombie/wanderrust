@@ -72,7 +72,7 @@ You can queue actions. The number of queued actions depends on Acumen. Alternati
 
 # digression: effects
 
-We might have a Relationship for area effects, like `AffectedBy` for a tile and `AreaEfect`, which also describes the specific mechanics of whatever `AreaEffect` has on `AffectedBy`?
+We might have a Relationship for area effects, like `AffectedBy` for a tile and `AreaEffect`, which also describes the specific mechanics of whatever `AreaEffect` has on `AffectedBy`?
 
 I am sleep deprived now so this isn't making sense. 
 

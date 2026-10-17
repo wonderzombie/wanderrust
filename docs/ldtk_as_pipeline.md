@@ -2,7 +2,7 @@
 
 The LDtk format has two layers, effectively: definitions and instances. For instance, if we have a definition of a `Pot` in our game, the definition is going to enumerate what fields exist on any given `Pot`, _including defaults_. Then any given entity layer that has a `Pot` is going to supply values for those fields. 
 
-In other words, we don't need to have any *actual* `Pot`s in our game in order to have a definiton of pots. 
+In other words, we don't need to have any *actual* `Pot`s in our game in order to have a definition of pots. 
 
 If we wanted to define equipment in this way, we could use entities (in the LDtk sense) similarly. If we define a `Sword` entity, we might ingest that as part of an `Acquireable` enum that contains `Item`, `Weapon`, and perhaps `Upgrade`. 
 
