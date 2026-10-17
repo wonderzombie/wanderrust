@@ -1,3 +1,12 @@
+//! Loads level and game object definitions from the LDtk JSON format so they can spawn.
+//!
+//! LDtk has *negative* Y as up and Bevy has *positive* Y as up.
+//!
+//! The LDtk documentation is the authority on these data structures; I've tried to mirror them as
+//! much as makes sense for my needs. In truth, deserializing the JSON via serde is probably the
+//! least complicated part.
+//!
+//! https://ldtk.io/docs/game-dev/json-overview/
 use std::path::PathBuf;
 
 use bevy::prelude::*;
@@ -14,15 +23,21 @@ use crate::{
     tiles::{SHEET_SIZE_G, TileIdx},
 };
 
+/// Converts from an LdtkEntity, a thin wrapper around [`serde_json::Value`] for (typically) one of
+/// a handful of possible entity types. The fields vary from entity to entity, although some like
+/// `name` or `tile` are common.
 pub trait LdtkEntityExt<T> {
     fn from_ldtk(entity: &LdtkEntity) -> Option<T>;
 }
 
 #[derive(Debug, Deserialize, Resource)]
 pub struct LdtkProject {
+    /// Each [`LdtkLevel`] contains multiple layers, such as entities or map tiles.
     pub levels: Vec<LdtkLevel>,
+    /// Width of the level measured in grid cells.
     #[serde(rename = "worldGridWidth")]
     pub grid_width: u32,
+    /// Height of the level measured in grid cells.
     #[serde(rename = "worldGridHeight")]
     pub grid_height: u32,
 }
@@ -30,17 +45,26 @@ pub struct LdtkProject {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkLevel {
+    /// Unique ID as given by LDtk itself.
     pub uid: i32,
+    /// Name of the level.
     pub identifier: String,
+    /// Layer instances belonging to this level, if any.
     pub layer_instances: Vec<LdtkLayer>,
+    /// The pixel height to convert from LDtk coordinates to Bevy coordinates.
     pub px_hei: f32,
+    /// The depth of this level as assigned or configured in LDtk.
     pub world_depth: i32,
+    /// A list of fields belonging to the level.
     pub field_instances: Vec<LdtkField>,
+    /// Pixel x coordinate in the LDtk world.
     pub world_x: i32,
+    /// Pixel y coordinate in the LDtk world.
     pub world_y: i32,
 }
 
 impl LdtkLevel {
+    /// Get this level's setting for [`LightLevel`] via the `light_level` field, if any.
     fn light_level(&self) -> Option<LightLevel> {
         self.field_instances
             .iter()
@@ -53,21 +77,29 @@ impl LdtkLevel {
     }
 }
 
+/// Contains data about an LDtk `layerInstance`.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkLayer {
+    /// Can be IntGrid, Entities, Tiles or AutoLayer.
     #[serde(rename = "__type")]
     pub layer_type: String,
+    /// Contains [`LdtkGridTile`] when this is a layer with tiles.
     pub grid_tiles: Vec<LdtkGridTile>,
+    /// Contains [`LdtkGridTile`] when this layer is an AutoLayer.
     pub auto_layer_tiles: Vec<LdtkGridTile>,
+    /// Contains [`LdtkEntity`] when this an Entities layer.
     #[serde(rename = "entityInstances", default)]
     pub entities: Vec<LdtkEntity>,
+    /// The width of this level in cells.
     #[serde(rename = "__cWid")]
     pub c_width: i32,
+    /// The height of this level in cells.
     #[serde(rename = "__cHei")]
     pub c_height: i32,
 }
 
+/// A single field of some type belonging to a Level or Entity.
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct LdtkField {
     #[serde(rename = "__identifier")]
@@ -78,22 +110,27 @@ pub struct LdtkField {
     pub val: Value,
 }
 
+/// A game object defined in LDtk.
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LdtkEntity {
+    /// Editor display name.
     #[serde(rename = "__identifier")]
     pub identifier: String,
+    /// Cell in LDtk coordinates.
     #[serde(rename = "__grid")]
     pub ldtk_cell: LdtkCell,
     /// This is the primary tile field for most entities.
     #[serde(rename = "__tile", default)]
     pub tile: Option<LdtkPxTile>,
+    /// Any remaining fields not explicitly mentioned here.
     pub field_instances: Vec<LdtkField>,
 }
 
 const LDTK_ENTITES_ENUM: &str = "Actor";
 
 impl LdtkEntity {
+    /// Attempts to guess the type of [`LdtkActor`] this [`LdtkEntity`] represents.
     pub fn ty(&self) -> Option<LdtkActor> {
         self.field_instances
             .iter()
@@ -102,6 +139,7 @@ impl LdtkEntity {
             .and_then(LdtkActor::from_str)
     }
 
+    /// Returns a [`ParsedValue`] for the field named [`key`].
     fn field_val(&self, key: &str) -> Option<ParsedValue> {
         self.field_instances
             .iter()
@@ -109,6 +147,7 @@ impl LdtkEntity {
             .map(ParsedValue::from)
     }
 
+    /// Reads a `boolean` field's value, returning false when there isn't one.
     pub fn get_bool(&self, key: &str) -> bool {
         match self.field_val(key) {
             Some(ParsedValue::Bool(v)) => v,
@@ -116,6 +155,7 @@ impl LdtkEntity {
         }
     }
 
+    /// Reads a `String` field's value.
     pub fn get_string(&self, key: &str) -> Option<String> {
         match self.field_val(key) {
             Some(ParsedValue::Ztring(s)) => Some(s.clone()),
@@ -123,6 +163,7 @@ impl LdtkEntity {
         }
     }
 
+    /// Reads an `Array<String>` field's value as`Vec<String>`.
     pub fn get_str_array(&self, key: &str) -> Option<Vec<String>> {
         match self.field_val(key) {
             Some(ParsedValue::ArrayString(vec)) => Some(vec.clone()),
@@ -130,6 +171,8 @@ impl LdtkEntity {
         }
     }
 
+    /// Reads an `Array<Point>` field's value as `Vec<LdtkGridPoint>`.
+    /// These are from LDtk space and must be converted.
     pub fn get_point_array(&self, key: &str) -> Option<Vec<LdtkGridPoint>> {
         match self.field_val(key) {
             Some(ParsedValue::ArrayPoint(points)) => Some(points),
@@ -144,8 +187,7 @@ impl LdtkEntity {
     //     }
     // }
 
-    /// Gets a tile field from this entity. An entity can have
-    /// zero or more of these.
+    /// Reads a `Tile` field from an entity, if any.
     pub fn get_tile_field(&self, key: &str) -> Option<TileIdx> {
         match self.field_val(key) {
             Some(ParsedValue::PxTile(t)) => Some(t),
@@ -159,10 +201,20 @@ impl LdtkEntity {
         self.tile.unwrap_or_default().into()
     }
 
+    /// Reads the `name` field from the entity. This isn't the same
+    /// as the identifier. See also [`LdtkEntity::deduce_display_name()`].
     pub fn get_name_field(&self) -> Option<String> {
         self.get_string("name")
     }
 
+    /// Given an LDtk entity which may or may not warrant a name, find the most appropriate name
+    /// among what is set.
+    ///
+    /// It tries:
+    /// 1. `name` field unless `None`.
+    /// 1. a [`TileIdx::label()`] unless `None`.
+    /// 1. The entity's identifier unless `None` or empty.
+    /// 1. The debug name for the tile.
     pub fn deduce_display_name(&self) -> String {
         self.get_name_field()
             .or_else(|| self.get_tile().label().map(Into::into))
@@ -171,15 +223,19 @@ impl LdtkEntity {
     }
 }
 
+/// Defines a tile's location in the LDtk grid in pixels.
 #[derive(Debug, Deserialize, Default, Clone, Copy)]
 pub struct LdtkGridTile {
+    /// The index of this tile's sprite in the sprite atlas.
     #[serde(rename = "t")]
     pub atlas_idx: usize,
+    /// The pixel coordinates for this tile.
     #[serde(rename = "px")]
     px: Vec2,
 }
 
 impl LdtkGridTile {
+    /// Converts [`LdtkGridTile`] into [`Cell`] using pixel height of level to flip the Y axis.
     fn into_cell(self, level_height_px: f32, depth: i32) -> Cell {
         let x = self.px.x;
         let y = self.px.y;
@@ -215,10 +271,12 @@ impl From<LdtkPxTile> for TileIdx {
     }
 }
 
+/// Defines a grid coordinate obtained from LDtk, so the y axis is inverted.
 #[derive(Deref, PartialEq, Debug, Deserialize, Default, Clone, Copy)]
 pub struct LdtkCell(pub Cell);
 
 impl LdtkCell {
+    /// Converts [`LdtkCell`] into [`Cell`] using pixel height of level to flip the Y axis.
     pub fn to_wandrs(self, level_height_cells: i32, depth: i32) -> Cell {
         Cell::at_depth(self.x, level_height_cells - 1 - self.y, depth)
     }
@@ -230,6 +288,7 @@ impl From<&LdtkGridPoint> for LdtkCell {
     }
 }
 
+/// LdtkGridPoint is from LDtk's `Point` type, identifying a cell in LDtk space.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Copy, Clone)]
 pub struct LdtkGridPoint {
     #[serde(rename = "cx")]

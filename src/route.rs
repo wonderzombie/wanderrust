@@ -38,6 +38,7 @@ pub fn on_insert_cell(
     Ok(())
 }
 
+/// Identifies a route has having a certain string ID.
 #[derive(Component, Debug, PartialEq, Clone, Reflect, Deserialize, Serialize, Eq)]
 pub struct RouteId(pub String);
 
@@ -47,25 +48,29 @@ impl From<&str> for RouteId {
     }
 }
 
+/// Identifies a sequence of [`Cell`]s as a sequence of detinations (points).
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[component(immutable)]
 #[reflect(Component)]
 pub struct Route {
+    /// Uniquely identifies this route. Must match `route_id` field in LDtk.
     pub id: RouteId,
     pub points: Vec<Cell>,
 }
 
+/// Entities with this component are assigned to the [`Route`] entity.
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
 pub struct OnRoute {
+    /// The route entity which contains the points on the route.
     pub route: Entity,
+    /// An index identifying the entity's next point along the route.
     pub idx: usize,
 }
 
 impl Route {
-    // Generates a new [`Route`]. In particular, it translates LDtk cell
-    // ([`crate::ldtk_loader::LdtkCell`]) coordinates to wanderrust coordinates. In Bevy, Y+ is up;
-    // in LDtk Y- is up.
+    /// Generates a new [`Route`]. In particular, it translates LDtk cell ([`LdtkCell`]) coordinates
+    /// to wanderrust coordinates. In Bevy, Y+ is up; in LDtk Y- is up.
     pub fn new(dimensions: &Dimensions, entity: &LdtkEntity) -> Self {
         let name = entity
             .get_name_field()

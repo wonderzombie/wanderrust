@@ -15,33 +15,50 @@ use crate::{
 };
 
 /// A component representing an interactable object in the world, such as a door
-/// or chest, that can be interacted with by actors.
+/// or chest, that can be interacted with by actors. This is an intermediate
+/// representation, the bridge between [`LDtk`] and [`Interacticator`].
+///
+/// [`LDtk`]: crate::ldtk_loader
+/// [`Interacticator`]: crate::interacticator::Interacticator
 #[derive(Component, Debug, Clone, Reflect, Serialize, Deserialize, Eq, PartialEq)]
 #[reflect(Component)]
 #[require(Actor)]
 pub enum Interactable {
     Door {
+        /// Whether the door is open.
         is_open: bool,
+        /// What [`ItemId`] is required to open the door, if any.
         requires: Option<ItemId>,
+        /// The tile for this entity.
         tile_idx: TileIdx,
     },
     Chest {
+        /// Whether the chest is open or closed.
         is_open: bool,
+        /// The contents of this "chest" if any.
         contents: Option<Inventory>,
+        /// The tile for this entity. Open/closed visuals
         tile_idx: TileIdx,
     },
     Speaker {
+        /// Display name for this `Speaker`.
         name: String,
         tile_idx: TileIdx,
+        /// The tile for this entity.
         lines: Vec<String>,
     },
     Mob {
+        /// Display name for this `Mob`, used in [`Interactable::display_name()`].
         name: String,
+        /// The tile for this entity.
         tile_idx: TileIdx,
+        /// The ID of the route this entity is meant to follow.
         route_id: Option<RouteId>,
     },
     Shrine {
+        /// A unique identifier for this shrine.
         id: String,
+        /// The tile for this entity.
         tile_idx: TileIdx,
     },
 }
@@ -216,6 +233,10 @@ pub struct Examine {
     pub target: Entity,
 }
 
+/// Iterates through [`Interactable`] and uses [`InsertInto`] to convert from [`Interactable`] to
+/// the appropriate [`Interxable`].
+///
+/// [`Interxable`]: crate::interacticator::Interxable
 pub fn spawn_interxs(
     mut commands: Commands,
     world_spec: Res<WorldSpec>,
@@ -233,7 +254,7 @@ pub fn spawn_interxs(
         for (interx, cell) in spec.interxs.iter() {
             commands
                 .spawn((
-                    ChildOf(*level_entity), // for display purposes
+                    ChildOf(*level_entity), // needs to be part of visual hierarchy
                     PieceBundle {
                         cell: *cell,
                         sprite: atlas.sprite(),
