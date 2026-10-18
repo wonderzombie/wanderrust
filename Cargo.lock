@@ -1810,6 +1810,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_replique"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b2c4cecade609b2072b4152b75ee2d46d509169642879e569fe327bed4793d2"
+dependencies = [
+ "bevy",
+ "bevy_replique_derive",
+ "replique",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "bevy_replique_derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "100332ef26f385b9cfcf2f5ad742601a6013b9aafec95182ab7ddcbbdd19c65f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
+]
+
+[[package]]
 name = "bevy_scene"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5527,6 +5550,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
 name = "regex-automata"
 version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5548,6 +5583,19 @@ name = "renderdoc-sys"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
+
+[[package]]
+name = "replique"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4277fd5dc9c414180523276b3e843dc105292b5c9798cf7b1889073d437c904"
+dependencies = [
+ "logos",
+ "regex",
+ "serde",
+ "thiserror 2.0.21",
+ "toml",
+]
 
 [[package]]
 name = "ring"
@@ -6679,6 +6727,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_northstar",
+ "bevy_replique",
  "clap",
  "fxhash",
  "itertools 0.15.0",

@@ -8,6 +8,7 @@ mod colors;
 mod combat;
 pub mod debug;
 mod diagnostics;
+pub mod dialogue;
 mod dialogue_modal;
 mod effects;
 mod equipment;
@@ -51,6 +52,7 @@ use bevy::{
     window::{CursorIcon, CustomCursor, CustomCursorImage},
 };
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::FilterQueryInspectorPlugin};
+use bevy_replique::plugin::RepliquePlugin;
 
 use crate::{
     actors::*,
@@ -343,6 +345,8 @@ fn add_wanderrust_plugins(app: &mut App) {
             mobs::plugin,
             route::plugin,
             NorthstarPlugin::<CardinalNeighborhood>::default(),
+            RepliquePlugin,
+            dialogue::plugin,
         ));
 }
 

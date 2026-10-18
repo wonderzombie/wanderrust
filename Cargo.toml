@@ -12,6 +12,7 @@ bevy = { version = "0.20", features = ["2d", "bevy_remote", "debug", "dev", "htt
 bevy-inspector-egui = "0.38.0"
 # bevy_northstar = { path = "../third_party/bevy_northstar" }
 bevy_northstar = { git = "https://github.com/jtothethree/bevy_northstar", branch = "bevy-0.20" }
+bevy_replique = "0.3.0"
 # bevy_northstar = "0.8.0"
 clap = { version = "4.6.6", features = ["derive"] }
 fxhash = "0.2.1"
