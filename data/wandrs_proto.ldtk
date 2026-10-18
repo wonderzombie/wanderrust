@@ -11,7 +11,7 @@
 	"iid": "2f06d430-21a0-11f1-94b8-0d8cb7e5476d",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 230,
+	"nextUid": 231,
 	"identifierStyle": "Free",
 	"toc": [
 		{
@@ -5677,15 +5677,23 @@
 									"id": "V_String",
 									"params": ["Wretch"]
 								}] },
-								{ "__identifier": "lines", "__type": "Array<String>", "__value": [ "leave me in peace.", "...", "take a hint." ], "__tile": null, "defUid": 213, "realEditorValues": [ {
+								{ "__identifier": "lines", "__type": "Array<String>", "__value": [
+									"all you need to do to survive this ...",
+									"...",
+									"... is don't.",
+									"just don't. it's easy. i made it work."
+								], "__tile": null, "defUid": 213, "realEditorValues": [ {
 									"id": "V_String",
-									"params": ["leave me in peace."]
+									"params": ["all you need to do to survive this ..."]
 								}, {
 									"id": "V_String",
 									"params": ["..."]
 								}, {
 									"id": "V_String",
-									"params": ["take a hint."]
+									"params": ["... is don't."]
+								}, {
+									"id": "V_String",
+									"params": ["just don't. it's easy. i made it work."]
 								} ] }
 							],
 							"__worldX": 144,
