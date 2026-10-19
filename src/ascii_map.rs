@@ -152,10 +152,12 @@ impl crate::interactions::Interactable {
                 name,
                 tile_idx: _,
                 lines,
+                replique_path,
             } => Self::Speaker {
                 name: name.clone(),
                 tile_idx,
                 lines: lines.clone(),
+                replique_path: replique_path.clone(),
             },
             Self::Shrine { .. } => {
                 error!("set_tile not implemented for Shrine yet");

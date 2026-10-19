@@ -17,6 +17,7 @@ use crate::interaxnable;
 pub struct Speaker {
     pub name: String,
     pub lines: Vec<String>,
+    pub replique_path: String,
 }
 
 /// A component representing the dialogue of an NPC.

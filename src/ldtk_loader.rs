@@ -163,6 +163,17 @@ impl LdtkEntity {
         }
     }
 
+    pub fn get_file_path(&self, key: &str) -> Option<String> {
+        match self.field_val(key) {
+            Some(ParsedValue::FilePath(s)) => {
+                trace!("maybe stripping `../assets/` from {s}");
+                let s = s.strip_prefix("../assets/").map(String::from).unwrap_or(s);
+                Some(s.clone())
+            }
+            _ => None,
+        }
+    }
+
     /// Reads an `Array<String>` field's value as`Vec<String>`.
     pub fn get_str_array(&self, key: &str) -> Option<Vec<String>> {
         match self.field_val(key) {
@@ -434,6 +445,7 @@ pub enum ParsedValue {
     ArrayString(Vec<String>),
     ArrayPoint(Vec<LdtkGridPoint>),
     LightLevelEnum(String),
+    FilePath(String),
 }
 
 impl From<LdtkField> for ParsedValue {
@@ -475,6 +487,10 @@ impl From<&LdtkField> for ParsedValue {
             "Array<Point>" => match from_value::<Vec<LdtkGridPoint>>(val) {
                 Ok(vec) => ArrayPoint(vec),
                 Err(_) => Unset,
+            },
+            "FilePath" => match val.as_str() {
+                Some(s) => ParsedValue::FilePath(s.to_string()),
+                None => Unset,
             },
             // "EntityRef" => match from_value::<HashMap<String, String>>(val) {
             //     Ok(map) => EntityRef(map),

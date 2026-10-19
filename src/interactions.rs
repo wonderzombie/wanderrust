@@ -46,6 +46,8 @@ pub enum Interactable {
         tile_idx: TileIdx,
         /// The tile for this entity.
         lines: Vec<String>,
+        /// The path to the *.res file for this Speaker.
+        replique_path: String,
     },
     Mob {
         /// Display name for this `Mob`, used in [`Interactable::display_name()`].
@@ -112,13 +114,18 @@ impl LdtkEntityExt<Interactable> for Interactable {
             }
             LdtkActor::Speaker => {
                 let lines = entity.get_str_array("lines").unwrap_or_default();
-                if lines.is_empty() {
-                    error!("found zero lines for speaker: {name} {tile_idx}");
+                let replique_path = entity.get_file_path("replique_path").unwrap_or_default();
+
+                if replique_path.is_empty() && lines.is_empty() {
+                    panic!(
+                        "found zero `lines` and no `replique_path` (.res) dialogue for speaker: {name} {tile_idx}"
+                    );
                 }
                 Some(Self::Speaker {
                     name,
                     tile_idx,
                     lines,
+                    replique_path,
                 })
             }
             LdtkActor::Door => {
@@ -194,9 +201,14 @@ impl EntityCommand for InsertInto {
                 name,
                 tile_idx,
                 lines,
+                replique_path,
             } => {
                 entity
-                    .insert(speaker::Speaker { name, lines })
+                    .insert(speaker::Speaker {
+                        name,
+                        lines,
+                        replique_path,
+                    })
                     .insert((name_component, tile_idx));
             }
             Interactable::Shrine { id, tile_idx } => {

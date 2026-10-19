@@ -51,6 +51,8 @@ fn populate(
     speech_text.set_if_neq(format!("\"{}\"", speech.unwrap_or_default()).into());
 }
 
+// fn populate_replique(current_speaker: Res<DialogueEntity>) {}
+
 fn interaction_system(
     mut commands: Commands,
     interactions: Query<&ui::Pressed, Changed<ui::Pressed>>,
