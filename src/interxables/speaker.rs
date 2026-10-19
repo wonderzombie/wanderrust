@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use bevy::ecs::system::Commands;
 use bevy::ecs::{component::Component, error::BevyError, system::In};
+use bevy_replique::asset::RepliqueDialogue;
 use serde::{Deserialize, Serialize};
 
 use crate::dialogue_modal::DialogueStart;
@@ -19,6 +20,10 @@ pub struct Speaker {
     pub lines: Vec<String>,
     pub replique_path: String,
 }
+
+#[derive(Component, Debug, Reflect, Deref)]
+#[reflect(Component)]
+pub struct Replique(Handle<RepliqueDialogue>);
 
 /// A component representing the dialogue of an NPC.
 ///
@@ -61,14 +66,19 @@ fn do_listen_to_speaker(
 }
 
 fn insert_dialogue(mut w: DeferredWorld, ctx: HookContext) {
-    let lines = w
-        .get::<Speaker>(ctx.entity)
-        .expect("Speaker was missing in its own on_insert handler?!")
-        .lines
-        .clone();
+    if let Some(speaker) = w.get::<Speaker>(ctx.entity)
+        && !speaker.lines.is_empty()
+    {
+        let phrases = speaker.lines.clone();
+        w.commands()
+            .entity(ctx.entity)
+            .insert(Dialogue { idx: 0, phrases });
+    }
 
-    w.commands().entity(ctx.entity).insert(Dialogue {
-        idx: 0,
-        phrases: lines,
-    });
+    if let Some(speaker) = w.get::<Speaker>(ctx.entity)
+        && !speaker.replique_path.is_empty()
+    {
+        let handle = w.load_asset::<RepliqueDialogue>(speaker.replique_path.clone());
+        w.commands().entity(ctx.entity).insert(Replique(handle));
+    }
 }
