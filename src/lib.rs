@@ -8,6 +8,7 @@ mod colors;
 mod combat;
 pub mod debug;
 mod diagnostics;
+mod dialogue;
 mod dialogue_modal;
 mod effects;
 mod equipment;
@@ -345,6 +346,7 @@ fn add_wanderrust_plugins(app: &mut App) {
             route::plugin,
             NorthstarPlugin::<CardinalNeighborhood>::default(),
             RepliquePlugin,
+            dialogue::plugin,
         ));
 }
 

@@ -1,5 +1,6 @@
 := start
 wretch: I don't have any money.
-wretch: And I'm too skinny to eat.
+wretch: I am not delicious.
 wretch: What do you want?
+>> set_flag(met_wretch)
 ---
