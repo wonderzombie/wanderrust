@@ -1,11 +1,24 @@
-use bevy::{prelude::*, ui};
 
-use crate::{gamestate::Modal, interxables::speaker::Dialogue, ui::theme::pcsr_font};
+use bevy::prelude::*;
+use bevy_replique::{
+    call::DialogueToken,
+    message::{DialogueLine, ResumeDialogue},
+    prelude::*,
+};
+
+use crate::{gamestate::Modal, ui::theme::pcsr_font};
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Modal::Dialogue), (setup, populate).chain())
-        .add_systems(OnExit(Modal::Dialogue), discard)
-        .add_systems(Update, interaction_system.run_if(in_state(Modal::Dialogue)))
+    app.add_systems(OnEnter(Modal::Dialogue), setup)
+        .add_systems(
+            Update,
+            (
+                interaction_system,
+                on_dialogue_line_message,
+                on_dialogue_finished_message,
+            )
+                .run_if(in_state(Modal::Dialogue)),
+        )
         .add_observer(on_dialogue_start);
 }
 
@@ -14,58 +27,70 @@ fn setup(mut commands: Commands) {
     commands.spawn_scene(scene());
 }
 
-fn discard(mut commands: Commands, scene: Single<Entity, With<SpeechBox>>) {
-    info!("discard");
-    commands.entity(*scene).despawn();
-}
-
-#[derive(Event, Debug)]
+#[derive(Event, Debug, Deref)]
 pub struct DialogueStart(pub Entity);
 
-#[derive(Resource)]
-pub struct DialogueEntity(pub Entity);
-
-pub fn on_dialogue_start(on: On<DialogueStart>, mut commands: Commands) {
-    let DialogueStart(speaker_nt) = *on;
-    commands.insert_resource(DialogueEntity(speaker_nt));
-    commands.set_state_if_different(Modal::Dialogue)
+pub fn on_dialogue_start(
+    on: On<DialogueStart>,
+    mut commands: Commands,
+    mut dialogue_start: MessageWriter<StartDialogue>,
+) {
+    info!("dialogue start");
+    commands.set_state_if_different(Modal::Dialogue);
+    dialogue_start.write(StartDialogue {
+        runner: **on,
+        node: "start".into(),
+    });
 }
 
-fn populate(
-    current_speaker: Res<DialogueEntity>,
-    mut dialogues: Query<(&Name, &mut Dialogue)>,
+#[derive(Component, Debug, Deref)]
+pub struct NextToken(pub DialogueToken);
+
+fn on_dialogue_line_message(
+    mut commands: Commands,
+    mut lines: MessageReader<DialogueLine>,
+    speech_box: Single<Entity, With<SpeechBox>>,
     mut name_text: Single<&mut Text, (With<SpeakerName>, Without<SpeakerText>)>,
     mut speech_text: Single<&mut Text, (With<SpeakerText>, Without<SpeakerName>)>,
 ) {
-    let DialogueEntity(speaker_nt) = *current_speaker;
-    let Some((name, mut dialogue)) = dialogues.get_mut(speaker_nt).ok() else {
-        error!("entity has no dialogue: {speaker_nt}");
-        return;
-    };
+    for line in lines.read() {
+        info!("dialogue line");
+        let speaker_name = line.speaker.clone().unwrap_or_default().to_uppercase();
+        let speaker_text = line.text.clone().to_uppercase();
 
-    // TODO: allow `DialogueEntity` or similar to format this in some way.
-    name_text.set_if_neq(format!("[{}]", name.to_ascii_uppercase()).into());
+        name_text.set_if_neq(speaker_name.into());
+        speech_text.set_if_neq(speaker_text.into());
 
-    let speech = dialogue.advance().map(|it| it.to_ascii_uppercase());
-    // TODO: allow `DialogueEntity` or similar to format this in some way.
-    speech_text.set_if_neq(format!("\"{}\"", speech.unwrap_or_default()).into());
+        commands.entity(*speech_box).insert(NextToken(line.token));
+    }
 }
 
-// fn populate_replique(current_speaker: Res<DialogueEntity>) {}
-
 fn interaction_system(
-    mut commands: Commands,
-    interactions: Query<&ui::Pressed, Changed<ui::Pressed>>,
+    mut resume_dialogue: MessageWriter<ResumeDialogue>,
     input: Res<ButtonInput<KeyCode>>,
+    next_token: Query<&NextToken, With<SpeechBox>>,
 ) {
     if input.is_changed()
         && input.any_just_pressed([KeyCode::Space, KeyCode::Enter, KeyCode::Escape])
     {
-        commands.set_state_if_different(Modal::None);
-        return;
+        if let Ok(next_token) = next_token.single() {
+            info!("next line");
+            resume_dialogue.write(ResumeDialogue {
+                token: **next_token,
+                input: ResumeInput::Advance,
+            });
+        } else {
+            error!("unable to find next dialogue token");
+        }
     }
+}
 
-    if !interactions.is_empty() {
+fn on_dialogue_finished_message(
+    mut commands: Commands,
+    mut finished: MessageReader<DialogueFinished>,
+) {
+    for _ in finished.read() {
+        info!("dialogue complete");
         commands.set_state_if_different(Modal::None);
     }
 }
@@ -83,6 +108,7 @@ fn scene() -> impl Scene {
     bsn! {
         #DialogueScene
         SpeechBox
+        DespawnOnExit<Modal>(Modal::Dialogue)
         Node {
             width: percent(100),
             height: percent(100),

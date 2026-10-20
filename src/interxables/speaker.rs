@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy::ecs::system::Commands;
 use bevy::ecs::{component::Component, error::BevyError, system::In};
 use bevy_replique::asset::RepliqueDialogue;
+use bevy_replique::runner::DialogueRunner;
 use serde::{Deserialize, Serialize};
 
 use crate::dialogue_modal::DialogueStart;
@@ -79,6 +80,7 @@ fn insert_dialogue(mut w: DeferredWorld, ctx: HookContext) {
         && !speaker.replique_path.is_empty()
     {
         let handle = w.load_asset::<RepliqueDialogue>(speaker.replique_path.clone());
-        w.commands().entity(ctx.entity).insert(Replique(handle));
+        let runner = DialogueRunner::new(handle);
+        w.commands().entity(ctx.entity).insert(runner);
     }
 }
