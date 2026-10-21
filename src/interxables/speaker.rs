@@ -13,7 +13,7 @@ use crate::interacticator::Outcome;
 use crate::interaxnable;
 
 #[derive(Component, Debug, Reflect)]
-#[component(on_insert = insert_dialogue)]
+#[component(on_insert = insert_dialogue_runner)]
 #[reflect(Component)]
 pub struct Speaker {
     pub name: String,
@@ -39,21 +39,17 @@ fn do_listen_to_speaker(
     Ok(Outcome::Failure)
 }
 
-fn insert_dialogue(mut w: DeferredWorld, ctx: HookContext) {
-    if let Some(speaker) = w.get::<Speaker>(ctx.entity)
-        && !speaker.lines.is_empty()
-    {
-        let phrases = speaker.lines.clone();
-        w.commands()
-            .entity(ctx.entity)
-            .insert(Dialogue { idx: 0, phrases });
-    }
-
-    if let Some(speaker) = w.get::<Speaker>(ctx.entity)
-        && !speaker.replique_path.is_empty()
-    {
-        let handle = w.load_asset::<RepliqueDialogue>(speaker.replique_path.clone());
-        let runner = DialogueRunner::new(handle);
-        w.commands().entity(ctx.entity).insert(runner);
+/// Inserts a [`DialogueRunner`] initialized with the [`Speaker::replique_path`] when the latter is
+/// non-empty.
+fn insert_dialogue_runner(mut w: DeferredWorld, ctx: HookContext) {
+    if let Some(speaker) = w.get::<Speaker>(ctx.entity) {
+        if !speaker.replique_path.is_empty() {
+            let handle = w.load_asset::<RepliqueDialogue>(speaker.replique_path.clone());
+            let runner = DialogueRunner::new(handle);
+            // Should there be a runner present already, it will be replaced.
+            w.commands().entity(ctx.entity).insert(runner);
+        } else {
+            warn!("{} has an empty path for `replique_path`", ctx.entity);
+        }
     }
 }
