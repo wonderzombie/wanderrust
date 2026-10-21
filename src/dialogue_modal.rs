@@ -125,7 +125,7 @@ fn scene() -> impl Scene {
                         padding: UiRect::all(px(4)),
                     }
                     SpeakerName
-                    Text::new("Metir")
+                    Text::new("")
                     TextLayout::justify(Justify::Center)
                     @pcsr_font(16)
                 --
