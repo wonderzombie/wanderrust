@@ -72,6 +72,7 @@ use crate::{
     message_log::LogEvent,
     parameters::{Flasks, Health, Parameters},
     route::Route,
+    sounds::SoundEvent,
     tilemap::{ActiveLevel, EntryId, Level, Portal, WorldSpec},
     tiles::TileIdx,
 };
@@ -499,8 +500,8 @@ fn process_actions(
                     commands
                         .entity(action.entity)
                         .insert(adjusted_cell)
-                        .queue(AddRecovery(params.move_speed))
-                        .trigger(Moved);
+                        .queue(AddRecovery(params.move_speed));
+                    commands.trigger(SoundEvent::Walk);
                 }
                 Some(target) if portals.get(target).is_ok() => {
                     let portal = portals.get(target).unwrap();
@@ -544,7 +545,7 @@ fn process_actions(
                     .entity(action.entity)
                     .queue(AddRecovery(params.move_speed))
                     .commands()
-                    .trigger(sounds::Quaffed);
+                    .trigger(SoundEvent::Quaff);
             }
             None => {
                 info!("Player has run out of flasks.");

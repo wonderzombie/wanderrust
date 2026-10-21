@@ -47,7 +47,7 @@ fn do_shrine_interaction(
             level_nt: *active_level,
         });
         commands.trigger(PlayerRested);
-        // commands.trigger(sounds::Rest);
+        // commands.trigger(SoundEvent::Rest);
     } else {
         shrines_visited.0.insert(entity);
         info!("Player lights the shrine {id}.");
@@ -55,7 +55,7 @@ fn do_shrine_interaction(
             txt: format!("lit shrine {id}"),
             color: Some(colors::KENNEY_BLUE),
         });
-        // commands.trigger(sounds::LitShrine);
+        // commands.trigger(SoundEvent::LitShrine);
     }
 
     Ok(Outcome::Success)

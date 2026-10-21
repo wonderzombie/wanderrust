@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! enum_with_str {
-    ( $enum_name:ident, [ $( $variant:ident ),* ] ) => {
+    ( $enum_name:ident, [ $( $variant:ident ),* $(,)? ] ) => {
         #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash, Reflect)]
         pub enum $enum_name {
             $( $variant, )*

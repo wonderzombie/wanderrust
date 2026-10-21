@@ -6,12 +6,8 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{
-    actors::{Bonk, Moved, Player},
-    combat::Attacked,
-};
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Deref)]
 pub struct Sounds(HashMap<String, Handle<AudioSource>>);
 
 const DEFAULT_SOUND_VOL: f32 = 1.;
@@ -51,118 +47,50 @@ pub fn on_loaded(
     info!("🔈 sounds loaded: {}", lookup.len());
 
     commands.insert_resource(Sounds(lookup));
+    commands.add_observer(on_sound_triggered);
 
-    commands.add_observer(on_walk_sound);
-    commands.add_observer(on_bonk_sound);
-    commands.add_observer(on_attack_sound);
-    commands.add_observer(on_acquired_sound);
-    commands.add_observer(on_quaff_sound);
-    commands.add_observer(on_equip_sound);
-    commands.add_observer(on_unequip_sound);
-    commands.add_observer(on_enemy_defeated_sound);
-    commands.add_observer(on_lit_shrine_sound);
-    commands.add_observer(on_rest_sound);
     info!("🔈 finished initializing sounds");
 }
 
-fn on_bonk_sound(_on: On<Bonk>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("bonk") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
+macro_rules! define_sounds {
+    ( $( $id:ident => $name:expr $(,)? )+ ) => {
+        #[derive(Event, Debug)]
+        pub(crate) enum SoundEvent {
+            $( $id, )+
+        }
 
-fn on_walk_sound(_on: On<Moved>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("step") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-fn on_attack_sound(
-    on: On<Attacked>,
-    mut commands: Commands,
-    sounds: Res<Sounds>,
-    player: Single<Entity, With<Player>>,
-) {
-    let sound = if *player == on.0 {
-        "player_hurt"
-    } else {
-        "enemy_hurt"
+        impl SoundEvent {
+            pub(crate) fn name(&self) -> &'static str {
+                match self {
+                    $( Self::$id => $name,  )+
+                }
+            }
+        }
     };
-    if let Some(s) = sounds.0.get(sound) {
-        commands.spawn(one_off_sound_bundle(s));
-    }
 }
 
-#[derive(Event, Debug)]
-pub(crate) struct Quaffed;
-
-fn on_quaff_sound(_on: On<Quaffed>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("quaff") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
+define_sounds! {
+    EnemyDefeated => "enemy_defeated",
+    EquipOff => "unequip",
+    EquipOn => "equip",
+    HurtEnemy => "enemy_hurt",
+    HurtPlayer => "player_hurt",
+    // LitShrine => "lit_shrine",
+    Opened => "open",
+    Quaff => "quaff",
+    // Rest => "rest",
+    Walk => "step",
 }
 
-#[derive(Event, Debug)]
-pub(crate) struct Equip;
-
-fn on_equip_sound(_on: On<Equip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("equip_01") {
-        commands.spawn(one_off_sound_bundle(s));
+fn on_sound_triggered(on: On<SoundEvent>, sounds: Res<Sounds>, mut commands: Commands) {
+    if let Some(handle) = sounds.get(on.event().name()) {
+        commands.spawn((
+            AudioPlayer::new(handle.clone()),
+            PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::Linear(DEFAULT_SOUND_VOL),
+                ..default()
+            },
+        ));
     }
-}
-
-#[derive(Event, Debug)]
-pub(crate) struct Unequip;
-
-fn on_unequip_sound(_on: On<Unequip>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("unequip_01") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-#[derive(Event, Debug)]
-pub(crate) struct Opened;
-
-fn on_acquired_sound(_on: On<Opened>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("open") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-#[derive(Event, Debug)]
-pub(crate) struct EnemyDefeated;
-
-fn on_enemy_defeated_sound(_on: On<EnemyDefeated>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("enemy_defeated") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-#[derive(Event, Debug)]
-pub(crate) struct LitShrine;
-
-fn on_lit_shrine_sound(_on: On<LitShrine>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("lit_shrine") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-#[derive(Event, Debug)]
-pub(crate) struct Rest;
-
-fn on_rest_sound(_on: On<Rest>, mut commands: Commands, sounds: Res<Sounds>) {
-    if let Some(s) = sounds.0.get("rest") {
-        commands.spawn(one_off_sound_bundle(s));
-    }
-}
-
-fn one_off_sound_bundle(handle: &Handle<AudioSource>) -> impl Bundle {
-    (
-        AudioPlayer::new(handle.clone()),
-        PlaybackSettings {
-            mode: PlaybackMode::Despawn,
-            volume: Volume::Linear(DEFAULT_SOUND_VOL),
-            ..default()
-        },
-    )
 }

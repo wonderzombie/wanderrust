@@ -9,13 +9,13 @@ use crate::{
     gamestate::{AddRecovery, PlayerDied, RecoveryNow, Turn},
     message_log::LogEvent,
     parameters::*,
-    sounds,
+    sounds::SoundEvent,
     tilemap::DenizenOf,
     tiles::TileIdx,
 };
 
 #[derive(EntityEvent, Debug)]
-pub(crate) struct Attacked(pub Entity);
+pub(crate) struct Hurt(pub Entity);
 
 #[derive(EntityEvent, Debug)]
 pub(crate) struct Hit(pub Entity);
@@ -32,7 +32,7 @@ impl AttackIcon {
     }
 }
 
-pub fn on_attacked(on: On<Attacked>, mut commands: Commands, atlas: Res<SpriteAtlas>) {
+pub fn on_attacked(on: On<Hurt>, mut commands: Commands, atlas: Res<SpriteAtlas>) {
     let defender = on.event_target();
     let sprite = atlas.sprite_from_idx(TileIdx::SlashDiagonal);
 
@@ -76,12 +76,13 @@ pub fn init_combatants(
             .insert_if_new(CombatantBundle::default());
 
         if let Ok((
-                true,
-                SpawnPoint {
-                    respawn_cell,
-                    level_nt,
-                },
-            )) = respawn_info.get(entity) {
+            true,
+            SpawnPoint {
+                respawn_cell,
+                level_nt,
+            },
+        )) = respawn_info.get(entity)
+        {
             ecmd.insert(ChildOf(*level_nt)).insert(*respawn_cell);
         }
     }
@@ -205,12 +206,16 @@ pub fn process_attacks(
                 if defender_is_player {
                     commands.trigger(PlayerDied);
                 } else {
-                    commands.trigger(sounds::EnemyDefeated);
+                    commands.trigger(SoundEvent::EnemyDefeated);
                 }
             } else {
                 info!("{attacker_name} attacks {defender_name}");
                 spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
-                commands.trigger(Attacked(defender_id))
+                if defender_is_player {
+                    commands.trigger(SoundEvent::HurtPlayer);
+                } else {
+                    commands.trigger(SoundEvent::HurtEnemy);
+                }
             }
         } else {
             info!("{attacker_name}'s damage did not overcome {defender_name}'s defense.");

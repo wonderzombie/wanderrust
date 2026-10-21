@@ -47,12 +47,6 @@ pub struct PieceBundle {
     pub revealed: Revealed,
 }
 
-#[derive(EntityEvent, Debug)]
-pub struct Moved(pub Entity);
-
-#[derive(EntityEvent, Debug)]
-pub struct Bonk(pub Entity);
-
 const STARTING_EQUIPMENT: &[&ItemId] = &[&ItemId::Rags, &ItemId::Stick];
 
 pub fn starting_items() -> Inventory {

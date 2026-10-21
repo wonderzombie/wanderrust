@@ -7,7 +7,8 @@ use crate::{
     inventory::CarriedBy,
     items::{ItemId, Slot},
     parameters::Parameters,
-    sounds, unwrap_collection,
+    sounds::SoundEvent,
+    unwrap_collection,
 };
 
 pub(crate) fn plugin(app: &mut App) {
@@ -128,7 +129,7 @@ pub fn on_toggle_equipped(
             .insert(CarriedBy(target));
 
         if extant_eq == equipment {
-            commands.trigger(sounds::Unequip);
+            commands.trigger(SoundEvent::EquipOff);
             return;
         }
     }
@@ -141,5 +142,5 @@ pub fn on_toggle_equipped(
             slot: target_eq_slot,
         })
         .commands()
-        .trigger(sounds::Equip);
+        .trigger(SoundEvent::EquipOn);
 }

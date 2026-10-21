@@ -2,14 +2,15 @@ use anyhow::anyhow;
 use bevy::prelude::*;
 
 use crate::interactions::Interactable;
+use crate::interaxnable;
 use crate::message_log::LogEvent;
+use crate::sounds::SoundEvent;
 use crate::{colors, interacticator};
 use crate::{
     interacticator::Outcome,
     inventory::{Inventory, InventoryChange},
     tiles::TileIdx,
 };
-use crate::{interaxnable, sounds};
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -55,7 +56,7 @@ fn do_open_chest(
     info!("Player opens {label}: {contents:?}");
     chest.is_open = true;
     log.write((format!("Opened {label}."), colors::KENNEY_BLUE).into());
-    commands.trigger(sounds::Opened);
+    commands.trigger(SoundEvent::Opened);
     inv_changes.write_batch(InventoryChange::acquire(actor, contents.clone()));
     contents.summarized("got").iter().for_each(|it| {
         log.write((it.as_str(), colors::KENNEY_GREEN).into());

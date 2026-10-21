@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
+use crate::interaxnable;
 use crate::message_log::LogEvent;
+use crate::sounds::SoundEvent;
 use crate::{colors, interacticator};
 use crate::{interacticator::Outcome, inventory::Inventory, items::ItemId, tiles::TileIdx};
-use crate::{interaxnable, sounds};
 
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
@@ -70,7 +71,7 @@ fn open_door(commands: &mut Commands, mut door: Mut<'_, Door>, mut tile_idx: Mut
         debug!("changing tile_idx from {tile_idx:?} to {:?}", new_tile);
         tile_idx.set_if_neq(new_tile);
     }
-    commands.trigger(sounds::Opened);
+    commands.trigger(SoundEvent::Opened);
 }
 
 #[cfg(test)]
