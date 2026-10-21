@@ -12,12 +12,19 @@ use crate::interacticator;
 use crate::interacticator::Outcome;
 use crate::interaxnable;
 
+/// A Speaker is capable of showing text on the screen, typically speech, in a box.
+/// [`Speaker::lines`] is for very simple text.
+/// [`Speaker::replique_path`] has scriptability via [`bevy_replique`].
 #[derive(Component, Debug, Reflect)]
 #[component(on_insert = insert_dialogue_runner)]
 #[reflect(Component)]
 pub struct Speaker {
+    /// The in-game name of the speaker.
     pub name: String,
+    // TODO: axe this or make it just a `String`.
     pub lines: Vec<String>,
+    /// Path to a .rep file in a format supported by [`bevy_replique`].
+    // TODO: plumb a topic or `":= start"` equivalent.
     pub replique_path: String,
 }
 
