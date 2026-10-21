@@ -30,14 +30,15 @@ fn setup(mut commands: Commands) {
 pub struct DialogueStart(pub Entity);
 
 pub fn on_dialogue_start(
-    on: On<DialogueStart>,
+    start_with: On<DialogueStart>,
     mut commands: Commands,
     mut dialogue_start: MessageWriter<StartDialogue>,
 ) {
     info!("dialogue start");
     commands.set_state_if_different(Modal::Dialogue);
     dialogue_start.write(StartDialogue {
-        runner: **on,
+        runner: **start_with,
+        // TODO: needs to be parameterized.
         node: "start".into(),
     });
 }

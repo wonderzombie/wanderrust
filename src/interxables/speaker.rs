@@ -6,7 +6,6 @@ use bevy::ecs::system::Commands;
 use bevy::ecs::{component::Component, error::BevyError, system::In};
 use bevy_replique::asset::RepliqueDialogue;
 use bevy_replique::runner::DialogueRunner;
-use serde::{Deserialize, Serialize};
 
 use crate::dialogue_modal::DialogueStart;
 use crate::interacticator;
@@ -22,36 +21,10 @@ pub struct Speaker {
     pub replique_path: String,
 }
 
-#[derive(Component, Debug, Reflect, Deref)]
-#[reflect(Component)]
-pub struct Replique(Handle<RepliqueDialogue>);
-
-/// A component representing the dialogue of an NPC.
-///
-/// This component is used to store and manage the dialogue of an NPC, including
-/// the current phrase and the list of phrases.
-#[derive(Component, Debug, Default, Serialize, Deserialize, Reflect)]
-#[reflect(Component)]
-pub struct Dialogue {
-    idx: usize,
-    phrases: Vec<String>,
-}
-
-impl Dialogue {
-    pub fn advance(&mut self) -> Option<&str> {
-        match &self.phrases.get(self.idx) {
-            Some(phrase) => {
-                self.idx = (self.idx + 1) % self.phrases.len();
-                Some(phrase)
-            }
-            _ => None,
-        }
-    }
-}
-
 interaxnable!( Speaker defaults to ListenTo );
 interacticator!( ListenTo on Speaker via do_listen_to_speaker );
 
+/// Triggers the beginning of dialogue.
 fn do_listen_to_speaker(
     input: In<ListenTo>,
     mut commands: Commands,
