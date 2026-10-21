@@ -74,7 +74,7 @@ impl Route {
         let name = entity
             .get_name_field()
             .or_else(|| entity.get_string("route_id"))
-            .unwrap_or_else(|| format!("RouteNameMissing"));
+            .unwrap_or_else(|| "RouteNameMissing".to_string());
 
         let points: Vec<Cell> = entity
             .get_point_array("waypoints")

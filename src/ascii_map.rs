@@ -142,7 +142,7 @@ impl crate::interactions::Interactable {
                 tile_idx,
             },
             Self::Mob {
-                name, tile_idx: _, ..
+                name, ..
             } => Self::Mob {
                 name: name.clone(),
                 tile_idx,

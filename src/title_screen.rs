@@ -97,7 +97,7 @@ fn interaction_system(
     ct: Single<Entity, With<ColorTest>>,
     debug_mode: Res<State<DebugState>>,
 ) {
-    for button_ty in interactions.iter() {
+    if let Some(button_ty) = interactions.iter().next() {
         match button_ty {
             Buttons::Start => {
                 commands.set_state_if_different(Screen::Playing);
