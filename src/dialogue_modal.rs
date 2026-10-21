@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 use bevy_replique::{
     call::DialogueToken,
@@ -13,9 +12,9 @@ pub fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                interaction_system,
-                on_dialogue_line_message,
-                on_dialogue_finished_message,
+                handle_interaction,
+                handle_dialogue_line,
+                handle_dialogue_finished,
             )
                 .run_if(in_state(Modal::Dialogue)),
         )
@@ -46,7 +45,7 @@ pub fn on_dialogue_start(
 #[derive(Component, Debug, Deref)]
 pub struct NextToken(pub DialogueToken);
 
-fn on_dialogue_line_message(
+fn handle_dialogue_line(
     mut commands: Commands,
     mut lines: MessageReader<DialogueLine>,
     speech_box: Single<Entity, With<SpeechBox>>,
@@ -65,7 +64,7 @@ fn on_dialogue_line_message(
     }
 }
 
-fn interaction_system(
+fn handle_interaction(
     mut resume_dialogue: MessageWriter<ResumeDialogue>,
     input: Res<ButtonInput<KeyCode>>,
     next_token: Query<&NextToken, With<SpeechBox>>,
@@ -85,10 +84,7 @@ fn interaction_system(
     }
 }
 
-fn on_dialogue_finished_message(
-    mut commands: Commands,
-    mut finished: MessageReader<DialogueFinished>,
-) {
+fn handle_dialogue_finished(mut commands: Commands, mut finished: MessageReader<DialogueFinished>) {
     for _ in finished.read() {
         info!("dialogue complete");
         commands.set_state_if_different(Modal::None);
