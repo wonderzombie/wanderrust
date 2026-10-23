@@ -19,7 +19,7 @@ pub struct TitleScreen;
 struct TitleText;
 
 pub fn setup(mut commands: Commands) {
-    commands.spawn_scene(screen_bundle());
+    commands.spawn_scene(scene());
 }
 
 fn discard(mut commands: Commands, screen: Single<Entity, With<TitleScreen>>) {
@@ -35,7 +35,7 @@ enum Buttons {
     Intro,
 }
 
-pub fn screen_bundle() -> impl Scene {
+pub fn scene() -> impl Scene {
     bsn! {
         TitleScreen
         BackgroundColor(Color::BLACK)
