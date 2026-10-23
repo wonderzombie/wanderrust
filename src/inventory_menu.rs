@@ -133,15 +133,11 @@ pub fn scene() -> impl Scene {
     }
 }
 
-pub fn toggle_menu(
-    _event: On<ToggleUi>,
-    nt_opt: Option<Single<Entity, With<InventoryMenu>>>,
-    mut next_modal: ResMut<NextState<Modal>>,
-) {
-    if nt_opt.is_some() {
-        next_modal.set(Modal::None);
-    } else {
-        next_modal.set(Modal::Inventory);
+pub fn toggle_menu(_on: On<ToggleUi>, mut commands: Commands, current_modal: Res<State<Modal>>) {
+    if *current_modal == Modal::Inventory {
+        commands.set_state_if_different(Modal::None);
+    } else if *current_modal == Modal::None {
+        commands.set_state_if_different(Modal::Inventory);
     }
 }
 
@@ -169,7 +165,7 @@ fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
 fn interaction_system(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    curr_selected_nt: Single<(Entity, &ItemRow), With<SelectedItem>>,
+    curr_selected: Single<(Entity, &ItemRow), With<SelectedItem>>,
     menu: Single<(Entity, &Children), With<ItemList>>,
     itam_texts: Query<&Text, With<ItemRow>>,
     mut log: MessageWriter<LogEvent>,
@@ -181,7 +177,7 @@ fn interaction_system(
         return;
     };
 
-    let (row_nt, ItemRow(item_nt)) = *curr_selected_nt;
+    let (row_nt, ItemRow(item_nt)) = *curr_selected;
     if matches!(action, MenuInput::Interact) {
         match itam_texts.get(row_nt) {
             Ok(txt) => {
