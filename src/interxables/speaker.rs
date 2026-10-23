@@ -7,7 +7,7 @@ use bevy::ecs::{component::Component, error::BevyError, system::In};
 use bevy_replique::asset::RepliqueDialogue;
 use bevy_replique::runner::DialogueRunner;
 
-use crate::dialogue_modal::DialogueStart;
+use crate::dialogue_modal::InitDialogue;
 use crate::interacticator;
 use crate::interacticator::Outcome;
 use crate::interaxnable;
@@ -39,7 +39,10 @@ fn do_listen_to_speaker(
 ) -> Result<Outcome, BevyError> {
     if let Ok(speaker) = speakers.get(input.target) {
         info!("Player listens to {}.", speaker.name);
-        commands.trigger(DialogueStart(input.target));
+        commands.trigger(InitDialogue {
+            entity: input.target,
+            start_node: "start".into(),
+        });
         return Ok(Outcome::Success);
     }
 

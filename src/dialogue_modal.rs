@@ -26,20 +26,23 @@ fn setup(mut commands: Commands) {
     commands.spawn_scene(scene());
 }
 
-#[derive(Event, Debug, Deref)]
-pub struct DialogueStart(pub Entity);
+#[derive(Event, Debug)]
+pub struct InitDialogue {
+    pub entity: Entity,
+    pub start_node: String,
+}
 
 pub fn on_dialogue_start(
-    start_with: On<DialogueStart>,
+    start_entity: On<InitDialogue>,
     mut commands: Commands,
     mut dialogue_start: MessageWriter<StartDialogue>,
 ) {
     info!("dialogue start");
     commands.set_state_if_different(Modal::Dialogue);
+    let InitDialogue { entity, start_node } = start_entity.event();
     dialogue_start.write(StartDialogue {
-        runner: **start_with,
-        // TODO: needs to be parameterized.
-        node: "start".into(),
+        runner: *entity,
+        node: start_node.to_owned(),
     });
 }
 
