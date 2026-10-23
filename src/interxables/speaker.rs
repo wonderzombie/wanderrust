@@ -5,9 +5,8 @@ use bevy::prelude::*;
 use bevy::ecs::system::Commands;
 use bevy::ecs::{component::Component, error::BevyError, system::In};
 use bevy_replique::asset::RepliqueDialogue;
-use bevy_replique::runner::DialogueRunner;
 
-use crate::dialogue_modal::InitDialogue;
+use crate::dialogue_modal::InitiateDialogue;
 use crate::interacticator;
 use crate::interacticator::Outcome;
 use crate::interaxnable;
@@ -39,7 +38,7 @@ fn do_listen_to_speaker(
 ) -> Result<Outcome, BevyError> {
     if let Ok(speaker) = speakers.get(input.target) {
         info!("Player listens to {}.", speaker.name);
-        commands.trigger(InitDialogue {
+        commands.trigger(InitiateDialogue {
             entity: input.target,
             start_node: "start".into(),
         });
@@ -49,15 +48,18 @@ fn do_listen_to_speaker(
     Ok(Outcome::Failure)
 }
 
+#[derive(Component, Debug, Deref)]
+pub struct DialogueHandle(pub Handle<RepliqueDialogue>);
+
 /// Inserts a [`DialogueRunner`] initialized with the [`Speaker::replique_path`] when the latter is
 /// non-empty.
 fn insert_dialogue_runner(mut w: DeferredWorld, ctx: HookContext) {
     if let Some(speaker) = w.get::<Speaker>(ctx.entity) {
         if !speaker.replique_path.is_empty() {
             let handle = w.load_asset::<RepliqueDialogue>(speaker.replique_path.clone());
-            let runner = DialogueRunner::new(handle);
-            // Should there be a runner present already, it will be replaced.
-            w.commands().entity(ctx.entity).insert(runner);
+            w.commands()
+                .entity(ctx.entity)
+                .insert(DialogueHandle(handle.clone()));
         } else {
             warn!("{} has an empty path for `replique_path`", ctx.entity);
         }

@@ -5,10 +5,10 @@ use bevy_replique::{
     prelude::*,
 };
 
-use crate::{gamestate::Modal, ui::theme::pcsr_font};
+use crate::{gamestate::Modal, interxables::speaker::DialogueHandle, ui::theme::pcsr_font};
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Modal::Dialogue), setup)
+    app.add_systems(OnEnter(Modal::Dialogue), scene.spawn())
         .add_systems(
             Update,
             (
@@ -21,40 +21,61 @@ pub fn plugin(app: &mut App) {
         .add_observer(on_dialogue_start);
 }
 
-fn setup(mut commands: Commands) {
-    info!("setup");
-    commands.spawn_scene(scene());
-}
-
-#[derive(Event, Debug)]
-pub struct InitDialogue {
+/// Initiates dialogue with [`InitiateDialogue::entity`] as the [`Speaker`].
+///
+/// [`Speaker`]: crate::interxables::speaker::Speaker
+#[derive(EntityEvent, Debug)]
+pub struct InitiateDialogue {
     pub entity: Entity,
     pub start_node: String,
 }
 
+/// Spawns, initializes and starts the [`DialogueRunner`] using the
+/// [`DialogueHandle`] stored on the target entity, entering
+/// [`Modal::Dialogue`].
 pub fn on_dialogue_start(
-    start_entity: On<InitDialogue>,
+    start_entity: On<InitiateDialogue>,
     mut commands: Commands,
     mut dialogue_start: MessageWriter<StartDialogue>,
+    handles: Query<&DialogueHandle>,
 ) {
     info!("dialogue start");
     commands.set_state_if_different(Modal::Dialogue);
-    let InitDialogue { entity, start_node } = start_entity.event();
+
+    let InitiateDialogue { entity, start_node } = start_entity.event();
+
+    let DialogueHandle(handle) = handles
+        .get(*entity)
+        .with_context(|| format!("failed to acquire handle for {entity} {start_node}"))
+        .unwrap();
+
+    // Spawn a new entity with a `DialogueRunner` for this conversation.
+    // Messages from `bevy_replique` that concern the `DialogueRunner` will
+    // include the runner ID, so we don't need to store it.
+    let runner = commands
+        .spawn((
+            DespawnOnExit(Modal::Dialogue),
+            DialogueRunner::new(handle.clone()),
+        ))
+        .id();
+
     dialogue_start.write(StartDialogue {
-        runner: *entity,
+        runner,
         node: start_node.to_owned(),
     });
 }
 
+/// [`NextToken`] is inserted on the [`SpeechBox`] entity to persist [`DialogueToken`].
 #[derive(Component, Debug, Deref)]
 pub struct NextToken(pub DialogueToken);
 
+/// Handles [`DialogueLine`] messages and displays them via [`SpeechText`].
 fn handle_dialogue_line(
     mut commands: Commands,
     mut lines: MessageReader<DialogueLine>,
     speech_box: Single<Entity, With<SpeechBox>>,
-    mut name_text: Single<&mut Text, (With<SpeakerName>, Without<SpeakerText>)>,
-    mut speech_text: Single<&mut Text, (With<SpeakerText>, Without<SpeakerName>)>,
+    mut name_text: Single<&mut Text, (With<SpeakerName>, Without<SpeechText>)>,
+    mut speech_text: Single<&mut Text, (With<SpeechText>, Without<SpeakerName>)>,
 ) {
     for line in lines.read() {
         info!("dialogue line");
@@ -68,6 +89,7 @@ fn handle_dialogue_line(
     }
 }
 
+/// Handles user input in order to advance dialogue to the next line (if any) via [`ResumeDialogue`].
 fn handle_interaction(
     mut resume_dialogue: MessageWriter<ResumeDialogue>,
     input: Res<ButtonInput<KeyCode>>,
@@ -88,6 +110,9 @@ fn handle_interaction(
     }
 }
 
+/// Handles end of dialogue via [`DialogueFinish`]. Exiting [`Modal::Dialogue`]
+/// will cause the [`DialogueRunner`] to despawn automatically via
+/// [`DespawnOnExit`].
 fn handle_dialogue_finished(mut commands: Commands, mut finished: MessageReader<DialogueFinished>) {
     for _ in finished.read() {
         info!("dialogue complete");
@@ -95,12 +120,15 @@ fn handle_dialogue_finished(mut commands: Commands, mut finished: MessageReader<
     }
 }
 
+/// Marker component for the root of the dialogue dialog.
 #[derive(Component, Debug, Clone, Default)]
 pub struct SpeechBox;
 
+/// Marker component for the node which displays speech text.
 #[derive(Component, Debug, Clone, Default)]
-pub struct SpeakerText;
+pub struct SpeechText;
 
+/// Marker component for the node which displays the speaker's name.
 #[derive(Component, Debug, Clone, Default)]
 pub struct SpeakerName;
 
@@ -135,7 +163,7 @@ fn scene() -> impl Scene {
                     Node {
                         padding: UiRect::all(px(4)),
                     }
-                    SpeakerText
+                    SpeechText
                     Text::new("")
                     TextLayout::justify(Justify::Left)
                     @pcsr_font(14)
