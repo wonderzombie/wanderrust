@@ -212,6 +212,7 @@ pub enum MenuAct {
 }
 
 fn get_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuAct> {
+    // TODO: pick & use input manager of some sort.
     if (input.just_released(KeyCode::KeyI) && input.pressed(KeyCode::ShiftLeft))
         || input.just_released(KeyCode::Tab)
     {
@@ -227,6 +228,7 @@ fn get_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuAct> {
 }
 
 fn get_action(input: &ButtonInput<KeyCode>) -> Option<Act> {
+    // TODO: pick & use input manager of some sort.
     if let Some(dir) = get_direction(input) {
         return Some(Act::Move(dir));
     } else if input.any_just_pressed([KeyCode::KeyP, KeyCode::Space]) {

@@ -110,6 +110,7 @@ fn interaction_system(
         }
     }
 
+    // TOOD: pick & use input manager of some sort.
     if input.is_changed() && input.any_just_pressed([KeyCode::Space, KeyCode::Enter]) {
         commands.set_state_if_different(Screen::Playing);
         return;

@@ -151,6 +151,7 @@ enum MenuInput {
 fn read_menu_input(input: &ButtonInput<KeyCode>) -> Option<MenuInput> {
     use MenuInput::*;
 
+    // TOOD: pick & use input manager of some sort.
     if input.any_just_pressed([KeyCode::KeyJ, KeyCode::ArrowDown, KeyCode::BracketRight]) {
         Some(Down)
     } else if input.any_just_pressed([KeyCode::KeyK, KeyCode::ArrowUp, KeyCode::BracketLeft]) {

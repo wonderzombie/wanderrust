@@ -95,6 +95,7 @@ fn handle_interaction(
     input: Res<ButtonInput<KeyCode>>,
     next_token: Query<&NextToken, With<SpeechBox>>,
 ) {
+    // TODO: pick & use input manager of some sort.
     if input.is_changed()
         && input.any_just_pressed([KeyCode::Space, KeyCode::Enter, KeyCode::Escape])
     {
