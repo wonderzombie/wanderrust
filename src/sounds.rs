@@ -6,7 +6,6 @@ use bevy::{
     prelude::*,
 };
 
-
 #[derive(Resource, Default, Deref)]
 pub struct Sounds(HashMap<String, Handle<AudioSource>>);
 

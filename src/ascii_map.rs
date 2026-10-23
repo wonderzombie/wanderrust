@@ -141,9 +141,7 @@ impl crate::interactions::Interactable {
                 requires: *requires,
                 tile_idx,
             },
-            Self::Mob {
-                name, ..
-            } => Self::Mob {
+            Self::Mob { name, .. } => Self::Mob {
                 name: name.clone(),
                 tile_idx,
                 route_id: None,
