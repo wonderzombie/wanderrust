@@ -8,7 +8,18 @@ members = [".", "mrpas"]
 
 [dependencies]
 anyhow = "1.0.104"
-bevy = { version = "0.20", features = ["2d", "bevy_remote", "debug", "dev", "http", "https", "mouse", "sprite_picking", "vorbis", "wav"] }
+bevy = { version = "0.20.1", features = [
+    "2d",
+    "bevy_remote",
+    "debug",
+    "dev",
+    "http",
+    "https",
+    "mouse",
+    "sprite_picking",
+    "vorbis",
+    "wav",
+] }
 bevy-inspector-egui = "0.38.0"
 # bevy_northstar = { path = "../third_party/bevy_northstar" }
 bevy_northstar = { git = "https://github.com/jtothethree/bevy_northstar", branch = "bevy-0.20" }
@@ -17,7 +28,10 @@ bevy_replique = "0.3.0"
 clap = { version = "4.6.6", features = ["derive"] }
 fxhash = "0.2.1"
 itertools = "0.15.0"
-log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+log = { version = "*", features = [
+    "max_level_debug",
+    "release_max_level_warn",
+] }
 mrpas = { path = "mrpas" }
 rand = "0.10.0"
 ron = "0.12.0"
@@ -112,10 +126,5 @@ codegen-units = 4
 opt-level = 0
 
 [package.metadata.typos.default]
-extend-ignore-words-re = [
-    "^[Ss]trat",
-]
-extend-ignore-identifiers-re = [
-    "^[Ss]trat",
-]
-
+extend-ignore-words-re = ["^[Ss]trat"]
+extend-ignore-identifiers-re = ["^[Ss]trat"]
