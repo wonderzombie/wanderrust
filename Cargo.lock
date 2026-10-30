@@ -1462,7 +1462,8 @@ checksum = "bff34eb29ff4b8a8688bc7299f14fb6b597461ca80fec03ed7d22939ab33e48f"
 [[package]]
 name = "bevy_northstar"
 version = "0.8.0"
-source = "git+https://github.com/jtothethree/bevy_northstar?branch=bevy-0.20#d4d4e1691690395b44e862dcefebade033cd4c4a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8365ad595cb6fb76ef78f1b5c3568e08f834be2d3a8751539755304846e5cd99"
 dependencies = [
  "bevy",
  "indexmap",
