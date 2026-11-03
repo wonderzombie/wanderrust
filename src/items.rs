@@ -15,7 +15,7 @@
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Modifiers, SlotType, modifiers};
+use crate::equipment::{Armament, Modifiers, SlotType, modifiers};
 use crate::parameters::Parameters;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -39,6 +39,7 @@ macro_rules! define_items {
             desc: $desc:literal,
             kind: $kind:ident // trailing comma only if there's another line
             $(, equip: $slot:ident, mods: $mods:expr, rating: $rating:expr )?
+            $(, armament: Armament::$armnt:ident )?
             $(,)?
         } ),* $(,)?
     ) => {
@@ -59,6 +60,7 @@ macro_rules! define_items {
                         desc: $desc,
                         kind: Kind::$kind,
                         equip: define_items!(@equip $( $slot, $mods, $rating )? ),
+                        armnt: define_items!(@armament $( $armnt )? ),
                     }, )*
                 }
             }
@@ -84,6 +86,12 @@ macro_rules! define_items {
                 }
             }
         }
+    };
+    (@armament $armament:ident ) => {
+        Some(Armament::$armament)
+    };
+    (@armament) => {
+        None
     };
     (@equip $slot:ident, $mods:expr, $rating:expr ) => {
         Some(EquipDef{ slot: SlotType::$slot, mods: $mods, rating: $rating })
@@ -137,6 +145,7 @@ pub struct ItemDef {
     pub desc: &'static str,
     pub kind: Kind,
     pub equip: Option<EquipDef>,
+    pub armnt: Option<Armament>,
 }
 
 impl Display for ItemDef {
@@ -207,6 +216,7 @@ define_items!(
         equip: MainHand,
         mods: modifiers!(attack: 1),
         rating: Rating::D,
+        armament: Armament::Stick,
     },
     Rags => {
         label: "rags",
@@ -223,6 +233,7 @@ define_items!(
         equip: MainHand,
         mods: modifiers!(attack: 3),
         rating: Rating::C,
+        armament: Armament::Sword,
     },
     Leather => {
         label: "leather",
