@@ -8,14 +8,14 @@
 ///
 /// [`Kind`] categorizes items by type. Presently that's all it does.
 ///
-/// [`EquipDef`] describes which [`Slot`] an item occupies and the
+/// [`EquipDef`] describes which [`SlotType`] an item occupies and the
 /// [`parameters::Parameters`] it confers on whoever has it equipped.
 ///
 /// See also [`crate::inventory::Inventory`] for convenient read access.
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Modifiers, modifiers};
+use crate::equipment::{Modifiers, SlotType, modifiers};
 use crate::parameters::Parameters;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -86,7 +86,7 @@ macro_rules! define_items {
         }
     };
     (@equip $slot:ident, $mods:expr, $rating:expr ) => {
-        Some(EquipDef{ slot: Slot::$slot, mods: $mods, rating: $rating })
+        Some(EquipDef{ slot: SlotType::$slot, mods: $mods, rating: $rating })
     };
     (@equip) => { None };
 }
@@ -145,17 +145,6 @@ impl Display for ItemDef {
     }
 }
 
-/// [`Slot`] defines all possible equipment slots.
-#[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
-pub enum Slot {
-    #[default]
-    Default,
-    Armor,
-    MainHand,
-    OffHand,
-    Trinket,
-}
-
 /// Used to categorize items very roughly by tier.
 #[derive(
     Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, Ord, PartialOrd,
@@ -167,10 +156,10 @@ pub enum Rating {
     A,
 }
 
-/// Defines which [`Slot`] this equipment uses and the [`Modifiers`] conferred when worn.
+/// Defines which [`SlotType`] this equipment uses and the [`Modifiers`] conferred when worn.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct EquipDef {
-    pub slot: Slot,
+    pub slot: SlotType,
     pub mods: Modifiers,
     pub rating: Rating,
 }

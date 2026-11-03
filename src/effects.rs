@@ -49,7 +49,11 @@ pub fn detect_spawn(_event: On<PlayerSpawned>, mut refresh: MessageWriter<Equipm
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Bestiary, equipment::EquippedBy, items::Slot, testing::init_app};
+    use crate::{
+        Bestiary,
+        equipment::{EquippedBy, SlotType},
+        testing::init_app,
+    };
     #[test]
     fn test_apply_params_modifiers() -> Result<(), BevyError> {
         let mut app = init_app();
@@ -72,7 +76,7 @@ mod tests {
                 ItemId::Sword,
                 EquippedBy {
                     entity: player_nt,
-                    slot: Slot::MainHand,
+                    slot: SlotType::MainHand,
                 },
             ))
             .id();

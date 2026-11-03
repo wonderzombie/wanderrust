@@ -4,11 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    inventory::CarriedBy,
-    items::{ItemId, Slot},
-    parameters::Parameters,
-    sounds::SoundEvent,
-    unwrap_collection,
+    equipment::SlotType, inventory::CarriedBy, items::ItemId, parameters::Parameters,
+    sounds::SoundEvent, unwrap_collection,
 };
 
 pub(crate) fn plugin(app: &mut App) {
@@ -27,7 +24,7 @@ pub struct EquipmentChanged;
 pub struct EquippedBy {
     #[relationship]
     pub entity: Entity,
-    pub slot: Slot,
+    pub slot: SlotType,
 }
 
 fn notify(mut w: DeferredWorld, _c: HookContext) {
@@ -38,16 +35,16 @@ fn notify(mut w: DeferredWorld, _c: HookContext) {
 /// Defines a collection of [`Slot`].
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-pub struct Slots(pub Vec<Slot>);
+pub struct Slots(pub Vec<SlotType>);
 
 impl Slots {
     /// Returns a standard list of [`Slot`] for such as a human-adjacent creature.
     pub fn standard() -> Self {
         Self(vec![
-            Slot::Armor,
-            Slot::MainHand,
-            Slot::OffHand,
-            Slot::Trinket,
+            SlotType::Armor,
+            SlotType::MainHand,
+            SlotType::OffHand,
+            SlotType::Trinket,
         ])
     }
 }
@@ -86,7 +83,7 @@ pub struct ToggleEquipped {
 }
 
 /// Returns which item (if any) is equipped in `slot`.
-fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: Slot) -> Option<Entity> {
+fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: SlotType) -> Option<Entity> {
     equipped
         .into_iter()
         .find(|&e| q.get(e).is_ok_and(|eq| eq.slot == slot))

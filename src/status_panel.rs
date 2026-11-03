@@ -4,10 +4,10 @@ use crate::{
     actors::Player,
     cell::Cell,
     colors,
-    equipment::{EquippedBy, HasEquipped},
+    equipment::{EquippedBy, HasEquipped, SlotType},
     gamestate::{Screen, WorldClock},
     inventory::Inventory,
-    items::{ItemId, Slot},
+    items::ItemId,
     parameters::{Flasks, Health, Parameters},
     ui::theme,
     unwrap_collection,
@@ -54,8 +54,8 @@ fn update_labels(
         .iter_many(equip_nt)
         .matched()
         .map(|(it, eq_by)| (eq_by.slot, it.def().label))
-        .collect::<HashMap<Slot, &str>>();
-    let eq_or_none = |s: Slot| equipped.get(&s).unwrap_or(&"--").to_uppercase();
+        .collect::<HashMap<SlotType, &str>>();
+    let eq_or_none = |s: SlotType| equipped.get(&s).unwrap_or(&"--").to_uppercase();
 
     let g = inv
         .item_quantity(&ItemId::Gold)
@@ -71,10 +71,10 @@ fn update_labels(
             Label::Move => format!("M: S{}", params.move_speed),
             Label::Attack => format!("A: {} S{}", params.attack, params.attack_speed),
             Label::Defense => format!("D: {}", params.defense),
-            Label::MainHand => format!("+ {}", eq_or_none(Slot::MainHand)),
-            Label::OffHand => format!("+ {}", eq_or_none(Slot::OffHand)),
-            Label::Armor => format!("+ {}", eq_or_none(Slot::Armor)),
-            Label::Trinket => format!("+ {}", eq_or_none(Slot::Trinket)),
+            Label::MainHand => format!("+ {}", eq_or_none(SlotType::MainHand)),
+            Label::OffHand => format!("+ {}", eq_or_none(SlotType::OffHand)),
+            Label::Armor => format!("+ {}", eq_or_none(SlotType::Armor)),
+            Label::Trinket => format!("+ {}", eq_or_none(SlotType::Trinket)),
             Label::Gold => format!("{} GP", g),
         };
         text.set_if_neq(Text::new(new_text));
