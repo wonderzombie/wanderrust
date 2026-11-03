@@ -11,7 +11,7 @@ mod diagnostics;
 mod dialogue;
 mod dialogue_modal;
 mod effects;
-mod equipment;
+pub mod equipment;
 mod equipment_menu;
 mod fov;
 pub mod gamestate;
