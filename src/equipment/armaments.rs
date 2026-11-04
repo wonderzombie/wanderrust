@@ -96,7 +96,45 @@ macro_rules! armaments {
         }
 
     };
+}
 
+macro_rules! fixed_slot_equipment {
+    ( $( $categ:ident in Slot::$slot:ident { $( $id:ident => { $label:literal, $mods:expr } ),+ $(,)? }),+ $(,)?  ) => {
+
+        $(
+            #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+            pub enum $categ {
+                $( $id, )+
+            }
+
+            impl Labeled for $categ {
+                fn label(&self) -> &'static str {
+                    match self {
+                        $( $categ::$id => $label, )+
+                    }
+                }
+            }
+
+            impl Equippable for $categ {
+                fn slot(&self) -> SlotType {
+                    SlotType::$slot
+                }
+
+                fn modifiers(&self) -> Modifiers {
+                    match self {
+                        $( Armor::$id => $mods ),+
+                    }
+                }
+            }
+
+        )+
+    };
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum Kind {
+    Armament(Armament),
+    Armor(Armor),
 }
 
 armaments! {
@@ -109,4 +147,16 @@ armaments! {
         mods: modifiers!(attack: 3),
         // scaling: acu: B, ala: B, grt: B,
     },
+    Sield => {
+        "shield", slot: SlotType::OffHand,
+        mods: modifiers!(defense: 2),
+    }
+}
+
+fixed_slot_equipment! {
+    Armor in Slot::Armor {
+        Rags => { "rags", modifiers!(defense: 1) },
+        Chain => { "chain", modifiers!(defense: 5) },
+        Leather => {"leather", modifiers!(defense: 3) },
+    }
 }
