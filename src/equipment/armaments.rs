@@ -132,9 +132,21 @@ macro_rules! fixed_slot_equipment {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum Kind {
+pub enum EquipmentKind {
     Armament(Armament),
     Armor(Armor),
+}
+
+impl From<Armament> for EquipmentKind {
+    fn from(value: Armament) -> Self {
+        Self::Armament(value)
+    }
+}
+
+impl From<Armor> for EquipmentKind {
+    fn from(value: Armor) -> Self {
+        Self::Armor(value)
+    }
 }
 
 armaments! {
@@ -147,7 +159,7 @@ armaments! {
         mods: modifiers!(attack: 3),
         // scaling: acu: B, ala: B, grt: B,
     },
-    Sield => {
+    Shield => {
         "shield", slot: SlotType::OffHand,
         mods: modifiers!(defense: 2),
     }
