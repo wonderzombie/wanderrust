@@ -4,7 +4,7 @@ use crate::{
     actors::Player,
     cell::Cell,
     colors,
-    equipment::{EquippedBy, HasEquipped, SlotType},
+    equipment::{EquippedBy, HasEquipped, Labeled, SlotType},
     gamestate::{Screen, WorldClock},
     inventory::Inventory,
     items::ItemId,
@@ -53,7 +53,7 @@ fn update_labels(
     let equipped = equipment
         .iter_many(equip_nt)
         .matched()
-        .map(|(it, eq_by)| (eq_by.slot, it.def().label))
+        .map(|(it, eq_by)| (eq_by.slot, it.label()))
         .collect::<HashMap<SlotType, &str>>();
     let eq_or_none = |s: SlotType| equipped.get(&s).unwrap_or(&"--").to_uppercase();
 
