@@ -144,17 +144,6 @@ impl Display for ItemDef {
     }
 }
 
-/// Used to categorize items very roughly by tier.
-#[derive(
-    Debug, Copy, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize, Ord, PartialOrd,
-)]
-pub enum Rating {
-    D,
-    C,
-    B,
-    A,
-}
-
 define_items!(
     Gold => {
         label: "gold",
