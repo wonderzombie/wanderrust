@@ -15,7 +15,7 @@
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Armament, Armor, EquipmentKind, Modifiers, SlotType};
+use crate::equipment::{Armament, Armor, EquipmentKind};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -153,15 +153,6 @@ pub enum Rating {
     C,
     B,
     A,
-}
-
-/// Defines which [`SlotType`] this equipment uses and the [`Modifiers`] conferred when worn.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct EquipDef {
-    pub slot: SlotType,
-    pub mods: Modifiers,
-    pub rating: Rating,
-    pub kind: Option<EquipmentKind>,
 }
 
 define_items!(
