@@ -87,7 +87,7 @@ fn populate(
         .union(&carrying)
         .flat_map(|nt| {
             let (nt, itam, is_equipped) = all_itam.get(*nt).ok()?;
-            itam.equip_def()?;
+            itam.ekind()?;
             let label = eq_item_label(itam, is_equipped);
 
             Some(

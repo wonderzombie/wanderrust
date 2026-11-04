@@ -107,7 +107,7 @@ pub fn on_toggle_equipped(
         return;
     };
 
-    let Some(target_eq_slot) = item_id.equip_def().map(|it| it.slot) else {
+    let Some(target_eq_slot) = item_id.ekind().map(|it| it.slot()) else {
         error!("unable to find target item {equipment:?} ({item_id}) as specified by {event:?}");
         return;
     };

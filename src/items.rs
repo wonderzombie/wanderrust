@@ -15,15 +15,14 @@
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Armament, Modifiers, SlotType, modifiers};
-use crate::parameters::Parameters;
+use crate::equipment::{Armament, Armor, EquipmentKind, Modifiers, SlotType};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// The group (`Kind`) the item belongs to. `Equipment` is not special; all
 /// equipment should have it; but `EquipDef` is the deciding factor.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
-pub enum Kind {
+pub enum ItemKind {
     Currency,
     Equipment,
     Key,
@@ -38,8 +37,7 @@ macro_rules! define_items {
             label: $label:literal,
             desc: $desc:literal,
             kind: $kind:ident // trailing comma only if there's another line
-            $(, equip: $slot:ident, mods: $mods:expr, rating: $rating:expr )?
-            $(, armament: Armament::$armnt:ident )?
+            $(, ekind: $ekind:expr, )?
             $(,)?
         } ),* $(,)?
     ) => {
@@ -58,15 +56,10 @@ macro_rules! define_items {
                     $( ItemId::$name => ItemDef {
                         label: $label,
                         desc: $desc,
-                        kind: Kind::$kind,
-                        equip: define_items!(@equip $( $slot, $mods, $rating )? ),
-                        armnt: define_items!(@armament $( $armnt )? ),
+                        kind: ItemKind::$kind,
+                        ekind: define_items!(@equip $( $ekind )? ),
                     }, )*
                 }
-            }
-
-            pub fn equip_def(&self) -> Option<EquipDef> {
-                self.def().equip
             }
 
             // Derives [`ItemId`] from CamelCase string matching [`ItemId`].
@@ -85,16 +78,14 @@ macro_rules! define_items {
                     _ => None,
                 }
             }
+
+            pub fn ekind(&self) -> Option<EquipmentKind> {
+                self.def().ekind
+            }
         }
     };
-    (@armament $armament:ident ) => {
-        Some(Armament::$armament)
-    };
-    (@armament) => {
-        None
-    };
-    (@equip $slot:ident, $mods:expr, $rating:expr ) => {
-        Some(EquipDef{ slot: SlotType::$slot, mods: $mods, rating: $rating })
+    (@equip $ekind:expr ) => {
+        Some($ekind)
     };
     (@equip) => { None };
 }
@@ -112,11 +103,11 @@ impl ItemId {
         }
     }
 
-    pub fn kind(&self) -> Kind {
+    pub fn kind(&self) -> ItemKind {
         self.def().kind
     }
 
-    pub fn is_kind(&self, other: Kind) -> bool {
+    pub fn is_kind(&self, other: ItemKind) -> bool {
         self.kind() == other
     }
 }
@@ -143,9 +134,8 @@ impl std::fmt::Display for Quantity {
 pub struct ItemDef {
     pub label: &'static str,
     pub desc: &'static str,
-    pub kind: Kind,
-    pub equip: Option<EquipDef>,
-    pub armnt: Option<Armament>,
+    pub kind: ItemKind,
+    pub ekind: Option<EquipmentKind>,
 }
 
 impl Display for ItemDef {
@@ -171,6 +161,7 @@ pub struct EquipDef {
     pub slot: SlotType,
     pub mods: Modifiers,
     pub rating: Rating,
+    pub kind: Option<EquipmentKind>,
 }
 
 define_items!(
@@ -213,50 +204,36 @@ define_items!(
         label: "stick",
         desc: "a sturdy, dirty stick.",
         kind: Equipment,
-        equip: MainHand,
-        mods: modifiers!(attack: 1),
-        rating: Rating::D,
-        armament: Armament::Stick,
+        ekind: EquipmentKind::Armament(Armament::Stick),
     },
     Rags => {
         label: "rags",
         desc: "tattered rags.",
         kind: Equipment,
-        equip: Armor,
-        mods: modifiers!(defense: 1),
-        rating: Rating::D,
+        ekind: EquipmentKind::Armor(Armor::Rags),
     },
     Sword => {
         label: "sword",
         desc: "better than a stick.",
         kind: Equipment,
-        equip: MainHand,
-        mods: modifiers!(attack: 3),
-        rating: Rating::C,
-        armament: Armament::Sword,
+        ekind: EquipmentKind::Armament(Armament::Sword),
     },
     Leather => {
         label: "leather",
         desc: "stiff boiled leather.",
         kind: Equipment,
-        equip: Armor,
-        mods: modifiers!(defense: 3),
-        rating: Rating::C,
+        ekind: EquipmentKind::Armor(Armor::Leather),
     },
     Chainmail => {
         label: "chainmail",
         desc: "a chainmail shirt.",
         kind: Equipment,
-        equip: Armor,
-        mods: modifiers!(defense: 5),
-        rating: Rating::B,
+        ekind: EquipmentKind::Armor(Armor::Chain),
     },
     Shield => {
         label: "shield",
         desc: "a basic metal shield.",
         kind: Equipment,
-        equip: OffHand,
-        mods: modifiers!(defense: 2),
-        rating: Rating::B,
+        ekind: EquipmentKind::Armament(Armament::Shield),
     }
 );

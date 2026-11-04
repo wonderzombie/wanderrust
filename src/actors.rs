@@ -99,7 +99,7 @@ pub fn on_player_added(mut commands: Commands, player: Single<Entity, Added<Play
     }
 
     for itam in STARTING_EQUIPMENT.iter() {
-        let Some(slot) = itam.equip_def().map(|it| it.slot) else {
+        let Some(slot) = itam.ekind().map(|it| it.slot()) else {
             error!("not equippable: {itam:#?}");
             continue;
         };

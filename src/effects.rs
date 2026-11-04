@@ -34,8 +34,8 @@ pub fn apply_params_modifiers(
         let modified: Parameters = equipment
             .iter_many(has_equipped)
             .matched()
-            .flat_map(|it| it.equip_def())
-            .fold(base_params.params(), |acc, eq| eq.mods.modify(acc));
+            .flat_map(|it| it.ekind())
+            .fold(base_params.params(), |acc, eq| eq.modifiers().modify(acc));
 
         info!("modified params for {entity}: {modified:?}");
         extant_params.set_if_neq(modified);

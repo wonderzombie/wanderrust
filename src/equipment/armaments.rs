@@ -137,6 +137,22 @@ pub enum EquipmentKind {
     Armor(Armor),
 }
 
+impl EquipmentKind {
+    pub fn slot(&self) -> SlotType {
+        match self {
+            EquipmentKind::Armament(armament) => armament.slot(),
+            EquipmentKind::Armor(armor) => armor.slot(),
+        }
+    }
+
+    pub fn modifiers(&self) -> Modifiers {
+        match self {
+            EquipmentKind::Armament(armament) => armament.modifiers(),
+            EquipmentKind::Armor(armor) => armor.modifiers(),
+        }
+    }
+}
+
 impl From<Armament> for EquipmentKind {
     fn from(value: Armament) -> Self {
         Self::Armament(value)
@@ -157,7 +173,6 @@ armaments! {
     Sword => {
         "sword", slot: SlotType::MainHand,
         mods: modifiers!(attack: 3),
-        // scaling: acu: B, ala: B, grt: B,
     },
     Shield => {
         "shield", slot: SlotType::OffHand,
