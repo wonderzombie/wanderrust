@@ -15,7 +15,7 @@
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Armament, Armor, EquipmentKind};
+use crate::equipment::{Armament, Armor, EquipmentKind, Labeled};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -83,6 +83,20 @@ macro_rules! define_items {
                 self.def().ekind
             }
         }
+
+        impl Labeled for ItemId {
+            fn label(&self) -> &'static str {
+                match self {
+                    $( Self::$name => $label, )+
+                }
+            }
+        }
+
+        impl Display for ItemId {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.label())
+            }
+        }
     };
     (@equip $ekind:expr ) => {
         Some($ekind)
@@ -109,12 +123,6 @@ impl ItemId {
 
     pub fn is_kind(&self, other: ItemKind) -> bool {
         self.kind() == other
-    }
-}
-
-impl Display for ItemId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.def())
     }
 }
 
