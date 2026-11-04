@@ -29,12 +29,6 @@ pub trait Labeled {
     fn label(&self) -> &'static str;
 }
 
-impl std::fmt::Display for dyn Labeled {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.label())
-    }
-}
-
 macro_rules! armaments {
     ( @scaling $acu:ident, $ala:ident, $grt:ident $(,)? ) => {
             Some(Scaling {
@@ -142,6 +136,12 @@ macro_rules! equipment_kinds {
             impl From<$kind> for EquipmentKind {
                 fn from(value: $kind) -> Self {
                     Self::$kind(value)
+                }
+            }
+
+            impl std::fmt::Display for $kind {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", self.label())
                 }
             }
         )+
