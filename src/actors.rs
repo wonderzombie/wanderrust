@@ -3,7 +3,20 @@ use std::fmt::Display;
 use bevy::prelude::*;
 
 use crate::{
-    atlas::SpriteAtlas, bestiary::Bestiary, cell::{Cell, PreviousCell}, combat::CombatantBundle, equipment::{Equippable, EquippedBy, Slots}, equipment_menu, gamestate::Modal, inventory::{Inventory, InventoryChange}, inventory_menu, items::{ItemId, Quantity}, light::{Emitter, LightLevel}, parameters::Flasks, tilemap::{self, ActiveLevel, TileStorage, WorldSpawn}, tiles::{self, MapTile, Occupied, Revealed, TileIdx},
+    atlas::SpriteAtlas,
+    bestiary::Bestiary,
+    cell::{Cell, PreviousCell},
+    combat::CombatantBundle,
+    equipment::{Equippable, EquippedBy, Slots},
+    equipment_menu,
+    gamestate::Modal,
+    inventory::{Inventory, InventoryChange},
+    inventory_menu,
+    items::{ItemId, Quantity},
+    light::{Emitter, LightLevel},
+    parameters::Flasks,
+    tilemap::{self, ActiveLevel, TileStorage, WorldSpawn},
+    tiles::{self, MapTile, Occupied, Revealed, TileIdx},
 };
 
 #[derive(Component, Debug, Reflect)]
