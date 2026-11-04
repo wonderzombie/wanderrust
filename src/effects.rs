@@ -1,3 +1,4 @@
+use crate::equipment::Equippable;
 use bevy::prelude::*;
 
 use crate::{

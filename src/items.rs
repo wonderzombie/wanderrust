@@ -204,36 +204,36 @@ define_items!(
         label: "stick",
         desc: "a sturdy, dirty stick.",
         kind: Equipment,
-        ekind: EquipmentKind::Armament(Armament::Stick),
+        ekind: EquipmentKind::from(Armament::Stick),
     },
     Rags => {
         label: "rags",
         desc: "tattered rags.",
         kind: Equipment,
-        ekind: EquipmentKind::Armor(Armor::Rags),
+        ekind: EquipmentKind::from(Armor::Rags),
     },
     Sword => {
         label: "sword",
         desc: "better than a stick.",
         kind: Equipment,
-        ekind: EquipmentKind::Armament(Armament::Sword),
+        ekind: EquipmentKind::from(Armament::Sword),
     },
     Leather => {
         label: "leather",
         desc: "stiff boiled leather.",
         kind: Equipment,
-        ekind: EquipmentKind::Armor(Armor::Leather),
+        ekind: EquipmentKind::from(Armor::Leather),
     },
     Chainmail => {
         label: "chainmail",
         desc: "a chainmail shirt.",
         kind: Equipment,
-        ekind: EquipmentKind::Armor(Armor::Chain),
+        ekind: EquipmentKind::from(Armor::Chain),
     },
     Shield => {
         label: "shield",
         desc: "a basic metal shield.",
         kind: Equipment,
-        ekind: EquipmentKind::Armament(Armament::Shield),
+        ekind: EquipmentKind::from(Armament::Shield),
     }
 );

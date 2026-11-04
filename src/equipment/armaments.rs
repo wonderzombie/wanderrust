@@ -20,12 +20,12 @@ pub struct Scaling {
     grt: Grade,
 }
 
-trait Equippable {
+pub trait Equippable {
     fn slot(&self) -> SlotType;
     fn modifiers(&self) -> Modifiers;
 }
 
-trait Labeled {
+pub trait Labeled {
     fn label(&self) -> &'static str;
 }
 
@@ -48,8 +48,8 @@ macro_rules! armaments {
     };
     ( $( $id:ident => {
             $label:literal,
-            slot: SlotType::$slot:ident,
-            mods: $mods:expr
+            SlotType::$slot:ident,
+            $mods:expr
 
             $(, scaling:
                 acu: $acu:ident, ala: $ala:ident, grt: $grt:ident
@@ -122,7 +122,7 @@ macro_rules! fixed_slot_equipment {
 
                 fn modifiers(&self) -> Modifiers {
                     match self {
-                        $( Armor::$id => $mods ),+
+                        $( $categ::$id => $mods ),+
                     }
                 }
             }
@@ -131,52 +131,59 @@ macro_rules! fixed_slot_equipment {
     };
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum EquipmentKind {
-    Armament(Armament),
-    Armor(Armor),
-}
-
-impl EquipmentKind {
-    pub fn slot(&self) -> SlotType {
-        match self {
-            EquipmentKind::Armament(armament) => armament.slot(),
-            EquipmentKind::Armor(armor) => armor.slot(),
+macro_rules! equipment_kinds {
+    ( $( $kind:ident ),+ ) => {
+        #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+        pub enum EquipmentKind {
+            $( $kind($kind), )+
         }
-    }
 
-    pub fn modifiers(&self) -> Modifiers {
-        match self {
-            EquipmentKind::Armament(armament) => armament.modifiers(),
-            EquipmentKind::Armor(armor) => armor.modifiers(),
+        $(
+            impl From<$kind> for EquipmentKind {
+                fn from(value: $kind) -> Self {
+                    Self::$kind(value)
+                }
+            }
+        )+
+
+        impl Equippable for EquipmentKind {
+            fn slot(&self) -> SlotType {
+                match self {
+                    $( Self::$kind(x) => x.slot(),  )+
+                }
+            }
+
+            fn modifiers(&self) -> Modifiers {
+                match self {
+                    $( Self::$kind(x) => x.modifiers(), )+
+                }
+            }
         }
-    }
+
+        impl Labeled for EquipmentKind {
+            fn label(&self) -> &'static str {
+                match self {
+                    $( Self::$kind(x) => x.label(), )+
+                }
+            }
+        }
+    };
 }
 
-impl From<Armament> for EquipmentKind {
-    fn from(value: Armament) -> Self {
-        Self::Armament(value)
-    }
-}
-
-impl From<Armor> for EquipmentKind {
-    fn from(value: Armor) -> Self {
-        Self::Armor(value)
-    }
-}
+equipment_kinds!(Armament, Armor);
 
 armaments! {
     Stick => {
-        "stick", slot: SlotType::MainHand,
-        mods: modifiers!(attack: 1),
+        "stick", SlotType::MainHand,
+        modifiers!(attack: 1),
     },
     Sword => {
-        "sword", slot: SlotType::MainHand,
-        mods: modifiers!(attack: 3),
+        "sword", SlotType::MainHand,
+        modifiers!(attack: 3),
     },
     Shield => {
-        "shield", slot: SlotType::OffHand,
-        mods: modifiers!(defense: 2),
+        "shield", SlotType::OffHand,
+        modifiers!(defense: 2),
     }
 }
 

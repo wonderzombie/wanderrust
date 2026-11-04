@@ -1,3 +1,4 @@
+use crate::equipment::Equippable;
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
