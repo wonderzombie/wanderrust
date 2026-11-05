@@ -1,5 +1,5 @@
 use crate::{
-    inventory,
+    inventory::Inventory,
     items::{self, Quantity},
 };
 use bevy::prelude::*;
@@ -7,7 +7,7 @@ use rand::{RngExt, seq::IndexedRandom};
 
 /// FixedLoot is used for deterministic loot drops.
 #[derive(Component, Debug, Clone)]
-pub struct FixedLoot(pub inventory::Inventory);
+pub struct FixedLoot(pub Inventory);
 
 /// A LootTable represents a collection of potential "drops." Each drop is a
 /// RandomQty of some item, where each usize is minimum and maximum.
@@ -26,7 +26,7 @@ pub struct TableEntry {
 impl LootTable {
     /// Rolls a random loot drop from the table and returns an Inventory with
     /// the result.
-    pub fn roll(&self) -> inventory::Inventory {
+    pub fn roll(&self) -> Inventory {
         match self.entries.choose(&mut rand::rng()) {
             Some(TableEntry {
                 item,
@@ -34,9 +34,9 @@ impl LootTable {
                 max_dropped,
             }) => {
                 let qty = rand::rng().random_range(*min_dropped..=*max_dropped);
-                inventory::Inventory::with_item(*item, Quantity(qty))
+                Inventory::with_item(*item, Quantity(qty))
             }
-            None => inventory::Inventory::empty(),
+            None => Inventory::empty(),
         }
     }
 }
