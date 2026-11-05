@@ -28,4 +28,6 @@ pub trait Item: Labeled {
     fn is_kind(&self, other: ItemKind) -> bool {
         self.kind() == other
     }
+
+    fn id(&self) -> ItemId;
 }

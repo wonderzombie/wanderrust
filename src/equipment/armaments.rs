@@ -1,6 +1,6 @@
 use crate::{
     equipment::{Equippable, Modifiers, modifiers, slots::SlotType},
-    items::{Item, ItemKind, Labeled},
+    items::{Item, ItemId, ItemKind, Labeled},
     parameters::Parameters,
 };
 
@@ -73,16 +73,19 @@ macro_rules! armaments {
 
         impl Labeled for Armament {
             fn label(&self) -> &'static str {
-                match self {
-                    $( Armament::$id => $label, )+
-                }
+                self.id().label()
             }
-
         }
 
         impl Item for Armament {
             fn kind(&self) -> ItemKind {
                 ItemKind::Equipment
+            }
+
+            fn id(&self) -> ItemId {
+                match self {
+                    $( Armament::$id => ItemId::$id, )+
+                }
             }
         }
     };
@@ -90,7 +93,6 @@ macro_rules! armaments {
 
 macro_rules! fixed_slot_equipment {
     ( $( $categ:ident in Slot::$slot:ident { $( $id:ident => { $label:literal, $mods:expr } ),+ $(,)? }),+ $(,)?  ) => {
-
         $(
             #[derive(Debug, Clone, Eq, PartialEq, Hash)]
             pub enum $categ {
@@ -108,6 +110,12 @@ macro_rules! fixed_slot_equipment {
             impl Item for $categ {
                 fn kind(&self) -> ItemKind {
                     ItemKind::Equipment
+                }
+
+                fn id(&self) -> ItemId {
+                    match self {
+                        $( $categ::$id => ItemId::$id, )+
+                    }
                 }
             }
 
@@ -160,14 +168,6 @@ macro_rules! equipment_kinds {
                 }
             }
         }
-
-        impl Labeled for EquipmentKind {
-            fn label(&self) -> &'static str {
-                match self {
-                    $( Self::$kind(x) => x.label(), )+
-                }
-            }
-        }
     };
 }
 
@@ -191,7 +191,7 @@ armaments! {
 fixed_slot_equipment! {
     Armor in Slot::Armor {
         Rags => { "rags", modifiers!(defense: 1) },
-        Chain => { "chain", modifiers!(defense: 5) },
+        Chainmail => { "chain", modifiers!(defense: 5) },
         Leather => {"leather", modifiers!(defense: 3) },
     }
 }

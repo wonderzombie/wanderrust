@@ -18,7 +18,6 @@ macro_rules! slots {
                     SlotType::Default => "default",
                 }
             }
-
         }
     };
 }

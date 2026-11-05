@@ -92,6 +92,10 @@ macro_rules! define_items {
                     $( Self::$name => ItemKind::$kind, )+
                 }
             }
+
+            fn id(&self) -> ItemId {
+                *self
+            }
         }
 
         impl std::fmt::Display for ItemId {
