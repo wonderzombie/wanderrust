@@ -1,3 +1,4 @@
+//! Manages equipping or unequipping equipment.
 use crate::equipment::Equippable;
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},

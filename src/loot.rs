@@ -1,3 +1,4 @@
+//! Defines types to award fixed loot or random loot based on a table.
 use crate::{
     inventory::Inventory,
     items::{self, Quantity},

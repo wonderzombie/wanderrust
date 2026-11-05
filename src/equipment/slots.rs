@@ -1,3 +1,4 @@
+//! Defines slots for equipment.
 use crate::items::Labeled;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};

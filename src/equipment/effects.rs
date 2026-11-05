@@ -1,3 +1,4 @@
+//! Reapplies [`crate::equipment::Modifiers`] when equipment changes.
 use crate::equipment::Equippable;
 use bevy::prelude::*;
 

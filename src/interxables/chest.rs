@@ -1,3 +1,4 @@
+//! Chests are lootable containers which can be opened once.
 use anyhow::anyhow;
 use bevy::prelude::*;
 

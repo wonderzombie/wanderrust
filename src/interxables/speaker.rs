@@ -1,3 +1,4 @@
+//! Interacting with a speaker reveals an NPC's speech text to the player.
 use bevy::ecs::lifecycle::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;

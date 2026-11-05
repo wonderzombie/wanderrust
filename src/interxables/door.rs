@@ -1,3 +1,4 @@
+//! Doors can be opened with the necessary key (if any).
 use bevy::prelude::*;
 
 use crate::interaxnable;

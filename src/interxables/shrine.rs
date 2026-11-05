@@ -1,3 +1,4 @@
+//! Resting at a shrine restores flasks, HP, and sets the player's spawn point.
 use bevy::ecs::system::ResMut;
 use bevy::ecs::{component::Component, error::BevyError, system::In};
 use bevy::prelude::*;

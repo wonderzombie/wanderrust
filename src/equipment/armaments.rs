@@ -1,3 +1,4 @@
+//! Defines armaments with reference to [`ItemId`].
 use crate::{
     equipment::{Equippable, Modifiers, modifiers, slots::SlotType},
     items::{Item, ItemId, Labeled},
