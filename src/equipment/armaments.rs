@@ -50,9 +50,16 @@ macro_rules! armaments {
         }
 
         impl Armament {
-             fn scaling(&self) -> Option<Scaling> {
-                match self {
-                    $( Armament::$id => armaments!{ @scaling $( $acu, $ala, $grt )? }, )+
+            //  fn scaling(&self) -> Option<Scaling> {
+            //     match self {
+            //         $( Armament::$id => armaments!{ @scaling $( $acu, $ala, $grt )? }, )+
+            //     }
+            // }
+
+            fn from_item(value: impl AsRef<ItemId>) -> Option<Self> {
+                match value.as_ref() {
+                    $( ItemId::$id => Some(Armament::$id), )+
+                    _ => None,
                 }
             }
         }
@@ -97,6 +104,15 @@ macro_rules! fixed_slot_equipment {
             #[derive(Debug, Clone, Eq, PartialEq, Hash)]
             pub enum $categ {
                 $( $id, )+
+            }
+
+            impl $categ {
+                fn from_item(value: impl AsRef<ItemId>) -> Option<Self> {
+                    match value.as_ref() {
+                        $( ItemId::$id => Some($categ::$id), )+
+                        _ => None,
+                    }
+                }
             }
 
             impl Labeled for $categ {
