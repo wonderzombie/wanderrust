@@ -1,18 +1,18 @@
-/// [`ItemId`] and [`Quantity`] mark entities as items. `ItemId` defines every
-/// item with an [`ItemDef`] and a [`Kind`]. Equipment also has [`EquipDef`]
-/// (see also [`equipment`]). More of the same item means a higher [`Quantity`].
-//
-/// When an entity receives an item, that item is created if it doesn't exist;
-/// the item receives [`Quantity`]; and adding the relationship [`CarriedBy`]
-/// links the item to the entity [`Carrying`] those items.
-///
-/// [`Kind`] categorizes items by type. Presently that's all it does.
-///
-/// [`EquipDef`] describes which [`SlotType`] an item occupies and the
-/// [`parameters::Parameters`] it confers on whoever has it equipped.
-///
-/// See also [`crate::inventory::Inventory`] for convenient read access.
-///
+//! [`ItemId`] and [`Quantity`] mark entities as items. `ItemId` defines every
+//! item with an [`ItemDef`] and a [`Kind`]. Equipment also has [`EquipDef`]
+//! (see also [`equipment`]). More of the same item means a higher [`Quantity`].
+//!
+//! When an entity receives an item, that item is created if it doesn't exist;
+//! the item receives [`Quantity`]; and adding the relationship [`CarriedBy`]
+//! links the item to the entity [`Carrying`] those items.
+//!
+//! [`Kind`] categorizes items by type. Presently that's all it does.
+//!
+//!
+//! [`EquipDef`] describes which [`SlotType`] an item occupies and the
+//! [`parameters::Parameters`] it confers on whoever has it equipped.
+//!
+//! See also [`crate::inventory::Inventory`] for convenient read access.
 use std::fmt::Display;
 
 use crate::equipment::{Armament, Armor, EquipmentKind};
