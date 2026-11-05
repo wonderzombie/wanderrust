@@ -4,22 +4,22 @@ use crate::{
     parameters::Parameters,
 };
 
-#[derive(PartialOrd, PartialEq)]
-#[repr(usize)]
-enum Grade {
-    NoScale,
-    E,
-    D,
-    C,
-    B,
-    A,
-}
+// #[derive(PartialOrd, PartialEq)]
+// #[repr(usize)]
+// enum Grade {
+//     NoScale,
+//     E,
+//     D,
+//     C,
+//     B,
+//     A,
+// }
 
-pub struct Scaling {
-    acu: Grade,
-    ala: Grade,
-    grt: Grade,
-}
+// pub struct Scaling {
+//     acu: Grade,
+//     ala: Grade,
+//     grt: Grade,
+// }
 
 macro_rules! armaments {
     ( @scaling $acu:ident, $ala:ident, $grt:ident $(,)? ) => {
