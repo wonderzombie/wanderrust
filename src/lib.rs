@@ -10,7 +10,6 @@ pub mod debug;
 mod diagnostics;
 mod dialogue;
 mod dialogue_modal;
-mod effects;
 pub mod equipment;
 mod equipment_menu;
 mod fov;
@@ -336,7 +335,6 @@ fn add_wanderrust_plugins(app: &mut App) {
         ))
         .add_plugins((
             // Gameplay
-            effects::plugin,
             equipment::plugin,
             gamestate::plugin,
             grid::plugin,

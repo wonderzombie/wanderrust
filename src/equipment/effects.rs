@@ -9,7 +9,7 @@ use crate::{
     unwrap_collection,
 };
 
-pub(super) fn plugin(app: &mut App) {
+pub fn plugin(app: &mut App) {
     app.add_systems(
         PostUpdate,
         apply_params_modifiers.run_if(on_message::<EquipmentChanged>),

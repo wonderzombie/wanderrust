@@ -9,11 +9,6 @@ use crate::{
     sounds::SoundEvent, unwrap_collection,
 };
 
-pub(crate) fn plugin(app: &mut App) {
-    app.add_observer(on_toggle_equipped)
-        .add_message::<EquipmentChanged>();
-}
-
 #[derive(Message, Debug, Default)]
 pub struct EquipmentChanged;
 
