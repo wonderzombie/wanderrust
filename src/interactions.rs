@@ -294,7 +294,7 @@ pub fn plugin(app: &mut App) {
 #[cfg(test)]
 mod tests {
 
-    use crate::{items::Quantity, testing::init_app};
+    use crate::testing::init_app;
 
     use super::*;
 

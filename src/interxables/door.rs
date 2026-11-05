@@ -80,7 +80,7 @@ mod tests {
     use bevy::ecs::system::{RunSystemError, RunSystemOnce};
     use std::assert_matches;
 
-    use crate::{items::Quantity, testing::init_app};
+    use crate::testing::init_app;
 
     use super::*;
 

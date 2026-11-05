@@ -4,7 +4,7 @@ use bevy_replique::prelude::*;
 use crate::{
     actors::Player,
     inventory::{Inventory, InventoryChange},
-    items::{ItemId, Quantity},
+    items::ItemId,
 };
 
 pub(super) fn plugin(app: &mut App) {
