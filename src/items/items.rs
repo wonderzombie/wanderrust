@@ -28,7 +28,7 @@ macro_rules! define_items {
         $( $name:ident => {
             label: $label:literal,
             desc: $desc:literal,
-            kind: $kind:ident // trailing comma only if there's another line
+            ikind: $ikind:ident // trailing comma only if there's another line
             $(, ekind: $ekind:expr, )?
             $(,)?
         } ),* $(,)?
@@ -48,7 +48,6 @@ macro_rules! define_items {
                     $( ItemId::$name => ItemDef {
                         label: $label,
                         desc: $desc,
-                        kind: ItemKind::$kind,
                         ekind: define_items!(@equip $( $ekind )? ),
                     }, )*
                 }
@@ -90,13 +89,12 @@ macro_rules! define_items {
                     $( Self::$name => $label, )+
                 }
             }
-
         }
 
         impl Item for ItemId {
             fn kind(&self) -> ItemKind {
                 match self {
-                    $( Self::$name => ItemKind::$kind, )+
+                    $( Self::$name => ItemKind::$ikind, )+
                 }
             }
 
@@ -112,7 +110,7 @@ macro_rules! define_items {
         }
     };
     (@equip $ekind:expr ) => {
-        Some($ekind)
+        Some($ekind.into())
     };
     (@equip) => { None };
 }
@@ -147,7 +145,6 @@ impl std::fmt::Display for Quantity {
 pub struct ItemDef {
     pub label: &'static str,
     pub desc: &'static str,
-    pub kind: ItemKind,
     pub ekind: Option<EquipmentKind>,
 }
 
@@ -161,72 +158,72 @@ define_items!(
     Gold => {
         label: "gold",
         desc: "glitters coldly.",
-        kind: Currency,
+        ikind: Currency,
     },
     Clock => {
         label: "clock",
         desc: "a precision instrument.",
-        kind: Tool,
+        ikind: Tool,
     },
     UpstairsKey => {
         label: "upstairs key",
         desc: "a key a locked door.",
-        kind: Key,
+        ikind: Key,
     },
     StrangeKey => {
         label: "strange key",
         desc: "a cold, ornate key.",
-        kind: Key,
+        ikind: Key,
     },
     HolySymbol => {
         label: "holy symbol",
         desc: "of some forgotten deity.",
-        kind: Integral,
+        ikind: Integral,
     },
     GlowingTome => {
         label: "glowing tome",
         desc: "emits a sickly light.",
-        kind: Integral,
+        ikind: Integral,
     },
     RedSalve => {
         label: "red salve",
         desc: "soothes burns.",
-        kind: Consumable,
+        ikind: Consumable,
     },
     Stick => {
         label: "stick",
         desc: "a sturdy, dirty stick.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armament::Stick),
+        ikind: Equipment,
+        ekind: Armament::Stick,
     },
     Rags => {
         label: "rags",
         desc: "tattered rags.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armor::Rags),
+        ikind: Equipment,
+        ekind: Armor::Rags,
     },
     Sword => {
         label: "sword",
         desc: "better than a stick.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armament::Sword),
+        ikind: Equipment,
+        ekind: Armament::Sword,
     },
     Leather => {
         label: "leather",
         desc: "stiff boiled leather.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armor::Leather),
+        ikind: Equipment,
+        ekind: Armor::Leather,
     },
     Chainmail => {
         label: "chainmail",
         desc: "a chainmail shirt.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armor::Chain),
+        ikind: Equipment,
+        ekind: Armor::Chainmail,
     },
     Shield => {
         label: "shield",
         desc: "a basic metal shield.",
-        kind: Equipment,
-        ekind: EquipmentKind::from(Armament::Shield),
+        ikind: Equipment,
+        ekind: Armament::Shield,
     }
 );
