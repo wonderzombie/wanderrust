@@ -55,6 +55,7 @@ macro_rules! define_items {
             }
 
             /// Infers [`ItemId`] from CamelCase string matching [`ItemId`].
+            /// Example: `RedSalve`
             pub fn from_name(name: impl AsRef<str>) -> Option<Self> {
                 match name.as_ref() {
                     $( stringify!($name) => Some(ItemId::$name), )*
@@ -62,13 +63,19 @@ macro_rules! define_items {
                 }
             }
 
-            /// Infers [`ItemId`] from snake_case string matching [`ItemDef::label`].
+            /// Infers [`ItemId`] from snake_case string matching the item's label.
+            /// Example: `red_salve`
             pub fn from_label(label: impl AsRef<str>) -> Option<Self> {
                 let l = label.as_ref().replace("_", " ");
                 match l.as_ref() {
                     $( $label => Some(ItemId::$name), )*
                     _ => None,
                 }
+            }
+
+            /// Infers [`ItemId`] from snake_case or CamelCase name of an item.
+            pub fn from_str(s: impl AsRef<str>) -> Option<Self> {
+                Self::from_name(&s).or(Self::from_label(&s))
             }
 
             /// Returns [`EquipmentKind`], if any.
