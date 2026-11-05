@@ -15,22 +15,13 @@
 //! See also [`crate::inventory::Inventory`] for convenient read access.
 use std::fmt::Display;
 
-use crate::equipment::{Armament, Armor, EquipmentKind};
-use crate::items::Labeled;
+use crate::{
+    equipment::{Armament, Armor, EquipmentKind},
+    items::{Item, ItemKind, Labeled},
+};
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-
-/// The group (`Kind`) the item belongs to. `Equipment` is not special; all
-/// equipment should have it; but `EquipDef` is the deciding factor.
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
-pub enum ItemKind {
-    Currency,
-    Equipment,
-    Key,
-    Integral,
-    Consumable,
-    Tool,
-}
 
 macro_rules! define_items {
     (
@@ -91,6 +82,15 @@ macro_rules! define_items {
                     $( Self::$name => $label, )+
                 }
             }
+
+        }
+
+        impl Item for ItemId {
+            fn kind(&self) -> ItemKind {
+                match self {
+                    $( Self::$name => ItemKind::$kind, )+
+                }
+            }
         }
 
         impl Display for ItemId {
@@ -116,14 +116,6 @@ impl ItemId {
             let item = ItemId::from_label(item_spec.as_ref())?;
             Some((item, Quantity(1)))
         }
-    }
-
-    pub fn kind(&self) -> ItemKind {
-        self.def().kind
-    }
-
-    pub fn is_kind(&self, other: ItemKind) -> bool {
-        self.kind() == other
     }
 }
 
