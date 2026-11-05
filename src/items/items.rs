@@ -13,7 +13,6 @@
 //! [`parameters::Parameters`] it confers on whoever has it equipped.
 //!
 //! See also [`crate::inventory::Inventory`] for convenient read access.
-use std::fmt::Display;
 
 use crate::{
     equipment::{Armament, Armor, EquipmentKind},
@@ -43,16 +42,6 @@ macro_rules! define_items {
             // pub const ALL: &'static [ItemId] = &[ $( ItemId::$name, )* ];
             // pub const COUNT: usize = Self::ALL.len();
 
-            pub fn def(self) -> ItemDef {
-                match self {
-                    $( ItemId::$name => ItemDef {
-                        label: $label,
-                        desc: $desc,
-                        ekind: define_items!(@equip $( $ekind )? ),
-                    }, )*
-                }
-            }
-
             /// Infers [`ItemId`] from CamelCase string matching [`ItemId`].
             /// Example: `RedSalve`
             pub fn from_name(name: impl AsRef<str>) -> Option<Self> {
@@ -79,7 +68,9 @@ macro_rules! define_items {
 
             /// Returns [`EquipmentKind`], if any.
             pub fn ekind(&self) -> Option<EquipmentKind> {
-                self.def().ekind
+                match self {
+                    $( ItemId::$name => define_items!(@equip $( $ekind )?), )+
+                }
             }
         }
 
@@ -138,19 +129,6 @@ pub struct Quantity(pub usize);
 impl std::fmt::Display for Quantity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ItemDef {
-    pub label: &'static str,
-    pub desc: &'static str,
-    pub ekind: Option<EquipmentKind>,
-}
-
-impl Display for ItemDef {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.label)
     }
 }
 
