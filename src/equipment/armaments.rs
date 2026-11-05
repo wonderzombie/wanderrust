@@ -1,6 +1,6 @@
 use crate::{
     equipment::{Equippable, Modifiers, modifiers, slots::SlotType},
-    items::Labeled,
+    items::{Item, ItemKind, Labeled},
     parameters::Parameters,
 };
 
@@ -79,6 +79,13 @@ macro_rules! armaments {
                     $( Armament::$id => $label, )+
                 }
             }
+
+        }
+
+        impl Item for Armament {
+            fn kind(&self) -> ItemKind {
+                ItemKind::Equipment
+            }
         }
 
     };
@@ -98,6 +105,13 @@ macro_rules! fixed_slot_equipment {
                     match self {
                         $( $categ::$id => $label, )+
                     }
+                }
+
+            }
+
+            impl Item for $categ {
+                fn kind(&self) -> ItemKind {
+                    ItemKind::Equipment
                 }
             }
 
