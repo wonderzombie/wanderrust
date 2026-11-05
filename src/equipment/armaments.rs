@@ -44,7 +44,6 @@ macro_rules! armaments {
             $(,)?
 
         } ),+ $(,)? ) => {
-
         #[derive(Debug, Clone, Eq, PartialEq, Hash)]
         pub enum Armament {
             $( $id, )+
@@ -57,7 +56,6 @@ macro_rules! armaments {
                 }
             }
         }
-
 
         impl Equippable for Armament {
             fn slot(&self) -> SlotType {
@@ -87,7 +85,6 @@ macro_rules! armaments {
                 ItemKind::Equipment
             }
         }
-
     };
 }
 
@@ -106,7 +103,6 @@ macro_rules! fixed_slot_equipment {
                         $( $categ::$id => $label, )+
                     }
                 }
-
             }
 
             impl Item for $categ {
@@ -126,7 +122,6 @@ macro_rules! fixed_slot_equipment {
                     }
                 }
             }
-
         )+
     };
 }
