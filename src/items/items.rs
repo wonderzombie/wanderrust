@@ -72,6 +72,12 @@ macro_rules! define_items {
                     $( ItemId::$name => define_items!(@equip $( $ekind )?), )+
                 }
             }
+
+            pub fn ikind(&self) -> ItemKind {
+                match self {
+                    $( ItemId::$name => ItemKind::$ikind, )+
+                }
+            }
         }
 
         impl Labeled for ItemId {
@@ -83,12 +89,6 @@ macro_rules! define_items {
         }
 
         impl Item for ItemId {
-            fn kind(&self) -> ItemKind {
-                match self {
-                    $( Self::$name => ItemKind::$ikind, )+
-                }
-            }
-
             fn id(&self) -> ItemId {
                 *self
             }
@@ -107,7 +107,7 @@ macro_rules! define_items {
 }
 
 impl ItemId {
-    /// Given a spec like `"gold:2"`, returns `(ItemId::Gold, Quantity(2))`.
+    /// Given a spec like `"red_salve:2"`, returns `(ItemId::RedSalve, Quantity(2))`.
     pub fn from_spec(item_spec: impl AsRef<str>) -> Option<(Self, Quantity)> {
         if let Some((it, n)) = item_spec.as_ref().split_once(':') {
             let item = ItemId::from_label(it)?;

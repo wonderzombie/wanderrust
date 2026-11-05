@@ -23,11 +23,5 @@ pub trait Labeled {
 }
 
 pub trait Item: Labeled {
-    fn kind(&self) -> ItemKind;
-
-    fn is_kind(&self, other: ItemKind) -> bool {
-        self.kind() == other
-    }
-
     fn id(&self) -> ItemId;
 }
