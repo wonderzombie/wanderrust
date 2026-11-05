@@ -4,7 +4,7 @@
 /// Messages ensure that the order of acquisition or loss is preserved.
 ///
 /// [`ItemId`] and [`Quantity`] from `crate::items` are marker components. Every
-/// item has a `def()`. Only equipment has `equip()`. See [`ItemId`] for details.
+/// item has a `label()`. Only equipment has `equip()`. See [`ItemId`] for details.
 ///
 ///
 ///
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     actors::Player,
-    items::{ItemId, Quantity},
+    items::{ItemId, Labeled, Quantity},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -139,7 +139,7 @@ impl Inventory {
     /// Returns labels that include item and quantity like `"Gold 2"`.
     pub fn as_labels(&self) -> Vec<String> {
         self.iter_items()
-            .map(|ItemEntry(id, q)| format!("{} {q}", id.def()))
+            .map(|ItemEntry(id, q)| format!("{} {q}", id.label()))
             .collect::<Vec<_>>()
     }
 

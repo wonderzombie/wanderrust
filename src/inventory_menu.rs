@@ -8,7 +8,7 @@ use crate::{
     colors,
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
-    items::{ItemId, Quantity},
+    items::{ItemId, Labeled, Quantity},
     message_log::LogEvent,
     ui::theme::pcsr_font,
 };
@@ -77,9 +77,9 @@ fn populate(
         .matched()
         .map(|(nt, itam, qty)| {
             let label = if qty.0 > 1 {
-                format!("{} ({})", itam.def(), qty)
+                format!("{} ({})", itam.label(), qty)
             } else {
-                itam.def().to_string()
+                itam.label().to_string()
             };
 
             commands

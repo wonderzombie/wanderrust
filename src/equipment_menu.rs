@@ -9,7 +9,7 @@ use crate::{
     equipment::{EquipmentChanged, EquippedBy, HasEquipped, ToggleEquipped},
     gamestate::{MenuSelection, Modal, SelectedItem},
     inventory::{CarriedBy, Carrying},
-    items::ItemId,
+    items::{ItemId, Labeled},
     ui::theme::pcsr_font,
     unwrap_collection,
 };
@@ -128,7 +128,7 @@ fn refresh_labels(
 
 fn eq_item_label(item_id: &ItemId, is_equipped: bool) -> String {
     let tag = if is_equipped { "[E]" } else { "[ ]" };
-    let item = item_id.def();
+    let item = item_id.label();
     format!("{tag} {item}").to_uppercase()
 }
 

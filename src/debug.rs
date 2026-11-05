@@ -8,7 +8,7 @@ use crate::colors;
 use crate::equipment::{EquippedBy, HasEquipped};
 use crate::gamestate::{Modal, ResetScenario};
 use crate::inventory::{CarriedBy, Inventory};
-use crate::items::{ItemId, Quantity};
+use crate::items::{ItemId, Labeled, Quantity};
 use crate::message_log::LogEvent;
 use crate::parameters::Vision;
 use crate::{
@@ -89,7 +89,7 @@ pub(super) fn on_button_input(
         let equipped = all_equipment
             .iter_many(player_equipped.iter())
             .matched()
-            .map(|it| it.def())
+            .map(|it| it.label())
             .collect::<Vec<_>>();
         dbg!(equipped);
     } else if input.just_released(KeyCode::F5) {
