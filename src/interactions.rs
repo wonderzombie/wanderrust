@@ -338,7 +338,7 @@ mod tests {
 
         let op = InsertInto(Interactable::Chest {
             is_open: false,
-            contents: Some(Inventory::with_item(ItemId::Gold, Quantity(2))),
+            contents: Some(Inventory::with_item(ItemId::Gold, 2.into())),
             tile_idx: TileIdx::ChestBrownClosed,
         });
 

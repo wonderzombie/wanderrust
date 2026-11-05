@@ -201,7 +201,7 @@ mod tests {
         );
 
         // Add the key.
-        app.insert_resource(Inventory::with_item(ItemId::UpstairsKey, Quantity(1)));
+        app.insert_resource(Inventory::with_item(ItemId::UpstairsKey, 1.into()));
 
         app.update();
 

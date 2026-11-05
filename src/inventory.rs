@@ -219,7 +219,7 @@ impl IntoIterator for Carrying {
 impl From<&[ItemId]> for Inventory {
     /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
     fn from(items: &[ItemId]) -> Self {
-        items.iter().cloned().map(|it| (it, Quantity(1))).collect()
+        items.iter().cloned().map(|it| (it, 1.into())).collect()
     }
 }
 

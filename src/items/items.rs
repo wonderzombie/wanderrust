@@ -132,6 +132,12 @@ impl std::fmt::Display for Quantity {
     }
 }
 
+impl From<usize> for Quantity {
+    fn from(value: usize) -> Self {
+        Quantity(value)
+    }
+}
+
 define_items!(
     Gold => {
         label: "gold",

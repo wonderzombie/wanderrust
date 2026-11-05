@@ -38,7 +38,7 @@ pub fn has_flag(In(flag): In<String>, flags: Res<Flags>) -> Result<bool, String>
 pub fn give_item(In((item, count)): In<(String, usize)>, player: Single<Entity, With<Player>>) {
     match ItemId::from_name(item.as_str()) {
         Some(item_id) => {
-            let inv = Inventory::with_item(item_id, Quantity(count));
+            let inv = Inventory::with_item(item_id, count.into());
             InventoryChange::acquire(*player, inv);
         }
         _ => {
