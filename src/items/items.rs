@@ -54,7 +54,7 @@ macro_rules! define_items {
                 }
             }
 
-            // Derives [`ItemId`] from CamelCase string matching [`ItemId`].
+            /// Infers [`ItemId`] from CamelCase string matching [`ItemId`].
             pub fn from_name(name: impl AsRef<str>) -> Option<Self> {
                 match name.as_ref() {
                     $( stringify!($name) => Some(ItemId::$name), )*
@@ -62,7 +62,7 @@ macro_rules! define_items {
                 }
             }
 
-            // Derives [`ItemId`] from snake_case string matching [`ItemDef::label`].
+            /// Infers [`ItemId`] from snake_case string matching [`ItemDef::label`].
             pub fn from_label(label: impl AsRef<str>) -> Option<Self> {
                 let l = label.as_ref().replace("_", " ");
                 match l.as_ref() {
@@ -71,6 +71,7 @@ macro_rules! define_items {
                 }
             }
 
+            /// Returns [`EquipmentKind`], if any.
             pub fn ekind(&self) -> Option<EquipmentKind> {
                 self.def().ekind
             }
@@ -93,7 +94,7 @@ macro_rules! define_items {
             }
         }
 
-        impl Display for ItemId {
+        impl std::fmt::Display for ItemId {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", self.label())
             }
