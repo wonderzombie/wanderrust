@@ -1,5 +1,6 @@
 use crate::{
     equipment::{Modifiers, modifiers, slots::SlotType},
+    items::Labeled,
     parameters::Parameters,
 };
 
@@ -23,10 +24,6 @@ pub struct Scaling {
 pub trait Equippable {
     fn slot(&self) -> SlotType;
     fn modifiers(&self) -> Modifiers;
-}
-
-pub trait Labeled {
-    fn label(&self) -> &'static str;
 }
 
 macro_rules! armaments {

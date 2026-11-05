@@ -1,4 +1,4 @@
-use crate::equipment::armaments::Labeled;
+use crate::items::Labeled;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 

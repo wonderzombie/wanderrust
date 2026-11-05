@@ -15,7 +15,8 @@
 ///
 use std::fmt::Display;
 
-use crate::equipment::{Armament, Armor, EquipmentKind, Labeled};
+use crate::equipment::{Armament, Armor, EquipmentKind};
+use crate::items::Labeled;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 

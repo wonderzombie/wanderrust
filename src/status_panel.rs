@@ -1,10 +1,11 @@
+use crate::items::Labeled;
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use crate::{
     actors::Player,
     cell::Cell,
     colors,
-    equipment::{EquippedBy, HasEquipped, Labeled, SlotType},
+    equipment::{EquippedBy, HasEquipped, SlotType},
     gamestate::{Screen, WorldClock},
     inventory::Inventory,
     items::ItemId,
