@@ -1,3 +1,5 @@
+//! Displays game world status such as player character [`Health`] and
+//! [`Flasks`] in addition to [`WorldClock`] and equipment.
 use crate::items::Labeled;
 use bevy::{platform::collections::HashMap, prelude::*};
 

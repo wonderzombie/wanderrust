@@ -1,3 +1,4 @@
+//! Spawns the world and all actors in it from [`WorldSpec`].
 use bevy::{
     platform::collections::{HashMap, HashSet},
     prelude::*,

@@ -1,3 +1,4 @@
+//! LEGACY: defines procedural generation for tilemaps.
 use std::hash::{Hash, Hasher};
 use std::ops::Div;
 

@@ -1,3 +1,10 @@
+//! Coordinates [`Mob`]s (creatures) based on [`bestiary::Bestiary`] info,
+//! including [`Attitude`] and [`Behavior`], and [`crate::route`]. Turn-related
+//! behavior, such as movement and attacking, is initiated in [`MobView`] with
+//! [`MobAction`], and with reference to [`crate::grid`].
+//!
+//! While some player functionality is handled here, it has marker struct
+//! [`Player`] and never has [`Mob`].
 use bevy::{ecs::query::QueryData, prelude::*};
 use bevy_northstar::prelude::*;
 use serde::{Deserialize, Serialize};

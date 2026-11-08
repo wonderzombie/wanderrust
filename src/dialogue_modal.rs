@@ -1,3 +1,6 @@
+//! Conducts the dialogue UI, relying heavily on [`bevy_replique`].
+//!
+//! See also [`crate::interxables::speaker`].
 use bevy::prelude::*;
 use bevy_replique::{
     call::DialogueToken,

@@ -1,3 +1,5 @@
+//! Uses [`bevy_northstar`] to coordinate pathfinding among mobs and defines
+//! [`SpatialIndex`] for non-walkable game entites/pieces.
 use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_northstar::prelude::*;
 

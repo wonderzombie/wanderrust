@@ -1,3 +1,4 @@
+//! LEGACY: defines ASCII representation for tilemaps.
 use crate::{cell::Cell, light::LightLevel, ptable::ProbabilityTable, tilemap::*, tiles::TileIdx};
 
 use bevy::platform::collections::HashMap;

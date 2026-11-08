@@ -1,3 +1,5 @@
+//! Defines a bridge between [`crate::ldtk_loader`] types and
+//! [`crate::interxables`] types via [`Interactable`].
 use bevy::{platform::collections::HashSet, prelude::*};
 use serde::{Deserialize, Serialize};
 

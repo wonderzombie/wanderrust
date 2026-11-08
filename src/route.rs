@@ -1,3 +1,4 @@
+//! Coordinates [`Route`]s and offers [`RouteAssist`] API for same.
 use bevy::{ecs::system::SystemParam, prelude::*};
 use serde::{Deserialize, Serialize};
 

@@ -1,3 +1,4 @@
+//! Allows the player to view and interact with [`ItemId`] in their inventory.
 use std::ops::Deref;
 
 use bevy::prelude::*;

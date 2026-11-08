@@ -1,3 +1,4 @@
+//! Defines [`Actor`], which is anything in the game with a function or behavior.
 use std::fmt::Display;
 
 use bevy::prelude::*;

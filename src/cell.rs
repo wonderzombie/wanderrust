@@ -1,3 +1,4 @@
+//! Represents a coordinate in a 2.5D tilemap grid.
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, Div, Sub};
 

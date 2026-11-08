@@ -1,3 +1,4 @@
+//! Contains definitions for interactable objects.
 pub mod chest;
 pub mod door;
 pub mod shrine;

@@ -1,3 +1,4 @@
+//! Displays a game-over-like screen with a respawn button when the player dies.
 use bevy::{prelude::*, ui, ui_widgets::Button};
 
 use crate::gamestate::{GameState, ResetScenario, Screen};

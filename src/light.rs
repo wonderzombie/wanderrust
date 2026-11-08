@@ -1,3 +1,8 @@
+//! Defines, spawns, and coordinates [`Emitter`]s that produce [`LightLevel`] on
+//! a per-tile basis.
+//!
+//! The lighting is very simple, defined by [`LightLevel`], [`LightMap`], and
+//! [`LevelLightMap`] alongside [`Emitter`].
 use std::collections::HashMap;
 
 use crate::{

@@ -1,3 +1,5 @@
+//! Contains color palettes and related functionality.
+
 // Don't warn about unused colors.
 #![allow(dead_code)]
 

@@ -1,3 +1,7 @@
+//! Coordinates changes to map tiles based on their properties in [`crate::tiles`].
+//!
+//! Tile properties are typically changed by modules like [`crate::fov`] and [`crate::light`].
+//! Most but not all tile properties are defined in [`crate::tiles`].
 use crate::{
     colors,
     light::{AmbientLight, LightLevel},

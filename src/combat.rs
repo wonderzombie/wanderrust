@@ -1,3 +1,4 @@
+//! Coordinates [`Attack`] and related events.
 use bevy::{prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, Pathfind};
 

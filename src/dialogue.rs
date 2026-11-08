@@ -1,3 +1,4 @@
+//! Dialogue-related "scripting" functionality lives here.
 use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_replique::prelude::*;
 

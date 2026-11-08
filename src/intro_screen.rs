@@ -1,3 +1,4 @@
+//! Displays an story-adjacent introduction to the game.
 use std::time::Duration;
 
 use bevy::prelude::*;

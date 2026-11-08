@@ -1,3 +1,4 @@
+//! Allows player interaction with equipment (equip, unequip) using [`crate::equipment`] APIs.
 use std::ops::Deref;
 
 use bevy::{platform::collections::HashSet, prelude::*};

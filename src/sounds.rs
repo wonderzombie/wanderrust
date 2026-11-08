@@ -1,3 +1,4 @@
+//! Defines and loads gameplay sounds, esp [`SoundEvent`].
 use std::collections::HashMap;
 
 use bevy::{

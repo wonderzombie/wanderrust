@@ -1,3 +1,4 @@
+//! APIs to display text on a timed, character by character basis via [`Typewriter`].
 use std::time::Duration;
 
 use bevy::prelude::*;

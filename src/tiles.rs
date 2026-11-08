@@ -1,3 +1,6 @@
+//! Defines every tile in the game, including creature tiles, along with all
+//! gameplay properties. [`TileIdx`] is the main type with a 1:1 correspondence
+//! between [`TileIdx`] and an index into [`crate::atlas::DEFAULT_SHEET`].
 use std::fmt::Display;
 
 use bevy::platform::collections::HashMap;

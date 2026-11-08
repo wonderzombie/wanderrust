@@ -1,3 +1,4 @@
+//! Contains testing related helpers.
 #![cfg(test)]
 
 use bevy::prelude::*;

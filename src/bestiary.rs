@@ -1,3 +1,5 @@
+//! Defines all creatures in the game under [`Bestiary`], including their
+//! appearance and game statistics.
 use crate::{
     mobs::{Attitude, Behavior, Mob, Role},
     parameters::BaseParameters,
@@ -79,6 +81,8 @@ define_bestiary!(
     Skeleton => [TileIdx::Skeleton, atk = 7, atk_spd = 11, def = 3, hp = 20, mov = 10, vis = 2, mood = Attitude::Hostile],
 );
 
+/// Used as an `on_insert` hook. Attempts to deduce [`Bestiary`] type and
+/// applies attributes accordingly, based on [`BaseParameters`].
 pub fn spec_mob(mut w: DeferredWorld, ctx: HookContext) {
     let Some(species) = w.entity(ctx.entity).get::<Bestiary>() else {
         error!("unknown species: {ctx:#?}");

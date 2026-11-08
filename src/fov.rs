@@ -1,3 +1,4 @@
+//! Coordinates field of view mechanics for the player and for mobs via [`Fov`].
 use bevy::prelude::*;
 
 use mrpas::Mrpas;

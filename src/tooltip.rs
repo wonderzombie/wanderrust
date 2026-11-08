@@ -1,3 +1,5 @@
+//! Displays a tooltip or label when the mouse cursor hovers over tiles with
+//! labels, especially [`crate::mobs::Mob`]s and interactable items.
 use bevy::prelude::*;
 
 use crate::{

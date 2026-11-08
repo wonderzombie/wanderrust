@@ -1,3 +1,4 @@
+//! Displays game events in an on-screen log. It's not scrollable.
 use bevy::prelude::*;
 
 use crate::{colors, ui::theme::pcsr_font};

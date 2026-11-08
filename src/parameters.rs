@@ -1,3 +1,5 @@
+//! Defines [`Parameters`], a creature's game statistics, notably [`Health`],
+//! [`Flasks`], [`Vision`], and [`Awareness`].
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Sub};

@@ -1,3 +1,4 @@
+//! Displays the title screen for the game as soon as the game loads.
 use bevy::{prelude::*, ui, ui_widgets::Button};
 use std::time::Duration;
 

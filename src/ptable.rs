@@ -1,3 +1,4 @@
+//! LEGACY: defines [`ProbabilityTable`], used by [`crate::procgen`].
 use bevy::{ecs::resource::Resource, prelude::Deref};
 
 use crate::tiles::TileIdx;
