@@ -9,7 +9,7 @@ use crate::combat::SpawnPoint;
 use crate::gamestate::PlayerRested;
 use crate::interacticator::Outcome;
 use crate::interactions::ShrinesVisited;
-use crate::interaxnable;
+use crate::interxable;
 use crate::message_log::LogEvent;
 use crate::tilemap::ActiveLevel;
 use crate::{colors, interacticator};
@@ -20,7 +20,7 @@ pub struct Shrine {
     pub(crate) id: String,
 }
 
-interaxnable!(Shrine defaults to Rest);
+interxable!(Shrine defaults to Rest);
 interacticator!(Rest on Shrine via do_shrine_interaction);
 
 fn do_shrine_interaction(

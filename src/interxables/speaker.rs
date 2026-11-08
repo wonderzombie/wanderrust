@@ -10,7 +10,7 @@ use bevy_replique::asset::RepliqueDialogue;
 use crate::dialogue_modal::InitiateDialogue;
 use crate::interacticator;
 use crate::interacticator::Outcome;
-use crate::interaxnable;
+use crate::interxable;
 
 /// A Speaker is capable of showing text on the screen, typically speech, in a box.
 /// [`Speaker::lines`] is for very simple text.
@@ -28,7 +28,7 @@ pub struct Speaker {
     pub replique_path: String,
 }
 
-interaxnable!( Speaker defaults to ListenTo );
+interxable!( Speaker defaults to ListenTo );
 interacticator!( ListenTo on Speaker via do_listen_to_speaker );
 
 /// Triggers the beginning of dialogue.

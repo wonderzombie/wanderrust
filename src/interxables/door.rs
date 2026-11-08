@@ -1,7 +1,7 @@
 //! Doors can be opened with the necessary key (if any).
 use bevy::prelude::*;
 
-use crate::interaxnable;
+use crate::interxable;
 use crate::message_log::LogEvent;
 use crate::sounds::SoundEvent;
 use crate::{colors, interacticator};
@@ -18,7 +18,7 @@ pub struct Door {
     pub tile_idx: TileIdx,
 }
 
-interaxnable!(Door defaults to OpenDoor);
+interxable!(Door defaults to OpenDoor);
 interacticator!(OpenDoor on Door via do_open_door);
 
 fn do_open_door(

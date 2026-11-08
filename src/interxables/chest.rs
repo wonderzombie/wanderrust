@@ -3,7 +3,7 @@ use anyhow::anyhow;
 use bevy::prelude::*;
 
 use crate::interactions::Interactable;
-use crate::interaxnable;
+use crate::interxable;
 use crate::message_log::LogEvent;
 use crate::sounds::SoundEvent;
 use crate::{colors, interacticator};
@@ -20,7 +20,7 @@ pub struct Chest {
     pub contents: Option<Inventory>,
 }
 
-interaxnable!(Chest defaults to OpenChest);
+interxable!(Chest defaults to OpenChest);
 interacticator!(OpenChest on Chest via do_open_chest);
 
 fn do_open_chest(

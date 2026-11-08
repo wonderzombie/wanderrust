@@ -1,4 +1,4 @@
-//! `interacticator.rs` defines the basis of an interaction for items.
+//! Defines the basis of an interaction for items.
 //!
 //! [`interxable!`] defines an object, like a Door or Chest. [`interacticator!`] defines *an*
 //! interaction with an object, like `OpenDoor` or `CloseDoor`.
@@ -14,6 +14,7 @@
 //! To enable dispatch, modify `interxables.rs`, registering the `Interxable` type, and allowing
 //! (in the above example) us to register `default_dispatch::<Door>`.
 //!
+//! See also [`crate::interxables`].
 use bevy::prelude::*;
 
 use crate::interactions::Examine;
@@ -87,9 +88,9 @@ impl InteractCommand for Commands<'_, '_> {
     }
 }
 
-/// Pronounced "interaction-able."
+/// Pronounced "interacts-able."
 #[macro_export]
-macro_rules! interaxnable {
+macro_rules! interxable {
     ( $obj:ident defaults to $verb:ident ) => {
         impl $crate::interacticator::Interxable for $obj {
             type DefaultAction = $verb;
