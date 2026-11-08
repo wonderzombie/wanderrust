@@ -150,7 +150,7 @@ impl Inventory {
             .map(|ItemEntry(_, q)| *q)
     }
 
-    /// Returns a summary of [Inventory] [Item]s as a vector of strings. Each
+    /// Returns a summary of [Inventory] [`ItemId`]s as a vector of strings. Each
     /// item will have `prefix` prepended to it.
     pub fn summarized(&self, prefix: &str) -> Vec<String> {
         self.0
@@ -217,7 +217,7 @@ impl IntoIterator for Carrying {
 }
 
 impl From<&[ItemId]> for Inventory {
-    /// Creates a new [Inventory] from a slice of [Item]s, counting each item's occurrences.
+    /// Creates a new [Inventory] from a slice of [ItemId]s, counting each item's occurrences.
     fn from(items: &[ItemId]) -> Self {
         items.iter().cloned().map(|it| (it, 1.into())).collect()
     }
@@ -260,7 +260,7 @@ impl InventoryChange {
             .collect()
     }
 
-    /// Creates a batch of [`InventoryChange`] which add [`Inventory`] to the given `Entity`.
+    /// Creates a batch of [`InventoryChange`] which add [`Inventory`] to the given [`Entity`].
     pub(crate) fn acquire(entity: Entity, inv: Inventory) -> Vec<InventoryChange> {
         Self::from_inv(entity, inv, Change::Acquired)
     }
