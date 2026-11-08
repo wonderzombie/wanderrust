@@ -2,7 +2,6 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    actors::Player,
     cell::Cell,
     gamestate::RecoveryNow,
     ldtk_loader::{LdtkCell, LdtkEntity},
@@ -18,21 +17,19 @@ pub fn on_insert_cell(
     on: On<Insert<Cell>>,
     mut route_assist: RouteAssist,
     cells: Populated<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
-    player: Single<Entity, With<Player>>,
 ) -> Result<()> {
-    if *player != on.event_target() {
-        let dest = route_assist
-            .destination(on.event_target())
-            .with_severity(Severity::Error)?;
-        let curr = cells
-            .get(on.event_target())
-            .with_severity(Severity::Error)?;
+    let new_cell = cells
+        .get(on.event_target())
+        .with_severity(Severity::Error)?;
 
-        if dest == *curr {
-            route_assist
-                .advance(on.event_target())
-                .with_severity(Severity::Error)?;
-        }
+    let dest = route_assist
+        .destination(on.event_target())
+        .with_severity(Severity::Error)?;
+
+    if dest == *new_cell {
+        route_assist
+            .advance(on.event_target())
+            .with_severity(Severity::Error)?;
     }
     Ok(())
 }
@@ -143,12 +140,12 @@ impl<'w, 's> RouteAssist<'w, 's> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{mobs::Mob, tiles::TileIdx};
+    use crate::{gamestate::WorldClock, mobs::Mob, tiles::TileIdx};
     use bevy::ecs::system::RunSystemOnce;
 
     #[test]
     fn test_assign_route_destination() -> Result {
-        let mut world = World::new();
+        let mut world = new_world();
 
         let cells = vec![Cell::new(1, 1), Cell::new(2, 2)];
 
@@ -193,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_assign_route_advance() {
-        let mut world = World::new();
+        let mut world = new_world();
 
         let cells = vec![Cell::new(1, 1), Cell::new(2, 2)];
 
@@ -257,7 +254,7 @@ mod tests {
 
     #[test]
     fn test_on_cell_inserted() -> Result {
-        let mut world = World::default();
+        let mut world = new_world();
 
         let chicken = world
             .spawn((
@@ -269,6 +266,8 @@ mod tests {
                 Cell::new(0, 0),
             ))
             .id();
+
+        world.add_observer(on_insert_cell);
 
         world.spawn(Route {
             id: "fake_route".into(),
@@ -283,7 +282,7 @@ mod tests {
             })
             .unwrap();
 
-        world.add_observer(on_insert_cell);
+        world.flush();
 
         // As if we're progressing along the route.
         world.entity_mut(chicken).insert(Cell::new(0, 1));
@@ -302,5 +301,11 @@ mod tests {
         assert_eq!(idx_for(&world, chicken), 1);
 
         Ok(())
+    }
+
+    fn new_world() -> World {
+        let mut world = World::default();
+        world.insert_resource(WorldClock::default());
+        world
     }
 }
