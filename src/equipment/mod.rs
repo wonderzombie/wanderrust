@@ -1,12 +1,12 @@
 mod armaments;
 mod effects;
-mod equipment;
+mod equipping;
 mod slots;
 
 use bevy::prelude::*;
 
 pub(crate) use armaments::{Armament, Armor, EquipmentKind};
-pub(crate) use equipment::*;
+pub(crate) use equipping::*;
 pub(crate) use slots::{EquippableSlots, SlotType};
 
 pub trait Equippable {
