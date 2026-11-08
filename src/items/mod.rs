@@ -1,9 +1,9 @@
-mod items;
+mod item_ids;
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-pub use items::*;
+pub use item_ids::*;
 
 macro_rules! item_kinds {
     ( $( $kind:ident ),+ ) => {
