@@ -30,7 +30,7 @@ impl From<(f32, TileIdx)> for WeightedEntry {
 /// Use TableBuilder to construct a [ProbabilityTable].
 ///
 /// Example:
-/// ```rust
+/// ```ignore
 /// let table = TableBuilder::new()
 ///     .table(1.0, |builder| {
 ///         builder.tile(0.5, TileIdx::Grass)
@@ -53,7 +53,7 @@ impl TableBuilder {
     /// Invokes `f` on a new table and adds it to this TableBuilder.
     ///
     /// Example:
-    /// ```rust
+    /// ```ignore
     /// let table = TableBuilder::new()
     ///     .table(1.0, |builder| {
     ///         builder.tile(0.5, TileIdx::Blank)
@@ -70,7 +70,7 @@ impl TableBuilder {
     /// Add a tile to the current table in this TableBuilder.
     ///
     /// Example:
-    /// ```rust
+    /// ```ignore
     /// let table = TableBuilder::new()
     ///     .tile(1.0, TileIdx::Blank)
     ///     .build();

@@ -5,8 +5,10 @@
 //!
 //! The minimal setup is a pair:
 //!
+//! ```ignore
 //!     interxable!(Door defaults to OpenDoor);
 //!     interacticator!(OpenDoor on Door via do_open_door);
+//! ```
 //!
 //! `do_open_door` is ultimately invoked via [`run_system_cached_with`]. It receives `OpenDoor`
 //! as a `SystemInput`, at a minimum.

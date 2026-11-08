@@ -371,7 +371,7 @@ mod tests {
             .map(|q| q.0)
             .unwrap_or_default();
 
-        assert_eq!(false, chest.is_open, "expected chest not to be open");
+        assert!(!chest.is_open, "expected chest not to be open");
         assert_eq!(q, 2, "expected two gold pieces to be present in chest");
     }
 }

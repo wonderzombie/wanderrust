@@ -391,7 +391,7 @@ mod tests {
     fn test_select_next() {
         let mut app = init_app();
 
-        let entities = vec![
+        let entities = [
             spawn_with_rec(app.world_mut(), 10),
             spawn_with_rec(app.world_mut(), 10),
             spawn_with_rec(app.world_mut(), 100),

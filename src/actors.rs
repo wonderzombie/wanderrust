@@ -345,7 +345,7 @@ mod tests {
         app.world_mut().commands().spawn((
             ChildOf(parent),
             Actor,
-            cell.clone(),
+            cell,
             PreviousCell(Cell::new(0, 0)),
         ));
         app.update();
@@ -387,7 +387,7 @@ mod tests {
             .spawn((
                 ChildOf(parent),
                 Actor,
-                first_cell.clone(),
+                first_cell,
                 PreviousCell(Cell::new(0, 0)),
             ))
             .id();

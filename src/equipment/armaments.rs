@@ -57,6 +57,7 @@ macro_rules! armaments {
             //     }
             // }
 
+            #[allow(unused)]
             fn from_item(value: impl AsRef<ItemId>) -> Option<Self> {
                 match value.as_ref() {
                     $( ItemId::$id => Some(Armament::$id), )+
@@ -104,6 +105,7 @@ macro_rules! fixed_slot_equipment {
             }
 
             impl $categ {
+                #[allow(unused)]
                 fn from_item(value: impl AsRef<ItemId>) -> Option<Self> {
                     match value.as_ref() {
                         $( ItemId::$id => Some($categ::$id), )+
