@@ -1,5 +1,5 @@
 //! Manages equipping or unequipping equipment.
-use crate::equipment::Equippable;
+use crate::equipment::{Equippable, EquippableSlots};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
@@ -27,23 +27,6 @@ pub struct EquippedBy {
 fn notify(mut w: DeferredWorld, _c: HookContext) {
     info!("equipment changed");
     w.write_message_default::<EquipmentChanged>();
-}
-
-/// Defines a collection of [`Slot`].
-#[derive(Component, Reflect, Debug)]
-#[reflect(Component)]
-pub struct Slots(pub Vec<SlotType>);
-
-impl Slots {
-    /// Returns a standard list of [`Slot`] for such as a human-adjacent creature.
-    pub fn standard() -> Self {
-        Self(vec![
-            SlotType::Armor,
-            SlotType::MainHand,
-            SlotType::OffHand,
-            SlotType::Trinket,
-        ])
-    }
 }
 
 #[derive(Component, Reflect, Debug)]
@@ -92,7 +75,7 @@ fn in_slot(equipped: Vec<Entity>, q: &Query<&EquippedBy>, slot: SlotType) -> Opt
 pub fn on_toggle_equipped(
     event: On<ToggleEquipped>,
     mut commands: Commands,
-    all_equipment_sets: Query<Option<&HasEquipped>, With<Slots>>,
+    all_equipment_sets: Query<Option<&HasEquipped>, With<EquippableSlots>>,
     all_equipped_itam: Query<&EquippedBy>,
     all_itam: Query<&ItemId>,
 ) {

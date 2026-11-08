@@ -7,7 +7,7 @@ use crate::{
     bestiary::Bestiary,
     cell::{Cell, PreviousCell},
     combat::CombatantBundle,
-    equipment::{Equippable, EquippedBy, Slots},
+    equipment::{Equippable, EquippableSlots, EquippedBy},
     equipment_menu,
     gamestate::Modal,
     inventory::{Inventory, InventoryChange},
@@ -80,7 +80,7 @@ pub fn spawn_player(
             (LightLevel::Light, 1),
         ),
         Flasks::default(),
-        Slots::standard(),
+        EquippableSlots::standard(),
         CombatantBundle::default(),
         PieceBundle {
             sprite: atlas.sprite(),

@@ -1,9 +1,9 @@
 //! Reapplies [`crate::equipment::Modifiers`] when equipment changes.
-use crate::equipment::Equippable;
+use crate::equipment::{Equippable, EquippableSlots};
 use bevy::prelude::*;
 
 use crate::{
-    equipment::{EquipmentChanged, HasEquipped, Slots},
+    equipment::{EquipmentChanged, HasEquipped},
     gamestate::PlayerSpawned,
     items::ItemId,
     parameters::{BaseParameters, Parameters},
@@ -26,7 +26,7 @@ pub fn apply_params_modifiers(
             &BaseParameters,
             &mut Parameters,
         ),
-        With<Slots>,
+        With<EquippableSlots>,
     >,
     equipment: Query<&ItemId>,
 ) {
@@ -64,7 +64,7 @@ mod tests {
         let player_nt = app
             .world_mut()
             .commands()
-            .spawn((Bestiary::Player, Slots::standard()))
+            .spawn((Bestiary::Player, EquippableSlots::standard()))
             .id();
         app.update();
 

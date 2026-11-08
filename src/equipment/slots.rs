@@ -29,3 +29,20 @@ slots!(
     Armor "armor",
     Trinket "trinket",
 );
+
+/// Defines a collection of [`Slot`].
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+pub struct EquippableSlots(pub Vec<SlotType>);
+
+impl EquippableSlots {
+    /// Returns a standard list of [`Slot`] for such as a human-adjacent creature.
+    pub fn standard() -> Self {
+        Self(vec![
+            SlotType::Armor,
+            SlotType::MainHand,
+            SlotType::OffHand,
+            SlotType::Trinket,
+        ])
+    }
+}
