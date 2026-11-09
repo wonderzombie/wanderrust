@@ -34,24 +34,29 @@ pub struct MeleeFlags {
     pub can_reach: bool,
 }
 
-macro_rules! armaments {
-    ( @scaling $acu:ident, $ala:ident, $grt:ident $(,)? ) => {
-            Some(Scaling {
-                acu: Grade::$acu,
-                ala: Grade::$ala,
-                grt: Grade::$grt,
-            })
-    };
-    ( @scaling ) => {
+macro_rules! melee_flags {
+    () => {
         None
     };
-    ( @flags $( $flagid:ident: $flaglit:literal )+ ) => {
+    ( $( $id:ident: $val:literal ),+ ) => {
         Some(MeleeFlags {
-            $( $flagid: $flaglit )+,
+            $( $id: $val, )+
             ..Default::default()
         })
     };
-    ( @flags ) => { None };
+}
+
+macro_rules! armaments {
+    // ( @scaling $acu:ident, $ala:ident, $grt:ident $(,)? ) => {
+    //         Some(Scaling {
+    //             acu: Grade::$acu,
+    //             ala: Grade::$ala,
+    //             grt: Grade::$grt,
+    //         })
+    // };
+    // ( @scaling ) => {
+    //     None
+    // };
     ( $( $id:ident => {
             SlotType::$slot:ident,
             $mods:expr
@@ -60,8 +65,8 @@ macro_rules! armaments {
                 acu: $acu:ident, ala: $ala:ident, grt: $grt:ident
             )?
 
-            $(, flags:
-                $( $flagid:ident: $flaglit:literal )+
+            $(, mflags:
+                $( $flagid:ident: $flagval:literal )+
             )?
 
             $(,)?
@@ -90,7 +95,13 @@ macro_rules! armaments {
             #[allow(unused)]
             fn flags(&self) -> Option<MeleeFlags> {
                 match self {
-                    $( Armament::$id => armaments!(@flags $( $($flagid: $flaglit),+  )?),)+
+                    $( Armament::$id =>
+                        melee_flags!(
+                            $(
+                                $( $flagid: $flagval ),+
+                            )?
+                        )
+                    ),+
                 }
             }
         }
@@ -224,12 +235,12 @@ armaments! {
     Axe => {
         SlotType::MainHand,
         modifiers!(attack: 2),
-        flags: can_cleave: true,
+        mflags: can_cleave: true,
     },
     Spear => {
         SlotType::MainHand,
         modifiers!(attack: 2),
-        flags: can_reach: true,
+        mflags: can_reach: true,
     },
     Shield => {
         SlotType::OffHand,
