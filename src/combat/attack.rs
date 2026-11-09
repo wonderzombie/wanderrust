@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {}
 
-#[derive(Message, Copy, Clone, Debug)]
+#[derive(Message, Copy, Clone, Debug, Reflect)]
 struct Attack {
     attacker: Entity,
     defender: Option<Entity>,
@@ -57,7 +57,7 @@ impl Attack {
     }
 }
 
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Default, Copy, Clone, Debug, Reflect)]
 struct WeaponFlags {
     /// Whether this attack should damage adjacent enemies.
     // TODO: should go on a weapon.
@@ -70,7 +70,7 @@ struct WeaponFlags {
 }
 
 /// The kind of attack, whether it be ranged or melee.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Reflect)]
 enum AttackKind {
     Melee {
         /// Entity for the weapon used, if any.
@@ -138,8 +138,9 @@ impl AttackKind {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Reflect, Default)]
 enum AttackRole {
+    #[default]
     Primary,
     Cleave,
     FollowUp,
