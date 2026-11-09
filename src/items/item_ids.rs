@@ -192,6 +192,18 @@ define_items!(
         ikind: Equipment,
         ekind: Armament::Sword,
     },
+    Axe => {
+        label: "axe",
+        desc: "attack in broad strokes.",
+        ikind: Equipment,
+        ekind: Armament::Axe,
+    },
+    Spear => {
+        label: "spear",
+        desc: "attack with reach.",
+        ikind: Equipment,
+        ekind: Armament::Spear,
+    },
     Leather => {
         label: "leather",
         desc: "stiff boiled leather.",

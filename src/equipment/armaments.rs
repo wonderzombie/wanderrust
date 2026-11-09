@@ -22,6 +22,17 @@ use crate::{
 //     grt: Grade,
 // }
 
+#[allow(unused)]
+#[derive(Default, Copy, Clone, Debug)]
+struct MeleeFlags {
+    /// Whether this attack should damage adjacent enemies.
+    can_cleave: bool,
+    /// Whether this attack should damage the target more than once.
+    can_follow_up: bool,
+    /// Whether this attack can reach beyond just adjacent tiles.
+    can_reach: bool,
+}
+
 macro_rules! armaments {
     ( @scaling $acu:ident, $ala:ident, $grt:ident $(,)? ) => {
             Some(Scaling {
@@ -33,13 +44,23 @@ macro_rules! armaments {
     ( @scaling ) => {
         None
     };
+    ( @flags $( $flagid:ident: $flaglit:literal )+ ) => {
+        Some(MeleeFlags {
+            $( $flagid: $flaglit )+,
+            ..Default::default()
+        })
+    };
+    ( @flags ) => { None };
     ( $( $id:ident => {
-            $label:literal,
             SlotType::$slot:ident,
             $mods:expr
 
             $(, scaling:
                 acu: $acu:ident, ala: $ala:ident, grt: $grt:ident
+            )?
+
+            $(, flags:
+                $( $flagid:ident: $flaglit:literal )+
             )?
 
             $(,)?
@@ -62,6 +83,13 @@ macro_rules! armaments {
                 match value.as_ref() {
                     $( ItemId::$id => Some(Armament::$id), )+
                     _ => None,
+                }
+            }
+
+            #[allow(unused)]
+            fn flags(&self) -> Option<MeleeFlags> {
+                match self {
+                    $( Armament::$id => armaments!(@flags $( $($flagid: $flaglit),+  )?),)+
                 }
             }
         }
@@ -97,7 +125,7 @@ macro_rules! armaments {
 }
 
 macro_rules! fixed_slot_equipment {
-    ( $( $categ:ident in Slot::$slot:ident { $( $id:ident => { $label:literal, $mods:expr } ),+ $(,)? }),+ $(,)?  ) => {
+    ( $( $categ:ident in Slot::$slot:ident { $( $id:ident => { $mods:expr } ),+ $(,)? }),+ $(,)?  ) => {
         $(
             #[derive(Debug, Clone, Eq, PartialEq, Hash)]
             pub enum $categ {
@@ -116,9 +144,7 @@ macro_rules! fixed_slot_equipment {
 
             impl Labeled for $categ {
                 fn label(&self) -> &'static str {
-                    match self {
-                        $( $categ::$id => $label, )+
-                    }
+                    self.id().label()
                 }
             }
 
@@ -187,23 +213,33 @@ equipment_kinds!(Armament, Armor);
 
 armaments! {
     Stick => {
-        "stick", SlotType::MainHand,
+        SlotType::MainHand,
         modifiers!(attack: 1),
     },
     Sword => {
-        "sword", SlotType::MainHand,
+        SlotType::MainHand,
         modifiers!(attack: 3),
     },
+    Axe => {
+        SlotType::MainHand,
+        modifiers!(attack: 2),
+        flags: can_cleave: true,
+    },
+    Spear => {
+        SlotType::MainHand,
+        modifiers!(attack: 2),
+        flags: can_reach: true,
+    },
     Shield => {
-        "shield", SlotType::OffHand,
+        SlotType::OffHand,
         modifiers!(defense: 2),
     }
 }
 
 fixed_slot_equipment! {
     Armor in Slot::Armor {
-        Rags => { "rags", modifiers!(defense: 1) },
-        Chainmail => { "chain", modifiers!(defense: 5) },
-        Leather => {"leather", modifiers!(defense: 3) },
+        Rags => { modifiers!(defense: 1) },
+        Chainmail => { modifiers!(defense: 5) },
+        Leather => { modifiers!(defense: 3) },
     }
 }

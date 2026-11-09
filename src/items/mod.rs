@@ -7,8 +7,7 @@ pub use item_ids::*;
 
 macro_rules! item_kinds {
     ( $( $kind:ident ),+ ) => {
-        /// The group (`Kind`) the item belongs to. `Equipment` is not special; all
-        /// equipment should have it; but `EquipDef` is the deciding factor.
+        /// The group (`Kind`) the item belongs to.
         #[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Serialize, Deserialize)]
         pub enum ItemKind {
             $( $kind, )+
