@@ -1,4 +1,6 @@
 //! Defines armaments with reference to [`ItemId`].
+use bevy::reflect::Reflect;
+
 use crate::{
     equipment::{Equippable, Modifiers, modifiers, slots::SlotType},
     items::{Item, ItemId, Labeled},
@@ -22,15 +24,14 @@ use crate::{
 //     grt: Grade,
 // }
 
-#[allow(unused)]
-#[derive(Default, Copy, Clone, Debug)]
-struct MeleeFlags {
+#[derive(Default, Copy, Clone, Debug, Reflect)]
+pub struct MeleeFlags {
     /// Whether this attack should damage adjacent enemies.
-    can_cleave: bool,
+    pub can_cleave: bool,
     /// Whether this attack should damage the target more than once.
-    can_follow_up: bool,
+    pub can_follow_up: bool,
     /// Whether this attack can reach beyond just adjacent tiles.
-    can_reach: bool,
+    pub can_reach: bool,
 }
 
 macro_rules! armaments {

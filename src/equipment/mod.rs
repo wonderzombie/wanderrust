@@ -5,7 +5,7 @@ mod slots;
 
 use bevy::prelude::*;
 
-pub(crate) use armaments::{Armament, Armor, EquipmentKind};
+pub(crate) use armaments::{Armament, Armor, EquipmentKind, MeleeFlags};
 pub(crate) use equipping::*;
 pub(crate) use slots::{EquippableSlots, SlotType};
 

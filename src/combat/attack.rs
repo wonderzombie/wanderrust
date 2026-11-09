@@ -1,6 +1,8 @@
 #![allow(unused)]
 use bevy::prelude::*;
 
+use crate::equipment::MeleeFlags;
+
 pub(super) fn plugin(app: &mut App) {}
 
 #[derive(Message, Copy, Clone, Debug, Reflect)]
@@ -57,25 +59,13 @@ impl Attack {
     }
 }
 
-#[derive(Default, Copy, Clone, Debug, Reflect)]
-struct WeaponFlags {
-    /// Whether this attack should damage adjacent enemies.
-    // TODO: should go on a weapon.
-    can_cleave: bool,
-    /// Whether this attack should damage the target more than once.
-    // TODO: should go on a weapon.
-    can_follow_up: bool,
-    /// Whether this attack can reach beyond just adjacent tiles.
-    has_reach: bool,
-}
-
 /// The kind of attack, whether it be ranged or melee.
 #[derive(Copy, Clone, Debug, Reflect)]
 enum AttackKind {
     Melee {
         /// Entity for the weapon used, if any.
         weapon: Option<Entity>,
-        flags: WeaponFlags,
+        flags: MeleeFlags,
     },
     Ranged {
         /// The projectile that will be launched, thrown, etc.
@@ -87,12 +77,12 @@ impl AttackKind {
     fn melee(weapon: Option<Entity>) -> AttackKind {
         AttackKind::Melee {
             weapon,
-            flags: WeaponFlags::default(),
+            flags: MeleeFlags::default(),
         }
     }
 
     fn melee_cleaving(weapon: Option<Entity>) -> AttackKind {
-        let flags = WeaponFlags {
+        let flags = MeleeFlags {
             can_cleave: true,
             ..Default::default()
         };
@@ -100,7 +90,7 @@ impl AttackKind {
     }
 
     fn melee_follow_up(weapon: Option<Entity>) -> AttackKind {
-        let flags = WeaponFlags {
+        let flags = MeleeFlags {
             can_follow_up: true,
             ..Default::default()
         };
@@ -115,7 +105,7 @@ impl AttackKind {
         matches!(
             self,
             AttackKind::Melee {
-                flags: WeaponFlags {
+                flags: MeleeFlags {
                     can_cleave: true,
                     ..
                 },
@@ -128,7 +118,7 @@ impl AttackKind {
         matches!(
             self,
             AttackKind::Melee {
-                flags: WeaponFlags {
+                flags: MeleeFlags {
                     can_follow_up: true,
                     ..
                 },
