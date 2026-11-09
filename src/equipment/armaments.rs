@@ -226,20 +226,20 @@ equipment_kinds!(Armament, Armor);
 armaments! {
     Stick => {
         SlotType::MainHand,
-        modifiers!(attack: 1),
+        modifiers!(attack: 1, attack_speed: 5),
     },
     Sword => {
         SlotType::MainHand,
-        modifiers!(attack: 3),
+        modifiers!(attack: 3, attack_speed: 3),
     },
     Axe => {
         SlotType::MainHand,
-        modifiers!(attack: 2),
+        modifiers!(attack: 2, attack_speed: 4),
         mflags: can_cleave: true,
     },
     Spear => {
         SlotType::MainHand,
-        modifiers!(attack: 2),
+        modifiers!(attack: 2, attack_speed: 2),
         mflags: can_reach: true,
     },
     Shield => {

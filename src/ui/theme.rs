@@ -8,7 +8,7 @@ pub(crate) fn pcsr_font(font_size: i32) -> impl Scene {
         TextFont {
             font,
             font_size: px(font_size),
-            font_smoothing: FontSmoothing::None
+            // font_smoothing: FontSmoothing::None
         }
     }
 }
