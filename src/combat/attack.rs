@@ -1,9 +1,9 @@
-#![allow(dead_code)]
+#![allow(unused)]
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {}
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Message, Copy, Clone, Debug)]
 struct Attack {
     attacker: Entity,
     defender: Option<Entity>,

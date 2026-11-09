@@ -228,6 +228,22 @@ pub fn process_attacks(
     }
 }
 
+// #[derive(QueryData)]
+// #[query_data(mutable)]
+// pub struct CombatantView {
+//     entity: Entity,
+//     name: &'static Name,
+//     params: &'static Parameters,
+//     health: &'static mut Health,
+//     has_player: Has<Player>,
+// }
+
+// #[derive(SystemParam)]
+// pub struct CombatAssist<'w, 's> {
+//     commands: Commands<'w, 's>,
+//     combatants: Query<'w, 's, CombatantView>,
+// }
+
 #[derive(Component)]
 pub struct FloatingText {
     timer: Timer,
