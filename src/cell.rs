@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 /// A simple struct representing a cell in the grid-based world, with integer
 /// coordinates. i32 allows us to use offsets without extra fuss compared to
 /// unsigned integers.
+///
+/// Important: no relationship to [`std::cell`].
 #[derive(
     Component,
     Default,
