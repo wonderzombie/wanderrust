@@ -19,9 +19,9 @@ pub fn on_insert_cell(
     mut route_assist: RouteAssist,
     cells: Populated<&Cell, (With<crate::mobs::Mob>, With<OnRoute>)>,
 ) -> Result<()> {
-    let new_cell = cells
-        .get(on.event_target())
-        .with_severity(Severity::Error)?;
+    let Ok(new_cell) = cells.get(on.event_target()) else {
+        return Ok(());
+    };
 
     let dest = route_assist
         .destination(on.event_target())
