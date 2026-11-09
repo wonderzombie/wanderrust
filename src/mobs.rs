@@ -204,10 +204,7 @@ pub fn consume_turn(
     match mob_view.decide(player_nt, player_cell, blocking.as_ref()) {
         MobAction::Attack(target) => {
             debug!("{next_nt}: attack {target}");
-            attacks.write(Attack {
-                attacker: next_nt,
-                target,
-            });
+            attacks.write(Attack::basic(next_nt, target));
         }
         MobAction::Move(cell) => {
             debug!("{next_nt}: move {cell}");

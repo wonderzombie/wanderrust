@@ -6,29 +6,33 @@ use crate::equipment::MeleeFlags;
 pub(super) fn plugin(app: &mut App) {}
 
 #[derive(Message, Copy, Clone, Debug, Reflect)]
-struct Attack {
-    attacker: Entity,
-    defender: Option<Entity>,
-    kind: AttackKind,
-    role: AttackRole,
+pub struct Attack {
+    pub attacker: Entity,
+    pub target: Option<Entity>,
+    pub kind: AttackKind,
+    pub role: AttackRole,
 }
 
 impl Attack {
-    fn with_weapon(attacker: Entity, defender: Option<Entity>, weapon: Option<Entity>) -> Attack {
+    pub fn basic(attacker: Entity, defender: Entity) -> Attack {
+        Self::with_weapon(attacker, Some(defender), None)
+    }
+
+    fn with_weapon(attacker: Entity, target: Option<Entity>, weapon: Option<Entity>) -> Attack {
         let kind = AttackKind::melee(weapon);
         let role = AttackRole::Primary;
         Attack {
             attacker,
-            defender,
+            target,
             kind,
             role,
         }
     }
 
-    fn with_kind(attacker: Entity, defender: Option<Entity>, kind: AttackKind) -> Attack {
+    fn with_kind(attacker: Entity, target: Option<Entity>, kind: AttackKind) -> Attack {
         Attack {
             attacker,
-            defender,
+            target,
             kind,
             role: AttackRole::Primary,
         }
@@ -40,7 +44,7 @@ impl Attack {
 
     fn cleave_into(&self, target: Entity) -> Attack {
         Attack {
-            defender: Some(target),
+            target: Some(target),
             role: AttackRole::Cleave,
             ..*self
         }
@@ -61,7 +65,7 @@ impl Attack {
 
 /// The kind of attack, whether it be ranged or melee.
 #[derive(Copy, Clone, Debug, Reflect)]
-enum AttackKind {
+pub enum AttackKind {
     Melee {
         /// Entity for the weapon used, if any.
         weapon: Option<Entity>,
@@ -129,7 +133,7 @@ impl AttackKind {
 }
 
 #[derive(Copy, Clone, Debug, Reflect, Default)]
-enum AttackRole {
+pub enum AttackRole {
     #[default]
     Primary,
     Cleave,

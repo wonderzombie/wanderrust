@@ -7,6 +7,7 @@ use crate::{
     atlas::SpriteAtlas,
     cell::Cell,
     colors,
+    combat::attack::Attack,
     gamestate::{AddRecovery, PlayerDied, RecoveryNow, Turn},
     message_log::LogEvent,
     parameters::*,
@@ -133,12 +134,6 @@ pub struct CombatantBundle {
     pub turn: Turn,
 }
 
-#[derive(Message, Debug, Copy, Clone, Reflect)]
-pub struct Attack {
-    pub attacker: Entity,
-    pub target: Entity,
-}
-
 pub fn process_attacks(
     mut commands: Commands,
     mut combatants: Query<(Entity, &Name, &Parameters, &mut Health, Has<Player>)>,
@@ -150,14 +145,18 @@ pub fn process_attacks(
 
     for attack in attacks.read() {
         debug!("{attack:?}");
-        let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, attack.target])
-        else {
+
+        let Some(target) = attack.target else {
+            unimplemented!("unable to attack without a target/defender");
+        };
+
+        let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, target]) else {
             warn!(
                 "either attacker {:?} or target {:?} was not found among combatants: {} vs {}",
                 attack.attacker,
-                attack.target,
+                target,
                 combatants.contains(attack.attacker),
-                combatants.contains(attack.target)
+                combatants.contains(target)
             );
             continue;
         };

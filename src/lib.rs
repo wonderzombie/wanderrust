@@ -512,10 +512,7 @@ fn process_actions(
                     });
                 }
                 Some(target) if combatants.get(target).is_ok() => {
-                    attacks.write(Attack {
-                        attacker: action.entity,
-                        target,
-                    });
+                    attacks.write(Attack::basic(action.entity, target));
                 }
                 Some(target) => {
                     info!("process_actions: interaction");
