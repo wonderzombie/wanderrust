@@ -1,5 +1,5 @@
 //! Coordinates [`Attack`] and related events.
-use bevy::{prelude::*, sprite::Text2dShadow};
+use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, Pathfind};
 
 use crate::{
@@ -136,7 +136,7 @@ pub struct CombatantBundle {
 
 pub fn process_attacks(
     mut commands: Commands,
-    mut combatants: Query<(Entity, &Name, &Parameters, &mut Health, Has<Player>)>,
+    mut combatants: Query<CombatantView>,
     mut attacks: MessageReader<Attack>,
     mut log: MessageWriter<LogEvent>,
     asset_server: Res<AssetServer>,
@@ -150,7 +150,7 @@ pub fn process_attacks(
             unimplemented!("unable to attack without a target/defender");
         };
 
-        let Ok([attacker, defender]) = combatants.get_many_mut([attack.attacker, target]) else {
+        let Ok([att, mut def]) = combatants.get_many_mut([attack.attacker, target]) else {
             warn!(
                 "either attacker {:?} or target {:?} was not found among combatants: {} vs {}",
                 attack.attacker,
@@ -161,87 +161,81 @@ pub fn process_attacks(
             continue;
         };
 
-        let (defender_id, defender_name, def_params, mut defender, defender_is_player) = defender;
-        let (attacker_id, attacker_name, atk_params, _, _) = attacker;
-
         commands
-            .entity(attacker_id)
-            .queue(AddRecovery(atk_params.attack_speed));
+            .entity(att.entity)
+            .queue(AddRecovery(att.params.attack_speed));
 
-        if defender.is_dead {
+        if def.health.as_ref().is_dead {
             log.write(LogEvent {
-                txt: format!("{defender_name} is already dead"),
+                txt: format!("{} is already dead", def.name),
                 color: Some(colors::KENNEY_GOLD),
             });
             continue;
         }
-        let damage = atk_params.attack - def_params.defense;
-        trace!("attacker: {atk_params:#?}; defender: {def_params:#?}");
+        let damage = att.params.attack - def.params.defense;
+        trace!("attacker: {:?}; defender: {:?}", att.params, def.params);
         if damage >= 0 {
-            commands.entity(defender_id).trigger(Hit);
-            defender.hp = defender.hp.saturating_sub(damage.cast_unsigned());
+            commands.entity(def.entity).trigger(Hit);
+            def.health.hp = def.health.hp.saturating_sub(damage.cast_unsigned());
 
-            if defender.hp == 0 {
-                info!("{attacker_name} slays {defender_name}.");
-                defender.is_dead = true;
+            if def.health.hp == 0 {
+                info!("{} slays {}.", att.name, def.name);
+                def.health.is_dead = true;
                 log.write(LogEvent {
-                    txt: format!("{defender_name} is dead"),
+                    txt: format!("{} is dead", def.name),
                     color: Some(colors::KENNEY_RED),
                 });
                 spawn_floating_text(
                     &mut commands,
                     colors::KENNEY_RED,
                     &font,
-                    defender_id,
+                    def.entity,
                     "*DEAD*",
                 );
                 commands
-                    .entity(defender_id)
+                    .entity(def.entity)
                     .insert(Dead)
                     .trigger(Died)
                     .remove::<(AgentOfGrid, AgentPos, Pathfind, Blocking)>()
                     .remove::<CombatantBundle>();
 
-                info!("{defender_name} has died. they were killed by {attacker_name}.");
-                if defender_is_player {
+                info!("{} has died. they were killed by {}.", def.name, att.name);
+                if def.is_player {
                     commands.trigger(PlayerDied);
                 } else {
                     commands.trigger(SoundEvent::EnemyDefeated);
                 }
             } else {
-                info!("{attacker_name} attacks {defender_name}");
-                spawn_floating_text(&mut commands, Color::WHITE, &font, defender_id, damage);
-                if defender_is_player {
+                info!("{} attacks {}", att.name, def.name);
+                spawn_floating_text(&mut commands, Color::WHITE, &font, def.entity, damage);
+                if def.is_player {
                     commands.trigger(SoundEvent::HurtPlayer);
                 } else {
                     commands.trigger(SoundEvent::HurtEnemy);
                 }
             }
         } else {
-            info!("{attacker_name}'s damage did not overcome {defender_name}'s defense.");
+            info!(
+                "{}'s damage did not overcome {}'s defense.",
+                att.name, def.name
+            );
             log.write(LogEvent {
-                txt: format!("{attacker_name} does no damage"),
+                txt: format!("{} does no damage", att.name),
                 color: Some(colors::KENNEY_GOLD),
             });
         }
     }
 }
 
-// #[derive(QueryData)]
-// #[query_data(mutable)]
-// pub struct CombatantView {
-//     entity: Entity,
-//     name: &'static Name,
-//     params: &'static Parameters,
-//     health: &'static mut Health,
-//     has_player: Has<Player>,
-// }
-
-// #[derive(SystemParam)]
-// pub struct CombatAssist<'w, 's> {
-//     commands: Commands<'w, 's>,
-//     combatants: Query<'w, 's, CombatantView>,
-// }
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct CombatantView {
+    entity: Entity,
+    name: &'static Name,
+    params: &'static Parameters,
+    health: &'static mut Health,
+    is_player: Has<Player>,
+}
 
 #[derive(Component)]
 pub struct FloatingText {
