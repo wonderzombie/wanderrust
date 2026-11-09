@@ -531,7 +531,7 @@ fn process_actions(
         }
         Act::Flask => match flasks.consume() {
             Some(healed) => {
-                *health = *health + healed;
+                health.restore(healed);
                 info!(
                     "Player consumes a flask. Health is {health:?}. {}",
                     flasks.uses

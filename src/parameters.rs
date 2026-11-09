@@ -2,7 +2,7 @@
 //! [`Flasks`], [`Vision`], and [`Awareness`].
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::ops::{Add, Sub};
+use std::ops::Add;
 
 #[derive(
     Component,
@@ -45,24 +45,25 @@ impl Health {
 
         *self
     }
-}
 
-impl Add<u32> for Health {
-    type Output = Health;
-
-    fn add(mut self, rhs: u32) -> Self::Output {
-        self.set(self.hp.saturating_add(rhs));
+    pub fn deduct(&mut self, amount: u32) -> &mut Self {
+        self.set(self.hp.saturating_sub(amount));
         self
     }
-}
 
-impl Sub<u32> for Health {
-    type Output = Health;
-
-    fn sub(mut self, rhs: u32) -> Self::Output {
-        self.set(self.hp.saturating_sub(rhs));
+    pub fn restore(&mut self, amount: u32) -> &mut Self {
+        self.set(self.hp.saturating_add(amount));
         self
     }
+
+    // pub fn reset(&mut self) -> &mut Self {
+    //     self.set(self.max);
+    //     self
+    // }
+
+    // pub fn is_at(&self, amount: u32) -> bool {
+    //     self.hp == amount
+    // }
 }
 
 #[derive(Component, Hash, Copy, Clone, Debug, Serialize, Deserialize, Reflect, PartialEq, Eq)]

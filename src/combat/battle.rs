@@ -1,4 +1,5 @@
 //! Coordinates [`Attack`] and related events.
+
 use bevy::{ecs::query::QueryData, prelude::*, sprite::Text2dShadow};
 use bevy_northstar::prelude::{AgentOfGrid, AgentPos, Blocking, Pathfind};
 
@@ -165,7 +166,7 @@ pub fn process_attacks(
             .entity(att.entity)
             .queue(AddRecovery(att.params.attack_speed));
 
-        if def.health.as_ref().is_dead {
+        if def.is_dead() {
             log.write(LogEvent {
                 txt: format!("{} is already dead", def.name),
                 color: Some(colors::KENNEY_GOLD),
@@ -176,11 +177,10 @@ pub fn process_attacks(
         trace!("attacker: {:?}; defender: {:?}", att.params, def.params);
         if damage >= 0 {
             commands.entity(def.entity).trigger(Hit);
-            def.health.hp = def.health.hp.saturating_sub(damage.cast_unsigned());
+            def.health.deduct(damage.cast_unsigned());
 
-            if def.health.hp == 0 {
+            if def.is_dead() {
                 info!("{} slays {}.", att.name, def.name);
-                def.health.is_dead = true;
                 log.write(LogEvent {
                     txt: format!("{} is dead", def.name),
                     color: Some(colors::KENNEY_RED),
@@ -235,6 +235,12 @@ pub struct CombatantView {
     params: &'static Parameters,
     health: &'static mut Health,
     is_player: Has<Player>,
+}
+
+impl<'w, 's> CombatantViewItem<'w, 's> {
+    pub fn is_dead(&self) -> bool {
+        self.health.is_dead
+    }
 }
 
 #[derive(Component)]
